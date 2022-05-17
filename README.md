@@ -1,9 +1,8 @@
 # AniStream
 
-<p align="center"><a href="https://github.com/mukul500/AnimeXStream"><img src="/.assets/logo.png" width="150"></a></p>
-<p align="center"><a href="https://github.com/mukul500/AnimeXStream/releases"><img src="/.assets/download.png"></a></p>
-
 AniStream is an android application to dtream/download your favourite anime. 
+
+<p align="center"><a href="https://github.com/jerry08/AniStream/releases"><img src="/.assets/download.png"></a></p>
 
 ### 🌟STAR THIS REPOSITORY TO SUPPORT THE DEVELOPER AND ENCOURAGE THE DEVELOPMENT OF THE APPLICATION!
 
