@@ -1,5 +1,5 @@
-# AnimeDl
-AnimeDl scrapes animes from sites. 
+# AniStream
+AniStream is an android application to dtream/download your favourite anime. 
 
 ### 🌟STAR THIS REPOSITORY TO SUPPORT THE DEVELOPER AND ENCOURAGE THE DEVELOPMENT OF THE APPLICATION!
 
