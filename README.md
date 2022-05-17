@@ -14,3 +14,22 @@ AniStream is an android application to dtream/download your favourite anime.
 <br>
 
 <img src="https://github.com/jerry08/AniStream/blob/master/.assets/Screenshot_07.jpg?raw=true" style="width: 23%;margin:16px;" />&nbsp;&nbsp;<img src="https://github.com/jerry08/AniStream/blob/master/.assets/Screenshot_08.jpg?raw=true" style="width: 23%;margin:16px;" />
+
+## Description
+
+AniStream parses website data and filter required info, thus It removes the ads for seamless experience. The app doesn't require account creation to use it.
+
+### Features
+
+* Search Anime
+* Recently Added Episodes
+* Popular Animes
+* Anime Movies
+* Add To Favourites
+* Auto Quality for Video Playback
+* Ads Free Video Playback
+
+### Coming Features
+
+* Online syncing of Favourite list & watched progress (Will require Login)
+* … and many more
