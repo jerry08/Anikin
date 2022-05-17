@@ -62,14 +62,14 @@ namespace AniStream.Adapters
             holder2.button.Text = Episodes[position].EpisodeName;
             holder2.download.Click += (s, e) =>
             {
-                Downloader downloader = new Downloader(EpisodesActivity, Anime, Episodes[position]);
+                Downloader downloader = new Downloader(EpisodesActivity, Anime, Episodes[holder2.BindingAdapterPosition]);
                 downloader.Download();
             };
             holder2.layout.Click += (s, e) =>
             {
                 Intent intent = new Intent(EpisodesActivity, typeof(VideoActivity));
                 //intent.PutExtra("link", link);
-                intent.PutExtra("episode", JsonConvert.SerializeObject(Episodes[position]));
+                intent.PutExtra("episode", JsonConvert.SerializeObject(Episodes[holder2.BindingAdapterPosition]));
                 intent.PutExtra("anime", JsonConvert.SerializeObject(Anime));
                 intent.SetFlags(ActivityFlags.NewTask);
                 EpisodesActivity.ApplicationContext.StartActivity(intent);

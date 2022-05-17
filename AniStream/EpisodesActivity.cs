@@ -28,7 +28,7 @@ using Org.Apmem.Tools.Layouts;
 using AniStream.Utils.Tags;
 using AndroidX.AppCompat.Widget;
 using AndroidX.Core.Content.Resources;
-using Com.MS.Square.Android.Expandabletextview;
+//using Com.MS.Square.Android.Expandabletextview;
 using PopupMenu = AndroidX.AppCompat.Widget.PopupMenu;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 

@@ -69,7 +69,7 @@ namespace AniStream.Adapters
             MyViewHolder holder2 = holder as MyViewHolder;
 
             //Anime anime = Animes[position];
-            Anime anime = Animes[holder2.AdapterPosition];
+            Anime anime = Animes[holder2.BindingAdapterPosition];
 
             if (anime != null && anime.Id == -1 && AnimeFragment != null)
             {
@@ -114,7 +114,7 @@ namespace AniStream.Adapters
                     //var anime2 = anime.Name;
                     //var test3 = holder2.title.Text;
 
-                    Anime anime2 = Animes[holder2.AdapterPosition];
+                    Anime anime2 = Animes[holder2.BindingAdapterPosition];
                     //Anime anime3 = Animes[position];
 
                     Intent intent = new Intent(Activity, typeof(EpisodesActivity));

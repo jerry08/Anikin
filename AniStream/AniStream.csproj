@@ -65,6 +65,8 @@
     </AndroidLinkSkip>
     <AndroidUseAapt2>true</AndroidUseAapt2>
     <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+    <AndroidEnableSGenConcurrent>true</AndroidEnableSGenConcurrent>
+    <AndroidDexTool>d8</AndroidDexTool>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -77,7 +79,6 @@
   <ItemGroup>
     <Compile Include="BookmarksActivity.cs" />
     <Compile Include="Adapters\AnimeRecyclerAdapter.cs" />
-    <Compile Include="Adapters\EpisodeAdapter.cs" />
     <Compile Include="Adapters\EpisodeRecyclerAdapter.cs" />
     <Compile Include="Adapters\ViewPagerAdapter.cs" />
     <Compile Include="BroadcastReceivers\NetworkStateReceiver.cs" />
@@ -139,16 +140,6 @@
     <AndroidResource Include="Resources\mipmap-xxxhdpi\ic_launcher_round.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Xamarin.ExpandableTextView-master\ExpandableTextView\ExpandableTextView.csproj">
-      <Project>{2ab919f8-12c3-4788-a584-dd44b988e069}</Project>
-      <Name>ExpandableTextView</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Xamarin.FlowLayout\Xamarin.FlowLayout\Xamarin.FlowLayout.csproj">
-      <Project>{ca93bdd5-fa08-45dd-9e2d-9da5300ed143}</Project>
-      <Name>Xamarin.FlowLayout</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="AnimeDl">
       <Version>1.0.0</Version>
     </PackageReference>
@@ -160,6 +151,9 @@
     </PackageReference>
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer">
       <Version>2.11.8</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.Android.Flowlayout">
+      <Version>1.0.0.4</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.4.1.1" />
     <PackageReference Include="Xamarin.AndroidX.ConstraintLayout">
@@ -449,6 +443,11 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\menu\bottommenu1.xml">
+      <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\logo.png">
       <Generator>MSBuild:UpdateGeneratedFiles</Generator>
     </AndroidResource>
   </ItemGroup>

@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:text="Anistream is an anime streaming app that allows users to stream anime with absolutely no ads and interruptions. Our app has a huge selection of anime that you cant even find on premium streaming services." />
 
-    <Space
+    <!--<Space
         android:layout_width="match_parent"
         android:layout_height="17dp" />
     <LinearLayout
@@ -72,7 +72,8 @@
                 android:text="Restore Data"
                 android:textColor="#FFFFFF"/>
         <View style="@style/Divider"/>
-    </LinearLayout>
+    </LinearLayout>-->
+
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dip"
@@ -85,7 +86,7 @@
         android:layout_width="match_parent"
         android:layout_height="20dp"
         android:fontFamily="@font/medium"
-        android:text="© Riku32"
+        android:text="© Jerry08"
         android:textAlignment="center"
         android:textSize="13sp" />
     </LinearLayout>
