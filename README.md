@@ -1,6 +1,6 @@
 # AniStream
 
-<p align="center"><a href="https://github.com/jerry08/AniStream/releases/download/anistream.apk"><img src="/.assets/download.png"></a></p>
+<p align="center"><a href="https://github.com/jerry08/AniStream/releases"><img src="/.assets/download.png"></a></p>
 
 AniStream is an android application to dtream/download your favourite anime. 
 
