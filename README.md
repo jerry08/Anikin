@@ -9,15 +9,4 @@ AniStream is an android application to dtream/download your favourite anime.
 
 ## Screenshots
 
-[<img src=".assets/screenshots/screenshot_01.jpg" width=160>](.assets/screenshots/screenshot_01.jpg)
-[<img src=".assets/screenshots/screenshot_02.jpg" width=160>](.assets/screenshots/screenshot_02.jpg)
-[<img src=".assets/screenshots/screenshot_03.jpg" width=160>](.assets/screenshots/screenshot_03.jpg)
-[<img src=".assets/screenshots/screenshot_04.jpg" width=160>](.assets/screenshots/screenshot_04.jpg)
-[<img src=".assets/screenshots/screenshot_05.jpg" width=160>](.assets/screenshots/screenshot_05.jpg)
-[<img src=".assets/screenshots/screenshot_06.jpg" width=160>](.assets/screenshots/screenshot_06.jpg)
-[<img src=".assets/screenshots/screenshot_07.jpg" width=160>](.assets/screenshots/screenshot_07.jpg)
-[<img src=".assets/screenshots/screenshot_08.jpg" width=160>](.assets/screenshots/screenshot_08.jpg)
-[<img src=".assets/screenshots/screenshot_09.jpg" width=160>](.assets/screenshots/screenshot_09.jpg)
-[<img src=".assets/screenshots/screenshot_10.jpg" width=160>](.assets/screenshots/screenshot_10.jpg)
-[<img src=".assets/screenshots/screenshot_11.png" width=405>](.assets/screenshots/screenshot_11.png)
-[<img src=".assets/screenshots/screenshot_12.png" width=405>](.assets/screenshots/screenshot_12.png)
+<img src="https://github.com/jerry08/AniStream/blob/master/.assets/Screenshot_01.jpg?raw=true" style="width: 23%;margin:16px;" />&nbsp;&nbsp;<img src="https://github.com/jerry08/AniStream/blob/master/.assets/Screenshot_02.jpg?raw=true" style="width: 23%;margin:16px;" />&nbsp;&nbsp;<img src="https://github.com/jerry08/AniStream/blob/master/.assets/Screenshot_03.jpg?raw=true" style="width: 23%;margin:16px;" />&nbsp;&nbsp;<img src="https://github.com/saikou-app/saikou-app.github.io/blob/main/assets/Screenshot_20220330-175600.png?raw=true" style="width: 23%;margin:16px;" />&nbsp;&nbsp;<img src="https://github.com/saikou-app/saikou-app.github.io/blob/main/assets/Screenshot_20220330-183102.png?raw=true" style="width: 23%;margin:16px;" />&nbsp;&nbsp;<img src="https://github.com/saikou-app/saikou-app.github.io/blob/main/assets/Screenshot_20220330-183112.png?raw=true" style="width: 23%;margin:16px;" />&nbsp;&nbsp;<img src="https://github.com/saikou-app/saikou-app.github.io/blob/main/assets/Screenshot_20220330-183120.png?raw=true" style="width: 23%;margin:16px;" />&nbsp;&nbsp;<img src="https://github.com/saikou-app/saikou-app.github.io/blob/main/assets/Screenshot_20220330-182352.png?raw=true" style="width: 23%;margin:16px;" />&nbsp;&nbsp;<img src="https://github.com/saikou-app/saikou-app.github.io/blob/main/assets/Screenshot_20220330-182421.png?raw=true" style="width: 23%;margin:16px;" />
