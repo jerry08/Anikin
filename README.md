@@ -1,8 +1,8 @@
 # AniStream
 
-AniStream is an android application to dtream/download your favourite anime. 
-
 <p align="center"><a href="https://github.com/jerry08/AniStream/releases"><img src="/.assets/download.png"></a></p>
+
+AniStream is an android application to dtream/download your favourite anime. 
 
 ### 🌟STAR THIS REPOSITORY TO SUPPORT THE DEVELOPER AND ENCOURAGE THE DEVELOPMENT OF THE APPLICATION!
 
