@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!--<color name="colorPrimary">#FF3D54</color>
+  <color name="colorPrimaryDark">#FF3D54</color>
+  <color name="colorAccent">#FF6B7E</color>
+  <color name="bgBottomNavigation">#FF6B7E</color>-->
+
+  <!--<color name="colorPrimary">#9600FF</color>
+  <color name="colorPrimaryDark">#9600FF</color>-->
+  <color name="colorPrimary">#8700e5</color>
+  <color name="colorPrimaryDark">#8700e5</color>
+  <color name="colorAccent">#FF6B7E</color>
+  <color name="bgBottomNavigation">#FF6B7E</color>
+
+  <color name="tab_disable">#979797</color>
+  <color name="tab_enable">#FFFFFF</color>
+
+  <color name="tab_checked">#FFFFFF</color>
+  <color name="tab_unchecked">#e3e3e3</color>
+  
+  <color name="white">#FFF</color>
+  <color name="offwhite">#e8e8e8</color>
+  <color name="black">#000</color>
+
+  <color name="backgroundtheme">#303030</color>
+  <color name="darkthemelight">#424242</color>
+  <color name="finishthemelight">#489E4D</color>
+
+  <!--Total Colors-->
+  <!--<color name="app_background">#FFFFFF</color>-->
+  <color name="app_background">#303030</color>
+  <color name="header">#FFFFFF</color>
+  <color name="text_default">#808080</color>
+  <color name="progress">#e5e5e5</color>
+  <color name="secondary_background">#808080</color>
+
+  <!--Home Fragment-->
+  <color name="home_header">@color/header</color>
+  <color name="home_icon">@color/header</color>
+  <!--Recycler Items-->
+  <color name="transparent_background">#80000000</color>
+  <color name="recycler_anime_title">@color/header</color>
+  <color name="recycler_anime_type">@color/text_default</color>
+  <color name="recycler_releases_date">@color/recycler_anime_type</color>
+  <color name="recycler_episode_number">@color/recycler_anime_type</color>
+  <color name="recycler_tags">@color/secondary_background</color>
+
+  <!--Recycler mini Header-->
+  <color name="recycler_mini_header_title">@color/text_default</color>
+  <color name="recycler_mini_header_see_more">@color/recycler_mini_header_title</color>
+  <!--Recycler Popular-->
+  <color name="anime_title">@color/home_header</color>
+
+  <!--Search Fragment-->
+  <color name="search_back">@color/favourite_back</color>
+
+
+  <!--Favourite-->
+  <color name="favourite_header">@color/home_header</color>
+  <color name="favourite_back">@color/recycler_anime_title</color>
+  <color name="favourite_icon">#c9485b</color>
+
+  <!--Anime Info Fragment-->
+  <color name="info_back">@color/favourite_back</color>
+  <color name="info_anime_title">@color/recycler_anime_title</color>
+  <color name="info_meta">@color/text_default</color>
+  <color name="types_title">#FFFFFF</color>
+  <color name="types_value">#FFFFFF</color>
+
+  <!--AnimeInfo Episodes-->
+  <color name="episode_background">#f8f8f8</color>
+  <color name="episode_watched_progress">@color/progress</color>
+  <color name="episode_text">#FFFFFF</color>
+
+
+  <!--Media Player Controls-->
+  <color name="media_player_controls">#ffffff</color>
+  <color name="buffer_loading">#CCFFFFFF</color>
+  <color name="media_player_controls_background">#80000000</color>
+
+
+  <!--Shimmer Background-->
+  <color name="shimmer_background">#dddddd</color>
+</resources>

@@ -1,0 +1,153 @@
+<resources>
+
+  <!-- Base application theme. -->
+  <!--<style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">-->
+  <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+    <item name="android:navigationBarColor">@color/colorPrimary</item>
+    <item name="colorControlHighlight">@color/colorAccent</item>
+    <!-- Customize your theme here. -->
+    <item name="colorPrimary">@color/colorPrimary</item>
+    <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+    <item name="colorAccent">@color/colorAccent</item>
+    <item name="white">#FFF</item>
+  </style>
+
+  <style name="AppTheme.NoActionBar">
+    <item name="windowActionBar">false</item>
+    <item name="windowNoTitle">true</item>
+  </style>
+  <style name="Divider">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">1dp</item>
+    <item name="android:background">?android:attr/listDivider</item>
+  </style>
+  
+  <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+  <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+  <style name="mystyle" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+    <item name="android:textColorPrimary">#FFF</item>
+    <item name="android:textColorSecondary">#FFF</item>
+  </style>
+  <style name="MyCustomTabLayout" parent="Widget.Design.TabLayout">
+    <item name="tabIndicatorColor">#FF4081</item>
+  </style>
+  <style name="RobotoBoldTextAppearance">
+    <item name="android:fontFamily">Merriweather
+
+    </item>
+  </style>
+      
+  <style name="ToolbarTheme" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+    <!-- android:textColorPrimary is the color of the title text in the Toolbar  -->
+    <item name="android:textColorPrimary">#FFFFFF
+    </item>
+    <!-- actionMenuTextColor is the color of the text of action (menu) items  -->
+    <item name="actionMenuTextColor">@android:color/holo_green_light</item>
+    <!-- Tints the input fields like checkboxes and text fields -->
+    <!-- Enable these below if you want clicking icons to trigger a ripple effect -->
+    <!--
+    <item name="selectableItemBackground">?android:selectableItemBackground</item>
+    <item name="selectableItemBackgroundBorderless">?android:selectableItemBackground</item>
+    -->    
+  </style>
+        
+  <!-- This configures the styles for the title within the Toolbar  -->
+  <style name="Toolbar.TitleText" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+    <item name="android:textSize">20sp</item>
+    <item name="android:textStyle">bold|italic</item>
+    <item name="android:typeface">monospace</item>
+    <item name="android:textColor">#e0f7fa</item>
+  </style>
+
+  <style name="Mediabutton">
+    <item name="android:background">?android:attr/selectableItemBackground</item>
+    <item name="android:layout_width">@dimen/exo_media_button_width</item>
+    <item name="android:layout_height">@dimen/exo_media_button_height</item>
+  </style>
+
+  <style name="Mediabutton.Settings">
+    <item name="android:src">@drawable/ic_settings_exoplayer</item>
+    <item name="android:contentDescription">@string/exo_controls_settings_description</item>
+  </style>
+
+  <style name="Theme.AppCompat.NoActionBar.FullScreen" parent="@style/Theme.AppCompat.NoActionBar">
+    <item name="android:windowNoTitle">true</item>
+    <item name="android:windowActionBar">false</item>
+    <item name="android:windowIsFloating">false</item>
+    <item name="colorControlHighlight">@color/colorAccent</item>
+    <item name="colorAccent">@color/colorAccent</item>
+
+    <item name="android:windowFullscreen">true</item>
+    <item name="android:windowContentOverlay">@null</item>
+  </style>
+  
+  <style name="MaterialDialogSheet" parent="Theme.Design.BottomSheetDialog">
+      <item name="android:windowIsTranslucent">true</item>
+      <item name="android:windowBackground">@android:color/transparent</item>
+      <item name="android:windowContentOverlay">@null</item>
+      <item name="android:windowNoTitle">true</item>
+      <item name="android:backgroundDimEnabled">true</item>
+      <item name="android:windowIsFloating">false</item>
+      <item name="android:windowAnimationStyle">@style/MaterialDialogSheetAnimation</item>
+  </style>
+
+  <style name="MaterialDialogSheetAnimation">
+    <item name="android:windowEnterAnimation">@anim/popup_show</item>
+    <item name="android:windowExitAnimation">@anim/popup_hide</item>
+  </style>
+
+  <style name="NiceButton">
+    <!--removes shadow-->
+    <item name="android:stateListAnimator">@null</item>
+
+    <item name="android:padding">5dp</item>
+    <item name="android:layout_marginStart">5dp</item>
+    <item name="android:layout_marginEnd">5dp</item>
+    <item name="android:layout_height">40dp</item>
+    <item name="android:textStyle">bold</item>
+    <item name="android:textAllCaps">false</item>
+    <item name="iconGravity">textStart</item>
+    <item name="iconSize">20dp</item>
+    <item name="cornerRadius">4dp</item>
+    <item name="android:textSize">15sp</item>
+
+    <item name="android:insetTop">0dp</item>
+    <item name="android:insetBottom">0dp</item>
+    <item name="android:foreground">@drawable/outline_drawable</item>
+  </style>
+
+  <style name="BlackButton" parent="NiceButton">
+    <item name="strokeColor">?attr/textColor</item>
+    <item name="backgroundTint">?attr/iconGrayBackground</item>
+    <item name="iconTint">?attr/textColor</item>
+    <item name="android:textColor">?attr/textColor</item>
+    <item name="rippleColor">?attr/textColor</item>
+  </style>
+
+  <style name="animeimage">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">400dp</item>
+    <item name="android:layout_marginTop">20dp</item>
+    <item name="android:alpha">1</item>
+  </style>
+
+  <style name="type_title" parent="Widget.AppCompat.TextView">
+    <item name="android:textSize">13sp</item>
+    <item name="android:textColor">@color/types_title</item>
+    <item name="fontFamily">sans-serif</item>
+  </style>
+
+  <style name="type_value" parent="Widget.AppCompat.TextView">
+    <item name="android:textSize">14sp</item>
+    <item name="android:textColor">@color/types_value</item>
+    <item name="fontFamily">sans-serif-medium</item>
+  </style>
+
+  <style name="plot_summary" parent="Widget.AppCompat.TextView">
+    <item name="android:textSize">14sp</item>
+    <item name="android:textColor">@color/white</item>
+    <item name="fontFamily">sans-serif</item>
+  </style>
+</resources>

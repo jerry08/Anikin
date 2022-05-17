@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:app="http://schemas.android.com/apk/res-auto">
+
+<androidx.core.widget.ContentLoadingProgressBar
+    android:layout_width="50dp"
+    android:layout_height="50dp"
+    android:layout_gravity="center"
+    android:id="@+id/loading"
+    android:visibility="gone"
+    style="@android:style/Widget.Material.ProgressBar.Large"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    android:indeterminate="true"
+    xmlns:android="http://schemas.android.com/apk/res/android" />
+</merge>

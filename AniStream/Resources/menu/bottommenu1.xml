@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+  <!--
+  <item 
+      android:title="DUB"
+      android:icon="@drawable/dub_icon"
+      app:showAsAction="always"
+      android:id="@+id/DUB"/>
+  <item
+      android:title="SUB"
+      android:icon="@drawable/home_icon"
+      app:showAsAction="always"
+      android:id="@+id/SUB"/>
+  <item
+      android:title="RECENT"
+      android:icon="@drawable/recents_icon"
+      app:showAsAction="always"
+      android:id="@+id/recent"/>
+  -->
+
+  <item
+      android:title="Last Updated"
+      android:icon="@drawable/lastupdated1"
+      app:showAsAction="always"
+      android:id="@+id/lastUpdated1"/>
+  <item
+      android:title="Popular"
+      android:icon="@drawable/popular"
+      app:showAsAction="always"
+      android:id="@+id/popular1"/>
+  <item
+      android:title="Ongoing"
+      android:icon="@drawable/ongoing"
+      app:showAsAction="always"
+      android:id="@+id/ongoing1"/>
+  <item
+      android:title="Movies"
+      android:icon="@drawable/video"
+      app:showAsAction="always"
+      android:id="@+id/movies1"/>
+</menu>

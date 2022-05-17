@@ -1,0 +1,47 @@
+<resources>
+  <string name="app_name">AniStream</string>
+  <string name="action_settings">Settings</string>
+  <string name="plot_summary">Plot Summary :</string>
+  <string name="exo_controls_settings_description">Settings</string>
+
+  <string name="discover">Browse</string>
+  <string name="retry">retry</string>
+  <string name="quality_auto" translatable="false">Auto</string>
+  <string name="speed" translatable="false">1x</string>
+  <string name="released">Released:</string>
+  <string name="other_names">Other Names:</string>
+  <string name="title">Title:</string>
+  <string name="type">Type:</string>
+  <string name="status">Status:</string>
+  <string name="next_episode">
+    <u>Next Episode</u>&gt;
+  </string>
+  <string name="previous_episode">
+    &lt;<u>Previous Episode</u>
+  </string>
+  <string name="back_button">Back Button</string>
+  <string name="search">Search</string>
+  <string name="something_went_wrong">Something Went Wrong</string>
+
+  <string name="no_internet">No Internet Connection</string>
+  <string name="favourite">Favourites</string>
+  <string name="status_code_default">Something went Wrong</string>
+  <string name="server_error">Server Error</string>
+  <string name="added_to_favourites">Anime added to Favourites</string>
+  <string name="removed_from_favourites">Anime removed from Favourites</string>
+  <string name="see_more"><![CDATA[See more >]]></string>
+  <string name="video_quality">Video Quality</string>
+  <string name="previous_episode_icon">Previous Episode Icon</string>
+  <string name="prev_ep">Prev. Ep.</string>
+  <string name="next_ep">Next Ep.</string>
+  <string name="qualityAuto">Quality(Auto)</string>
+  <string name="_10">10</string>
+  <string name="_plus10">+10</string>
+  <string name="_minus10">-10</string>
+
+  <string name="shared_anime_title">shared_anime_title</string>
+  <string name="shared_anime_image">shared_anime_image</string>
+  <string name="favourite_transition">favourite_transition</string>
+  <string name="episode_transition">episode_transition</string>
+  <string name="search_transition">search_transition</string>
+</resources>

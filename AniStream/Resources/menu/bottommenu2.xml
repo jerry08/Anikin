@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+  <!--
+  <item 
+      android:title="DUB"
+      android:icon="@drawable/dub_icon"
+      app:showAsAction="always"
+      android:id="@+id/DUB"/>
+  <item
+      android:title="SUB"
+      android:icon="@drawable/home_icon"
+      app:showAsAction="always"
+      android:id="@+id/SUB"/>
+  <item
+      android:title="RECENT"
+      android:icon="@drawable/recents_icon"
+      app:showAsAction="always"
+      android:id="@+id/recent"/>
+  -->
+
+  <item
+      android:title="Popular"
+      android:icon="@drawable/popular"
+      app:showAsAction="always"
+      android:id="@+id/Popular"/>
+  <item
+      android:title="New"
+      android:icon="@drawable/trending"
+      app:showAsAction="always"
+      android:id="@+id/New"/>
+  <item
+      android:title="Last Updated"
+      android:icon="@drawable/lastupdated1"
+      app:showAsAction="always"
+      android:id="@+id/LastUpdated"/>
+</menu>

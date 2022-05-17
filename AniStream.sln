@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32422.2
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AniStream", "AniStream\AniStream.csproj", "{5134EEA6-64F6-4DF6-B0BB-C58189BA508A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExpandableTextView", "..\Xamarin.ExpandableTextView-master\ExpandableTextView\ExpandableTextView.csproj", "{2AB919F8-12C3-4788-A584-DD44B988E069}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xamarin.FlowLayout", "..\Xamarin.FlowLayout\Xamarin.FlowLayout\Xamarin.FlowLayout.csproj", "{CA93BDD5-FA08-45DD-9E2D-9DA5300ED143}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5134EEA6-64F6-4DF6-B0BB-C58189BA508A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5134EEA6-64F6-4DF6-B0BB-C58189BA508A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5134EEA6-64F6-4DF6-B0BB-C58189BA508A}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{5134EEA6-64F6-4DF6-B0BB-C58189BA508A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5134EEA6-64F6-4DF6-B0BB-C58189BA508A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5134EEA6-64F6-4DF6-B0BB-C58189BA508A}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{2AB919F8-12C3-4788-A584-DD44B988E069}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2AB919F8-12C3-4788-A584-DD44B988E069}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2AB919F8-12C3-4788-A584-DD44B988E069}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2AB919F8-12C3-4788-A584-DD44B988E069}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA93BDD5-FA08-45DD-9E2D-9DA5300ED143}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA93BDD5-FA08-45DD-9E2D-9DA5300ED143}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA93BDD5-FA08-45DD-9E2D-9DA5300ED143}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA93BDD5-FA08-45DD-9E2D-9DA5300ED143}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F43DE728-9698-4C54-B1FC-D48A9E2DC0D6}
+	EndGlobalSection
+EndGlobal

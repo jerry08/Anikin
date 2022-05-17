@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+  <item android:id="@+id/anime_info_details"
+        android:titleCondensed="Details"
+        android:title="Details">
+  </item>
+
+  <group android:checkableBehavior="single"
+       android:id="@+id/grp1">
+    <item android:id="@+id/sort_ascending"
+          android:titleCondensed="Ascending"
+          android:title="Ascending"
+          app:actionViewClass="androidx.appcompat.widget.AppCompatRadioButton">
+    </item>
+    <item android:id="@+id/sort_descending"
+          android:titleCondensed="Descending"
+          android:title="Descending"
+          app:actionViewClass="androidx.appcompat.widget.AppCompatRadioButton">
+    </item>
+  </group>
+
+</menu>
