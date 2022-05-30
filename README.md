@@ -32,6 +32,12 @@ AniStream parses website data and filter required info, thus It removes the ads 
 * Auto Quality for Video Playback
 * Ads Free Video Playback
 
+## 💻 Install 
+
+| Platform | Download | Status |
+|----------|----------|--------|
+| Android    |[![Download Button](https://img.shields.io/github/v/release/Shabinder/SpotiFlyer?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](https://github.com/Shabinder/SpotiFlyer/releases/download/v3.6.1/SpotiFlyer-3.6.1.apk)| ✅ Stable |
+
 ### Coming Features
 
 * Online syncing of Favourite list & watched progress (Will require Login)
