@@ -36,7 +36,7 @@ AniStream parses website data and filter required info, thus It removes the ads 
 
 | Platform | Download | Status |
 |----------|----------|--------|
-| Android    |[![Download Button](https://img.shields.io/github/v/release/jerry08/AniStream?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](https://github.com/jerry08/AniStream/releases/download/1.0/anistream.apk)| ✅ Stable |
+| Android    |[![Download Button](https://img.shields.io/github/v/release/jerry08/AniStream?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](https://github.com/jerry08/AniStream/releases/download/v1.3.0/AniStream-v1.3.0.apk)| ✅ Stable |
 
 ### Coming Features
 
