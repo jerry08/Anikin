@@ -24,7 +24,6 @@ namespace AniStream.Adapters
 {
     public class AnimeRecyclerAdapter : RecyclerView.Adapter
     {
-        //Context Context { get; set; }
         Activity Activity { get; set; }
         public List<Anime> Animes { get; set; }
         int lastPosition = -1;
@@ -68,8 +67,8 @@ namespace AniStream.Adapters
         {
             MyViewHolder holder2 = holder as MyViewHolder;
 
-            //Anime anime = Animes[position];
-            Anime anime = Animes[holder2.BindingAdapterPosition];
+            //var anime = Animes[position];
+            var anime = Animes[holder2.BindingAdapterPosition];
 
             if (anime != null && anime.Id == -1 && AnimeFragment != null)
             {

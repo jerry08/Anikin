@@ -1,27 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
+﻿using System.Collections.Generic;
 using AndroidX.Fragment.App;
-using Java.Lang;
 using AniStream.Fragments;
 using Fragment = AndroidX.Fragment.App.Fragment;
 using FragmentManager = AndroidX.Fragment.App.FragmentManager;
-using AnimeDl;
 using AnimeDl.Scrapers;
 
 namespace AniStream.Adapters
 {
     public class ViewPagerAdapter : FragmentPagerAdapter
     {
-        List<Fragment> Fragments = new List<Fragment>();
+        private readonly List<Fragment> Fragments = new List<Fragment>();
 
         public ViewPagerAdapter(FragmentManager fm) : base(fm)
         {            

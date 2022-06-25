@@ -88,14 +88,10 @@
     <Compile Include="Utils\Downloader.cs" />
     <Compile Include="Utils\FileSizeToStringConverter.cs" />
     <Compile Include="Fragments\AnimeFragment.cs" />
-    <Compile Include="Utils\InputFilterMinMax.cs" />
     <Compile Include="BroadcastReceivers\INetworkStateReceiverListener.cs" />
     <Compile Include="Utils\MySpannable.cs" />
     <Compile Include="Utils\Tags\GenreTag.cs" />
-    <Compile Include="Utils\TestDataSource.cs" />
-    <Compile Include="Utils\TestDataSourceFactory.cs" />
     <Compile Include="Utils\Extensions\TextViewExtensions.cs" />
-    <Compile Include="Utils\UriByteDataHelper.cs" />
     <Compile Include="ViewHolders\EpisodeViewHolder.cs" />
     <Compile Include="ViewHolders\ViewHolder.cs" />
     <Compile Include="Utils\WeebUtils.cs" />
@@ -141,7 +137,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AnimeDl">
-      <Version>1.0.0</Version>
+      <Version>1.3.2</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.1</Version>

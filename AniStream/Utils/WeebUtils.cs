@@ -1,24 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Android.App;
+﻿using System.IO;
 using Android.Content;
 using Android.Graphics;
 using Android.Net;
 using Android.OS;
-using Android.Runtime;
 using Android.Views;
 using Android.Widget;
-using AnimeDl;
-using Java.IO;
 using Java.Net;
-using Java.Util.Concurrent;
-using Newtonsoft.Json;
 using Xamarin.Essentials;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 
@@ -83,49 +70,6 @@ namespace AniStream.Utils
         }
 
         public static string AppFolderName { get; set; }
-
-        public static int GetUrlFileSize(string url)
-        {
-            var task = Task.Run(() =>
-            {
-                try
-                {
-                    // Build and set timeout values for the request.
-                    Java.Net.URLConnection connection = new Java.Net.URL(url).OpenConnection();
-                    //Java.Net.URL urlCon = new Java.Net.URL(url);
-                    //Java.Net.URLConnection connection = urlCon.OpenConnection();
-                    connection.ConnectTimeout = 5000;
-                    connection.ReadTimeout = 5000;
-                    
-                    //var httpURLConnection = (connection as Java.Net.HttpURLConnection);
-                    //var test = httpURLConnection as Javax.Net.Ssl.HttpsURLConnection;
-                    //
-                    //test.SSLSocketFactory = Android.Net.SSLCertificateSocketFactory.GetInsecure(0, null);
-                    //test.HostnameVerifier = new Org.Apache.Http.Conn.Ssl.AllowAllHostnameVerifier();
-
-                    //if (connection is HttpsURLConnection) 
-                    //{
-                    //    HttpsURLConnection httpsConn = (HttpsURLConnection) conn;
-                    //    httpsConn.setSSLSocketFactory(SSLCertificateSocketFactory.getInsecure(0, null));
-                    //    httpsConn.setHostnameVerifier(new AllowAllHostnameVerifier());
-                    //}
-
-                    connection.Connect();
-
-                    int file_size = connection.ContentLength;
-
-                    return file_size;
-                }
-                catch (Exception e)
-                {
-                    return 0;
-                }
-            });
-
-            task.Wait();
-
-            return task.Result;
-        }
 
         public static AlertDialog SetProgressDialog(Context context, string text, bool cancelable)
         {
@@ -211,93 +155,6 @@ namespace AniStream.Utils
             //            haveConnectedMobile = true;
             //}
             //return haveConnectedWifi || haveConnectedMobile;
-        }
-
-        public static void GetLastUpdatedBkAnimes(Context context)
-        {
-
-        }
-
-        public static string GetAssetJsonData(Context context)
-        {
-            string json = null;
-            try
-            {
-                using (StreamReader sr = new StreamReader(context.Assets.Open("client_secret.json")))
-                {
-                    json = sr.ReadToEnd();
-                }
-
-                //System.IO.Stream input = context.Assets.Open("myJson.json");
-                //int size = input.Length;
-                //byte[] buffer = new byte[size];
-                //input.Read(buffer);
-                //input.Close();
-                //json = new string(buffer, "UTF-8");
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
-
-            return json;
-        }
-    }
-
-    public static class SubstringExtensions
-    {
-        /// <summary>
-        /// Get string value between [first] a and [last] b.
-        /// </summary>
-        public static string Between(this string value, string a, string b)
-        {
-            int posA = value.IndexOf(a);
-            int posB = value.LastIndexOf(b);
-            if (posA == -1)
-            {
-                return "";
-            }
-            if (posB == -1)
-            {
-                return "";
-            }
-            int adjustedPosA = posA + a.Length;
-            if (adjustedPosA >= posB)
-            {
-                return "";
-            }
-            return value.Substring(adjustedPosA, posB - adjustedPosA);
-        }
-
-        /// <summary>
-        /// Get string value after [first] a.
-        /// </summary>
-        public static string Before(this string value, string a)
-        {
-            int posA = value.IndexOf(a);
-            if (posA == -1)
-            {
-                return "";
-            }
-            return value.Substring(0, posA);
-        }
-
-        /// <summary>
-        /// Get string value after [last] a.
-        /// </summary>
-        public static string After(this string value, string a)
-        {
-            int posA = value.LastIndexOf(a);
-            if (posA == -1)
-            {
-                return "";
-            }
-            int adjustedPosA = posA + a.Length;
-            if (adjustedPosA >= value.Length)
-            {
-                return "";
-            }
-            return value.Substring(adjustedPosA);
         }
     }
 }

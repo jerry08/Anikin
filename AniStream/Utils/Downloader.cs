@@ -21,10 +21,10 @@ namespace AniStream.Utils
 {
     public class Downloader : Java.Lang.Object, IDialogInterfaceOnClickListener
     {
-        AnimeScraper AnimeScraper;
-        EpisodesActivity Activity;
-        Episode Episode;
-        Anime Anime;
+        private readonly AnimeClient _client = new AnimeClient();
+        private EpisodesActivity Activity;
+        private Episode Episode;
+        private Anime Anime;
 
         public Downloader(EpisodesActivity activity, Anime anime, Episode episode)
         {
@@ -87,8 +87,7 @@ namespace AniStream.Utils
 
             AlertDialog loadingDialog = WeebUtils.SetProgressDialog(Activity, "Getting Download Links...", false);
 
-            AnimeScraper = new AnimeScraper();
-            AnimeScraper.OnQualitiesLoaded += (s, e) =>
+            _client.OnQualitiesLoaded += (s, e) =>
             {
                 AlertDialog.Builder builder = new AlertDialog.Builder(Activity);
                 builder.SetTitle("Download - " + Episode.EpisodeName);
@@ -98,7 +97,7 @@ namespace AniStream.Utils
 
                 });
 
-                string[] items = AnimeScraper.Qualities.Select(x => x.Resolution).ToArray();
+                string[] items = _client.Qualities.Select(x => x.Resolution).ToArray();
                 builder.SetItems(items, this);
                 builder.SetCancelable(true);
                 //Dialog dialog = builder.Create();
@@ -109,7 +108,7 @@ namespace AniStream.Utils
                 
                 dialog.Show();
             };
-            AnimeScraper.GetEpisodeLinks(Episode, false);
+            _client.GetEpisodeLinks(Episode, false);
         }
 
         public void OnClick(IDialogInterface dialog, int which)
@@ -118,7 +117,7 @@ namespace AniStream.Utils
             string mimeType = mime.GetMimeTypeFromExtension("mp4");
             string mimeTypem4a = mime.GetMimeTypeFromExtension("m4a");
 
-            Quality quality = AnimeScraper.Qualities[which];
+            var quality = _client.Qualities[which];
 
             //string invalidCharRemoved = Episode.EpisodeName.Replace("[\\\\/:*?\"<>|]", "");
 
@@ -128,7 +127,7 @@ namespace AniStream.Utils
               .Where(x => !invalidChars.Contains(x))
               .ToArray());
 
-            DownloadManager.Request request = new DownloadManager.Request(Android.Net.Uri.Parse(quality.QualityUrl));
+            var request = new DownloadManager.Request(Android.Net.Uri.Parse(quality.QualityUrl));
 
             request.AddRequestHeader("Referer", quality.Referer);
 

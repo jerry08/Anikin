@@ -23,7 +23,6 @@ namespace AniStream
     public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
     {
         List<Anime> animes;
-        Android.Widget.GridView animeGridView;
         Android.Widget.ProgressBar ProgressBar;
         SearchView SearchView;
 

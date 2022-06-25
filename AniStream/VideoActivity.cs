@@ -60,7 +60,7 @@ namespace AniStream
 
         Anime anime;
         Episode episode;
-        AnimeScraper AnimeScraper = new AnimeScraper();
+        private readonly AnimeClient _client = new AnimeClient();
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -110,13 +110,12 @@ namespace AniStream
 
             progressBar.Visibility = ViewStates.Visible;
 
-            AnimeScraper = new AnimeScraper();
-            AnimeScraper.OnQualitiesLoaded += (s, e) =>
+            _client.OnQualitiesLoaded += (s, e) =>
             {
-                if (AnimeScraper == null)
+                if (_client == null)
                     return;
 
-                if (AnimeScraper.Qualities.Count <= 0)
+                if (_client.Qualities.Count <= 0)
                 {
                     errorText.Text = "Video not found.";
                     errorText.Visibility = ViewStates.Visible;
@@ -126,26 +125,26 @@ namespace AniStream
 
                 errorText.Visibility = ViewStates.Gone;
 
-                for (int i = 0; i < AnimeScraper.Qualities.Count; i++)
+                for (int i = 0; i < _client.Qualities.Count; i++)
                 {
-                    Qualities.Add(AnimeScraper.Qualities[i].QualityUrl);
+                    Qualities.Add(_client.Qualities[i].QualityUrl);
                 }
 
-                var quality = AnimeScraper.Qualities.FirstOrDefault();
+                var quality = _client.Qualities.FirstOrDefault();
 
                 currentQuality = 0;
 
                 PlayVideo(quality.QualityUrl);
             };
 
-            AnimeScraper.GetEpisodeLinks(episode);
+            _client.GetEpisodeLinks(episode);
 
             qualityChangerButton.Click += (s, e) =>
             {
                 var builder = 
                     new AlertDialog.Builder(this, Android.App.AlertDialog.ThemeDeviceDefaultLight);
                 builder.SetTitle("Quality");
-                builder.SetItems(AnimeScraper.Qualities.Select(x => x.Resolution).ToArray(), this);
+                builder.SetItems(_client.Qualities.Select(x => x.Resolution).ToArray(), this);
                 builder.Show();
             };
         }
@@ -166,7 +165,7 @@ namespace AniStream
             {
                 player.Stop();
                 player.Release();
-                AnimeScraper = null;
+                _client.CancelGetEpisodeLinks();
                 base.OnBackPressed();
             });
 
@@ -200,7 +199,7 @@ namespace AniStream
                 currentQuality = which;
                 player.SeekTo(t);
 
-                PlayVideo(AnimeScraper.Qualities[currentQuality].QualityUrl);
+                PlayVideo(_client.Qualities[currentQuality].QualityUrl);
             }
         }
 
@@ -215,10 +214,10 @@ namespace AniStream
 
             var dataSourceFactory = new DefaultHttpDataSourceFactory(userAgent, bandwidthMeter);
 
-            for (int i = 0; i < AnimeScraper.Qualities[currentQuality].Headers.Count; i++)
+            for (int i = 0; i < _client.Qualities[currentQuality].Headers.Count; i++)
             {
-                string headerKey = AnimeScraper.Qualities[currentQuality].Headers.GetKey(i);
-                string headerValue = AnimeScraper.Qualities[currentQuality].Headers[i];
+                string headerKey = _client.Qualities[currentQuality].Headers.GetKey(i);
+                string headerValue = _client.Qualities[currentQuality].Headers[i];
 
                 dataSourceFactory.DefaultRequestProperties.Set(headerKey, headerValue);
             }

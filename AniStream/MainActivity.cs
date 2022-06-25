@@ -33,8 +33,7 @@ namespace AniStream
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
     public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.IOnPageChangeListener
     {
-        public AnimeScraper AnimeScraper = new AnimeScraper();
-        List<Anime> Animes = new List<Anime>();
+        private readonly AnimeClient _client = new AnimeClient();
         Android.Widget.ProgressBar ProgressBar;
         SearchView SearchView;
         IMenuItem prevMenuItem;
@@ -51,20 +50,6 @@ namespace AniStream
             base.OnCreate(savedInstanceState);
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
-
-            //string linkTest = "https://goload.pro/encrypt-ajax.php?id=WZ+Ui79hxLDJVOPtxtMXDw==&title=Platinum+End+Episode+24&mip=0.0.0.0&refer=none&ch=d41d8cd98f00b204e9800998ecf8427e&token2=OUq9vFyXSPXc8cfUlTEuKQ&expires2=1652731176&op=1&alias=MTgzMDY3";
-            //
-            //string encHtmlData = await Http.GetHtmlAsync(linkTest,
-            //    new WebHeaderCollection()
-            //    {
-            //        { "X-Requested-With", "XMLHttpRequest" },
-            //        //{ "Referer", "https://gogoanime.sk/" },
-            //    });
-            //
-            //var builder =
-            //    new AlertDialog.Builder(this, Android.App.AlertDialog.ThemeDeviceDefaultLight);
-            //builder.SetMessage(encHtmlData);
-            //builder.Show();
 
             WeebUtils.AppFolderName = Resources.GetString(Resource.String.app_name);
             //WeebUtils.AppFolder = GetExternalFilesDir(null).AbsolutePath;
@@ -94,17 +79,13 @@ namespace AniStream
                 appBarLayout.Visibility = ViewStates.Gone;
             }
 
-            ViewPagerAdapter viewPagerAdapter;
-            viewPagerAdapter = new ViewPagerAdapter(SupportFragmentManager);
+            var viewPagerAdapter = new ViewPagerAdapter(SupportFragmentManager);
             viewPager.OffscreenPageLimit = 3;
             viewPager.SetPageTransformer(true, new DepthPageTransformer());
             viewPager.Adapter = viewPagerAdapter;
 
-            switch (AnimeScraper.CurrentSite)
+            switch (_client.Site)
             {
-                case AnimeSites.TwistMoe:
-                    bottomNavigationView.InflateMenu(Resource.Menu.bottommenu2);
-                    break;
                 case AnimeSites.GogoAnime:
                     bottomNavigationView.InflateMenu(Resource.Menu.bottommenu2);
                     break;
@@ -148,10 +129,9 @@ namespace AniStream
                 }
             };
 
-            AnimeScraper = new AnimeScraper();
-            AnimeScraper.OnAnimesLoaded += (s, e) =>
+            _client.OnAnimesLoaded += (s, e) =>
             {
-                AnimeRecyclerAdapter mDataAdapter = new AnimeRecyclerAdapter(this, e.Animes);
+                var mDataAdapter = new AnimeRecyclerAdapter(this, e.Animes);
 
                 recyclerView.HasFixedSize = true;
                 recyclerView.DrawingCacheEnabled = true;
@@ -218,12 +198,12 @@ namespace AniStream
                     viewPager.Visibility = ViewStates.Gone;
                     bottomNavigationView.Visibility = ViewStates.Gone;
 
-                    AnimeScraper.CancelSearch();
-                    AnimeScraper.Search(e.NewText);
+                    _client.CancelSearch();
+                    _client.Search(e.NewText);
                 }
                 else
                 {
-                    AnimeScraper.CancelSearch();
+                    _client.CancelSearch();
 
                     recyclerView.Visibility = ViewStates.Gone;
                     viewPager.Visibility = ViewStates.Visible;
@@ -261,13 +241,6 @@ namespace AniStream
             }
 
             return base.OnOptionsItemSelected(item);
-        }
-
-        private void FabOnClick(object sender, EventArgs eventArgs)
-        {
-            View view = (View) sender;
-            Snackbar.Make(view, "Replace with your own action", Snackbar.LengthLong)
-                .SetAction("Action", (View.IOnClickListener)null).Show();
         }
 
         public override void OverridePendingTransition(int enterAnim, int exitAnim)

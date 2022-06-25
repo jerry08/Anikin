@@ -20,10 +20,13 @@ namespace AniStream.Fragments
 {
     public class AnimeFragment : Fragment
     {
-        SearchType SearchType;
-        AnimeScraper AnimeScraper = new AnimeScraper();
-        SwipeRefreshLayout swipeRefreshLayout;
-        View view;
+        private readonly SearchType SearchType;
+        private readonly AnimeClient _client = new AnimeClient();
+        private SwipeRefreshLayout swipeRefreshLayout;
+        private View view;
+        private int Page = 1;
+
+        //public bool SupportsPagination = false;
 
         public AnimeFragment(SearchType searchType)
         {
@@ -51,7 +54,7 @@ namespace AniStream.Fragments
 
         public void Search()
         {
-            AnimeScraper.Search("", SearchType);
+            _client.Search("", SearchType, Page);
         }
 
         public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -72,30 +75,12 @@ namespace AniStream.Fragments
             progressBar = view.FindViewById<ProgressBar>(Resource.Id.progress3);
             progressBar.Visibility = ViewStates.Visible;
 
-            //Dub();
-
-            /*switch (SearchType)
+            _client.OnAnimesLoaded += (s, e) =>
             {
-                case SearchType.Find:
-                    break;
-                case SearchType.Popular:
-                    Popular();
-                    break;
-                case SearchType.NewSeason:
-                    NewSeason();
-                    break;
-                case SearchType.LastUpdated:
-                    break;
-                case SearchType.Trending:
-                    break;
-                default:
-                    break;
-            }*/
-
-            AnimeScraper.OnAnimesLoaded += (s, e) =>
-            {
-                if (AnimeScraper.CurrentSite == AnimeSites.GogoAnime)
-                    AnimeScraper.Page++;
+                if (_client.Site == AnimeSites.GogoAnime)
+                {
+                    Page++;
+                }
 
                 var animes = e.Animes;
 
@@ -106,10 +91,12 @@ namespace AniStream.Fragments
 
                     animeRecyclerAdapter.Animes.RemoveAll(x => x.Id == -1);
 
-                    if (AnimeScraper.CurrentSite == AnimeSites.GogoAnime)
+                    if (_client.Site == AnimeSites.GogoAnime)
                     {
                         if (animes.Count > 0)
+                        {
                             animes.Add(new Anime() { Id = -1 });
+                        }
                     }
 
                     animeRecyclerAdapter.Animes.AddRange(animes);
@@ -124,13 +111,13 @@ namespace AniStream.Fragments
                 }
                 else
                 {
-                    if (AnimeScraper.CurrentSite == AnimeSites.GogoAnime)
+                    if (_client.Site == AnimeSites.GogoAnime)
                     {
                         animes.Add(new Anime() { Id = -1 });
                     }
 
-                    //AnimeRecyclerAdapter mDataAdapter = new AnimeRecyclerAdapter(view.Context, animes, this);
-                    AnimeRecyclerAdapter mDataAdapter = new AnimeRecyclerAdapter(Activity, animes, this);
+                    //var mDataAdapter = new AnimeRecyclerAdapter(view.Context, animes, this);
+                    var mDataAdapter = new AnimeRecyclerAdapter(Activity, animes, this);
 
                     mRecyclerView.HasFixedSize = true;
                     mRecyclerView.DrawingCacheEnabled = true;
@@ -144,34 +131,9 @@ namespace AniStream.Fragments
                 swipeRefreshLayout.Refreshing = false;
             };
 
-            AnimeScraper.Search("", SearchType);
+            _client.Search("", SearchType);
 
             return view;
-            //return base.OnCreateView(inflater, container, savedInstanceState);
         }
-
-        /*void Dub()
-        {
-            if (initial == 1)
-            {
-                progressBar = view.FindViewById<ProgressBar>(Resource.Id.progress);
-                progressBar.Visibility = ViewStates.Visible;
-                //     swipeRefreshLayout.setRefreshing(true);
-            }
-
-            RecyclerView mRecyclerView = view.FindViewById<RecyclerView>(Resource.Id.act_recyclerview);
-            DataAdapter mDataAdapter = new DataAdapter(view.Context, dubAnimeList, dubSiteLink, dubImageLink, dubEpisodeList, getActivity());
-            RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(view.Context, 2);
-
-            mRecyclerView.HasFixedSize = true;
-            mRecyclerView.DrawingCacheEnabled = true;
-            mRecyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
-            mRecyclerView.SetItemViewCacheSize(20);
-            mRecyclerView.SetLayoutManager(mLayoutManager);
-            mRecyclerView.SetAdapter(mDataAdapter);
-            initial = 0;
-            progressBar.Visibility = ViewStates.Gone;
-            swipeRefreshLayout.Refreshing = false;
-        }*/
     }
 }

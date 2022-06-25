@@ -37,25 +37,23 @@ namespace AniStream
     [Activity(Label = "EpisodesActivity", Theme = "@style/AppTheme", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
     public class EpisodesActivity : AppCompatActivity
     {
-        public AnimeScraper AnimeScraper;
+        private readonly AnimeClient _client = new AnimeClient();
         public event EventHandler<EventArgs> OnPermissionsResult;
 
-        RecyclerView episodesRecyclerView;
-        List<Episode> Episodes = new List<Episode>();
-        Anime anime;
+        private RecyclerView episodesRecyclerView;
+        private List<Episode> Episodes = new List<Episode>();
+        private Anime anime;
 
-        bool isBooked;
-        bool IsAscending;
+        private bool isBooked;
+        private bool IsAscending;
 
-        BookmarkManager BookmarkManager;
+        private readonly BookmarkManager BookmarkManager = new BookmarkManager();
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             
             SetContentView(Resource.Layout.animeinfo);
-
-            BookmarkManager = new BookmarkManager();
 
             string animeString = Intent.GetStringExtra("anime");
             if (!string.IsNullOrEmpty(animeString))
@@ -158,8 +156,7 @@ namespace AniStream
                 }
             };
 
-            AnimeScraper = new AnimeScraper();
-            AnimeScraper.OnEpisodesLoaded += (s, e) =>
+            _client.OnEpisodesLoaded += (s, e) =>
             {
                 loading.Visibility = ViewStates.Gone;
                 rootLayout.Visibility = ViewStates.Visible;
@@ -202,7 +199,7 @@ namespace AniStream
                 episodesRecyclerView.SetAdapter(new EpisodeRecyclerAdapter(Episodes, this, anime));
             };
 
-            AnimeScraper.GetEpisodes(anime);
+            _client.GetEpisodes(anime);
         }
 
         private void PopupMenu_MenuItemClick(object sender, PopupMenu.MenuItemClickEventArgs e)
@@ -255,7 +252,7 @@ namespace AniStream
                     genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genres[i].Trim()));
                 }
 
-                string[] items = AnimeScraper.Qualities.Select(x => x.Resolution).ToArray();
+                string[] items = _client.Qualities.Select(x => x.Resolution).ToArray();
                 builder.SetCancelable(true);
                 //Dialog dialog = builder.Create();
                 AlertDialog dialog = builder.Create();
