@@ -2,6 +2,25 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+  <group android:checkableBehavior="single"
+       android:id="@+id/sources_group">
+    <item android:id="@+id/source_gogoanime"
+          android:titleCondensed="Gogoanime"
+          android:title="Gogoanime"
+          app:actionViewClass="android.widget.RadioButton">
+    </item>
+    <item android:id="@+id/source_tenshi"
+          android:titleCondensed="Tenshi"
+          android:title="Tenshi"
+          app:actionViewClass="android.widget.RadioButton">
+    </item>
+    <item android:id="@+id/source_zoro"
+          android:titleCondensed="Zoro"
+          android:title="Zoro"
+          app:actionViewClass="android.widget.RadioButton">
+    </item>
+  </group>
+
     <item
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search"

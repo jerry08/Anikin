@@ -21,7 +21,7 @@ namespace AniStream.Utils
 {
     public class Downloader : Java.Lang.Object, IDialogInterfaceOnClickListener
     {
-        private readonly AnimeClient _client = new AnimeClient();
+        private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
         private EpisodesActivity Activity;
         private Episode Episode;
         private Anime Anime;

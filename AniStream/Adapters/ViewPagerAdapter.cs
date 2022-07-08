@@ -4,18 +4,39 @@ using AniStream.Fragments;
 using Fragment = AndroidX.Fragment.App.Fragment;
 using FragmentManager = AndroidX.Fragment.App.FragmentManager;
 using AnimeDl.Scrapers;
+using AniStream.Utils;
 
 namespace AniStream.Adapters
 {
-    public class ViewPagerAdapter : FragmentPagerAdapter
+    //https://stackoverflow.com/questions/41649956/how-to-reload-fragments-in-viewpager-xamarin
+    //public class ViewPagerAdapter : FragmentPagerAdapter
+    public class ViewPagerAdapter : FragmentStatePagerAdapter
     {
         private readonly List<Fragment> Fragments = new List<Fragment>();
 
         public ViewPagerAdapter(FragmentManager fm) : base(fm)
-        {            
-            Fragments.Add(AnimeFragment.NewInstance(SearchType.Popular));
-            Fragments.Add(AnimeFragment.NewInstance(SearchType.NewSeason));
-            Fragments.Add(AnimeFragment.NewInstance(SearchType.LastUpdated));
+        {
+            switch (WeebUtils.AnimeSite)
+            {
+                case AnimeSites.GogoAnime:
+                    Fragments.Add(AnimeFragment.NewInstance(SearchFilter.Popular));
+                    Fragments.Add(AnimeFragment.NewInstance(SearchFilter.NewSeason));
+                    Fragments.Add(AnimeFragment.NewInstance(SearchFilter.LastUpdated));
+                    break;
+                case AnimeSites.TwistMoe:
+                    break;
+                case AnimeSites.Zoro:
+                    Fragments.Add(AnimeFragment.NewInstance(SearchFilter.Popular));
+                    Fragments.Add(AnimeFragment.NewInstance(SearchFilter.NewSeason));
+                    break;
+                case AnimeSites.NineAnime:
+                    break;
+                case AnimeSites.Tenshi:
+                    Fragments.Add(AnimeFragment.NewInstance(SearchFilter.NewSeason));
+                    break;
+                default:
+                    break;
+            }
         }
 
         public override int Count { get { return Fragments.Count; } }

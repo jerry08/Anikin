@@ -36,31 +36,28 @@ namespace AniStream
         IDialogInterfaceOnClickListener, IMediaSourceEventListener, 
         INetworkStateReceiverListener
     {
-        NetworkStateReceiver NetworkStateReceiver;
+        private NetworkStateReceiver NetworkStateReceiver;
 
-        ProgressBar progressBar;
-        SimpleExoPlayer player;
-        string vidStreamUrl;
-        int currentQuality;
-        List<string> Qualities = new List<string>();
+        private ProgressBar progressBar;
+        private SimpleExoPlayer player;
+        private int currentQuality;
+        private List<string> Qualities = new List<string>();
         private PlayerView playerView;
-        LinearLayout controls;
-        TextView title;
-        TextView errorText;
-        ImageButton nextEpisodeButton;
-        ImageButton previousEpisodeButton;
-        ImageButton qualityChangerButton;
-        View mBottomLayout;
-        View mVideoLayout;
+        private LinearLayout controls;
+        private TextView title;
+        private TextView errorText;
+        private ImageButton nextEpisodeButton;
+        private ImageButton previousEpisodeButton;
+        private ImageButton qualityChangerButton;
+        private View mVideoLayout;
 
-        private int mSeekPosition;
         private int cachedHeight;
         private bool isFullscreen;
-        Android.Net.Uri videoUri;
+        private Android.Net.Uri videoUri;
 
-        Anime anime;
-        Episode episode;
-        private readonly AnimeClient _client = new AnimeClient();
+        private Anime anime;
+        private Episode episode;
+        private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -141,8 +138,8 @@ namespace AniStream
 
             qualityChangerButton.Click += (s, e) =>
             {
-                var builder = 
-                    new AlertDialog.Builder(this, Android.App.AlertDialog.ThemeDeviceDefaultLight);
+                var builder = new Android.App.AlertDialog.Builder(this,
+                    Android.App.AlertDialog.ThemeDeviceDefaultLight);
                 builder.SetTitle("Quality");
                 builder.SetItems(_client.Qualities.Select(x => x.Resolution).ToArray(), this);
                 builder.Show();
@@ -394,8 +391,6 @@ namespace AniStream
                 layoutParams.Width = ViewGroup.LayoutParams.MatchParent;
                 layoutParams.Height = ViewGroup.LayoutParams.MatchParent;
                 mVideoLayout.LayoutParameters = layoutParams;
-                //GONE the unconcerned views to leave room for video and controller
-                //mBottomLayout.Visibility = ViewStates.Gone;
             }
             else
             {
@@ -403,7 +398,6 @@ namespace AniStream
                 layoutParams.Width = ViewGroup.LayoutParams.MatchParent;
                 layoutParams.Height = this.cachedHeight;
                 mVideoLayout.LayoutParameters = layoutParams;
-                //mBottomLayout.Visibility = ViewStates.Visible;
             }
         }
 

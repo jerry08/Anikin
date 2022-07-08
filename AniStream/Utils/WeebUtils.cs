@@ -5,6 +5,7 @@ using Android.Net;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
+using AnimeDl.Scrapers;
 using Java.Net;
 using Xamarin.Essentials;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
@@ -13,6 +14,8 @@ namespace AniStream.Utils
 {
     public static class WeebUtils
     {
+        public static AnimeSites AnimeSite { get; set; } = AnimeSites.GogoAnime;
+
         public static CookieManager DEFAULT_COOKIE_MANAGER 
         { 
             get 
@@ -123,7 +126,7 @@ namespace AniStream.Utils
             return dialog;
         }
 
-        public static bool HaveNetworkConnection(Context context)
+        public static bool HasNetworkConnection(Context context)
         {
             ConnectivityManager connectivityManager = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService);
             if (Build.VERSION.SdkInt >= BuildVersionCodes.M)

@@ -35,6 +35,7 @@ namespace AniStream.Utils
             if (!string.IsNullOrEmpty(json))
             {
                 animes = JsonConvert.DeserializeObject<List<Anime>>(json);
+                animes = animes.Where(x => x.Site == WeebUtils.AnimeSite).ToList();
             }
 
             return animes;

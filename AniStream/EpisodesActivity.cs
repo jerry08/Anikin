@@ -37,7 +37,7 @@ namespace AniStream
     [Activity(Label = "EpisodesActivity", Theme = "@style/AppTheme", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
     public class EpisodesActivity : AppCompatActivity
     {
-        private readonly AnimeClient _client = new AnimeClient();
+        private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
         public event EventHandler<EventArgs> OnPermissionsResult;
 
         private RecyclerView episodesRecyclerView;
@@ -177,18 +177,17 @@ namespace AniStream
 
                 anime = e.Anime;
 
-                type.Text = e.Anime.Type.Replace("Type:", "");
-                //animeInfoSummary.Text = e.Anime.Summary.Replace("Plot Summary:", "");
-                released.Text = e.Anime.Released.Replace("Released:", "");
-                status.Text = e.Anime.Status.Replace("Status:", "");
-                //othernames.Text = e.Anime.OtherNames.Replace("Other name:", "");
+                type.Text = e.Anime.Type?.Replace("Type:", "");
+                //animeInfoSummary.Text = e.Anime.Summary?.Replace("Plot Summary:", "");
+                released.Text = e.Anime.Released?.Replace("Released:", "");
+                status.Text = e.Anime.Status?.Replace("Status:", "");
+                //othernames.Text = e.Anime.OtherNames?.Replace("Other name:", "");
 
                 //TextViewExtensions.MakeTextViewResizable(animeInfoSummary, 2, "See More", true);
 
-                string[] genres = e.Anime.Genre.Split(",");
-                for (int i = 0; i < genres.Length; i++)
+                foreach (var genre in e.Anime.Genres)
                 {
-                    genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genres[i].Trim()));
+                    genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genre.Name));
                 }
                 
                 episodesRecyclerView.SetLayoutManager(new LinearLayoutManager(this));
@@ -246,10 +245,9 @@ namespace AniStream
                 otherNames.SetText(TextViewExtensions.MakeSectionOfTextBold(otherNames.Text, "Other name:"), TextView.BufferType.Spannable);
                 plotSummary.SetText(TextViewExtensions.MakeSectionOfTextBold(plotSummary.Text, "Plot Summary:"), TextView.BufferType.Spannable);
 
-                string[] genres = anime.Genre.Split(",");
-                for (int i = 0; i < genres.Length; i++)
+                foreach (var genre in anime.Genres)
                 {
-                    genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genres[i].Trim()));
+                    genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genre.Name));
                 }
 
                 string[] items = _client.Qualities.Select(x => x.Resolution).ToArray();

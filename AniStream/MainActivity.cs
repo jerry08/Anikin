@@ -27,28 +27,30 @@ using Google.Android.Material.BottomNavigation;
 using Google.Android.Material.Navigation;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using Google.Android.Material.Snackbar;
+using Xamarin.Essentials;
 
 namespace AniStream
 {
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
     public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.IOnPageChangeListener
     {
-        private readonly AnimeClient _client = new AnimeClient();
-        Android.Widget.ProgressBar ProgressBar;
-        SearchView SearchView;
-        IMenuItem prevMenuItem;
-        AppBarLayout appBarLayout;
-        Android.Widget.LinearLayout noanime;
+        private AnimeClient _client;
 
-        RecyclerView recyclerView;
-        BottomNavigationView bottomNavigationView;
-        ViewPager viewPager;
-        GridLayoutManager gridLayoutManager;
+        private Android.Widget.ProgressBar ProgressBar;
+        private SearchView _searchView;
+        private IMenuItem prevMenuItem;
+        private AppBarLayout appBarLayout;
+        private Android.Widget.LinearLayout noanime;
 
-        protected override void OnCreate(Bundle savedInstanceState)
+        private RecyclerView recyclerView;
+        private BottomNavigationView bottomNavigationView;
+        private ViewPager viewPager;
+        private GridLayoutManager gridLayoutManager;
+
+        protected override async void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            Xamarin.Essentials.Platform.Init(this, savedInstanceState);
+            Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
 
             WeebUtils.AppFolderName = Resources.GetString(Resource.String.app_name);
@@ -69,7 +71,7 @@ namespace AniStream
             viewPager = FindViewById<ViewPager>(Resource.Id.viewPager);
             appBarLayout = FindViewById<AppBarLayout>(Resource.Id.appbar);
 
-            if (!WeebUtils.HaveNetworkConnection(ApplicationContext))
+            if (!WeebUtils.HasNetworkConnection(ApplicationContext))
             {
                 Android.Widget.LinearLayout linearLayout1 = FindViewById<Android.Widget.LinearLayout>(Resource.Id.notvisiblelinearlayout);
                 linearLayout1.Visibility = ViewStates.Visible;
@@ -79,15 +81,76 @@ namespace AniStream
                 appBarLayout.Visibility = ViewStates.Gone;
             }
 
+            var animeSiteStr = await SecureStorage.GetAsync("AnimeSite");
+            if (!string.IsNullOrEmpty(animeSiteStr))
+            {
+                WeebUtils.AnimeSite = (AnimeSites)Convert.ToInt32(animeSiteStr);
+            }
+
+            _client = new AnimeClient(WeebUtils.AnimeSite);
+            _client.OnAnimesLoaded += (s, e) =>
+            {
+                var mDataAdapter = new AnimeRecyclerAdapter(this, e.Animes);
+
+                recyclerView.HasFixedSize = true;
+                recyclerView.DrawingCacheEnabled = true;
+                recyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
+                recyclerView.SetItemViewCacheSize(20);
+                recyclerView.SetAdapter(mDataAdapter);
+                ProgressBar.Visibility = ViewStates.Gone;
+            };
+
+            SetupViewPager();
+        }
+
+        public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
+        {
+            Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+
+            base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+
+        public override void OnBackPressed()
+        {
+            var alert = new AlertDialog.Builder(this);
+            alert.SetMessage("Are you sure you want to exit?");
+            alert.SetPositiveButton("Yes", (s, e) =>
+            {
+                FinishAffinity();
+                Process.KillProcess(Process.MyPid());
+
+                base.OnBackPressed();
+            });
+
+            alert.SetNegativeButton("Cancel", (s, e) =>
+            {
+
+            });
+
+            alert.SetCancelable(false);
+            var dialog = alert.Create();
+            dialog.Show();
+        }
+
+        private void SetupViewPager()
+        {
             var viewPagerAdapter = new ViewPagerAdapter(SupportFragmentManager);
             viewPager.OffscreenPageLimit = 3;
             viewPager.SetPageTransformer(true, new DepthPageTransformer());
             viewPager.Adapter = viewPagerAdapter;
 
+            bottomNavigationView.Menu.Clear();
+
             switch (_client.Site)
             {
                 case AnimeSites.GogoAnime:
                     bottomNavigationView.InflateMenu(Resource.Menu.bottommenu2);
+                    break;
+                case AnimeSites.Tenshi:
+                    bottomNavigationView.InflateMenu(Resource.Menu.bottommenu3);
+                    break;
+                case AnimeSites.Zoro:
+                    bottomNavigationView.InflateMenu(Resource.Menu.bottommenu4);
                     break;
                 default:
                     break;
@@ -128,47 +191,6 @@ namespace AniStream
                         break;
                 }
             };
-
-            _client.OnAnimesLoaded += (s, e) =>
-            {
-                var mDataAdapter = new AnimeRecyclerAdapter(this, e.Animes);
-
-                recyclerView.HasFixedSize = true;
-                recyclerView.DrawingCacheEnabled = true;
-                recyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
-                recyclerView.SetItemViewCacheSize(20);
-                recyclerView.SetAdapter(mDataAdapter);
-                ProgressBar.Visibility = ViewStates.Gone;
-            };
-        }
-
-        public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
-        {
-            Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-
-            base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
-
-        public override void OnBackPressed()
-        {
-            var alert = new AlertDialog.Builder(this);
-            alert.SetMessage("Are you sure you want to exit?");
-            alert.SetPositiveButton("Yes", (s, e) =>
-            {
-                FinishAffinity();
-                Process.KillProcess(Process.MyPid());
-
-                base.OnBackPressed();
-            });
-
-            alert.SetNegativeButton("Cancel", (s, e) =>
-            {
-
-            });
-
-            alert.SetCancelable(false);
-            var dialog = alert.Create();
-            dialog.Show();
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)
@@ -184,10 +206,12 @@ namespace AniStream
             donate.SetVisible(false);
             animeGenres.SetVisible(false);
 
-            SearchView = search.ActionView.JavaCast<SearchView>();
-            SearchView.Clickable = true;
+            SetupSources(menu);
 
-            SearchView.QueryTextChange += (s, e) =>
+            _searchView = search.ActionView.JavaCast<SearchView>();
+            _searchView.Clickable = true;
+
+            _searchView.QueryTextChange += (s, e) =>
             {
                 noanime.Visibility = ViewStates.Gone;
 
@@ -215,6 +239,32 @@ namespace AniStream
             return true;
         }
 
+        private async void SetupSources(IMenu menu)
+        {
+            IMenuItem gogoanime = menu.FindItem(Resource.Id.source_gogoanime);
+            IMenuItem tenshi = menu.FindItem(Resource.Id.source_tenshi);
+            IMenuItem zoro = menu.FindItem(Resource.Id.source_zoro);
+
+            switch (WeebUtils.AnimeSite)
+            {
+                case AnimeSites.GogoAnime:
+                    gogoanime.SetChecked(true);
+                    break;
+                case AnimeSites.TwistMoe:
+                    break;
+                case AnimeSites.Zoro:
+                    zoro.SetChecked(true);
+                    break;
+                case AnimeSites.NineAnime:
+                    break;
+                case AnimeSites.Tenshi:
+                    tenshi.SetChecked(true);
+                    break;
+                default:
+                    break;
+            }
+        }
+
         public override bool OnOptionsItemSelected(IMenuItem item)
         {
             int id = item.ItemId;
@@ -239,8 +289,40 @@ namespace AniStream
                 //startActivity(browserIntent);
                 return false;
             }
+            else
+            {
+                SaveSelectedSource(id);
+            }
 
             return base.OnOptionsItemSelected(item);
+        }
+
+        private async void SaveSelectedSource(int id)
+        {
+            var lastAnimeSite = WeebUtils.AnimeSite;
+
+            if (id == Resource.Id.source_gogoanime)
+            {
+                WeebUtils.AnimeSite = AnimeSites.GogoAnime;
+            }
+            else if (id == Resource.Id.source_tenshi)
+            {
+                WeebUtils.AnimeSite = AnimeSites.Tenshi;
+            }
+            else if (id == Resource.Id.source_zoro)
+            {
+                WeebUtils.AnimeSite = AnimeSites.Zoro;
+            }
+
+            if (lastAnimeSite != WeebUtils.AnimeSite)
+            {
+                await SecureStorage.SetAsync("AnimeSite", ((int)WeebUtils.AnimeSite).ToString());
+
+                _client = new AnimeClient(WeebUtils.AnimeSite);
+
+                InvalidateOptionsMenu();
+                SetupViewPager();
+            }
         }
 
         public override void OverridePendingTransition(int enterAnim, int exitAnim)

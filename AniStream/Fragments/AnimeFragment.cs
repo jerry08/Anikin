@@ -15,29 +15,30 @@ using AndroidX.SwipeRefreshLayout.Widget;
 using AniStream.Adapters;
 using AnimeDl;
 using AnimeDl.Scrapers;
+using AniStream.Utils;
 
 namespace AniStream.Fragments
 {
     public class AnimeFragment : Fragment
     {
-        private readonly SearchType SearchType;
-        private readonly AnimeClient _client = new AnimeClient();
+        private readonly SearchFilter _searchFilter;
+        private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
         private SwipeRefreshLayout swipeRefreshLayout;
         private View view;
         private int Page = 1;
 
         //public bool SupportsPagination = false;
 
-        public AnimeFragment(SearchType searchType)
+        public AnimeFragment(SearchFilter searchFilter)
         {
-            SearchType = searchType;
+            _searchFilter = searchFilter;
         }
 
-        public static AnimeFragment NewInstance(SearchType searchType)
+        public static AnimeFragment NewInstance(SearchFilter searchFilter)
         {
             Bundle bundle = new Bundle();
-            bundle.PutInt("searchType", (int)searchType);
-            AnimeFragment dubFragment = new AnimeFragment(searchType);
+            bundle.PutInt("searchFilter", (int)searchFilter);
+            AnimeFragment dubFragment = new AnimeFragment(searchFilter);
             dubFragment.Arguments = bundle;
             return dubFragment;
         }
@@ -46,7 +47,7 @@ namespace AniStream.Fragments
         //{
         //    if (bundle != null)
         //    {
-        //        SearchType = (SearchType)bundle.GetInt("searchType");
+        //        SearchFilter = (SearchFilter)bundle.GetInt("searchFilter");
         //    }
         //}
 
@@ -54,7 +55,7 @@ namespace AniStream.Fragments
 
         public void Search()
         {
-            _client.Search("", SearchType, Page);
+            _client.Search("", _searchFilter, Page);
         }
 
         public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -77,7 +78,8 @@ namespace AniStream.Fragments
 
             _client.OnAnimesLoaded += (s, e) =>
             {
-                if (_client.Site == AnimeSites.GogoAnime)
+                if (WeebUtils.AnimeSite == AnimeSites.GogoAnime
+                    || WeebUtils.AnimeSite == AnimeSites.Tenshi)
                 {
                     Page++;
                 }
@@ -131,7 +133,7 @@ namespace AniStream.Fragments
                 swipeRefreshLayout.Refreshing = false;
             };
 
-            _client.Search("", SearchType);
+            _client.Search("", _searchFilter);
 
             return view;
         }
