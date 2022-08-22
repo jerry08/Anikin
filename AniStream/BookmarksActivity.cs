@@ -31,7 +31,7 @@ namespace AniStream
 
         BookmarkManager BookmarkManager;
 
-        protected override void OnCreate(Bundle savedInstanceState)
+        protected override async void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
@@ -49,7 +49,7 @@ namespace AniStream
 
             BookmarkManager = new BookmarkManager();
 
-            animes = BookmarkManager.GetBookmarks();
+            animes = await BookmarkManager.GetBookmarks();
 
             AnimeRecyclerAdapter mDataAdapter = new AnimeRecyclerAdapter(this, animes);
 
@@ -101,29 +101,33 @@ namespace AniStream
             }
             else if (id == Resource.Id.clearAllBookmarks)
             {
-                BookmarkManager.RemoveAllBookmarks();
-
-                List<Anime> animes = BookmarkManager.GetBookmarks();
-
-                AnimeRecyclerAdapter mDataAdapter = new AnimeRecyclerAdapter(this, animes);
-
-                recyclerView.HasFixedSize = true;
-                recyclerView.DrawingCacheEnabled = true;
-                recyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
-                recyclerView.SetItemViewCacheSize(20);
-                recyclerView.SetAdapter(mDataAdapter);
-
+                ClearBookmarks();
                 return false;
             }
 
             return base.OnOptionsItemSelected(item);
         }
 
-        protected override void OnRestart()
+        private async void ClearBookmarks()
+        {
+            BookmarkManager.RemoveAllBookmarks();
+
+            var animes = await BookmarkManager.GetBookmarks();
+
+            var mDataAdapter = new AnimeRecyclerAdapter(this, animes);
+
+            recyclerView.HasFixedSize = true;
+            recyclerView.DrawingCacheEnabled = true;
+            recyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
+            recyclerView.SetItemViewCacheSize(20);
+            recyclerView.SetAdapter(mDataAdapter);
+        }
+
+        protected override async void OnRestart()
         {
             base.OnRestart();
 
-            List<Anime> animes = BookmarkManager.GetBookmarks();
+            var animes = await BookmarkManager.GetBookmarks();
 
             if (recyclerView != null && recyclerView.GetAdapter() is AnimeRecyclerAdapter animeRecyclerAdapter)
             {
