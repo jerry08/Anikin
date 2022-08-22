@@ -4,15 +4,16 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Xamarin.Essentials;
 
 namespace AniStream.Utils
 {
     internal class BookmarkManager
     {
-        public bool IsBookmarked(Anime anime)
+        public async Task<bool> IsBookmarked(Anime anime)
         {
-            List<Anime> list = GetBookmarks();
+            var list = await GetBookmarks();
 
             Anime animeBookmarked = list.Where(x => x.Category == anime.Category)
                 .FirstOrDefault();
@@ -24,13 +25,11 @@ namespace AniStream.Utils
             return false;
         }
 
-        public List<Anime> GetBookmarks()
+        public async Task<List<Anime>> GetBookmarks()
         {
-            var task = SecureStorage.GetAsync("bookmarks");
-            task.Wait();
-            string json = task.Result;
+            var json = await SecureStorage.GetAsync("bookmarks");
 
-            List<Anime> animes = new List<Anime>();
+            var animes = new List<Anime>();
 
             if (!string.IsNullOrEmpty(json))
             {
@@ -41,53 +40,28 @@ namespace AniStream.Utils
             return animes;
         }
 
-        public void SaveBookmark(Anime anime)
+        public async void SaveBookmark(Anime anime)
         {
-            List<Anime> animes = GetBookmarks();
+            var animes = await GetBookmarks();
             animes.Add(anime);
 
-            string json = JsonConvert.SerializeObject(animes);
+            var json = JsonConvert.SerializeObject(animes);
 
             SecureStorage.SetAsync("bookmarks", json).Wait();
         }
 
-        /*public void RemoveBookmark(Context context, Anime anime)
+        public async void RemoveBookmark(Anime anime)
         {
-            ISharedPreferences bookmarksPref = context.GetSharedPreferences("bookmarksPref", FileCreationMode.Private);
-
-            //settingsPref.Edit().PutString("settings", null).Commit();
-
-            ISharedPreferencesEditor bookmarks = bookmarksPref.Edit();
-
-            List<Anime> list = new List<Anime>();
-
-            string bookmarksStr = bookmarksPref.GetString("bookmarks", string.Empty);
-            if (!string.IsNullOrEmpty(bookmarksStr))
-            {
-                list = JsonConvert.DeserializeObject<List<Anime>>(bookmarksStr);
-                Anime animeBookmarked = list.Where(x => x.Category == anime.Category)
-                    .FirstOrDefault();
-                if (animeBookmarked != null)
-                {
-                    list.Remove(animeBookmarked);
-                    bookmarks.PutString("bookmarks", JsonConvert.SerializeObject(list));
-                    bookmarks.Commit();
-                }
-            }
-        }*/
-        public void RemoveBookmark(Anime anime)
-        {
-            List<Anime> animes = GetBookmarks();
+            var animes = await GetBookmarks();
 
             var animeToRemove = animes.Where(x => x.Category == anime.Category)
                 .FirstOrDefault();
-
             if (animeToRemove != null)
             {
                 animes.Remove(animeToRemove);
             }
 
-            string json = JsonConvert.SerializeObject(animes);
+            var json = JsonConvert.SerializeObject(animes);
 
             SecureStorage.SetAsync("bookmarks", json).Wait();
         }
@@ -99,11 +73,11 @@ namespace AniStream.Utils
 
         public static float GetLastWatchedEp(Context context, Anime anime)
         {
-            ISharedPreferences bookmarksPref = context.GetSharedPreferences("lastWatchedPref", FileCreationMode.Private);
+            var bookmarksPref = context.GetSharedPreferences("lastWatchedPref", FileCreationMode.Private);
 
-            List<Anime> list = new List<Anime>();
+            var list = new List<Anime>();
 
-            string lastWatchedStr = bookmarksPref.GetString("lastWatched", string.Empty);
+            var lastWatchedStr = bookmarksPref.GetString("lastWatched", string.Empty);
             if (!string.IsNullOrEmpty(lastWatchedStr))
             {
                 list = JsonConvert.DeserializeObject<List<Anime>>(lastWatchedStr);
@@ -111,9 +85,8 @@ namespace AniStream.Utils
 
             if (list != null)
             {
-                Anime anime2 = list.Where(x => x.Category == anime.Category)
+                var anime2 = list.Where(x => x.Category == anime.Category)
                     .FirstOrDefault();
-
                 if (anime2 != null)
                 {
                     return anime2.LastWatchedEp;
@@ -125,11 +98,10 @@ namespace AniStream.Utils
 
         public static void SaveLastWatchedEp(Context context, Anime anime)
         {
-            ISharedPreferences lastWatchedPref = context.GetSharedPreferences("lastWatchedPref", FileCreationMode.Private);
+            var lastWatchedPref = context.GetSharedPreferences("lastWatchedPref", FileCreationMode.Private);
+            var lastWatched = lastWatchedPref.Edit();
 
-            ISharedPreferencesEditor lastWatched = lastWatchedPref.Edit();
-
-            List<Anime> list = new List<Anime>();
+            var list = new List<Anime>();
 
             string lastWatchedStr = lastWatchedPref.GetString("lastWatched", string.Empty);
             if (string.IsNullOrEmpty(lastWatchedStr))
@@ -144,7 +116,7 @@ namespace AniStream.Utils
             else
             {
                 list = JsonConvert.DeserializeObject<List<Anime>>(lastWatchedStr);
-                Anime anime2 = list.Where(x => x.Category == anime.Category)
+                var anime2 = list.Where(x => x.Category == anime.Category)
                     .FirstOrDefault();
 
                 if (anime2 == null)

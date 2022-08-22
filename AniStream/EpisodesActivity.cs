@@ -44,12 +44,12 @@ namespace AniStream
         private List<Episode> Episodes = new List<Episode>();
         private Anime anime;
 
-        private bool isBooked;
+        private bool IsBooked;
         private bool IsAscending;
 
-        private readonly BookmarkManager BookmarkManager = new BookmarkManager();
+        private readonly BookmarkManager _bookmarkManager = new BookmarkManager();
 
-        protected override void OnCreate(Bundle savedInstanceState)
+        protected override async void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             
@@ -118,9 +118,9 @@ namespace AniStream
             ISharedPreferences bookmarksPref = this.GetSharedPreferences("isAscendingPref", FileCreationMode.Private);
             IsAscending = bookmarksPref.GetBoolean("isAscending", false);
 
-            isBooked = BookmarkManager.IsBookmarked(anime);
+            IsBooked = await _bookmarkManager.IsBookmarked(anime);
 
-            if (isBooked)
+            if (IsBooked)
             {
                 bookmarkbtn.SetImageDrawable(ResourcesCompat
                     .GetDrawable(Resources, Resource.Drawable.ic_favorite, null));
@@ -131,20 +131,20 @@ namespace AniStream
                     .GetDrawable(Resources, Resource.Drawable.ic_unfavorite, null));
             }
 
-            bookmarkbtn.Click += (s, e) =>
+            bookmarkbtn.Click += async (s, e) =>
             {
-                if (isBooked)
+                if (IsBooked)
                 {
-                    BookmarkManager.RemoveBookmark(anime);
+                    _bookmarkManager.RemoveBookmark(anime);
                 }
                 else
                 {
-                    BookmarkManager.SaveBookmark(anime);
+                    _bookmarkManager.SaveBookmark(anime);
                 }
 
-                isBooked = BookmarkManager.IsBookmarked(anime);
+                IsBooked = await _bookmarkManager.IsBookmarked(anime);
 
-                if (isBooked)
+                if (IsBooked)
                 {
                     bookmarkbtn.SetImageDrawable(ResourcesCompat
                         .GetDrawable(Resources, Resource.Drawable.ic_favorite, null));
