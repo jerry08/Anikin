@@ -51,3 +51,29 @@ AniStream parses website data and filter required info, thus It removes the ads 
 
 * Online syncing of Favourite list & watched progress (Will require Login)
 * … and many more
+
+## WANT TO CONTRIBUTE?
+
+- All contributions are welcome, from code to documentation to graphics to design suggestions to bug reports. Please use GitHub to its fullest; contribute Pull Requests, contribute tutorials or other content- whatever you have to offer, we can use it!
+
+- You can come hang out with our awesome community and request new features and report any bugs or issue at our discord server too.
+
+### Official Discord Server
+
+<p align="center">
+ <a href="https://discord.gg/mhxsSMy2Nf">
+  <img src="https://invidget.switchblade.xyz/mhxsSMy2Nf">
+ </a>
+</p>
+
+## DISCLAIMER
+
+* AniStream only scrapes links from various websites and makes it easier for users to find anime and manga. 
+
+* Furthermore, all of the anime/manga links found in AniStream are taken from various 3rd party anime hosting websites.
+
+* The developers aren't liable for any misuse of any of the contents found inside or outside of the app and cannot be held accountable for the distribution of any of the contents found inside the app. 
+
+* By using AniStream, you comply to the fact that the developer of the app is not responsible for any of the contents found in the app; nonetheless they may or may not be from their legitimate sources. 
+
+* If the internet infringement issues are involved, please contact the source website. The developer does not assume any legal responsibility.
