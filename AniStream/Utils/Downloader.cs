@@ -37,12 +37,6 @@ namespace AniStream.Utils
 
         private void Activity_OnPermissionsResult(object sender, EventArgs e)
         {
-            //var test = ContextCompat.CheckSelfPermission(Activity,
-            //   Manifest.Permission.WriteExternalStorage);
-            //
-            //var tests = ContextCompat.CheckSelfPermission(Activity,
-            //   Manifest.Permission.ReadExternalStorage);
-
             if (ContextCompat.CheckSelfPermission(Activity,
                Manifest.Permission.WriteExternalStorage)
                != Permission.Granted || ContextCompat.CheckSelfPermission(Activity,
@@ -89,25 +83,39 @@ namespace AniStream.Utils
 
             _client.OnQualitiesLoaded += (s, e) =>
             {
-                AlertDialog.Builder builder = new AlertDialog.Builder(Activity);
-                builder.SetTitle("Download - " + Episode.EpisodeName);
+                var alert = new AlertDialog.Builder(Activity);
 
-                builder.SetNegativeButton("Cancel", (sender2, ev2) =>
+                var qualities = _client.Qualities.Where(x => !x.IsM3U8).ToList();
+                if (qualities.Count <= 0)
                 {
+                    alert.SetMessage("No downloads are available");
+                    alert.SetPositiveButton("OK", (s, e) =>
+                    {
+                    });
+                }
+                else
+                {
+                    alert.SetTitle("Download - " + Episode.EpisodeName);
 
-                });
+                    alert.SetNegativeButton("Cancel", (sender2, ev2) =>
+                    {
 
-                string[] items = _client.Qualities.Select(x => x.Resolution).ToArray();
-                builder.SetItems(items, this);
-                builder.SetCancelable(true);
+                    });
+
+                    string[] items = qualities.Select(x => x.Resolution).ToArray();
+                    alert.SetItems(items, this);
+                    alert.SetCancelable(true);
+                }
+
                 //Dialog dialog = builder.Create();
-                AlertDialog dialog = builder.Create();
+                var dialog = alert.Create();
                 dialog.SetCanceledOnTouchOutside(false);
 
                 loadingDialog.Dismiss();
                 
                 dialog.Show();
             };
+
             _client.GetEpisodeLinks(Episode, false);
         }
 
@@ -139,7 +147,7 @@ namespace AniStream.Utils
             
             //request.SetDestinationInExternalPublicDir(WeebUtils.AppFolderName, invalidCharsRemoved + ".mp4");
             request.SetDestinationInExternalPublicDir(Android.OS.Environment.DirectoryDownloads, invalidCharsRemoved + ".mp4");
-            DownloadManager dm = (DownloadManager)Application.Context.GetSystemService(Application.DownloadService);
+            var dm = (DownloadManager)Application.Context.GetSystemService(Application.DownloadService);
             long id = dm.Enqueue(request);
         }
     }

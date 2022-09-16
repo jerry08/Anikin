@@ -138,10 +138,12 @@ namespace AniStream
 
             qualityChangerButton.Click += (s, e) =>
             {
+                var res = _client.Qualities.Select(x => x.Resolution).ToArray();
+
                 var builder = new Android.App.AlertDialog.Builder(this,
                     Android.App.AlertDialog.ThemeDeviceDefaultLight);
                 builder.SetTitle("Quality");
-                builder.SetItems(_client.Qualities.Select(x => x.Resolution).ToArray(), this);
+                builder.SetItems(res, this);
                 builder.Show();
             };
         }
