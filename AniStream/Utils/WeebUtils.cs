@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Android.App;
 using Android.Content;
 using Android.Graphics;
 using Android.Net;
@@ -15,6 +16,8 @@ namespace AniStream.Utils
     public static class WeebUtils
     {
         public static AnimeSites AnimeSite { get; set; } = AnimeSites.GogoAnime;
+
+        public static bool IsDubSelected { get; set; } = false;
 
         public static CookieManager DEFAULT_COOKIE_MANAGER 
         { 
@@ -74,20 +77,30 @@ namespace AniStream.Utils
 
         public static string AppFolderName { get; set; }
 
+        public static void CopyToClipboard(Activity activity,
+            string text, bool toast = true)
+        {
+            var clipboard = (ClipboardManager)activity.GetSystemService(Context.ClipboardService);
+            var clip = ClipData.NewPlainText("label", text);
+            clipboard.PrimaryClip = clip;
+            if (toast)
+                Toast.MakeText(activity, $"Copied \"{text}\"", ToastLength.Short);
+        }
+
         public static AlertDialog SetProgressDialog(Context context, string text, bool cancelable)
         {
             int llPadding = 20;
-            LinearLayout ll = new LinearLayout(context);
+            var ll = new LinearLayout(context);
             ll.Orientation = Orientation.Horizontal;
             ll.SetPadding(llPadding, llPadding, llPadding, llPadding);
             ll.SetGravity(GravityFlags.Center);
-            LinearLayout.LayoutParams llParam = new LinearLayout.LayoutParams(
+            var llParam = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WrapContent,
                     ViewGroup.LayoutParams.WrapContent);
             llParam.Gravity = GravityFlags.Center;
             ll.LayoutParameters = llParam;
 
-            ProgressBar progressBar = new ProgressBar(context);
+            var progressBar = new ProgressBar(context);
             progressBar.Indeterminate = true;
             progressBar.SetPadding(0, 0, llPadding, 0);
             progressBar.LayoutParameters = llParam;
@@ -95,7 +108,8 @@ namespace AniStream.Utils
             llParam = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent,
                 ViewGroup.LayoutParams.WrapContent);
             llParam.Gravity = GravityFlags.Center;
-            TextView tvText = new TextView(context);
+
+            var tvText = new TextView(context);
             tvText.Text = text;
             tvText.SetTextColor(Color.ParseColor("#ffffff"));
             tvText.TextSize = 18;
@@ -105,18 +119,19 @@ namespace AniStream.Utils
             ll.AddView(progressBar);
             ll.AddView(tvText);
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            var builder = new AlertDialog.Builder(context);
             builder.SetCancelable(cancelable);
             builder.SetView(ll);
 
             AlertDialog dialog = builder.Create();
             dialog.Show();
+
             Window window = dialog.Window;
             if (window != null)
             {
                 //IWindowManager windowManager = this.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
 
-                WindowManagerLayoutParams layoutParams = new WindowManagerLayoutParams();
+                var layoutParams = new WindowManagerLayoutParams();
                 layoutParams.CopyFrom(dialog.Window.Attributes);
                 layoutParams.Width = ViewGroup.LayoutParams.WrapContent;
                 layoutParams.Height = ViewGroup.LayoutParams.WrapContent;

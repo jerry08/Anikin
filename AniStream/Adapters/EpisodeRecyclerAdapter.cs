@@ -1,40 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
+﻿using System.Collections.Generic;
 using Android.Views;
 using Android.Widget;
-using Newtonsoft.Json;
+using AndroidX.RecyclerView.Widget;
 using Square.Picasso;
-using AniStream.ViewHolders;
+using Newtonsoft.Json;
 using AnimeDl;
 using AniStream.Utils;
-using AndroidX.RecyclerView.Widget;
+using AniStream.Fragments;
 
 namespace AniStream.Adapters
 {
     public class EpisodeRecyclerAdapter : RecyclerView.Adapter
     {
-        EpisodesActivity EpisodesActivity { get; set; }
-        public List<Episode> Episodes { get; set; }
-        Anime Anime;
+        private readonly AnimeClient _client;
+        private readonly Anime _anime;
 
-        public EpisodeRecyclerAdapter(List<Episode> episodes, EpisodesActivity activity, Anime anime)
+        EpisodesActivity EpisodesActivity { get; set; }
+
+        public List<Episode> Episodes { get; set; }
+
+        public EpisodeRecyclerAdapter(AnimeClient client,
+            List<Episode> episodes, EpisodesActivity activity,
+            Anime anime)
         {
+            _client = client;
+            _anime = anime;
             Episodes = episodes;
-            Anime = anime;
             EpisodesActivity = activity;
         }
 
         class MyViewHolder : RecyclerView.ViewHolder
         {
             public TextView button;
-            //public Button download;
             public ImageButton download;
             public LinearLayout layout;
 
@@ -43,8 +40,6 @@ namespace AniStream.Adapters
                 layout = view.FindViewById<LinearLayout>(Resource.Id.linearlayouta);
                 button = view.FindViewById<TextView>(Resource.Id.notbutton);
                 download = view.FindViewById<ImageButton>(Resource.Id.downloadchoice);
-
-                //download.Visibility = ViewStates.Gone;
             }
         }
 
@@ -59,20 +54,47 @@ namespace AniStream.Adapters
         {
             var holder2 = (holder as MyViewHolder);
 
-            holder2.button.Text = Episodes[position].EpisodeName;
+            holder2.button.Text = Episodes[position].Name;
             holder2.download.Click += (s, e) =>
             {
-                Downloader downloader = new Downloader(EpisodesActivity, Anime, Episodes[holder2.BindingAdapterPosition]);
+                var downloader = new Downloader(EpisodesActivity, _anime, Episodes[holder2.BindingAdapterPosition]);
                 downloader.Download();
             };
+
             holder2.layout.Click += (s, e) =>
             {
-                Intent intent = new Intent(EpisodesActivity, typeof(VideoActivity));
-                //intent.PutExtra("link", link);
-                intent.PutExtra("episode", JsonConvert.SerializeObject(Episodes[holder2.BindingAdapterPosition]));
-                intent.PutExtra("anime", JsonConvert.SerializeObject(Anime));
-                intent.SetFlags(ActivityFlags.NewTask);
-                EpisodesActivity.ApplicationContext.StartActivity(intent);
+                var episode = Episodes[holder2.BindingAdapterPosition];
+
+                var fragment = SelectorDialogFragment.NewInstance(_client, _anime, episode);
+                fragment.Show(EpisodesActivity.SupportFragmentManager, "tag1");
+                
+                return;
+
+                /*var loadingDialog = WeebUtils.SetProgressDialog(EpisodesActivity, "Loading Servers...", false);
+
+                _client.OnVideoServersLoaded += (s2, e2) =>
+                {
+                    loadingDialog.Dismiss();
+
+                    var servers = e2.VideoServers.Select(x => x.Name).ToArray();
+
+                    var builder = new AlertDialog.Builder(EpisodesActivity,
+                        AlertDialog.ThemeDeviceDefaultLight);
+                    builder.SetTitle("Select Server");
+                    builder.SetItems(servers, (s3, e3) =>
+                    {
+                        var intent = new Intent(EpisodesActivity, typeof(VideoActivity));
+                        //intent.PutExtra("link", link);
+                        intent.PutExtra("anime", JsonConvert.SerializeObject(_anime));
+                        intent.PutExtra("episode", JsonConvert.SerializeObject(episode));
+                        intent.PutExtra("videoServer", JsonConvert.SerializeObject(e2.VideoServers[e3.Which]));
+                        intent.SetFlags(ActivityFlags.NewTask);
+                        EpisodesActivity.ApplicationContext.StartActivity(intent);
+                    });
+                    builder.Show();
+                };
+
+                _client.GetVideoServers(episode);*/
             };
         }
 

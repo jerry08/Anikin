@@ -77,11 +77,16 @@
     <Reference Include="System.Numerics.Vectors" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Adapters\VideoAdapter.cs" />
+    <Compile Include="Adapters\ExtractorAdapter.cs" />
+    <Compile Include="Fragments\SelectorDialogFragment.cs" />
+    <Compile Include="RecentlyWatchedActivity.cs" />
     <Compile Include="BookmarksActivity.cs" />
     <Compile Include="Adapters\AnimeRecyclerAdapter.cs" />
     <Compile Include="Adapters\EpisodeRecyclerAdapter.cs" />
     <Compile Include="Adapters\ViewPagerAdapter.cs" />
     <Compile Include="BroadcastReceivers\NetworkStateReceiver.cs" />
+    <Compile Include="Utils\AndroidStoragePermission.cs" />
     <Compile Include="Utils\BookmarkManager.cs" />
     <Compile Include="Utils\CacheDataSourceFactory.cs" />
     <Compile Include="Utils\DepthPageTransformer.cs" />
@@ -108,6 +113,10 @@
     <None Include="Assets\AboutAssets.txt" />
     <AndroidResource Include="Resources\font\medium.ttf" />
     <AndroidResource Include="Resources\font\regular.ttf" />
+    <AndroidResource Include="Resources\font\poppins_bold.ttf" />
+    <AndroidResource Include="Resources\font\poppins.ttf" />
+    <AndroidResource Include="Resources\font\poppins_semi_bold.ttf" />
+    <AndroidResource Include="Resources\font\poppins_thin.ttf" />
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\layout\activity_main.xml">
@@ -137,7 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AnimeDl">
-      <Version>1.4.0</Version>
+      <Version>1.5.5</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.1</Version>
@@ -411,6 +420,10 @@
     </AndroidResource>
   </ItemGroup>
   <ItemGroup>
+    <AndroidResource Include="Resources\values\themes.xml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+    </AndroidResource>
     <AndroidResource Include="Resources\xml\motion_scene_animeinfo.xml">
       <Generator>MSBuild:UpdateGeneratedFiles</Generator>
     </AndroidResource>
@@ -458,6 +471,36 @@
       <Generator>MSBuild:UpdateGeneratedFiles</Generator>
       <SubType>Designer</SubType>
     </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\bottom_sheet_selector.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\item_stream.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\item_url.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\font\poppins_family.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ic_round_download_24.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\shape_corner_16dp.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\anim_splash.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\round_corner.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

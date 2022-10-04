@@ -1,16 +1,23 @@
-﻿using Android.Content;
-using AnimeDl;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
+using System.Collections.Generic;
+using Android.Content;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Xamarin.Essentials;
+using AnimeDl;
 
 namespace AniStream.Utils
 {
     internal class BookmarkManager
     {
+        private readonly string _name;
+
+        public BookmarkManager(string name)
+        {
+            _name = name;
+        }
+
         public async Task<bool> IsBookmarked(Anime anime)
         {
             var list = await GetBookmarks();
@@ -27,7 +34,7 @@ namespace AniStream.Utils
 
         public async Task<List<Anime>> GetBookmarks()
         {
-            var json = await SecureStorage.GetAsync("bookmarks");
+            var json = await SecureStorage.GetAsync(_name);
 
             var animes = new List<Anime>();
 
@@ -40,14 +47,17 @@ namespace AniStream.Utils
             return animes;
         }
 
-        public async void SaveBookmark(Anime anime)
+        public async void SaveBookmark(Anime anime, bool addToTop = false)
         {
             var animes = await GetBookmarks();
-            animes.Add(anime);
+            if (addToTop)
+                animes.Insert(0, anime);
+            else
+                animes.Add(anime);
 
             var json = JsonConvert.SerializeObject(animes);
 
-            SecureStorage.SetAsync("bookmarks", json).Wait();
+            SecureStorage.SetAsync(_name, json).Wait();
         }
 
         public async void RemoveBookmark(Anime anime)
@@ -63,12 +73,12 @@ namespace AniStream.Utils
 
             var json = JsonConvert.SerializeObject(animes);
 
-            SecureStorage.SetAsync("bookmarks", json).Wait();
+            SecureStorage.SetAsync(_name, json).Wait();
         }
 
         public void RemoveAllBookmarks()
         {
-            SecureStorage.SetAsync("bookmarks", "").Wait();
+            SecureStorage.SetAsync(_name, "").Wait();
         }
 
         public static float GetLastWatchedEp(Context context, Anime anime)

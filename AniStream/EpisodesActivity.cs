@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
@@ -34,7 +33,7 @@ using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 
 namespace AniStream
 {
-    [Activity(Label = "EpisodesActivity", Theme = "@style/AppTheme", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
+    [Activity(Label = "EpisodesActivity", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
     public class EpisodesActivity : AppCompatActivity
     {
         private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
@@ -47,7 +46,7 @@ namespace AniStream
         private bool IsBooked;
         private bool IsAscending;
 
-        private readonly BookmarkManager _bookmarkManager = new BookmarkManager();
+        private readonly BookmarkManager _bookmarkManager = new BookmarkManager("bookmarks");
 
         protected override async void OnCreate(Bundle savedInstanceState)
         {
@@ -168,11 +167,11 @@ namespace AniStream
 
                 if (!IsAscending)
                 {
-                    Episodes = Episodes.OrderByDescending(x => x.EpisodeNumber).ToList();
+                    Episodes = Episodes.OrderByDescending(x => x.Number).ToList();
                 }
                 else
                 {
-                    Episodes = Episodes.OrderBy(x => x.EpisodeNumber).ToList();
+                    Episodes = Episodes.OrderBy(x => x.Number).ToList();
                 }
 
                 anime = e.Anime;
@@ -189,13 +188,15 @@ namespace AniStream
                 {
                     genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genre.Name));
                 }
-                
+
+                var adapter = new EpisodeRecyclerAdapter(_client, Episodes, this, anime);
+
                 episodesRecyclerView.SetLayoutManager(new LinearLayoutManager(this));
                 episodesRecyclerView.HasFixedSize = true;
                 episodesRecyclerView.DrawingCacheEnabled = true;
                 episodesRecyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
                 episodesRecyclerView.SetItemViewCacheSize(20);
-                episodesRecyclerView.SetAdapter(new EpisodeRecyclerAdapter(Episodes, this, anime));
+                episodesRecyclerView.SetAdapter(adapter);
             };
 
             _client.GetEpisodes(anime);
@@ -250,7 +251,6 @@ namespace AniStream
                     genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genre.Name));
                 }
 
-                string[] items = _client.Qualities.Select(x => x.Resolution).ToArray();
                 builder.SetCancelable(true);
                 //Dialog dialog = builder.Create();
                 AlertDialog dialog = builder.Create();
@@ -263,7 +263,7 @@ namespace AniStream
                 IsAscending = true;
                 e.Item.SetChecked(true);
 
-                Episodes = Episodes.OrderBy(x => x.EpisodeNumber).ToList();
+                Episodes = Episodes.OrderBy(x => x.Number).ToList();
 
                 if (episodesRecyclerView.GetAdapter() is EpisodeRecyclerAdapter episodeRecyclerAdapter)
                 {
@@ -281,7 +281,7 @@ namespace AniStream
                 IsAscending = false;
                 e.Item.SetChecked(true);
 
-                Episodes = Episodes.OrderByDescending(x => x.EpisodeNumber).ToList();
+                Episodes = Episodes.OrderByDescending(x => x.Number).ToList();
 
                 if (episodesRecyclerView.GetAdapter() is EpisodeRecyclerAdapter episodeRecyclerAdapter)
                 {

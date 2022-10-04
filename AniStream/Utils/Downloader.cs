@@ -14,8 +14,8 @@ using Android.Widget;
 using AndroidX.AppCompat.App;
 using AndroidX.Core.App;
 using AndroidX.Core.Content;
-using AnimeDl;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
+using AnimeDl;
 
 namespace AniStream.Utils
 {
@@ -24,24 +24,30 @@ namespace AniStream.Utils
         private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
         private EpisodesActivity Activity;
         private Episode Episode;
-        private Anime Anime;
 
         public Downloader(EpisodesActivity activity, Anime anime, Episode episode)
         {
             Activity = activity;
             Episode = episode;
-            Anime = anime;
 
             Activity.OnPermissionsResult += Activity_OnPermissionsResult;
         }
 
         private void Activity_OnPermissionsResult(object sender, EventArgs e)
         {
+            var ggs = new AndroidStoragePermission(Activity);
+            ggs.HasStoragePermission();
+
+            var gg = ContextCompat.CheckSelfPermission(Activity,
+               Manifest.Permission.WriteExternalStorage);
+            
+            var g2g = ContextCompat.CheckSelfPermission(Activity,
+               Manifest.Permission.ReadExternalStorage);
+
             if (ContextCompat.CheckSelfPermission(Activity,
-               Manifest.Permission.WriteExternalStorage)
-               != Permission.Granted || ContextCompat.CheckSelfPermission(Activity,
-               Manifest.Permission.ReadExternalStorage)
-               != Permission.Granted)
+               Manifest.Permission.WriteExternalStorage) != Permission.Granted
+               || ContextCompat.CheckSelfPermission(Activity,
+               Manifest.Permission.ReadExternalStorage) != Permission.Granted)
             {
                 Toast.MakeText(Activity, "Failed to Download video", ToastLength.Short).Show();
 
@@ -57,9 +63,15 @@ namespace AniStream.Utils
             }
         }
 
-        public void Download()
+        public async void Download()
         {
-            if (ContextCompat.CheckSelfPermission(Activity,
+            var test = new AndroidStoragePermission(Activity);
+            if (!test.HasStoragePermission())
+            {
+                var gg = await test.RequestStoragePermission();
+            }
+
+            /*if (ContextCompat.CheckSelfPermission(Activity,
                Manifest.Permission.WriteExternalStorage)
                != Permission.Granted || ContextCompat.CheckSelfPermission(Activity,
                Manifest.Permission.ReadExternalStorage)
@@ -77,46 +89,60 @@ namespace AniStream.Utils
             else
             {
                 // Permission has already been granted
-            }
+            }*/
 
-            AlertDialog loadingDialog = WeebUtils.SetProgressDialog(Activity, "Getting Download Links...", false);
+            var loadingDialog = WeebUtils.SetProgressDialog(Activity, "Getting Download Links...", false);
 
-            _client.OnQualitiesLoaded += (s, e) =>
+            _client.OnVideoServersLoaded += (s, e) =>
             {
-                var alert = new AlertDialog.Builder(Activity);
-
-                var qualities = _client.Qualities.Where(x => !x.IsM3U8).ToList();
-                if (qualities.Count <= 0)
-                {
-                    alert.SetMessage("No downloads are available");
-                    alert.SetPositiveButton("OK", (s, e) =>
-                    {
-                    });
-                }
-                else
-                {
-                    alert.SetTitle("Download - " + Episode.EpisodeName);
-
-                    alert.SetNegativeButton("Cancel", (sender2, ev2) =>
-                    {
-
-                    });
-
-                    string[] items = qualities.Select(x => x.Resolution).ToArray();
-                    alert.SetItems(items, this);
-                    alert.SetCancelable(true);
-                }
-
-                //Dialog dialog = builder.Create();
-                var dialog = alert.Create();
-                dialog.SetCanceledOnTouchOutside(false);
-
                 loadingDialog.Dismiss();
-                
-                dialog.Show();
+
+                var servers = e.VideoServers.Select(x => x.Name).ToArray();
+
+                var builder = new Android.App.AlertDialog.Builder(Activity,
+                    Android.App.AlertDialog.ThemeDeviceDefaultLight);
+                builder.SetTitle("Select Server");
+                builder.SetItems(servers, (s2, e2) =>
+                {
+                    _client.OnVideosLoaded += (s3, e3) =>
+                    {
+                        var alert = new AlertDialog.Builder(Activity);
+
+                        var videos = _client.Videos.Where(x => !x.IsM3U8).ToList();
+                        if (videos.Count <= 0)
+                        {
+                            alert.SetMessage("No downloads are available because this source does not allow downloading. Please try a different source.");
+                            alert.SetPositiveButton("OK", (s, e) =>
+                            {
+                            });
+                        }
+                        else
+                        {
+                            alert.SetTitle("Download - " + Episode.Name);
+
+                            alert.SetNegativeButton("Cancel", (sender2, ev2) =>
+                            {
+
+                            });
+
+                            var items = videos.Select(x => x.Resolution).ToArray();
+
+                            alert.SetItems(items, this);
+                            alert.SetCancelable(true);
+                        }
+
+                        //Dialog dialog = builder.Create();
+                        var dialog = alert.Create();
+                        dialog.SetCanceledOnTouchOutside(false);
+                        dialog.Show();
+                    };
+
+                    _client.GetVideos(_client.VideoServers[e2.Which]);
+                });
+                builder.Show();
             };
 
-            _client.GetEpisodeLinks(Episode, false);
+            _client.GetVideoServers(Episode);
         }
 
         public void OnClick(IDialogInterface dialog, int which)
@@ -125,19 +151,19 @@ namespace AniStream.Utils
             string mimeType = mime.GetMimeTypeFromExtension("mp4");
             string mimeTypem4a = mime.GetMimeTypeFromExtension("m4a");
 
-            var quality = _client.Qualities[which];
+            var video = _client.Videos[which];
 
             //string invalidCharRemoved = Episode.EpisodeName.Replace("[\\\\/:*?\"<>|]", "");
 
             var invalidChars = System.IO.Path.GetInvalidFileNameChars();
 
-            string invalidCharsRemoved = new string(Episode.EpisodeName
+            string invalidCharsRemoved = new string(Episode.Name
               .Where(x => !invalidChars.Contains(x))
               .ToArray());
 
-            var request = new DownloadManager.Request(Android.Net.Uri.Parse(quality.QualityUrl));
+            var request = new DownloadManager.Request(Android.Net.Uri.Parse(video.VideoUrl));
 
-            request.AddRequestHeader("Referer", quality.Referer);
+            request.AddRequestHeader("Referer", video.Referer);
 
             request.SetMimeType(mimeType);
             request.AllowScanningByMediaScanner();

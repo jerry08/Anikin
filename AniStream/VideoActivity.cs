@@ -26,21 +26,31 @@ using AnimeDl;
 using AniStream.BroadcastReceivers;
 using AndroidX.AppCompat.App;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
+using AnimeDl.Models;
+using AniStream.Fragments;
 
 namespace AniStream
 {
-    [Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape, 
-        ResizeableActivity = true, LaunchMode = LaunchMode.SingleTask, SupportsPictureInPicture = true,
+    //[Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape,
+    [Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape | ScreenOrientation.Portrait,
+        //ResizeableActivity = true, LaunchMode = LaunchMode.SingleTask, SupportsPictureInPicture = true,
+        ResizeableActivity = true, NoHistory = true, LaunchMode = LaunchMode.Multiple, SupportsPictureInPicture = true,
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.SmallestScreenSize | ConfigChanges.ScreenLayout)]
     public class VideoActivity : AppCompatActivity, IPlayerEventListener, 
         IDialogInterfaceOnClickListener, IMediaSourceEventListener, 
         INetworkStateReceiverListener
     {
+        private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
+
+        private Anime anime;
+        private Episode episode;
+        private Video video;
+
         private NetworkStateReceiver NetworkStateReceiver;
 
         private ProgressBar progressBar;
         private SimpleExoPlayer player;
-        private int currentQuality;
+        private int currentVideoIndex;
         private List<string> Qualities = new List<string>();
         private PlayerView playerView;
         private LinearLayout controls;
@@ -48,18 +58,14 @@ namespace AniStream
         private TextView errorText;
         private ImageButton nextEpisodeButton;
         private ImageButton previousEpisodeButton;
-        private ImageButton qualityChangerButton;
+        private ImageButton videoChangerButton;
         private View mVideoLayout;
 
         private int cachedHeight;
         private bool isFullscreen;
         private Android.Net.Uri videoUri;
 
-        private Anime anime;
-        private Episode episode;
-        private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
-
-        protected override void OnCreate(Bundle savedInstanceState)
+        protected async override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             
@@ -82,6 +88,21 @@ namespace AniStream
             {
                 episode = JsonConvert.DeserializeObject<Episode>(episodeString);
             }
+            
+            string videoString = Intent.GetStringExtra("video");
+            if (!string.IsNullOrEmpty(videoString))
+            {
+                video = JsonConvert.DeserializeObject<Video>(videoString);
+            }
+
+            var bookmarkManager = new BookmarkManager("recently_watched");
+            var isBooked = await bookmarkManager.IsBookmarked(anime);
+            if (isBooked)
+            {
+                bookmarkManager.RemoveBookmark(anime);
+            }
+
+            bookmarkManager.SaveBookmark(anime, true);
 
             NetworkStateReceiver = new NetworkStateReceiver();
             NetworkStateReceiver.AddListener(this);
@@ -91,7 +112,7 @@ namespace AniStream
             controls = FindViewById<LinearLayout>(Resource.Id.wholecontroller);
             progressBar = FindViewById<ProgressBar>(Resource.Id.buffer);
             title = FindViewById<TextView>(Resource.Id.titleofanime);
-            qualityChangerButton = FindViewById<ImageButton>(Resource.Id.qualitychanger);
+            videoChangerButton = FindViewById<ImageButton>(Resource.Id.qualitychanger);
             nextEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_nextvideo);
             previousEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_prevvideo);
             errorText = FindViewById<TextView>(Resource.Id.errorText);
@@ -99,7 +120,7 @@ namespace AniStream
             nextEpisodeButton.Visibility = ViewStates.Gone;
             previousEpisodeButton.Visibility = ViewStates.Gone;
 
-            title.Text = episode.EpisodeName;
+            title.Text = episode.Name;
 
             player = new SimpleExoPlayer.Builder(this).Build();
             playerView.Player = player;
@@ -107,45 +128,39 @@ namespace AniStream
 
             progressBar.Visibility = ViewStates.Visible;
 
-            _client.OnQualitiesLoaded += (s, e) =>
+            PlayVideo(video);
+
+            var fragment = SelectorDialogFragment.NewInstance(_client, anime, episode);
+
+            videoChangerButton.Click += (s, e) =>
             {
-                if (_client == null)
-                    return;
+                //var res = _client.Videos.Select(x => x.Resolution).ToArray();
+                //
+                //var builder = new Android.App.AlertDialog.Builder(this,
+                //    Android.App.AlertDialog.ThemeDeviceDefaultLight);
+                //builder.SetTitle("Resolution");
+                //builder.SetItems(res, this);
+                //builder.Show();
 
-                if (_client.Qualities.Count <= 0)
-                {
-                    errorText.Text = "Video not found.";
-                    errorText.Visibility = ViewStates.Visible;
-                
-                    return;
-                }
-
-                errorText.Visibility = ViewStates.Gone;
-
-                for (int i = 0; i < _client.Qualities.Count; i++)
-                {
-                    Qualities.Add(_client.Qualities[i].QualityUrl);
-                }
-
-                var quality = _client.Qualities.FirstOrDefault();
-
-                currentQuality = 0;
-
-                PlayVideo(quality.QualityUrl);
+                //var fragment = SelectorDialogFragment.NewInstance(_client, anime, episode);
+                fragment.Show(SupportFragmentManager, "tag2");
             };
+        }
 
-            _client.GetEpisodeLinks(episode);
+        private long lastCurrentPosition = 0;
 
-            qualityChangerButton.Click += (s, e) =>
+        public void OnClick(IDialogInterface dialog, int which)
+        {
+            /*if (currentVideoIndex != which)
             {
-                var res = _client.Qualities.Select(x => x.Resolution).ToArray();
+                currentVideoIndex = which;
+                lastCurrentPosition = player.CurrentPosition;
 
-                var builder = new Android.App.AlertDialog.Builder(this,
-                    Android.App.AlertDialog.ThemeDeviceDefaultLight);
-                builder.SetTitle("Quality");
-                builder.SetItems(res, this);
-                builder.Show();
-            };
+                PlayVideo(_client.Videos[currentVideoIndex].VideoUrl);
+                player.SeekTo(lastCurrentPosition);
+
+                lastCurrentPosition = 0;
+            }*/
         }
 
         protected override void OnDestroy()
@@ -164,7 +179,8 @@ namespace AniStream
             {
                 player.Stop();
                 player.Release();
-                _client.CancelGetEpisodeLinks();
+                _client.CancelGetVideos();
+
                 base.OnBackPressed();
             });
 
@@ -190,21 +206,9 @@ namespace AniStream
             player.PlayWhenReady = false;
         }
 
-        public void OnClick(IDialogInterface dialog, int which)
+        private void PlayVideo(Video video)
         {
-            if (currentQuality != which)
-            {
-                long t = player.CurrentPosition;
-                currentQuality = which;
-                player.SeekTo(t);
-
-                PlayVideo(_client.Qualities[currentQuality].QualityUrl);
-            }
-        }
-
-        void PlayVideo(string episodeLink)
-        {
-            videoUri = Android.Net.Uri.Parse(episodeLink.Replace(" ", "%20"));
+            videoUri = Android.Net.Uri.Parse(video.VideoUrl.Replace(" ", "%20"));
 
             string userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36";
 
@@ -213,41 +217,39 @@ namespace AniStream
 
             var dataSourceFactory = new DefaultHttpDataSourceFactory(userAgent, bandwidthMeter);
 
-            for (int i = 0; i < _client.Qualities[currentQuality].Headers.Count; i++)
+            for (int i = 0; i < video.Headers.Count; i++)
             {
-                string headerKey = _client.Qualities[currentQuality].Headers.GetKey(i);
-                string headerValue = _client.Qualities[currentQuality].Headers[i];
+                string headerKey = video.Headers.GetKey(i);
+                string headerValue = video.Headers[i];
 
                 dataSourceFactory.DefaultRequestProperties.Set(headerKey, headerValue);
             }
 
-            IMediaSource mediaSource;
+            DefaultExtractorsFactory extractorsFactory =
+                new DefaultExtractorsFactory().SetConstantBitrateSeekingEnabled(true);
+            
             var cacheDataSourceFactory = new CacheDataSourceFactory(this, 100 * 1024 * 1024,
                 10 * 1024 * 1024, dataSourceFactory);
 
-            var test = Util.InferContentType(videoUri);
-            switch (test)
+            var type = Util.InferContentType(videoUri);
+            IMediaSource mediaSource = type switch
             {
                 //case C.TypeDash:
                 //    break;
                 //case C.TypeSs:
                 //    break;
-                case C.TypeHls:
-                    mediaSource = new HlsMediaSource.Factory(cacheDataSourceFactory)
-                        .CreateMediaSource(videoUri);
-                    break;
+                C.TypeHls => new HlsMediaSource.Factory(cacheDataSourceFactory)
+                    .CreateMediaSource(videoUri),
                 //case C.TypeOther:
                 //    break;
-                default:
-                    mediaSource = new ProgressiveMediaSource.Factory(cacheDataSourceFactory)
-                        .CreateMediaSource(videoUri);
-                    break;
-            }
+                _ => new ProgressiveMediaSource.Factory(cacheDataSourceFactory, extractorsFactory)
+                    .CreateMediaSource(videoUri),
+            };
 
             player.Prepare(mediaSource);
             player.PlayWhenReady = true;
 
-            anime.LastWatchedEp = episode.EpisodeNumber;
+            anime.LastWatchedEp = episode.Number;
 
             //WeebUtils.SaveLastWatchedEp(this, anime);
         }
@@ -346,20 +348,21 @@ namespace AniStream
 
         public void OnPlayerStateChanged(bool playWhenReady, int playbackState)
         {
-            if (playbackState == Player.StateEnded)
+            if (playbackState == IPlayer.StateReady)
             {
-                //if (nextVideoLink == null || nextVideoLink.equals(""))
-                //    Toast.makeText(getApplicationContext(), "Last Episode", Toast.LENGTH_SHORT).show();
-                //else
+                progressBar.Visibility = ViewStates.Invisible;
+
+                //if (lastCurrentPosition > 0)
                 //{
-                //    executeQuery(animeName, episodeNumber, nextVideoLink, imageLink);
-                //    player.stop();
-                //    currentScraper = 2;
-                //    new ScrapeVideoLink(nextVideoLink, context).execute();
-                //
+                //    player.SeekTo(lastCurrentPosition);
+                //    lastCurrentPosition = 0;
                 //}
             }
-            else if (playbackState == Player.StateBuffering)
+            else if (playbackState == IPlayer.StateEnded)
+            {
+                //Play next video?
+            }
+            else if (playbackState == IPlayer.StateBuffering)
             {
                 progressBar.Visibility = ViewStates.Visible;
             }
@@ -389,14 +392,14 @@ namespace AniStream
             this.isFullscreen = isFullscreen;
             if (isFullscreen)
             {
-                ViewGroup.LayoutParams layoutParams = mVideoLayout.LayoutParameters;
+                var layoutParams = mVideoLayout.LayoutParameters;
                 layoutParams.Width = ViewGroup.LayoutParams.MatchParent;
                 layoutParams.Height = ViewGroup.LayoutParams.MatchParent;
                 mVideoLayout.LayoutParameters = layoutParams;
             }
             else
             {
-                ViewGroup.LayoutParams layoutParams = mVideoLayout.LayoutParameters;
+                var layoutParams = mVideoLayout.LayoutParameters;
                 layoutParams.Width = ViewGroup.LayoutParams.MatchParent;
                 layoutParams.Height = this.cachedHeight;
                 mVideoLayout.LayoutParameters = layoutParams;
@@ -413,22 +416,27 @@ namespace AniStream
         {
 
         }
+
         public void OnLoadCanceled(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId, MediaSourceEventListenerLoadEventInfo loadEventInfo, MediaSourceEventListenerMediaLoadData mediaLoadData)
         {
 
         }
+
         public void OnLoadCompleted(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId, MediaSourceEventListenerLoadEventInfo loadEventInfo, MediaSourceEventListenerMediaLoadData mediaLoadData)
         {
 
         }
+
         public void OnLoadError(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId, MediaSourceEventListenerLoadEventInfo loadEventInfo, MediaSourceEventListenerMediaLoadData mediaLoadData, IOException error, bool wasCanceled)
         {
 
         }
+
         public void OnLoadStarted(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId, MediaSourceEventListenerLoadEventInfo loadEventInfo, MediaSourceEventListenerMediaLoadData mediaLoadData)
         {
 
         }
+
         public void OnMediaPeriodCreated(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId)
         {
 

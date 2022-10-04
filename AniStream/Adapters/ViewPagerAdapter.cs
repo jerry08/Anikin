@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using AndroidX.Fragment.App;
-using AniStream.Fragments;
 using Fragment = AndroidX.Fragment.App.Fragment;
 using FragmentManager = AndroidX.Fragment.App.FragmentManager;
-using AnimeDl.Scrapers;
+using AniStream.Fragments;
 using AniStream.Utils;
+using AnimeDl.Scrapers;
 
 namespace AniStream.Adapters
 {
@@ -22,8 +22,6 @@ namespace AniStream.Adapters
                     Fragments.Add(AnimeFragment.NewInstance(SearchFilter.Popular));
                     Fragments.Add(AnimeFragment.NewInstance(SearchFilter.NewSeason));
                     Fragments.Add(AnimeFragment.NewInstance(SearchFilter.LastUpdated));
-                    break;
-                case AnimeSites.TwistMoe:
                     break;
                 case AnimeSites.Zoro:
                     Fragments.Add(AnimeFragment.NewInstance(SearchFilter.Popular));

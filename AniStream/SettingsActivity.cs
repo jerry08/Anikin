@@ -18,7 +18,7 @@ using Toolbar = AndroidX.AppCompat.Widget.Toolbar;
 
 namespace AniStream
 {
-    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
+    [Activity(Label = "@string/app_name", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
     public class SettingsActivity : AppCompatActivity
     {
         protected override void OnCreate(Bundle savedInstanceState)
@@ -35,6 +35,11 @@ namespace AniStream
             SupportActionBar.SetDisplayHomeAsUpEnabled(true);
             SupportActionBar.SetDisplayShowHomeEnabled(true);
 
+            toolbar.Click += (s, e) =>
+            {
+                base.OnBackPressed();
+            };
+
             //Button2 = FindViewById<Button>(Resource.Id.buttonrestore);
             //Button2.Click += (s, e) =>
             //{
@@ -46,6 +51,12 @@ namespace AniStream
             //{
             //    SignIn();
             //};
+        }
+
+        public override bool OnSupportNavigateUp()
+        {
+            base.OnBackPressed();
+            return base.OnSupportNavigateUp();
         }
 
         private void SignIn()
@@ -60,7 +71,7 @@ namespace AniStream
 
         public void discord(View view) 
         { 
-            Discordurl("https://discord.gg/kami"); 
+            Discordurl("https://discord.gg/mhxsSMy2Nf"); 
         }
 
         private void Discordurl(string url)

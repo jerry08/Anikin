@@ -19,8 +19,8 @@ using AniStream.ViewHolders;
 
 namespace AniStream
 {
-    [Activity(Label = "@string/app_name", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
-    public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
+    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
+    public class RecentlyWatchedActivity : AndroidX.AppCompat.App.AppCompatActivity
     {
         List<Anime> animes;
         Android.Widget.ProgressBar ProgressBar;
@@ -47,7 +47,7 @@ namespace AniStream
             recyclerView.SetLayoutManager(gridLayoutManager);
             recyclerView.Visibility = ViewStates.Visible;
 
-            BookmarkManager = new BookmarkManager("bookmarks");
+            BookmarkManager = new BookmarkManager("recently_watched");
 
             animes = await BookmarkManager.GetBookmarks();
 

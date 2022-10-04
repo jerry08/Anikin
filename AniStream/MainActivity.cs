@@ -31,7 +31,7 @@ using Xamarin.Essentials;
 
 namespace AniStream
 {
-    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
+    [Activity(Label = "@string/app_name", MainLauncher = true, ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
     public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.IOnPageChangeListener
     {
         private AnimeClient _client;
@@ -79,6 +79,8 @@ namespace AniStream
 
                 bottomNavigationView.Visibility = ViewStates.Gone;
                 appBarLayout.Visibility = ViewStates.Gone;
+
+                return;
             }
 
             var animeSiteStr = await SecureStorage.GetAsync("AnimeSite");
@@ -215,7 +217,8 @@ namespace AniStream
             {
                 noanime.Visibility = ViewStates.Gone;
 
-                if (e.NewText.Length >= 3)
+                //if (e.NewText.Length >= 3)
+                if (e.NewText.Length >= 1)
                 {
                     ProgressBar.Visibility = ViewStates.Visible;
                     recyclerView.Visibility = ViewStates.Visible;
@@ -239,7 +242,7 @@ namespace AniStream
             return true;
         }
 
-        private async void SetupSources(IMenu menu)
+        private void SetupSources(IMenu menu)
         {
             IMenuItem gogoanime = menu.FindItem(Resource.Id.source_gogoanime);
             IMenuItem tenshi = menu.FindItem(Resource.Id.source_tenshi);
@@ -249,8 +252,6 @@ namespace AniStream
             {
                 case AnimeSites.GogoAnime:
                     gogoanime.SetChecked(true);
-                    break;
-                case AnimeSites.TwistMoe:
                     break;
                 case AnimeSites.Zoro:
                     zoro.SetChecked(true);
@@ -272,6 +273,12 @@ namespace AniStream
             if (id == Resource.Id.settings)
             {
                 Intent intent = new Intent(this, typeof(SettingsActivity));
+                StartActivity(intent);
+                return false;
+            }
+            else if (id == Resource.Id.recently_watched)
+            {
+                Intent intent = new Intent(this, typeof(RecentlyWatchedActivity));
                 StartActivity(intent);
                 return false;
             }
@@ -299,6 +306,8 @@ namespace AniStream
 
         private async void SaveSelectedSource(int id)
         {
+            bool shouldUpdateMainView = false;
+
             var lastAnimeSite = WeebUtils.AnimeSite;
 
             if (id == Resource.Id.source_gogoanime)
@@ -314,7 +323,8 @@ namespace AniStream
                 WeebUtils.AnimeSite = AnimeSites.Zoro;
             }
 
-            if (lastAnimeSite != WeebUtils.AnimeSite)
+            if (lastAnimeSite != WeebUtils.AnimeSite
+                || shouldUpdateMainView)
             {
                 await SecureStorage.SetAsync("AnimeSite", ((int)WeebUtils.AnimeSite).ToString());
 
