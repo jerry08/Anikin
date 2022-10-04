@@ -45,7 +45,7 @@ AniStream parses website data and filter required info, thus It removes the ads 
 
 | Platform | Download | Status |
 |----------|----------|--------|
-| Android    |[![Download Button](https://img.shields.io/github/v/release/jerry08/AniStream?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](https://github.com/jerry08/AniStream/releases/download/v1.7.2/AniStream-v1.7.2.apk)| ✅ Stable |
+| Android    |[![Download Button](https://img.shields.io/github/v/release/jerry08/AniStream?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](https://github.com/jerry08/AniStream/releases/download/v1.7.3/AniStream-v1.7.3.apk)| ✅ Stable |
 
 ### Coming Features
 
@@ -68,9 +68,9 @@ AniStream parses website data and filter required info, thus It removes the ads 
 
 ## DISCLAIMER
 
-* AniStream only scrapes links from various websites and makes it easier for users to find anime and manga. 
+* AniStream only scrapes links from various websites and makes it easier for users to find anime. 
 
-* Furthermore, all of the anime/manga links found in AniStream are taken from various 3rd party anime hosting websites.
+* Furthermore, all of the anime links found in AniStream are taken from various 3rd party anime hosting websites.
 
 * The developers aren't liable for any misuse of any of the contents found inside or outside of the app and cannot be held accountable for the distribution of any of the contents found inside the app. 
 
