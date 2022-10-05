@@ -50,7 +50,7 @@ namespace AniStream
 
         private ProgressBar progressBar;
         private SimpleExoPlayer player;
-        private int currentVideoIndex;
+        //private int currentVideoIndex;
         private List<string> Qualities = new List<string>();
         private PlayerView playerView;
         private LinearLayout controls;
