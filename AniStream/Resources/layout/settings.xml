@@ -34,45 +34,45 @@
         android:layout_height="wrap_content"
         android:text="Anistream is an anime streaming app that allows users to stream anime with absolutely no ads and interruptions. Our app has a huge selection of anime that you cant even find on premium streaming services." />
 
-    <!--<Space
+    <Space
         android:layout_width="match_parent"
         android:layout_height="17dp" />
     <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="2dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical">
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
         <View style="@style/Divider"/>
         <Button
-                android:id="@+id/button"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:onClick="discord"
-                android:background="@android:color/transparent"
-                android:text="Discord"
-                android:textColor="#FFFFFF" style="?android:attr/buttonStyle"/>
+            android:id="@+id/buttondiscord"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:onClick="discord"
+            android:background="@android:color/transparent"
+            android:text="Discord"
+            android:textColor="#FFFFFF" style="?android:attr/buttonStyle"/>
         <View style="@style/Divider"/>
         <Button
-                android:id="@+id/buttonbackup"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:text="Backup Data"
-                android:background="@android:color/transparent"
-                android:textColor="#FFFFFF"/>
+            android:id="@+id/buttonbackup"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Backup Data"
+            android:background="@android:color/transparent"
+            android:textColor="#FFFFFF"/>
         <View style="@style/Divider"/>
         <Button
-                android:id="@+id/buttonrestore"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:background="@android:color/transparent"
-                android:text="Restore Data"
-                android:textColor="#FFFFFF"/>
+            android:id="@+id/buttonrestore"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:background="@android:color/transparent"
+            android:text="Restore Data"
+            android:textColor="#FFFFFF"/>
         <View style="@style/Divider"/>
-    </LinearLayout>-->
+    </LinearLayout>
 
     <LinearLayout
             android:layout_width="match_parent"

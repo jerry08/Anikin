@@ -29,6 +29,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/poppins_bold"
+                android:textColor="@color/colorPrimary"
                 android:gravity="center_vertical"
                 android:textSize="16sp"
                 tools:ignore="NestedWeights"

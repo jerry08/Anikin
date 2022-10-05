@@ -130,7 +130,7 @@ namespace AniStream
 
             PlayVideo(video);
 
-            var fragment = SelectorDialogFragment.NewInstance(_client, anime, episode);
+            var fragment = SelectorDialogFragment.NewInstance(anime, episode);
 
             videoChangerButton.Click += (s, e) =>
             {

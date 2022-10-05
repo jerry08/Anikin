@@ -30,6 +30,7 @@ using AndroidX.Core.Content.Resources;
 //using Com.MS.Square.Android.Expandabletextview;
 using PopupMenu = AndroidX.AppCompat.Widget.PopupMenu;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
+using AnimeDl.Models;
 
 namespace AniStream
 {
@@ -189,7 +190,7 @@ namespace AniStream
                     genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genre.Name));
                 }
 
-                var adapter = new EpisodeRecyclerAdapter(_client, Episodes, this, anime);
+                var adapter = new EpisodeRecyclerAdapter(Episodes, this, anime);
 
                 episodesRecyclerView.SetLayoutManager(new LinearLayoutManager(this));
                 episodesRecyclerView.HasFixedSize = true;

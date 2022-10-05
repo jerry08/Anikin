@@ -76,11 +76,15 @@ namespace AniStream.Adapters
                 urlViewHolder.urlQuality.Text = "Default Quality";
             }
 
-            urlViewHolder.urlDownload.Click += (s, e) =>
+            if (video.Format == VideoType.Container)
             {
-                //var downloader = new Downloader(EpisodesActivity, _anime, Episodes[holder2.BindingAdapterPosition]);
-                //downloader.Download();
-            };
+                urlViewHolder.urlDownload.Visibility = ViewStates.Visible;
+                urlViewHolder.urlDownload.Click += (s, e) =>
+                {
+                    var downloader = new Downloader(Activity);
+                    downloader.Download(_episode, video);
+                };
+            }
 
             urlViewHolder.ItemView.Click += (s, e) =>
             {

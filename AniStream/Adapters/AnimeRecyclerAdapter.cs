@@ -19,6 +19,7 @@ using Square.Picasso;
 using AniStream.Fragments;
 using AniStream.ViewHolders;
 using AnimeDl;
+using AnimeDl.Models;
 
 namespace AniStream.Adapters
 {

@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using AniStream.Utils;
 using AniStream.Adapters;
 using AniStream.ViewHolders;
+using AnimeDl.Models;
 
 namespace AniStream
 {

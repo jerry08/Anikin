@@ -7,39 +7,40 @@ using Newtonsoft.Json;
 using AnimeDl;
 using AniStream.Utils;
 using AniStream.Fragments;
+using AnimeDl.Models;
 
 namespace AniStream.Adapters
 {
     public class EpisodeRecyclerAdapter : RecyclerView.Adapter
     {
-        private readonly AnimeClient _client;
         private readonly Anime _anime;
 
         EpisodesActivity EpisodesActivity { get; set; }
 
         public List<Episode> Episodes { get; set; }
 
-        public EpisodeRecyclerAdapter(AnimeClient client,
-            List<Episode> episodes, EpisodesActivity activity,
+        public EpisodeRecyclerAdapter(List<Episode> episodes,
+            EpisodesActivity activity,
             Anime anime)
         {
-            _client = client;
             _anime = anime;
             Episodes = episodes;
             EpisodesActivity = activity;
         }
 
-        class MyViewHolder : RecyclerView.ViewHolder
+        class EpisodeViewHolder : RecyclerView.ViewHolder
         {
             public TextView button;
             public ImageButton download;
             public LinearLayout layout;
 
-            public MyViewHolder(View view) : base (view)
+            public EpisodeViewHolder(View view) : base (view)
             {
                 layout = view.FindViewById<LinearLayout>(Resource.Id.linearlayouta);
                 button = view.FindViewById<TextView>(Resource.Id.notbutton);
                 download = view.FindViewById<ImageButton>(Resource.Id.downloadchoice);
+
+                download.Visibility = ViewStates.Gone;
             }
         }
 
@@ -52,20 +53,20 @@ namespace AniStream.Adapters
 
         public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
         {
-            var holder2 = (holder as MyViewHolder);
+            var episodeViewHolder = holder as EpisodeViewHolder;
 
-            holder2.button.Text = Episodes[position].Name;
-            holder2.download.Click += (s, e) =>
+            episodeViewHolder.button.Text = Episodes[position].Name;
+            //episodeViewHolder.download.Click += (s, e) =>
+            //{
+            //    var downloader = new Downloader(EpisodesActivity, _anime, Episodes[episodeViewHolder.BindingAdapterPosition]);
+            //    downloader.Download();
+            //};
+
+            episodeViewHolder.layout.Click += (s, e) =>
             {
-                var downloader = new Downloader(EpisodesActivity, _anime, Episodes[holder2.BindingAdapterPosition]);
-                downloader.Download();
-            };
+                var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
 
-            holder2.layout.Click += (s, e) =>
-            {
-                var episode = Episodes[holder2.BindingAdapterPosition];
-
-                var fragment = SelectorDialogFragment.NewInstance(_client, _anime, episode);
+                var fragment = SelectorDialogFragment.NewInstance(_anime, episode);
                 fragment.Show(EpisodesActivity.SupportFragmentManager, "tag1");
                 
                 return;
@@ -103,7 +104,7 @@ namespace AniStream.Adapters
             View itemView = LayoutInflater.From(parent.Context)
                 .Inflate(Resource.Layout.adapterforepisode, parent, false);
 
-            return new MyViewHolder(itemView);
+            return new EpisodeViewHolder(itemView);
         }
     }
 }

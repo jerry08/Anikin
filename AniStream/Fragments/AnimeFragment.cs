@@ -8,6 +8,7 @@ using AniStream.Adapters;
 using AnimeDl;
 using AniStream.Utils;
 using AnimeDl.Scrapers;
+using AnimeDl.Models;
 
 namespace AniStream.Fragments
 {

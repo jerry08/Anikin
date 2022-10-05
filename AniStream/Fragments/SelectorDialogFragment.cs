@@ -8,6 +8,7 @@ using AndroidX.RecyclerView.Widget;
 using AnimeDl;
 using AnimeDl.Models;
 using AniStream.Adapters;
+using AniStream.Utils;
 using Google.Android.Material.BottomSheet;
 using Newtonsoft.Json;
 using System;
@@ -19,23 +20,22 @@ namespace AniStream.Fragments
 {
     internal class SelectorDialogFragment : BottomSheetDialogFragment
     {
-        private readonly AnimeClient _client;
+        private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
         private readonly Anime _anime;
         private readonly Episode _episode;
 
         private View _view;
 
-        SelectorDialogFragment(AnimeClient client, Anime anime, Episode episode)
+        SelectorDialogFragment(Anime anime, Episode episode)
         {
-            _client = client;
             _episode = episode;
             _anime = anime;
         }
 
-        public static SelectorDialogFragment NewInstance(AnimeClient client,
+        public static SelectorDialogFragment NewInstance(
             Anime anime, Episode episode)
         {
-            return new SelectorDialogFragment(client, anime, episode);
+            return new SelectorDialogFragment(anime, episode);
         }
 
         public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)

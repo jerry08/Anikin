@@ -28,6 +28,7 @@ using Google.Android.Material.Navigation;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using Google.Android.Material.Snackbar;
 using Xamarin.Essentials;
+using AnimeDl.Scrapers.Events;
 
 namespace AniStream
 {
@@ -90,19 +91,21 @@ namespace AniStream
             }
 
             _client = new AnimeClient(WeebUtils.AnimeSite);
-            _client.OnAnimesLoaded += (s, e) =>
-            {
-                var mDataAdapter = new AnimeRecyclerAdapter(this, e.Animes);
-
-                recyclerView.HasFixedSize = true;
-                recyclerView.DrawingCacheEnabled = true;
-                recyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
-                recyclerView.SetItemViewCacheSize(20);
-                recyclerView.SetAdapter(mDataAdapter);
-                ProgressBar.Visibility = ViewStates.Gone;
-            };
+            _client.OnAnimesLoaded += Client_OnAnimesLoaded;
 
             SetupViewPager();
+        }
+
+        private void Client_OnAnimesLoaded(object sender, AnimeEventArgs e)
+        {
+            var mDataAdapter = new AnimeRecyclerAdapter(this, e.Animes);
+
+            recyclerView.HasFixedSize = true;
+            recyclerView.DrawingCacheEnabled = true;
+            recyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
+            recyclerView.SetItemViewCacheSize(20);
+            recyclerView.SetAdapter(mDataAdapter);
+            ProgressBar.Visibility = ViewStates.Gone;
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
@@ -220,6 +223,12 @@ namespace AniStream
                 //if (e.NewText.Length >= 3)
                 if (e.NewText.Length >= 1)
                 {
+                    if (recyclerView.GetAdapter() is AnimeRecyclerAdapter adapter)
+                    {
+                        adapter.Animes.Clear();
+                        adapter.NotifyDataSetChanged();
+                    }
+
                     ProgressBar.Visibility = ViewStates.Visible;
                     recyclerView.Visibility = ViewStates.Visible;
                     viewPager.Visibility = ViewStates.Gone;
@@ -329,6 +338,7 @@ namespace AniStream
                 await SecureStorage.SetAsync("AnimeSite", ((int)WeebUtils.AnimeSite).ToString());
 
                 _client = new AnimeClient(WeebUtils.AnimeSite);
+                _client.OnAnimesLoaded += Client_OnAnimesLoaded;
 
                 InvalidateOptionsMenu();
                 SetupViewPager();

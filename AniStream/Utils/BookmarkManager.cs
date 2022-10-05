@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Xamarin.Essentials;
 using AnimeDl;
+using AnimeDl.Models;
 
 namespace AniStream.Utils
 {
