@@ -108,26 +108,17 @@ namespace AniStream
                         sw.WriteLine(jsonData);
                     }
 
-                    RunOnUiThread(() =>
-                    {
-                        Toast.MakeText(this, "Export completed", ToastLength.Short);
-                    });   
+                    Toast.MakeText(this, "Export completed", ToastLength.Short).Show();
                 }
                 else
                 {
-                    RunOnUiThread(() =>
-                    {
-                        Toast.MakeText(this, "No permission granted", ToastLength.Short);
-                    });
+                    Toast.MakeText(this, "No permission granted", ToastLength.Short).Show();
                 }
             };
 
             buttonrestore.Click += async (s, e) =>
             {
-                RunOnUiThread(() =>
-                {
-                    Toast.MakeText(this, "This feature will be implemented in the next update", ToastLength.Short);
-                });
+                Toast.MakeText(this, "This feature will be implemented in the next update", ToastLength.Short).Show();
 
                 return;
 

@@ -31,8 +31,8 @@ using AniStream.Fragments;
 
 namespace AniStream
 {
-    //[Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape,
-    [Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape | ScreenOrientation.Portrait,
+    [Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape,
+    //[Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape | ScreenOrientation.Portrait,
         //ResizeableActivity = true, LaunchMode = LaunchMode.SingleTask, SupportsPictureInPicture = true,
         ResizeableActivity = true, NoHistory = true, LaunchMode = LaunchMode.Multiple, SupportsPictureInPicture = true,
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.SmallestScreenSize | ConfigChanges.ScreenLayout)]
@@ -130,8 +130,6 @@ namespace AniStream
 
             PlayVideo(video);
 
-            var fragment = SelectorDialogFragment.NewInstance(anime, episode);
-
             videoChangerButton.Click += (s, e) =>
             {
                 //var res = _client.Videos.Select(x => x.Resolution).ToArray();
@@ -142,7 +140,7 @@ namespace AniStream
                 //builder.SetItems(res, this);
                 //builder.Show();
 
-                //var fragment = SelectorDialogFragment.NewInstance(_client, anime, episode);
+                var fragment = SelectorDialogFragment.NewInstance(anime, episode);
                 fragment.Show(SupportFragmentManager, "tag2");
             };
         }

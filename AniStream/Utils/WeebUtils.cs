@@ -84,7 +84,7 @@ namespace AniStream.Utils
             var clip = ClipData.NewPlainText("label", text);
             clipboard.PrimaryClip = clip;
             if (toast)
-                Toast.MakeText(activity, $"Copied \"{text}\"", ToastLength.Short);
+                Toast.MakeText(activity, $"Copied \"{text}\"", ToastLength.Short).Show();
         }
 
         public static AlertDialog SetProgressDialog(Context context, string text, bool cancelable)

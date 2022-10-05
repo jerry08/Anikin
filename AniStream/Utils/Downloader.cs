@@ -2,6 +2,7 @@
 using System.Linq;
 using Android.App;
 using Android.Webkit;
+using Android.Widget;
 using AnimeDl.Models;
 
 namespace AniStream.Utils
@@ -59,6 +60,8 @@ namespace AniStream.Utils
             request.SetDestinationInExternalPublicDir(Android.OS.Environment.DirectoryDownloads, invalidCharsRemoved + ".mp4");
             var dm = (DownloadManager)Application.Context.GetSystemService(Application.DownloadService);
             long id = dm.Enqueue(request);
+
+            Toast.MakeText(Activity, "Download started", ToastLength.Short).Show();
         }
     }
 }

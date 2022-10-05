@@ -86,6 +86,12 @@ namespace AniStream.Adapters
                 };
             }
 
+            if (video.Size != null && video.Size > 0)
+            {
+                urlViewHolder.urlSize.Visibility = ViewStates.Visible;
+                urlViewHolder.urlSize.Text = FileSizeToStringConverter.Instance.Convert(video.Size.Value);
+            }
+
             urlViewHolder.ItemView.Click += (s, e) =>
             {
                 var intent = new Intent(Activity, typeof(VideoActivity));
@@ -122,6 +128,11 @@ namespace AniStream.Adapters
                 .Inflate(Resource.Layout.item_url, parent, false);
 
             return new UrlViewHolder(itemView);
+        }
+
+        static double ConvertBytesToMegabytes(long bytes)
+        {
+            return (bytes / 1024f) / 1024f;
         }
     }
 }
