@@ -329,7 +329,7 @@ namespace AniStream
 
             EventArgs eventArgs = new EventArgs();
 
-            OnPermissionsResult(this, eventArgs);
+            OnPermissionsResult?.Invoke(this, eventArgs);
         }
 
         public override void OnBackPressed()
