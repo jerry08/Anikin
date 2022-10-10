@@ -8,6 +8,7 @@ using AnimeDl;
 using AniStream.Utils;
 using AniStream.Fragments;
 using AnimeDl.Models;
+using AndroidX.CardView.Widget;
 
 namespace AniStream.Adapters
 {
@@ -15,7 +16,7 @@ namespace AniStream.Adapters
     {
         private readonly Anime _anime;
 
-        EpisodesActivity EpisodesActivity { get; set; }
+        private readonly EpisodesActivity _episodesActivity;
 
         public List<Episode> Episodes { get; set; }
 
@@ -25,22 +26,18 @@ namespace AniStream.Adapters
         {
             _anime = anime;
             Episodes = episodes;
-            EpisodesActivity = activity;
+            _episodesActivity = activity;
         }
 
         class EpisodeViewHolder : RecyclerView.ViewHolder
         {
-            public TextView button;
-            public ImageButton download;
-            public LinearLayout layout;
+            public CardView cardView;
+            public TextView episodeNumber;
 
             public EpisodeViewHolder(View view) : base (view)
             {
-                layout = view.FindViewById<LinearLayout>(Resource.Id.linearlayouta);
-                button = view.FindViewById<TextView>(Resource.Id.notbutton);
-                download = view.FindViewById<ImageButton>(Resource.Id.downloadchoice);
-
-                download.Visibility = ViewStates.Gone;
+                cardView = view.FindViewById<CardView>(Resource.Id.cardView);
+                episodeNumber = view.FindViewById<TextView>(Resource.Id.episodeNumber);
             }
         }
 
@@ -55,54 +52,26 @@ namespace AniStream.Adapters
         {
             var episodeViewHolder = holder as EpisodeViewHolder;
 
-            episodeViewHolder.button.Text = Episodes[position].Name;
-            //episodeViewHolder.download.Click += (s, e) =>
-            //{
-            //    var downloader = new Downloader(EpisodesActivity, _anime, Episodes[episodeViewHolder.BindingAdapterPosition]);
-            //    downloader.Download();
-            //};
+            var ep = $"EP {Episodes[position].Number}";
 
-            episodeViewHolder.layout.Click += (s, e) =>
+            episodeViewHolder.episodeNumber.Text = ep;
+
+            if (episodeViewHolder.cardView.HasOnClickListeners)
+                return;
+
+            episodeViewHolder.cardView.Click += (s, e) =>
             {
                 var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
 
-                var fragment = SelectorDialogFragment.NewInstance(_anime, episode);
-                fragment.Show(EpisodesActivity.SupportFragmentManager, "tag1");
-                
-                return;
-
-                /*var loadingDialog = WeebUtils.SetProgressDialog(EpisodesActivity, "Loading Servers...", false);
-
-                _client.OnVideoServersLoaded += (s2, e2) =>
-                {
-                    loadingDialog.Dismiss();
-
-                    var servers = e2.VideoServers.Select(x => x.Name).ToArray();
-
-                    var builder = new AlertDialog.Builder(EpisodesActivity,
-                        AlertDialog.ThemeDeviceDefaultLight);
-                    builder.SetTitle("Select Server");
-                    builder.SetItems(servers, (s3, e3) =>
-                    {
-                        var intent = new Intent(EpisodesActivity, typeof(VideoActivity));
-                        //intent.PutExtra("link", link);
-                        intent.PutExtra("anime", JsonConvert.SerializeObject(_anime));
-                        intent.PutExtra("episode", JsonConvert.SerializeObject(episode));
-                        intent.PutExtra("videoServer", JsonConvert.SerializeObject(e2.VideoServers[e3.Which]));
-                        intent.SetFlags(ActivityFlags.NewTask);
-                        EpisodesActivity.ApplicationContext.StartActivity(intent);
-                    });
-                    builder.Show();
-                };
-
-                _client.GetVideoServers(episode);*/
+                var selector = SelectorDialogFragment.NewInstance(_anime, episode);
+                selector.Show(_episodesActivity.SupportFragmentManager, "dialog");
             };
         }
 
         public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
         {
             View itemView = LayoutInflater.From(parent.Context)
-                .Inflate(Resource.Layout.adapterforepisode, parent, false);
+                .Inflate(Resource.Layout.recycler_episode_item, parent, false);
 
             return new EpisodeViewHolder(itemView);
         }

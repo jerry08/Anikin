@@ -20,22 +20,29 @@ namespace AniStream.Fragments
 {
     internal class SelectorDialogFragment : BottomSheetDialogFragment
     {
+        //public static readonly Dictionary<Episode, List<ServerWithVideos>> Cache = new();
+        public static readonly Dictionary<string, List<ServerWithVideos>> Cache = new();
+
         private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
         private readonly Anime _anime;
         private readonly Episode _episode;
 
+        private readonly VideoActivity _videoActivity;
+
         private View _view;
 
-        SelectorDialogFragment(Anime anime, Episode episode)
+        SelectorDialogFragment(Anime anime, Episode episode,
+            VideoActivity? videoActivity = null)
         {
+            _videoActivity = videoActivity;
             _episode = episode;
             _anime = anime;
         }
 
         public static SelectorDialogFragment NewInstance(
-            Anime anime, Episode episode)
+            Anime anime, Episode episode, VideoActivity? videoActivity = null)
         {
-            return new SelectorDialogFragment(anime, episode);
+            return new SelectorDialogFragment(anime, episode, videoActivity);
         }
 
         public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -50,106 +57,154 @@ namespace AniStream.Fragments
 
             selectorMakeDefault.Visibility = ViewStates.Gone;
 
-            /*_client.OnVideoServersLoaded += (s, e) =>
-            {
-                if (e.VideoServers.Count > 0)
-                    _client.GetVideos(e.VideoServers[0]);
-            };
+            var activity = _videoActivity ?? Activity;
 
-            int totalServersLoaded = 0;
-            _client.OnVideosLoaded += (s, e) =>
+            var cache = Cache.GetValueOrDefault(_episode.Link);
+            if (cache is null)
             {
-                totalServersLoaded++;
-                
-                if (totalServersLoaded >= _client.VideoServers.Count)
-                {
-                    selectorProgressBar.Visibility = ViewStates.Gone;
-                }
-                else
-                {
-                    var servers = e.VideoServers.Select(x => x.Name).ToArray();
+                cache = new();
 
-                    var adapter = new ExtractorAdapter(_client, e.VideoServers);
+                int totalServersLoaded = 0;
+
+                _client.OnVideoServersLoaded += (s, e) =>
+                {
+                    var serverWithVideos = e.VideoServers
+                        .Select(x => new ServerWithVideos(x, new())).ToList();
+
+                    Cache.Add(_episode.Link, serverWithVideos);
+
+                    if (e.VideoServers.Count > 0)
+                        _client.GetVideos(e.VideoServers[0]);
+                };
+
+                _client.OnVideosLoaded += (s, e) =>
+                {
+                    totalServersLoaded++;
+
+                    if (totalServersLoaded >= _client.VideoServers.Count)
+                    {
+                        selectorProgressBar.Visibility = ViewStates.Gone;
+                        return;
+                    }
+                    else
+                    {
+                        _client.GetVideos(_client.VideoServers[totalServersLoaded]);
+                    }
+
+                    if (e.Videos.Count <= 0)
+                        return;
+
+                    if (serversRecyclerView.GetAdapter() is ExtractorAdapter adapter)
+                    {
+                        adapter.Containers.Add(new(e.VideoServer, e.Videos)
+                        {
+                            IsLoaded = true
+                        });
+
+                        cache = adapter.Containers;
+                    }
+                    else
+                    {
+                        var containers = new List<ServerWithVideos>
+                        {
+                            new(e.VideoServer, e.Videos)
+                            {
+                                IsLoaded = true
+                            }
+                        };
+
+                        cache.AddRange(containers);
+
+                        adapter = new ExtractorAdapter(activity, _anime, _episode, containers);
+
+                        serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
+                        serversRecyclerView.HasFixedSize = true;
+                        serversRecyclerView.SetItemViewCacheSize(20);
+                        serversRecyclerView.SetAdapter(adapter);
+                    }
+
+                    Cache.Remove(_episode.Link);
+                    Cache.Add(_episode.Link, cache);
+
+                    adapter.NotifyDataSetChanged();
+                };
+
+                _client.GetVideoServers(_episode);
+            }
+            else
+            {
+                var notLoadedServers = cache.Where(x => !x.IsLoaded)
+                    .Select(x => x.VideoServer).ToList();
+                if (notLoadedServers.Count <= 0)
+                {
+                    var adapter = new ExtractorAdapter(activity, _anime, _episode, cache);
 
                     serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
                     serversRecyclerView.HasFixedSize = true;
                     serversRecyclerView.SetItemViewCacheSize(20);
                     serversRecyclerView.SetAdapter(adapter);
-                }
-            };*/
 
-            //_client.OnVideoServersLoaded += (s, e) =>
-            //{
-            //    var servers = e.VideoServers.Select(x => x.Name).ToArray();
-            //
-            //    var adapter = new ExtractorAdapter(Activity, _client, e.VideoServers);
-            //
-            //    serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
-            //    serversRecyclerView.HasFixedSize = true;
-            //    serversRecyclerView.SetItemViewCacheSize(20);
-            //    serversRecyclerView.SetAdapter(adapter);
-            //};
-            //
-            //int totalServersLoaded = 0;
-            //_client.OnVideosLoaded += (s, e) =>
-            //{
-            //    totalServersLoaded++;
-            //
-            //    if (totalServersLoaded >= _client.VideoServers.Count)
-            //    {
-            //        selectorProgressBar.Visibility = ViewStates.Gone;
-            //    }
-            //};
-
-            _client.OnVideoServersLoaded += (s, e) =>
-            {
-                if (e.VideoServers.Count > 0)
-                    _client.GetVideos(e.VideoServers[0]);
-            };
-
-            int totalServersLoaded = 0;
-            _client.OnVideosLoaded += (s, e) =>
-            {
-                totalServersLoaded++;
-
-                if (totalServersLoaded >= _client.VideoServers.Count)
-                {
                     selectorProgressBar.Visibility = ViewStates.Gone;
-                    return;
                 }
                 else
                 {
-                    _client.GetVideos(_client.VideoServers[totalServersLoaded]);
-                }
+                    int totalServersLoaded = 0;
 
-                if (e.Videos.Count <= 0)
-                {
-                    return;
-                }
-
-                if (serversRecyclerView.GetAdapter() is ExtractorAdapter adapter)
-                {
-                    adapter.Containers.Add(new ServerWithVideos(e.VideoServer, e.Videos));
-                }
-                else
-                {
-                    var containers = new List<ServerWithVideos>
+                    _client.OnVideosLoaded += (s, e) =>
                     {
-                        new ServerWithVideos(e.VideoServer, e.Videos)
+                        totalServersLoaded++;
+
+                        if (totalServersLoaded >= notLoadedServers.Count)
+                        {
+                            selectorProgressBar.Visibility = ViewStates.Gone;
+                            return;
+                        }
+                        else
+                        {
+                            _client.GetVideos(_client.VideoServers[totalServersLoaded]);
+                        }
+
+                        if (e.Videos.Count <= 0)
+                            return;
+
+                        if (serversRecyclerView.GetAdapter() is ExtractorAdapter adapter)
+                        {
+                            adapter.Containers.Add(new(e.VideoServer, e.Videos)
+                            {
+                                IsLoaded = true
+                            });
+
+                            cache = adapter.Containers;
+                        }
+                        else
+                        {
+                            var containers = new List<ServerWithVideos>
+                            {
+                                new(e.VideoServer, e.Videos)
+                                {
+                                    IsLoaded = true
+                                }
+                            };
+
+                            cache.AddRange(containers);
+
+                            adapter = new ExtractorAdapter(activity, _anime, _episode, containers);
+
+                            serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
+                            serversRecyclerView.HasFixedSize = true;
+                            serversRecyclerView.SetItemViewCacheSize(20);
+                            serversRecyclerView.SetAdapter(adapter);
+                        }
+
+                        Cache.Remove(_episode.Link);
+                        Cache.Add(_episode.Link, cache);
+
+                        adapter.NotifyDataSetChanged();
                     };
 
-                    adapter = new ExtractorAdapter(Activity, _anime, _episode, containers);
-
-                    serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
-                    serversRecyclerView.HasFixedSize = true;
-                    serversRecyclerView.SetItemViewCacheSize(20);
-                    serversRecyclerView.SetAdapter(adapter);
+                    _client.GetVideos(notLoadedServers[0]);
                 }
-
-                adapter.NotifyDataSetChanged();
-            };
-
-            _client.GetVideoServers(_episode);
+            }
 
             return _view;
         }

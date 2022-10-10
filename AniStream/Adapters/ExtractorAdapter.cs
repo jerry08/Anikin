@@ -1,27 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+﻿using System.Collections.Generic;
 using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
 using Android.Views;
 using Android.Widget;
-using Newtonsoft.Json;
-using Square.Picasso;
-using AniStream.ViewHolders;
-using AnimeDl;
-using AniStream.Utils;
 using AndroidX.RecyclerView.Widget;
-using AniStream.Fragments;
 using AnimeDl.Models;
 
 namespace AniStream.Adapters
 {
     public class ServerWithVideos
     {
+        public bool IsLoaded { get; set; }
+
         public VideoServer VideoServer { get; set; }
 
         public List<Video> Videos { get; set; }
@@ -80,8 +69,7 @@ namespace AniStream.Adapters
 
             streamViewHolder.streamName.Text = server.Name;
 
-            if (!(streamViewHolder.streamRecyclerView.GetAdapter()
-                is VideoAdapter))
+            if (streamViewHolder.streamRecyclerView.GetAdapter() is not VideoAdapter)
             {
                 var adapter = new VideoAdapter(Activity, _anime, _episode, videos);
 
@@ -90,17 +78,6 @@ namespace AniStream.Adapters
                 streamViewHolder.streamRecyclerView.SetItemViewCacheSize(20);
                 streamViewHolder.streamRecyclerView.SetAdapter(adapter);
             }
-
-            //if (!(streamViewHolder.streamRecyclerView.GetAdapter()
-            //    is VideoAdapter))
-            //{
-            //    _client.OnVideosLoaded += (s, e) =>
-            //    {
-            //
-            //    };
-            //
-            //    _client.GetVideos(server);
-            //}
         }
 
         public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)

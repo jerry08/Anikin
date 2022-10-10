@@ -1,21 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+﻿using System.Collections.Generic;
 using Android.App;
 using Android.Content;
-using Android.OS;
-using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Newtonsoft.Json;
-using Square.Picasso;
-using AniStream.ViewHolders;
-using AnimeDl;
 using AniStream.Utils;
 using AndroidX.RecyclerView.Widget;
-using AniStream.Fragments;
 using AnimeDl.Models;
 
 namespace AniStream.Adapters
@@ -94,6 +84,12 @@ namespace AniStream.Adapters
 
             urlViewHolder.ItemView.Click += (s, e) =>
             {
+                if (Activity is VideoActivity videoActivity)
+                {
+                    videoActivity.PlayVideo(video);
+                    return;
+                }
+
                 var intent = new Intent(Activity, typeof(VideoActivity));
 
                 intent.PutExtra("anime", JsonConvert.SerializeObject(_anime));
@@ -128,11 +124,6 @@ namespace AniStream.Adapters
                 .Inflate(Resource.Layout.item_url, parent, false);
 
             return new UrlViewHolder(itemView);
-        }
-
-        static double ConvertBytesToMegabytes(long bytes)
-        {
-            return (bytes / 1024f) / 1024f;
         }
     }
 }
