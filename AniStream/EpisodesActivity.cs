@@ -31,6 +31,7 @@ using AndroidX.Core.Content.Resources;
 using PopupMenu = AndroidX.AppCompat.Widget.PopupMenu;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using AnimeDl.Models;
+using AniStream.Fragments;
 
 namespace AniStream
 {
@@ -41,7 +42,7 @@ namespace AniStream
         public event EventHandler<EventArgs> OnPermissionsResult;
 
         private RecyclerView episodesRecyclerView;
-        private List<Episode> Episodes = new List<Episode>();
+        private List<Episode> Episodes = new();
         private Anime anime;
 
         private bool IsBooked;
@@ -54,6 +55,8 @@ namespace AniStream
             base.OnCreate(savedInstanceState);
             
             SetContentView(Resource.Layout.animeinfo);
+
+            SelectorDialogFragment.Cache.Clear();
 
             string animeString = Intent.GetStringExtra("anime");
             if (!string.IsNullOrEmpty(animeString))
@@ -192,7 +195,8 @@ namespace AniStream
 
                 var adapter = new EpisodeRecyclerAdapter(Episodes, this, anime);
 
-                episodesRecyclerView.SetLayoutManager(new LinearLayoutManager(this));
+                //episodesRecyclerView.SetLayoutManager(new LinearLayoutManager(this));
+                episodesRecyclerView.SetLayoutManager(new GridLayoutManager(this, 4));
                 episodesRecyclerView.HasFixedSize = true;
                 episodesRecyclerView.DrawingCacheEnabled = true;
                 episodesRecyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
