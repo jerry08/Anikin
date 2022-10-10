@@ -28,16 +28,26 @@ using AndroidX.AppCompat.App;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using AnimeDl.Models;
 using AniStream.Fragments;
+using AnimeDl.Utils.Extensions;
+using Square.Picasso;
+using Com.Google.Android.Exoplayer2.Upstream.Cache;
+using static Com.Google.Android.Exoplayer2.IPlayer;
+using AnimeDl.Anilist.Api;
+using Square.OkHttp3;
+using AndroidX.Fragment.App;
+using System.Threading.Tasks;
+using Com.Google.Android.Exoplayer2.Video;
+using Google.Android.Material.BottomSheet;
 
 namespace AniStream
 {
     //[Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape,
     [Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape | ScreenOrientation.Portrait,
-        //ResizeableActivity = true, LaunchMode = LaunchMode.SingleTask, SupportsPictureInPicture = true,
-        ResizeableActivity = true, NoHistory = true, LaunchMode = LaunchMode.Multiple, SupportsPictureInPicture = true, Exported = true,
+        ResizeableActivity = true, LaunchMode = LaunchMode.SingleTask, SupportsPictureInPicture = true,
+        //ResizeableActivity = true, NoHistory = true, LaunchMode = LaunchMode.Multiple, SupportsPictureInPicture = true, Exported = true,
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.SmallestScreenSize | ConfigChanges.ScreenLayout | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden)]
-    public class VideoActivity : AppCompatActivity, IPlayerEventListener, 
-        IDialogInterfaceOnClickListener, IMediaSourceEventListener, 
+    public class VideoActivity : AppCompatActivity, IPlayer.IListener,
+        //IDialogInterfaceOnClickListener, IMediaSourceEventListener, 
         INetworkStateReceiverListener
     {
         private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
@@ -49,9 +59,11 @@ namespace AniStream
         private NetworkStateReceiver NetworkStateReceiver;
 
         private ProgressBar progressBar;
-        private SimpleExoPlayer player;
+        private IExoPlayer player;
+        private ImageButton exoplay;
         //private int currentVideoIndex;
         private List<string> Qualities = new List<string>();
+        //private StyledPlayerView playerView;
         private PlayerView playerView;
         private LinearLayout controls;
         private TextView title;
@@ -65,11 +77,28 @@ namespace AniStream
         private bool isFullscreen;
         private Android.Net.Uri videoUri;
 
+        SelectorDialogFragment selector;
+
         protected async override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            
+
             SetContentView(Resource.Layout.videoviewer);
+            AndroidEnvironment.UnhandledExceptionRaiser += (s, e) =>
+            {
+
+            };
+            
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+
+            };
+
+            TaskScheduler.UnobservedTaskException += (s, e) =>
+            {
+
+            };
+
             //SetVideoOptions();
 
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Gingerbread)
@@ -110,6 +139,7 @@ namespace AniStream
 
             playerView = FindViewById<PlayerView>(Resource.Id.exoplayer);
             controls = FindViewById<LinearLayout>(Resource.Id.wholecontroller);
+            exoplay = FindViewById<ImageButton>(Resource.Id.exo_play);
             progressBar = FindViewById<ProgressBar>(Resource.Id.buffer);
             title = FindViewById<TextView>(Resource.Id.titleofanime);
             videoChangerButton = FindViewById<ImageButton>(Resource.Id.qualitychanger);
@@ -122,16 +152,35 @@ namespace AniStream
 
             title.Text = episode.Name;
 
-            player = new SimpleExoPlayer.Builder(this).Build();
+            player = new IExoPlayer.Builder(this).Build();
             playerView.Player = player;
             player.AddListener(this);
 
             progressBar.Visibility = ViewStates.Visible;
 
+            //exoplay.Click += (s, e) =>
+            //{
+            //    if (player.IsPlaying)
+            //    {
+            //        Picasso.Get().Load(Resource.Drawable.anim_play_to_pause)
+            //            .Into(exoplay);
+            //        player.Pause();
+            //    }
+            //    else
+            //    {
+            //        Picasso.Get().Load(Resource.Drawable.anim_pause_to_play)
+            //            .Into(exoplay);
+            //        player.Play();
+            //    }
+            //};
+
             PlayVideo(video);
 
             videoChangerButton.Click += (s, e) =>
             {
+                //var gs = player.PlayerError;
+                //return;
+
                 //var res = _client.Videos.Select(x => x.Resolution).ToArray();
                 //
                 //var builder = new Android.App.AlertDialog.Builder(this,
@@ -140,8 +189,11 @@ namespace AniStream
                 //builder.SetItems(res, this);
                 //builder.Show();
 
-                var fragment = SelectorDialogFragment.NewInstance(anime, episode);
-                fragment.Show(SupportFragmentManager, "tag2");
+                selector = SelectorDialogFragment.NewInstance(anime, episode, this);
+                //var test = (selector.Dialog as BottomSheetDialog);
+                //var behavior = BottomSheetBehavior.From(selector);
+                //behavior.State = BottomSheetBehavior.StateExpanded;
+                selector.Show(SupportFragmentManager, "dialog");
             };
         }
 
@@ -204,7 +256,7 @@ namespace AniStream
             player.PlayWhenReady = false;
         }
 
-        private void PlayVideo(Video video)
+        /*private void PlayVideo(Video video)
         {
             videoUri = Android.Net.Uri.Parse(video.VideoUrl.Replace(" ", "%20"));
 
@@ -250,6 +302,150 @@ namespace AniStream
             anime.LastWatchedEp = episode.Number;
 
             //WeebUtils.SaveLastWatchedEp(this, anime);
+        }*/
+
+        public void PlayVideo(Video video)
+        {
+            if (selector is not null)
+            {
+                selector.Dismiss();
+                selector = null;
+            }
+
+            lastCurrentPosition = player.CurrentPosition;
+
+            videoUri = Android.Net.Uri.Parse(video.VideoUrl.Replace(" ", "%20"));
+
+            var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36";
+
+            var bandwidthMeter = new DefaultBandwidthMeter.Builder(this).Build();
+
+            //var httpClient = new OkHttpClient.Builder()
+            //    .FollowSslRedirects(true)
+            //    .FollowRedirects(true)
+            //    .Build();
+
+            var dataSourceFactory = new DefaultHttpDataSource.Factory();
+            //var dataSourceFactory = new OkHttpDataSource.Factory(httpClient);
+
+            dataSourceFactory.SetUserAgent(userAgent);
+            dataSourceFactory.SetTransferListener(bandwidthMeter);
+            dataSourceFactory.SetDefaultRequestProperties(video.Headers.ToDictionary());
+
+            //dataSourceFactory.CreateDataSource();
+
+            var extractorsFactory = new DefaultExtractorsFactory()
+                .SetConstantBitrateSeekingEnabled(true);
+
+            var simpleCache = VideoCache.GetInstance(this);
+
+            var cacheFactory = new CacheDataSource.Factory();
+            cacheFactory.SetCache(simpleCache);
+            cacheFactory.SetUpstreamDataSourceFactory(dataSourceFactory);
+
+            var mimeType = video?.Format switch
+            {
+                VideoType.M3u8 => MimeTypes.ApplicationM3u8,
+                //VideoType.Dash => MimeTypes.ApplicationMpd,
+                _ => MimeTypes.ApplicationMp4,
+            };
+
+            var mediaItem = new MediaItem.Builder()
+                .SetUri(videoUri)
+                .SetMimeType(mimeType)
+                .Build();
+
+            var type = Util.InferContentType(videoUri);
+            IMediaSource mediaSource = type switch
+            {
+                //case C.TypeDash:
+                //    break;
+                //case C.TypeSs:
+                //    break;
+                C.TypeHls => new HlsMediaSource.Factory(cacheFactory)
+                    .CreateMediaSource(mediaItem),
+                //case C.TypeOther:
+                //    break;
+                _ => new ProgressiveMediaSource.Factory(cacheFactory, extractorsFactory)
+                    .CreateMediaSource(mediaItem),
+            };
+
+            player.SetMediaSource(mediaSource);
+
+            //player.SetMediaItem(mediaItem);
+
+            //player.Prepare(mediaSource);
+            player.Prepare();
+            player.PlayWhenReady = true;
+
+            anime.LastWatchedEp = episode.Number;
+
+            //WeebUtils.SaveLastWatchedEp(this, anime);
+
+            player.SeekTo(lastCurrentPosition);
+
+            lastCurrentPosition = 0;
+        }
+
+        public void OnMediaItemTransition(MediaItem? mediaItem, int reason)
+        {
+
+        }
+
+        public void OnAvailableCommandsChanged(Commands? availableCommands)
+        {
+
+        }
+
+        public void OnPlaybackStateChanged(int playbackState)
+        {
+            if (playbackState == IPlayer.StateReady)
+            {
+                progressBar.Visibility = ViewStates.Invisible;
+
+                //if (lastCurrentPosition > 0)
+                //{
+                //    player.SeekTo(lastCurrentPosition);
+                //    lastCurrentPosition = 0;
+                //}
+            }
+            else if (playbackState == IPlayer.StateEnded)
+            {
+                //Play next video?
+            }
+            else if (playbackState == IPlayer.StateBuffering)
+            {
+                progressBar.Visibility = ViewStates.Visible;
+            }
+            else
+            {
+                progressBar.Visibility = ViewStates.Invisible;
+            }
+        }
+
+        public void OnPlaybackSuppressionReasonChanged(int playbackSuppressionReason)
+        {
+
+        }
+
+        public void OnRepeatModeChanged(int repeatMode)
+        {
+
+        }
+
+        public void OnAudioSessionIdChanged(int audioSessionId)
+        {
+
+        }
+
+        public void OnTracksChanged(Tracks? tracks)
+        {
+
+        }
+
+        public void OnTimelineChanged(Timeline? timeline, int reason)
+        {
+
         }
 
         void SetVideoOptions()
@@ -288,101 +484,10 @@ namespace AniStream
             }
         }
 
-        public void OnIsPlayingChanged(bool isPlaying)
-        {
-
-        }
-
-        public void OnLoadingChanged(bool isLoading)
-        {
-
-        }
-
-        public void OnPlaybackParametersChanged(PlaybackParameters playbackParameters)
-        {
-
-        }
-
-        public void OnPlaybackSuppressionReasonChanged(int playbackSuppressionReason)
-        {
-
-        }
-
-        public void OnPlayerError(ExoPlaybackException error)
+        public void OnPlayerError(PlaybackException? error)
         {
             errorText.Text = "Video not found.";
             errorText.Visibility = ViewStates.Visible;
-        }
-
-        public void OnPositionDiscontinuity(int reason)
-        {
-
-        }
-
-        public void OnRepeatModeChanged(int repeatMode)
-        {
-
-        }
-
-        public void OnSeekProcessed()
-        {
-
-        }
-
-        public void OnShuffleModeEnabledChanged(bool shuffleModeEnabled)
-        {
-
-        }
-
-        public void OnTimelineChanged(Timeline timeline, int reason)
-        {
-
-        }
-
-        public void OnTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections)
-        {
-
-        }
-
-        public void OnPlayerStateChanged(bool playWhenReady, int playbackState)
-        {
-            if (playbackState == IPlayer.StateReady)
-            {
-                progressBar.Visibility = ViewStates.Invisible;
-
-                //if (lastCurrentPosition > 0)
-                //{
-                //    player.SeekTo(lastCurrentPosition);
-                //    lastCurrentPosition = 0;
-                //}
-            }
-            else if (playbackState == IPlayer.StateEnded)
-            {
-                //Play next video?
-            }
-            else if (playbackState == IPlayer.StateBuffering)
-            {
-                progressBar.Visibility = ViewStates.Visible;
-            }
-            else
-            {
-                progressBar.Visibility = ViewStates.Invisible;
-            }
-        }
-
-        public void OnBufferingEnd(MediaPlayer mediaPlayer)
-        {
-
-        }
-
-        public void OnBufferingStart(MediaPlayer mediaPlayer)
-        {
-
-        }
-
-        public void OnPause(MediaPlayer mediaPlayer)
-        {
-
         }
 
         public void OnScaleChange(bool isFullscreen)
@@ -404,54 +509,83 @@ namespace AniStream
             }
         }
 
-        public void OnStart(MediaPlayer mediaPlayer)
+        public void OnIsPlayingChanged(bool isPlaying)
         {
 
         }
 
-        #region IMediaSourceEventListener
-        public void OnDownstreamFormatChanged(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId, MediaSourceEventListenerMediaLoadData mediaLoadData)
+        public void OnLoadingChanged(bool isLoading)
         {
 
         }
 
-        public void OnLoadCanceled(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId, MediaSourceEventListenerLoadEventInfo loadEventInfo, MediaSourceEventListenerMediaLoadData mediaLoadData)
+        public void OnPlaybackParametersChanged(PlaybackParameters playbackParameters)
         {
 
         }
 
-        public void OnLoadCompleted(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId, MediaSourceEventListenerLoadEventInfo loadEventInfo, MediaSourceEventListenerMediaLoadData mediaLoadData)
+        public void OnPositionDiscontinuity(int reason)
         {
 
         }
 
-        public void OnLoadError(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId, MediaSourceEventListenerLoadEventInfo loadEventInfo, MediaSourceEventListenerMediaLoadData mediaLoadData, IOException error, bool wasCanceled)
+        public void OnSeekProcessed()
         {
 
         }
 
-        public void OnLoadStarted(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId, MediaSourceEventListenerLoadEventInfo loadEventInfo, MediaSourceEventListenerMediaLoadData mediaLoadData)
+        public void OnShuffleModeEnabledChanged(bool shuffleModeEnabled)
         {
 
         }
 
-        public void OnMediaPeriodCreated(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId)
+        public void OnTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections)
         {
 
         }
-        public void OnMediaPeriodReleased(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId)
+
+        public void OnPlayerStateChanged(bool playWhenReady, int playbackState)
         {
 
         }
-        public void OnReadingStarted(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId)
+
+        public void OnPlayWhenReadyChanged(bool playWhenReady, int reason)
         {
 
         }
-        public void OnUpstreamDiscarded(int windowIndex, MediaSourceMediaPeriodId mediaPeriodId, MediaSourceEventListenerMediaLoadData mediaLoadData)
+
+        public void OnEvents(IPlayer? player, Events? events)
         {
 
         }
-        #endregion
+
+        public void OnSurfaceSizeChanged(int width, int height)
+        {
+
+        }
+
+        public void OnIsLoadingChanged(bool isLoading)
+        {
+
+        }
+
+        public void OnVideoSizeChanged(VideoSize? videoSize)
+        {
+
+        }
+
+        public void OnRenderedFirstFrame()
+        {
+
+        }
+
+        public void OnPlayerErrorChanged(PlaybackException? error)
+        {
+            errorText.Text = "Video not found.";
+            errorText.Visibility = ViewStates.Visible;
+
+            Toast.MakeText(this, error?.Message, ToastLength.Short).Show();
+        }
 
         public void NetworkAvailable()
         {
