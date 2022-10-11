@@ -316,7 +316,7 @@ namespace AniStream
                 selector = null;
             }
 
-            var gg = await Http.Client.SendHttpRequestAsync(video.VideoUrl, video.Headers);
+            //var test = await Http.Client.SendHttpRequestAsync(video.VideoUrl, video.Headers);
 
             lastCurrentPosition = player.CurrentPosition;
 
