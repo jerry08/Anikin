@@ -1,4 +1,7 @@
 <resources>
+
+    <string name="repo">jerry08/AniStream</string>
+
     <string name="app_name">AniStream</string>
     <string name="action_settings">Settings</string>
     <string name="plot_summary">Plot Summary :</string>
