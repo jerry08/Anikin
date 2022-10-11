@@ -42,7 +42,7 @@ using Google.Android.Material.BottomSheet;
 namespace AniStream
 {
     //[Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape,
-    [Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape | ScreenOrientation.Portrait,
+    [Activity(Label = "VideoActivity",
         ResizeableActivity = true, LaunchMode = LaunchMode.SingleTask, SupportsPictureInPicture = true,
         //ResizeableActivity = true, NoHistory = true, LaunchMode = LaunchMode.Multiple, SupportsPictureInPicture = true, Exported = true,
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.SmallestScreenSize | ConfigChanges.ScreenLayout | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden)]
@@ -84,6 +84,7 @@ namespace AniStream
             base.OnCreate(savedInstanceState);
 
             SetContentView(Resource.Layout.videoviewer);
+
             AndroidEnvironment.UnhandledExceptionRaiser += (s, e) =>
             {
 
@@ -101,10 +102,10 @@ namespace AniStream
 
             //SetVideoOptions();
 
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.Gingerbread)
-            {
-                RequestedOrientation = ScreenOrientation.SensorLandscape;
-            }
+            //if (Build.VERSION.SdkInt >= BuildVersionCodes.Gingerbread)
+            //{
+            //    RequestedOrientation = ScreenOrientation.SensorLandscape;
+            //}
 
             string animeString = Intent.GetStringExtra("anime");
             if (!string.IsNullOrEmpty(animeString))
@@ -230,6 +231,7 @@ namespace AniStream
                 player.Stop();
                 player.Release();
                 _client.CancelGetVideos();
+                VideoCache.Release();
 
                 base.OnBackPressed();
             });
@@ -316,7 +318,10 @@ namespace AniStream
 
             videoUri = Android.Net.Uri.Parse(video.VideoUrl.Replace(" ", "%20"));
 
-            var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36";
+            var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36";
+
+            var headers = video.Headers.ToDictionary();
+            headers.TryAdd("User-Agent", userAgent);
 
             var bandwidthMeter = new DefaultBandwidthMeter.Builder(this).Build();
 
@@ -330,7 +335,7 @@ namespace AniStream
 
             dataSourceFactory.SetUserAgent(userAgent);
             dataSourceFactory.SetTransferListener(bandwidthMeter);
-            dataSourceFactory.SetDefaultRequestProperties(video.Headers.ToDictionary());
+            dataSourceFactory.SetDefaultRequestProperties(headers);
 
             //dataSourceFactory.CreateDataSource();
 
@@ -402,6 +407,7 @@ namespace AniStream
             if (playbackState == IPlayer.StateReady)
             {
                 progressBar.Visibility = ViewStates.Invisible;
+                errorText.Visibility = ViewStates.Gone;
 
                 //if (lastCurrentPosition > 0)
                 //{
@@ -420,6 +426,7 @@ namespace AniStream
             else
             {
                 progressBar.Visibility = ViewStates.Invisible;
+                errorText.Visibility = ViewStates.Gone;
             }
         }
 
@@ -585,6 +592,11 @@ namespace AniStream
             errorText.Visibility = ViewStates.Visible;
 
             Toast.MakeText(this, error?.Message, ToastLength.Short).Show();
+        }
+
+        public void OnDeviceVolumeChanged(int volume, bool muted)
+        {
+
         }
 
         public void NetworkAvailable()

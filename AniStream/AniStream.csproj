@@ -7,8 +7,8 @@
     <WarningsAsErrors>nullable</WarningsAsErrors>
     <ImplicitUsings>enable</ImplicitUsings>-->
     <ApplicationId>com.oneb.anistream</ApplicationId>
-    <ApplicationVersion>12</ApplicationVersion>
-    <ApplicationDisplayVersion>1.7.6</ApplicationDisplayVersion>
+    <ApplicationVersion>13</ApplicationVersion>
+    <ApplicationDisplayVersion>1.7.7</ApplicationDisplayVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -32,7 +32,6 @@
     <None Remove="Resources\layout\recycler_episode_item.xml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AnimeDl" Version="1.6.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xamarin.Android.Flowlayout" Version="1.0.0.4" />
@@ -44,6 +43,9 @@
     <PackageReference Include="Xamarin.Google.Android.Material" Version="1.6.1.1" />
     <PackageReference Include="Xamarin.Essentials" Version="1.7.3" />
     <PackageReference Include="Xamarin.Google.Guava" Version="31.1.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\AnimeDl\AnimeDl\AnimeDl.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="ExoPlayer">
@@ -66,6 +68,9 @@
     </Reference>
     <Reference Include="ExoPlayer.Decoder">
       <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.Decoder.dll</HintPath>
+    </Reference>
+    <Reference Include="ExoPlayer.Ext.OkHttp">
+      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer.Ext.OkHttp\bin\Debug\net6.0-android33.0\ExoPlayer.Ext.OkHttp.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.Extractor">
       <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.Extractor.dll</HintPath>

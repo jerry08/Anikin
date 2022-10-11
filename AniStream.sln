@@ -3,12 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32422.2
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AniStream", "AniStream\AniStream.csproj", "{5134EEA6-64F6-4DF6-B0BB-C58189BA508A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AniStream", "AniStream\AniStream.csproj", "{5134EEA6-64F6-4DF6-B0BB-C58189BA508A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B3DC27BF-3B60-4266-895D-9153C1825E19}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnimeDl", "..\..\AnimeDl\AnimeDl\AnimeDl.csproj", "{CF795D93-3598-4CA9-8B75-2CDD8F256AA0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,6 +24,10 @@ Global
 		{5134EEA6-64F6-4DF6-B0BB-C58189BA508A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5134EEA6-64F6-4DF6-B0BB-C58189BA508A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5134EEA6-64F6-4DF6-B0BB-C58189BA508A}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{CF795D93-3598-4CA9-8B75-2CDD8F256AA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF795D93-3598-4CA9-8B75-2CDD8F256AA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF795D93-3598-4CA9-8B75-2CDD8F256AA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF795D93-3598-4CA9-8B75-2CDD8F256AA0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
