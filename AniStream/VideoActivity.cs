@@ -38,6 +38,8 @@ using AndroidX.Fragment.App;
 using System.Threading.Tasks;
 using Com.Google.Android.Exoplayer2.Video;
 using Google.Android.Material.BottomSheet;
+using AnimeDl.Utils;
+using Com.Google.Android.Exoplayer2.Ext.Okhttp;
 
 namespace AniStream
 {
@@ -306,13 +308,15 @@ namespace AniStream
             //WeebUtils.SaveLastWatchedEp(this, anime);
         }*/
 
-        public void PlayVideo(Video video)
+        public async void PlayVideo(Video video)
         {
             if (selector is not null)
             {
                 selector.Dismiss();
                 selector = null;
             }
+
+            var gg = await Http.Client.SendHttpRequestAsync(video.VideoUrl, video.Headers);
 
             lastCurrentPosition = player.CurrentPosition;
 
@@ -325,13 +329,13 @@ namespace AniStream
 
             var bandwidthMeter = new DefaultBandwidthMeter.Builder(this).Build();
 
-            //var httpClient = new OkHttpClient.Builder()
-            //    .FollowSslRedirects(true)
-            //    .FollowRedirects(true)
-            //    .Build();
+            var httpClient = new OkHttpClient.Builder()
+                .FollowSslRedirects(true)
+                .FollowRedirects(true)
+                .Build();
 
-            var dataSourceFactory = new DefaultHttpDataSource.Factory();
-            //var dataSourceFactory = new OkHttpDataSource.Factory(httpClient);
+            //var dataSourceFactory = new DefaultHttpDataSource.Factory();
+            var dataSourceFactory = new OkHttpDataSource.Factory(httpClient);
 
             dataSourceFactory.SetUserAgent(userAgent);
             dataSourceFactory.SetTransferListener(bandwidthMeter);
