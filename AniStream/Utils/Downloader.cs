@@ -1,24 +1,24 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.Linq;
 using Android.App;
 using Android.Webkit;
 using Android.Widget;
-using AnimeDl.Models;
 
 namespace AniStream.Utils
 {
     public class Downloader
     {
-        private Activity Activity;
+        private readonly Activity _activity;
 
         public Downloader(Activity activity)
         {
-            Activity = activity;
+            _activity = activity;
         }
 
-        public async void Download(Episode episode, Video video)
+        public async void Download(string fileName, string url, NameValueCollection? headers = null)
         {
-            var androidStoragePermission = new AndroidStoragePermission(Activity);
+            var androidStoragePermission = new AndroidStoragePermission(_activity);
 
             bool hasStoragePermission = androidStoragePermission.HasStoragePermission();
             if (!hasStoragePermission)
@@ -32,22 +32,23 @@ namespace AniStream.Utils
             }
 
             MimeTypeMap mime = MimeTypeMap.Singleton;
-            string mimeType = mime.GetMimeTypeFromExtension("mp4");
-            string mimeTypem4a = mime.GetMimeTypeFromExtension("m4a");
+            var mimeType = mime.GetMimeTypeFromExtension("mp4");
+            var mimeTypem4a = mime.GetMimeTypeFromExtension("m4a");
 
             //string invalidCharRemoved = Episode.EpisodeName.Replace("[\\\\/:*?\"<>|]", "");
 
             var invalidChars = System.IO.Path.GetInvalidFileNameChars();
 
-            string invalidCharsRemoved = new string(episode.Name
+            var invalidCharsRemoved = new string(fileName
               .Where(x => !invalidChars.Contains(x))
               .ToArray());
 
-            var request = new DownloadManager.Request(Android.Net.Uri.Parse(video.VideoUrl));
+            var request = new DownloadManager.Request(Android.Net.Uri.Parse(url));
 
-            for (int i = 0; i < video.Headers.Count; i++)
+            if (headers is not null)
             {
-                request.AddRequestHeader(video.Headers.Keys[i], video.Headers[i]);
+                for (int i = 0; i < headers.Count; i++)
+                    request.AddRequestHeader(headers.Keys[i], headers[i]);
             }
 
             request.SetMimeType(mimeType);
@@ -61,7 +62,7 @@ namespace AniStream.Utils
             var dm = (DownloadManager)Application.Context.GetSystemService(Application.DownloadService);
             long id = dm.Enqueue(request);
 
-            Toast.MakeText(Activity, "Download started", ToastLength.Short).Show();
+            Toast.MakeText(_activity, "Download started", ToastLength.Short).Show();
         }
     }
 }

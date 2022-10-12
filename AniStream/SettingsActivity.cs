@@ -14,9 +14,11 @@ using Android.Views;
 using Android.Widget;
 using AndroidX.AppCompat.App;
 using AniStream.Utils;
+using Google.Android.Material.SwitchMaterial;
 using Java.Lang;
 using Java.Util;
 using Newtonsoft.Json;
+using Xamarin.Essentials;
 using Toolbar = AndroidX.AppCompat.Widget.Toolbar;
 
 namespace AniStream
@@ -29,9 +31,11 @@ namespace AniStream
 
         AndroidStoragePermission AndroidStoragePermission;
 
-        Button buttonbackup, buttonrestore, buttondiscord;
+        Button buttonbackup, buttonrestore, buttondiscord, buttongithub;
+        Button button_check_for_updates;
+        SwitchMaterial dontAskForUpdate;
 
-        protected override void OnCreate(Bundle savedInstanceState)
+        protected override async void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
@@ -52,7 +56,26 @@ namespace AniStream
 
             buttonbackup = FindViewById<Button>(Resource.Id.buttonbackup);
             buttonrestore = FindViewById<Button>(Resource.Id.buttonrestore);
+            buttongithub = FindViewById<Button>(Resource.Id.buttongithub);
             buttondiscord = FindViewById<Button>(Resource.Id.buttondiscord);
+            button_check_for_updates = FindViewById<Button>(Resource.Id.button_check_for_updates);
+            dontAskForUpdate = FindViewById<SwitchMaterial>(Resource.Id.dontAskForUpdate);
+
+            var packageInfo = PackageManager.GetPackageInfo(PackageName, 0);
+
+            bool dontShow = false;
+            var dontShowStr = await SecureStorage.GetAsync($"dont_ask_for_update_{packageInfo.VersionName}");
+            if (!string.IsNullOrEmpty(dontShowStr))
+            {
+                dontShow = System.Convert.ToBoolean(dontShowStr);
+            }
+
+            dontAskForUpdate.Checked = dontShow;
+
+            dontAskForUpdate.CheckedChange += async (s, e) =>
+            {
+                await SecureStorage.SetAsync($"dont_ask_for_update_{packageInfo.VersionName}", dontAskForUpdate.Checked.ToString());
+            };
 
             //AndroidStoragePermission = new AndroidStoragePermission(this);
 
@@ -139,9 +162,28 @@ namespace AniStream
                 }
             };
 
+            buttongithub.Click += (s, e) =>
+            {
+                OpenLink("https://github.com/jerry08/AniStream");
+            };
+            
             buttondiscord.Click += (s, e) =>
             {
-                Discordurl("https://discord.gg/mhxsSMy2Nf");
+                OpenLink("https://discord.gg/mhxsSMy2Nf");
+            };
+
+            button_check_for_updates.Click += async (s, e) =>
+            {
+                var dialog = WeebUtils.SetProgressDialog(this, "Checking for updates", false);
+                dialog.Show();
+
+                var updater = new AppUpdater();
+                var updateAvailable = await updater.CheckAsync(this);
+
+                dialog.Dismiss();
+
+                if (!updateAvailable)
+                    Toast.MakeText(this, "No updates available", ToastLength.Short).Show();
             };
 
             //Button2 = FindViewById<Button>(Resource.Id.buttonrestore);
@@ -173,10 +215,10 @@ namespace AniStream
             
         }
 
-        private void Discordurl(string url)
+        private void OpenLink(string url)
         {
-            Uri uriUrl = Uri.Parse(url);
-            Intent launchBrowser = new Intent(Intent.ActionView, uriUrl);
+            var uriUrl = Uri.Parse(url);
+            var launchBrowser = new Intent(Intent.ActionView, uriUrl);
             StartActivity(launchBrowser);
         }
 

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
-
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -40,19 +40,29 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="2dp"
-        android:layout_weight="1"
+        android:layout_weight="2"
         android:gravity="center"
         android:orientation="vertical">
+        <View style="@style/Divider"/>
+        <Button
+            android:id="@+id/buttongithub"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:background="@android:color/transparent"
+            android:text="Github"
+            android:textColor="#FFFFFF"
+            style="?android:attr/buttonStyle"/>
         <View style="@style/Divider"/>
         <Button
             android:id="@+id/buttondiscord"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:onClick="discord"
             android:background="@android:color/transparent"
             android:text="Discord"
-            android:textColor="#FFFFFF" style="?android:attr/buttonStyle"/>
+            android:textColor="#FFFFFF"
+            style="?android:attr/buttonStyle"/>
         <View style="@style/Divider"/>
         <Button
             android:id="@+id/buttonbackup"
@@ -72,22 +82,53 @@
             android:text="Restore Data"
             android:textColor="#FFFFFF"/>
         <View style="@style/Divider"/>
+
+        <Button
+            android:id="@+id/button_check_for_updates"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:background="@android:color/transparent"
+            android:text="Check for updates"
+            android:textColor="#FFFFFF"
+            style="?android:attr/buttonStyle"/>
+        <View style="@style/Divider"/>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/dontAskForUpdate"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:checked="true"
+            android:drawablePadding="16dp"
+            app:drawableTint="?attr/colorPrimary"
+            android:elegantTextHeight="false"
+            android:fontFamily="@font/poppins_bold"
+            android:minHeight="64dp"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp"
+            android:text="Don't ask for updates"
+            android:background="@android:color/transparent"
+            android:textColor="#FFFFFF"
+            app:cornerRadius="0dp"
+            app:showText="false" />
+        <View style="@style/Divider"/>
     </LinearLayout>
 
     <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dip"
-            android:layout_weight="1"
-            android:gravity="center|bottom"
-            android:orientation="vertical" >
-
-    <TextView
-        android:id="@+id/copyright"
         android:layout_width="match_parent"
-        android:layout_height="20dp"
-        android:fontFamily="@font/medium"
-        android:text="© Jerry08"
-        android:textAlignment="center"
-        android:textSize="13sp" />
+        android:layout_height="0dip"
+        android:layout_weight="1"
+        android:gravity="center|bottom"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/copyright"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:fontFamily="@font/medium"
+            android:text="© Jerry08"
+            android:textAlignment="center"
+            android:textSize="13sp" />
     </LinearLayout>
 </LinearLayout>

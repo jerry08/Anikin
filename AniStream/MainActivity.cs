@@ -94,6 +94,9 @@ namespace AniStream
             _client.OnAnimesLoaded += Client_OnAnimesLoaded;
 
             SetupViewPager();
+
+            var updater = new AppUpdater();
+            await updater.CheckAsync(this);
         }
 
         private void Client_OnAnimesLoaded(object sender, AnimeEventArgs e)
