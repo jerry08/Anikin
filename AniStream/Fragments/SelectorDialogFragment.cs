@@ -84,7 +84,6 @@ namespace AniStream.Fragments
                     if (totalServersLoaded >= _client.VideoServers.Count)
                     {
                         selectorProgressBar.Visibility = ViewStates.Gone;
-                        return;
                     }
                     else
                     {
