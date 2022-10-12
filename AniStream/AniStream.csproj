@@ -32,8 +32,9 @@
     <None Remove="Resources\layout\recycler_episode_item.xml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AnimeDl" Version="1.6.4" />
+    <PackageReference Include="AnimeDl" Version="1.6.5" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Octokit" Version="4.0.0" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xamarin.Android.Flowlayout" Version="1.0.0.4" />
     <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.5.1" />
