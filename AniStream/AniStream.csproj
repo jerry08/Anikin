@@ -8,7 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>-->
     <ApplicationId>com.oneb.anistream</ApplicationId>
     <ApplicationVersion>14</ApplicationVersion>
-    <ApplicationDisplayVersion>1.7.8</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>1.7.9</ApplicationDisplayVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -16,11 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Adapters\EpisodeRecyclerAdapter_1.cs" />
     <Compile Remove="Utils\CacheDataSourceFactory.cs" />
-    <Compile Remove="Utils\Downloader_Main.cs" />
-    <Compile Remove="VideoActivity - Copy.cs" />
-    <Compile Remove="VideoActivity_oldExoplayer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Resources\drawable\anim_pause_to_play.xml" />
@@ -39,7 +35,7 @@
     <PackageReference Include="Xamarin.Android.Flowlayout" Version="1.0.0.4" />
     <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.5.1" />
     <PackageReference Include="Xamarin.AndroidX.ConstraintLayout" Version="2.1.4.1" />
-    <PackageReference Include="Xamarin.AndroidX.ExifInterface" Version="1.3.3.6" />
+    <PackageReference Include="Xamarin.AndroidX.ExifInterface" Version="1.3.4" />
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData" Version="2.5.1" />
     <PackageReference Include="Xamarin.AndroidX.SwipeRefreshLayout" Version="1.1.0.9" />
     <PackageReference Include="Xamarin.Google.Android.Material" Version="1.6.1.1" />
@@ -48,46 +44,46 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="ExoPlayer">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.Common">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.Common.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.Common.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.Core">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.Core.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.Core.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.Dash">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.Dash.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.Dash.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.Database">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.Database.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.Database.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.DataSource">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.DataSource.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.DataSource.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.Decoder">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.Decoder.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.Decoder.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.Ext.OkHttp">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer.Ext.OkHttp\bin\Debug\net6.0-android33.0\ExoPlayer.Ext.OkHttp.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.Ext.OkHttp.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.Extractor">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.Extractor.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.Extractor.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.Hls">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.Hls.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.Hls.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.Rtsp">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.Rtsp.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.Rtsp.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.SmoothStreaming">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.SmoothStreaming.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.SmoothStreaming.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.Transformer">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.Transformer.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.Transformer.dll</HintPath>
     </Reference>
     <Reference Include="ExoPlayer.UI">
-      <HintPath>..\..\ExoPlayerXamarin-develop\ExoPlayer\bin\Debug\net6.0-android33.0\ExoPlayer.UI.dll</HintPath>
+      <HintPath>..\ExoplayerDlls\ExoPlayer.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
