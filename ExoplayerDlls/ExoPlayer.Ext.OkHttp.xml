@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ExoPlayer.Ext.OkHttp</name>
+    </assembly>
+    <members>
+        <member name="T:Com.Google.Android.Exoplayer2.Ext.Okhttp.OkHttpDataSource">
+            <summary>An <c>HttpDataSource</c> that delegates to Square's <c>Call.Factory</c>.</summary>
+        </member>
+    </members>
+</doc>

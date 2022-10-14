@@ -1,0 +1,865 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ExoPlayer.DataSource</name>
+    </assembly>
+    <members>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.AssetDataSource">
+            <summary>A <c>DataSource</c> for reading from a local asset.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.BaseDataSource">
+            <summary>Base <c>DataSource</c> implementation to keep a list of <c>TransferListener</c>s.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.BaseDataSource.#ctor(System.Boolean)">
+            <param name="isNetwork">Whether the data source loads data through a network.</param>
+            <summary>Creates base data source.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.BaseDataSource.BytesTransferred(System.Int32)">
+            <param name="bytesTransferred">The number of bytes transferred since the previous call to this method
+                (or if the first call, since the transfer was started).</param>
+            <summary>Notifies listeners that bytes were transferred.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.BaseDataSource.TransferEnded">
+            <summary>Notifies listeners that a transfer ended.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.BaseDataSource.TransferInitializing(Com.Google.Android.Exoplayer2.Upstream.DataSpec)">
+            <param name="dataSpec">
+              <c>DataSpec</c> describing the data for initializing transfer.</param>
+            <summary>Notifies listeners that data transfer for the specified <c>DataSpec</c> is being initialized.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.BaseDataSource.TransferStarted(Com.Google.Android.Exoplayer2.Upstream.DataSpec)">
+            <param name="dataSpec">
+              <c>DataSpec</c> describing the data being transferred.</param>
+            <summary>Notifies listeners that data transfer for the specified <c>DataSpec</c> started.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.BaseDataSource.Close">
+            <summary>Closes the source.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.BaseDataSource.Open(Com.Google.Android.Exoplayer2.Upstream.DataSpec)">
+            <param name="dataSpec">Defines the data to be read.</param>
+            <summary>Opens the source to read the specified data.</summary>
+            <returns>The number of bytes that can be read from the opened source. For unbounded requests
+                (i.e., requests where <c>DataSpec#length</c> equals <c>C#LENGTH_UNSET</c>) this value is
+                the resolved length of the request, or <c>C#LENGTH_UNSET</c> if the length is still
+                unresolved. For all other requests, the value returned will be equal to the request's
+                <c>DataSpec#length</c>.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.BaseDataSourceInvoker.Close">
+            <summary>Closes the source.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.BaseDataSourceInvoker.Open(Com.Google.Android.Exoplayer2.Upstream.DataSpec)">
+            <param name="dataSpec">Defines the data to be read.</param>
+            <summary>Opens the source to read the specified data.</summary>
+            <returns>The number of bytes that can be read from the opened source. For unbounded requests
+                (i.e., requests where <c>DataSpec#length</c> equals <c>C#LENGTH_UNSET</c>) this value is
+                the resolved length of the request, or <c>C#LENGTH_UNSET</c> if the length is still
+                unresolved. For all other requests, the value returned will be equal to the request's
+                <c>DataSpec#length</c>.</returns>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.ByteArrayDataSink">
+            <summary>A <c>DataSink</c> for writing to a byte array.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.ByteArrayDataSink.GetData">
+            <summary>Returns the data written to the sink since the last call to <c>#open(DataSpec)</c>, or null if
+            <c>#open(DataSpec)</c> has never been called.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.ByteArrayDataSource">
+            <summary>A <c>DataSource</c> for reading from a byte array.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.ByteArrayDataSource.#ctor(System.Byte[])">
+            <param name="data">The data to be read.</param>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSink">
+            <summary>Writes data into a cache.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSink.DefaultBufferSize">
+            <summary>Default buffer size in bytes.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSink.DefaultFragmentSize">
+            <summary>Default <c>fragmentSize</c> recommended for caching use cases.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSink.#ctor(Com.Google.Android.Exoplayer2.Upstream.Cache.ICache,System.Int64)">
+            <param name="cache">The cache into which data should be written.</param>
+            <param name="fragmentSize">For requests that should be fragmented into multiple cache files, this is
+                the maximum size of a cache file in bytes. If set to <c>C#LENGTH_UNSET</c> then no
+                fragmentation will occur. Using a small value allows for finer-grained cache eviction
+                policies, at the cost of increased overhead both on the cache implementation and the file
+                system. Values under <c>(2 * 1024 * 1024)</c> are not recommended.</param>
+            <summary>Constructs an instance using <c>#DEFAULT_BUFFER_SIZE</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSink.#ctor(Com.Google.Android.Exoplayer2.Upstream.Cache.ICache,System.Int64,System.Int32)">
+            <param name="cache">The cache into which data should be written.</param>
+            <param name="fragmentSize">For requests that should be fragmented into multiple cache files, this is
+                the maximum size of a cache file in bytes. If set to <c>C#LENGTH_UNSET</c> then no
+                fragmentation will occur. Using a small value allows for finer-grained cache eviction
+                policies, at the cost of increased overhead both on the cache implementation and the file
+                system. Values under <c>(2 * 1024 * 1024)</c> are not recommended.</param>
+            <param name="bufferSize">The buffer size in bytes for writing to a cache file. A zero or negative
+                value disables buffering.</param>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSource">
+            <summary>A <c>DataSource</c> that reads and writes a <c>Cache</c>.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSource.CacheIgnoredReasonError">
+            <summary>Cache ignored due to a cache related error.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSource.CacheIgnoredReasonUnsetLength">
+            <summary>Cache ignored due to a request with an unset length.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSource.FlagBlockOnCache">
+            <summary>A flag indicating whether we will block reads if the cache key is locked.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSource.FlagIgnoreCacheForUnsetLengthRequests">
+            <summary>A flag indicating that the cache should be bypassed for requests whose lengths are unset.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSource.FlagIgnoreCacheOnError">
+            <summary>A flag indicating whether the cache is bypassed following any cache related error.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSource.#ctor(Com.Google.Android.Exoplayer2.Upstream.Cache.ICache,Com.Google.Android.Exoplayer2.Upstream.IDataSource)">
+            <param name="cache">The cache.</param>
+            <param name="upstreamDataSource">A <c>DataSource</c> for reading data not in the cache. If null,
+                reading will fail if a cache miss occurs.</param>
+            <summary>Constructs an instance with default <c>DataSource</c> and <c>DataSink</c> instances for
+            reading and writing the cache.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSource.#ctor(Com.Google.Android.Exoplayer2.Upstream.Cache.ICache,Com.Google.Android.Exoplayer2.Upstream.IDataSource,System.Int32)">
+            <param name="cache">The cache.</param>
+            <param name="upstreamDataSource">A <c>DataSource</c> for reading data not in the cache. If null,
+                reading will fail if a cache miss occurs.</param>
+            <param name="flags">A combination of <c>#FLAG_BLOCK_ON_CACHE</c>, <c>#FLAG_IGNORE_CACHE_ON_ERROR</c>
+                and <c>#FLAG_IGNORE_CACHE_FOR_UNSET_LENGTH_REQUESTS</c>, or 0.</param>
+            <summary>Constructs an instance with default <c>DataSource</c> and <c>DataSink</c> instances for
+            reading and writing the cache.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSource.Cache">
+            <summary>Returns the <c>Cache</c> used by this instance.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheDataSource.CacheKeyFactory">
+            <summary>Returns the <c>CacheKeyFactory</c> used by this instance.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan">
+            <summary>Defines a span of data that may or may not be cached (as indicated by <c>#isCached</c>).</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan.File">
+            <summary>The file corresponding to this <c>CacheSpan</c>, or null if <c>#isCached</c> is false.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan.IsCached">
+            <summary>Whether the <c>CacheSpan</c> is cached.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan.Key">
+            <summary>The cache key that uniquely identifies the resource.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan.LastTouchTimestamp">
+            <summary>The last touch timestamp, or <c>C#TIME_UNSET</c> if <c>#isCached</c> is false.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan.Length">
+            <summary>The length of the <c>CacheSpan</c>, or <c>C#LENGTH_UNSET</c> if this is an open-ended hole.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan.Position">
+            <summary>The position of the <c>CacheSpan</c> in the resource.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan.#ctor(System.String,System.Int64,System.Int64)">
+            <param name="key">The cache key that uniquely identifies the resource.</param>
+            <param name="position">The position of the <c>CacheSpan</c> in the resource.</param>
+            <param name="length">The length of the <c>CacheSpan</c>, or <c>C#LENGTH_UNSET</c> if this is an
+                open-ended hole.</param>
+            <summary>Creates a hole CacheSpan which isn't cached, has no last touch timestamp and no file
+            associated.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan.#ctor(System.String,System.Int64,System.Int64,System.Int64,Java.IO.File)">
+            <param name="key">The cache key that uniquely identifies the resource.</param>
+            <param name="position">The position of the <c>CacheSpan</c> in the resource.</param>
+            <param name="length">The length of the <c>CacheSpan</c>, or <c>C#LENGTH_UNSET</c> if this is an
+                open-ended hole.</param>
+            <param name="lastTouchTimestamp">The last touch timestamp, or <c>C#TIME_UNSET</c> if <c>#isCached</c> is false.</param>
+            <param name="file">The file corresponding to this <c>CacheSpan</c>, or null if it's a hole.</param>
+            <summary>Creates a CacheSpan.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan.IsHoleSpan">
+            <summary>Returns whether this is a hole <c>CacheSpan</c>.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan.IsOpenEnded">
+            <summary>Returns whether this is an open-ended <c>CacheSpan</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheWriter">
+            <summary>Caching related utility methods.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheWriter.DefaultBufferSizeBytes">
+            <summary>Default buffer size to be used while caching.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheWriter.Cache">
+            <summary>Caches the requested data, skipping any that's already cached.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheWriter.Cancel">
+            <summary>Cancels this writer's caching operation.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadataMutations">
+            <summary>Defines multiple mutations on metadata value which are applied atomically.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadataMutations.#ctor">
+            <summary>Constructs a DefaultMetadataMutations.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadataMutations.EditedValues">
+            <summary>Returns a map of metadata name, value pairs to be set.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadataMutations.RemovedValues">
+            <summary>Returns a list of names of metadata values to be removed.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadataMutations.Remove(System.String)">
+            <param name="name">The name of the metadata value.</param>
+            <summary>Adds a mutation to remove a metadata value.</summary>
+            <returns>This instance, for convenience.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadataMutations.Set(System.String,System.Byte[])">
+            <param name="name">The name of the metadata value.</param>
+            <param name="value">The value to be set.</param>
+            <summary>Adds a mutation to set a metadata value.</summary>
+            <returns>This instance, for convenience.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadataMutations.Set(System.String,System.String)">
+            <param name="name">The name of the metadata value.</param>
+            <param name="value">The value to be set.</param>
+            <summary>Adds a mutation to set a metadata value.</summary>
+            <returns>This instance, for convenience.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadataMutations.Set(System.String,System.Int64)">
+            <param name="name">The name of the metadata value.</param>
+            <param name="value">The value to be set.</param>
+            <summary>Adds a mutation to set a metadata value.</summary>
+            <returns>This instance, for convenience.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadataMutations.SetContentLength(Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadataMutations,System.Int64)">
+            <param name="mutations">The mutations to modify.</param>
+            <param name="length">The length value, or <c>C#LENGTH_UNSET</c> to remove any existing entry.</param>
+            <summary>Adds a mutation to set the <c>ContentMetadata#KEY_CONTENT_LENGTH</c> value, or to remove any
+            existing value if <c>C#LENGTH_UNSET</c> is passed.</summary>
+            <returns>The mutations instance, for convenience.</returns>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.DefaultContentMetadata">
+            <summary>Default implementation of <c>ContentMetadata</c>.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.DefaultContentMetadata.Empty">
+            <summary>An empty DefaultContentMetadata.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.DefaultContentMetadata.InterfaceConsts.KeyContentLength">
+            <summary>Key for content length in bytes (type: long).</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.DefaultContentMetadata.InterfaceConsts.KeyCustomPrefix">
+            <summary>Prefix for custom metadata keys.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.DefaultContentMetadata.InterfaceConsts.KeyRedirectedUri">
+            <summary>Key for redirected uri (type: String).</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.DefaultContentMetadata.#ctor(System.Collections.Generic.IDictionary{System.String,System.Byte[]})">
+            <param name="metadata">The metadata entries in their raw byte array form.</param>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.DefaultContentMetadata.CopyWithMutationsApplied(Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadataMutations)">
+            <summary>Returns a copy <c>DefaultContentMetadata</c> with <c>mutations</c> applied.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.DefaultContentMetadata.EntrySet">
+            <summary>Returns the set of metadata entries in their raw byte array form.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.Cache.UidUnset">
+            <summary>Returned by <c>#getUid()</c> if initialization failed before the unique identifier was read or
+            generated.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache">
+            <summary>A cache that supports partial caching of resources.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.UidUnset">
+            <summary>Returned by <c>#getUid()</c> if initialization failed before the unique identifier was read or
+            generated.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.ApplyContentMetadataMutations(System.String,Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadataMutations)">
+            <param name="key">The cache key of the resource.</param>
+            <param name="mutations">Contains mutations to be applied to the metadata.</param>
+            <summary>Applies <c>mutations</c> to the <c>ContentMetadata</c> for the given resource.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.CommitFile(Java.IO.File,System.Int64)">
+            <param name="file">A newly written cache file.</param>
+            <param name="length">The length of the newly written cache file in bytes.</param>
+            <summary>Commits a file into the cache.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.GetCachedBytes(System.String,System.Int64,System.Int64)">
+            <param name="key">The cache key of the resource.</param>
+            <param name="position">The starting position of the data in the resource.</param>
+            <param name="length">The length of the data to check. <c>C#LENGTH_UNSET</c> is permitted, and is
+                equivalent to passing <c>Long#MAX_VALUE</c>.</param>
+            <summary>Returns the total number of cached bytes between <c>position</c> (inclusive) and <c>(position + length)</c> (exclusive) of a resource.</summary>
+            <returns>The total number of cached bytes.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.GetCachedLength(System.String,System.Int64,System.Int64)">
+            <param name="key">The cache key of the resource.</param>
+            <param name="position">The starting position of the data in the resource.</param>
+            <param name="length">The maximum length of the data or hole to be returned. <c>C#LENGTH_UNSET</c> is
+                permitted, and is equivalent to passing <c>Long#MAX_VALUE</c>.</param>
+            <summary>Returns the length of continuously cached data starting from <c>position</c>, up to a maximum
+            of <c>maxLength</c>, of a resource.</summary>
+            <returns>The length of the continuously cached data, or <c>-holeLength</c> if <c>position</c>
+                isn't cached.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.GetCachedSpans(System.String)">
+            <param name="key">The cache key of the resource.</param>
+            <summary>Returns the cached spans for a given resource.</summary>
+            <returns>The spans for the key.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.GetContentMetadata(System.String)">
+            <param name="key">The cache key of the resource.</param>
+            <summary>Returns a <c>ContentMetadata</c> for the given resource.</summary>
+            <returns>The <c>ContentMetadata</c> for the resource.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.IsCached(System.String,System.Int64,System.Int64)">
+            <param name="key">The cache key of the resource.</param>
+            <param name="position">The starting position of the data in the resource.</param>
+            <param name="length">The length of the data.</param>
+            <summary>Returns whether the specified range of data in a resource is fully cached.</summary>
+            <returns>true if the data is available in the Cache otherwise false;</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.Release">
+            <summary>Releases the cache.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.ReleaseHoleSpan(Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan)">
+            <param name="holeSpan">The <c>CacheSpan</c> being released.</param>
+            <summary>Releases a <c>CacheSpan</c> obtained from <c>#startReadWrite(String, long, long)</c> which
+            corresponded to a hole in the cache.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.RemoveResource(System.String)">
+            <param name="key">The cache key of the resource being removed.</param>
+            <summary>Removes all <c>CacheSpan CacheSpans</c> for a resource, deleting the underlying files.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.RemoveSpan(Com.Google.Android.Exoplayer2.Upstream.Cache.CacheSpan)">
+            <param name="span">The <c>CacheSpan</c> to remove.</param>
+            <summary>Removes a cached <c>CacheSpan</c> from the cache, deleting the underlying file.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.StartFile(System.String,System.Int64,System.Int64)">
+            <param name="key">The cache key of the resource being written.</param>
+            <param name="position">The starting position in the resource from which data will be written.</param>
+            <param name="length">The length of the data being written, or <c>C#LENGTH_UNSET</c> if unknown. Used
+                only to ensure that there is enough space in the cache.</param>
+            <summary>Obtains a cache file into which data can be written.</summary>
+            <returns>The file into which data should be written.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.StartReadWrite(System.String,System.Int64,System.Int64)">
+            <param name="key">The cache key of the resource.</param>
+            <param name="position">The starting position in the resource from which data is required.</param>
+            <param name="length">The length of the data being requested, or <c>C#LENGTH_UNSET</c> if unbounded.
+                The length is ignored if there is a cache entry that overlaps the position. Else, it
+                defines the maximum length of the hole <c>CacheSpan</c> that's returned. Cache
+                implementations may support parallel writes into non-overlapping holes, and so passing the
+                actual required length should be preferred to passing <c>C#LENGTH_UNSET</c> when possible.</param>
+            <summary>A caller should invoke this method when they require data starting from a given position in a
+            given resource.</summary>
+            <returns>The <c>CacheSpan</c>.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICache.StartReadWriteNonBlocking(System.String,System.Int64,System.Int64)">
+            <param name="key">The cache key of the resource.</param>
+            <param name="position">The starting position in the resource from which data is required.</param>
+            <param name="length">The length of the data being requested, or <c>C#LENGTH_UNSET</c> if unbounded.
+                The length is ignored if there is a cache entry that overlaps the position. Else, it
+                defines the range of data locked by the returned <c>CacheSpan</c>.</param>
+            <summary>Same as <c>#startReadWrite(String, long, long)</c>.</summary>
+            <returns>The <c>CacheSpan</c>. Or null if the cache entry is locked.</returns>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.ICacheEvictor">
+            <summary>Evicts data from a <c>Cache</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICacheEvictor.OnCacheInitialized">
+            <summary>Called when cache has been initialized.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICacheEvictor.OnStartFile(Com.Google.Android.Exoplayer2.Upstream.Cache.ICache,System.String,System.Int64,System.Int64)">
+            <param name="cache">The source of the event.</param>
+            <param name="key">The key being written.</param>
+            <param name="position">The starting position of the data being written.</param>
+            <param name="length">The length of the data being written, or <c>C#LENGTH_UNSET</c> if unknown.</param>
+            <summary>Called when a writer starts writing to the cache.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICacheEvictor.RequiresCacheSpanTouches">
+            <summary>Returns whether the evictor requires the <c>Cache</c> to touch <c>CacheSpan CacheSpans</c>
+            when it accesses them.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.CacheKeyFactory.Default">
+            <summary>Default <c>CacheKeyFactory</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.ICacheKeyFactory">
+            <summary>Factory for cache keys.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.Cache.ICacheKeyFactory.Default">
+            <summary>Default <c>CacheKeyFactory</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ICacheKeyFactory.BuildCacheKey(Com.Google.Android.Exoplayer2.Upstream.DataSpec)">
+            <param name="dataSpec">The <c>DataSpec</c>.</param>
+            <summary>Returns the cache key of the resource containing the data defined by a <c>DataSpec</c>.</summary>
+            <returns>The cache key of the resource.</returns>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadata.KeyContentLength">
+            <summary>Key for content length in bytes (type: long).</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadata.KeyCustomPrefix">
+            <summary>Prefix for custom metadata keys.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadata.KeyRedirectedUri">
+            <summary>Key for redirected uri (type: String).</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.ContentMetadata.GetContentLength(Com.Google.Android.Exoplayer2.Upstream.Cache.IContentMetadata)">
+            <summary>Returns the value stored under <c>#KEY_CONTENT_LENGTH</c>, or <c>C#LENGTH_UNSET</c> if not
+            set.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.IContentMetadata">
+            <summary>Interface for an immutable snapshot of keyed metadata.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.IContentMetadata.KeyContentLength">
+            <summary>Key for content length in bytes (type: long).</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.IContentMetadata.KeyCustomPrefix">
+            <summary>Prefix for custom metadata keys.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.IContentMetadata.KeyRedirectedUri">
+            <summary>Key for redirected uri (type: String).</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.IContentMetadata.Contains(System.String)">
+            <summary>Returns whether the metadata is available.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.IContentMetadata.Get(System.String,System.Byte[])">
+            <param name="key">Key of the metadata to be returned.</param>
+            <param name="defaultValue">Value to return if the metadata doesn't exist.</param>
+            <summary>Returns a metadata value.</summary>
+            <returns>The metadata value.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.IContentMetadata.Get(System.String,System.String)">
+            <param name="key">Key of the metadata to be returned.</param>
+            <param name="defaultValue">Value to return if the metadata doesn't exist.</param>
+            <summary>Returns a metadata value.</summary>
+            <returns>The metadata value.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.IContentMetadata.Get(System.String,System.Int64)">
+            <param name="key">Key of the metadata to be returned.</param>
+            <param name="defaultValue">Value to return if the metadata doesn't exist.</param>
+            <summary>Returns a metadata value.</summary>
+            <returns>The metadata value.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.IContentMetadata.GetContentLength(Com.Google.Android.Exoplayer2.Upstream.Cache.IContentMetadata)">
+            <summary>Returns the value stored under <c>#KEY_CONTENT_LENGTH</c>, or <c>C#LENGTH_UNSET</c> if not
+            set.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.LeastRecentlyUsedCacheEvictor">
+            <summary>Evicts least recently used cache files first.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.NoOpCacheEvictor">
+            <summary>Evictor that doesn't ever evict cache files.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Cache.SimpleCache">
+            <summary>A <c>Cache</c> implementation that maintains an in-memory representation.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.Cache.SimpleCache.InterfaceConsts.UidUnset">
+            <summary>Returned by <c>#getUid()</c> if initialization failed before the unique identifier was read or
+            generated.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.SimpleCache.#ctor(Java.IO.File,Com.Google.Android.Exoplayer2.Upstream.Cache.ICacheEvictor)">
+            <param name="cacheDir">A dedicated cache directory.</param>
+            <param name="evictor">The evictor to be used. For download use cases where cache eviction should not
+                occur, use <c>NoOpCacheEvictor</c>.</param>
+            <summary>Constructs the cache.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.SimpleCache.#ctor(Java.IO.File,Com.Google.Android.Exoplayer2.Upstream.Cache.ICacheEvictor,System.Byte[])">
+            <param name="cacheDir">A dedicated cache directory.</param>
+            <param name="evictor">The evictor to be used. For download use cases where cache eviction should not
+                occur, use <c>NoOpCacheEvictor</c>.</param>
+            <param name="secretKey">If not null, cache keys will be stored encrypted on filesystem using AES/CBC.
+                The key must be 16 bytes long.</param>
+            <summary>Constructs the cache.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.SimpleCache.#ctor(Java.IO.File,Com.Google.Android.Exoplayer2.Upstream.Cache.ICacheEvictor,System.Byte[],System.Boolean)">
+            <param name="cacheDir">A dedicated cache directory.</param>
+            <param name="evictor">The evictor to be used. For download use cases where cache eviction should not
+                occur, use <c>NoOpCacheEvictor</c>.</param>
+            <param name="secretKey">If not null, cache keys will be stored encrypted on filesystem using AES/CBC.
+                The key must be 16 bytes long.</param>
+            <param name="encrypt">Whether the index will be encrypted when written. Must be false if <c>secretKey</c> is null.</param>
+            <summary>Constructs the cache.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.SimpleCache.CheckInitialization">
+            <summary>Checks whether the cache was initialized successfully.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Cache.SimpleCache.IsCacheFolderLocked(Java.IO.File)">
+            <summary>Returns whether <c>cacheFolder</c> is locked by a <c>SimpleCache</c> instance.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.ContentDataSource">
+            <summary>A <c>DataSource</c> for reading from a content URI.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Crypto.AesCipherDataSink">
+            <summary>A wrapping <c>DataSink</c> that encrypts the data being consumed.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Crypto.AesCipherDataSink.#ctor(System.Byte[],Com.Google.Android.Exoplayer2.Upstream.IDataSink)">
+            <param name="secretKey">The key data.</param>
+            <param name="wrappedDataSink">The wrapped <c>DataSink</c>.</param>
+            <summary>Create an instance whose <c>write</c> methods have the side effect of overwriting the input
+            <c>data</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.Crypto.AesCipherDataSink.#ctor(System.Byte[],Com.Google.Android.Exoplayer2.Upstream.IDataSink,System.Byte[])">
+            <param name="secretKey">The key data.</param>
+            <param name="wrappedDataSink">The wrapped <c>DataSink</c>.</param>
+            <param name="scratch">Scratch space. Data is encrypted into this array before being written to the
+                wrapped <c>DataSink</c>. It should be of appropriate size for the expected writes. If a
+                write is larger than the size of this array the write will still succeed, but multiple
+                cipher calls will be required to complete the operation. If <c>null</c> then encryption
+                will overwrite the input <c>data</c>.</param>
+            <summary>Create an instance whose <c>write</c> methods are free of side effects.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Crypto.AesCipherDataSource">
+            <summary>A <c>DataSource</c> that decrypts the data read from an upstream source.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.Crypto.AesFlushingCipher">
+            <summary>A flushing variant of a AES/CTR/NoPadding <c>Cipher</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.DataSchemeDataSource">
+            <summary>A <c>DataSource</c> for reading data URLs, as defined by RFC 2397.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.DataSourceException">
+            <summary>Used to specify reason of a DataSource error.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.DataSourceException.PositionOutOfRange">
+            <summary>Indicates that the <c>DataSpec#position starting position</c> of the request was outside the
+            bounds of the data.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.DataSourceException.Reason">
+            <summary>The reason of this <c>DataSourceException</c>, should be one of the <c>ERROR_CODE_IO_*</c> in
+            <c>PlaybackException.ErrorCode</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSourceException.#ctor(System.Int32)">
+            <param name="reason">Reason of the error, should be one of the <c>ERROR_CODE_IO_*</c> in <c>PlaybackException.ErrorCode</c>.</param>
+            <summary>Constructs a DataSourceException.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSourceException.#ctor(System.String,System.Int32)">
+            <param name="message">The error message.</param>
+            <param name="reason">Reason of the error, should be one of the <c>ERROR_CODE_IO_*</c> in <c>PlaybackException.ErrorCode</c>.</param>
+            <summary>Constructs a DataSourceException.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSourceException.#ctor(System.String,Java.Lang.Throwable,System.Int32)">
+            <param name="message">The error message.</param>
+            <param name="cause">The error cause.</param>
+            <param name="reason">Reason of the error, should be one of the <c>ERROR_CODE_IO_*</c> in <c>PlaybackException.ErrorCode</c>.</param>
+            <summary>Constructs a DataSourceException.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSourceException.#ctor(Java.Lang.Throwable,System.Int32)">
+            <param name="cause">The error cause.</param>
+            <param name="reason">Reason of the error, should be one of the <c>ERROR_CODE_IO_*</c> in <c>PlaybackException.ErrorCode</c>.</param>
+            <summary>Constructs a DataSourceException.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSourceException.IsCausedByPositionOutOfRange(Java.IO.IOException)">
+            <summary>Returns whether the given <c>IOException</c> was caused by a <c>DataSourceException</c> whose
+            <c>#reason</c> is <c>PlaybackException#ERROR_CODE_IO_READ_POSITION_OUT_OF_RANGE</c> in its
+            cause stack.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.DataSourceInputStream">
+            <summary>Allows data corresponding to a given <c>DataSpec</c> to be read from a <c>DataSource</c> and
+            consumed through an <c>InputStream</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSourceInputStream.#ctor(Com.Google.Android.Exoplayer2.Upstream.IDataSource,Com.Google.Android.Exoplayer2.Upstream.DataSpec)">
+            <param name="dataSource">The <c>DataSource</c> from which the data should be read.</param>
+            <param name="dataSpec">The <c>DataSpec</c> defining the data to be read from <c>dataSource</c>.</param>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSourceInputStream.BytesRead">
+            <summary>Returns the total number of bytes that have been read or skipped.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSourceInputStream.Open">
+            <summary>Optional call to open the underlying <c>DataSource</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.DataSourceUtil">
+            <summary>Utility methods for <c>DataSource</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSourceUtil.CloseQuietly(Com.Google.Android.Exoplayer2.Upstream.IDataSource)">
+            <param name="dataSource">The <c>DataSource</c> to close.</param>
+            <summary>Closes a <c>DataSource</c>, suppressing any <c>IOException</c> that may occur.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSourceUtil.ReadExactly(Com.Google.Android.Exoplayer2.Upstream.IDataSource,System.Int32)">
+            <param name="dataSource">The source from which to read.</param>
+            <summary>Reads <c>length</c> bytes from the specified opened <c>DataSource</c>, and returns a byte
+            array containing the read data.</summary>
+            <returns>The read data.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSourceUtil.ReadToEnd(Com.Google.Android.Exoplayer2.Upstream.IDataSource)">
+            <param name="dataSource">The source from which to read.</param>
+            <summary>Reads data from the specified opened <c>DataSource</c> until it ends, and returns a byte array
+            containing the read data.</summary>
+            <returns>The concatenation of all read data.</returns>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.DataSpec">
+            <summary>Defines a region of data in a resource.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.DataSpec.AbsoluteStreamPosition">
+            <summary>The absolute position of the data in the resource.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.DataSpec.CustomData">
+            <summary>Application specific data.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.DataSpec.Flags">
+            <summary>Request <c>Flags flags</c>.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.DataSpec.FlagAllowCacheFragmentation">
+            <summary>Allows fragmentation of this request into multiple cache files, meaning a cache eviction policy
+            will be able to evict individual fragments of the data.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.DataSpec.FlagAllowGzip">
+            <summary>Allows an underlying network stack to request that the server use gzip compression.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.DataSpec.FlagDontCacheIfLengthUnknown">
+            <summary>Prevents caching if the length cannot be resolved when the <c>DataSource</c> is opened.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.DataSpec.FlagMightNotUseFullNetworkSpeed">
+            <summary>Indicates there are known external factors that might prevent the data from being loaded at
+            full network speed (e.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.DataSpec.HttpBody">
+            <summary>The HTTP request body, null otherwise.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.DataSpec.HttpMethod">
+            <summary>The HTTP method to use when requesting the data.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.DataSpec.HttpRequestHeaders">
+            <summary>Additional HTTP headers to use when requesting the data.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.DataSpec.HttpMethodGet">
+            <summary>HTTP GET method.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.DataSpec.HttpMethodHead">
+            <summary>HTTP HEAD method.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.DataSpec.HttpMethodPost">
+            <summary>HTTP POST method.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.DataSpec.Key">
+            <summary>A key that uniquely identifies the resource.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.DataSpec.Length">
+            <summary>The length of the data, or <c>C#LENGTH_UNSET</c>.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.DataSpec.Position">
+            <summary>The position of the data when read from <c>#uri</c>.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.DataSpec.UriPositionOffset">
+            <summary>The offset of the data located at <c>#uri</c> within the resource.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.DataSpec.HttpMethodString">
+            <summary>Returns the uppercase HTTP method name (e.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSpec.GetStringForHttpMethod(System.Int32)">
+            <summary>Returns an uppercase HTTP method name (e.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSpec.IsFlagSet(System.Int32)">
+            <param name="flag">Flag to be checked if it is set.</param>
+            <summary>Returns whether the given flag is set.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSpec.Subrange(System.Int64)">
+            <param name="offset">The offset of the subrange.</param>
+            <summary>Returns a data spec that represents a subrange of the data defined by this DataSpec.</summary>
+            <returns>A data spec that represents a subrange of the data defined by this DataSpec.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSpec.Subrange(System.Int64,System.Int64)">
+            <param name="offset">The offset of the subrange.</param>
+            <param name="length">The length of the subrange.</param>
+            <summary>Returns a data spec that represents a subrange of the data defined by this DataSpec.</summary>
+            <returns>A data spec that represents a subrange of the data defined by this DataSpec.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSpec.WithAdditionalHeaders(System.Collections.Generic.IDictionary{System.String,System.String})">
+            <param name="additionalHttpRequestHeaders">The additional HTTP request headers.</param>
+            <summary>Returns a copy this data spec with additional HTTP request headers.</summary>
+            <returns>The copied data spec with the additional HTTP request headers.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DataSpec.WithRequestHeaders(System.Collections.Generic.IDictionary{System.String,System.String})">
+            <param name="httpRequestHeaders">The HTTP request headers.</param>
+            <summary>Returns a copy of this data spec with the specified HTTP request headers.</summary>
+            <returns>The copied data spec with the specified HTTP request headers.</returns>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.DefaultDataSource">
+            <summary>A <c>DataSource</c> that supports multiple URI schemes.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.DefaultHttpDataSource">
+            <summary>An <c>HttpDataSource</c> that uses Android's <c>HttpURLConnection</c>.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.DefaultHttpDataSource.DefaultConnectTimeoutMillis">
+            <summary>The default connection timeout, in milliseconds.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.DefaultHttpDataSource.DefaultReadTimeoutMillis">
+            <summary>The default read timeout, in milliseconds.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.DefaultHttpDataSource.Open(Com.Google.Android.Exoplayer2.Upstream.DataSpec)">
+            <summary>Opens the source to read the specified data.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.FileDataSource">
+            <summary>A <c>DataSource</c> for reading local files.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.HttpUtil">
+            <summary>Utility methods for HTTP.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.HttpUtil.BuildRangeRequestHeader(System.Int64,System.Int64)">
+            <param name="position">The request position.</param>
+            <param name="length">The request length, or <c>C#LENGTH_UNSET</c> if the request is unbounded.</param>
+            <summary>Builds a <c>HttpHeaders#RANGE Range header</c> for the given position and length.</summary>
+            <returns>The corresponding range header, or <c>null</c> if a header is unnecessary because the
+                whole resource is being requested.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.HttpUtil.GetContentLength(System.String,System.String)">
+            <param name="contentLengthHeader">The <c>HttpHeaders#CONTENT_LENGTH Content-Length header</c>, or
+                <c>null</c> if not set.</param>
+            <param name="contentRangeHeader">The <c>HttpHeaders#CONTENT_RANGE Content-Range header</c>, or <c>null</c> if not set.</param>
+            <summary>Attempts to parse the length of a response body from the corresponding response headers.</summary>
+            <returns>The length of the response body, or <c>C#LENGTH_UNSET</c> if it could not be
+                determined.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.HttpUtil.GetDocumentSize(System.String)">
+            <param name="contentRangeHeader">The <c>HttpHeaders#CONTENT_RANGE Content-Range header</c>, or <c>null</c> if not set.</param>
+            <summary>Attempts to parse the document size from a <c>HttpHeaders#CONTENT_RANGE Content-Range
+            header</c>.</summary>
+            <returns>The document size, or <c>C#LENGTH_UNSET</c> if it could not be determined.</returns>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.IDataSink">
+            <summary>A component to which streams of data can be written.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.IDataSink.Close">
+            <summary>Closes the sink.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.IDataSink.Open(Com.Google.Android.Exoplayer2.Upstream.DataSpec)">
+            <param name="dataSpec">Defines the data to be consumed.</param>
+            <summary>Opens the sink to consume the specified data.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.IDataSink.Write(System.Byte[],System.Int32,System.Int32)">
+            <param name="buffer">The buffer from which data should be consumed.</param>
+            <param name="offset">The offset of the data to consume in <c>buffer</c>.</param>
+            <param name="length">The length of the data to consume, in bytes.</param>
+            <summary>Consumes the provided data.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.IDataSource">
+            <summary>Reads data from URI-identified resources.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.IDataSource.ResponseHeaders">
+            <summary>When the source is open, returns the response headers associated with the last <c>#open</c>
+            call.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.IDataSource.AddTransferListener(Com.Google.Android.Exoplayer2.Upstream.ITransferListener)">
+            <param name="transferListener">A <c>TransferListener</c>.</param>
+            <summary>Adds a <c>TransferListener</c> to listen to data transfers.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.IDataSource.Close">
+            <summary>Closes the source.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.IDataSource.Open(Com.Google.Android.Exoplayer2.Upstream.DataSpec)">
+            <param name="dataSpec">Defines the data to be read.</param>
+            <summary>Opens the source to read the specified data.</summary>
+            <returns>The number of bytes that can be read from the opened source. For unbounded requests
+                (i.e., requests where <c>DataSpec#length</c> equals <c>C#LENGTH_UNSET</c>) this value is
+                the resolved length of the request, or <c>C#LENGTH_UNSET</c> if the length is still
+                unresolved. For all other requests, the value returned will be equal to the request's
+                <c>DataSpec#length</c>.</returns>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.IHttpDataSource">
+            <summary>An HTTP <c>DataSource</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.IHttpDataSource.ClearAllRequestProperties">
+            <summary>Clears all request headers that were set by <c>#setRequestProperty(String, String)</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.IHttpDataSource.ClearRequestProperty(System.String)">
+            <param name="name">The name of the header field.</param>
+            <summary>Clears the value of a request header.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.IHttpDataSource.Open(Com.Google.Android.Exoplayer2.Upstream.DataSpec)">
+            <summary>Opens the source to read the specified data.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.IHttpDataSource.SetRequestProperty(System.String,System.String)">
+            <param name="name">The name of the header field.</param>
+            <param name="value">The value of the field.</param>
+            <summary>Sets the value of a request header.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.ITransferListener">
+            <summary>A listener of data transfer events.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.ITransferListener.OnBytesTransferred(Com.Google.Android.Exoplayer2.Upstream.IDataSource,Com.Google.Android.Exoplayer2.Upstream.DataSpec,System.Boolean,System.Int32)">
+            <param name="source">The source performing the transfer.</param>
+            <param name="dataSpec">Describes the data being transferred.</param>
+            <param name="isNetwork">Whether the data is transferred through a network.</param>
+            <param name="bytesTransferred">The number of bytes transferred since the previous call to this method.</param>
+            <summary>Called incrementally during a transfer.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.ITransferListener.OnTransferEnd(Com.Google.Android.Exoplayer2.Upstream.IDataSource,Com.Google.Android.Exoplayer2.Upstream.DataSpec,System.Boolean)">
+            <param name="source">The source performing the transfer.</param>
+            <param name="dataSpec">Describes the data being transferred.</param>
+            <param name="isNetwork">Whether the data is transferred through a network.</param>
+            <summary>Called when a transfer ends.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.ITransferListener.OnTransferInitializing(Com.Google.Android.Exoplayer2.Upstream.IDataSource,Com.Google.Android.Exoplayer2.Upstream.DataSpec,System.Boolean)">
+            <param name="source">The source performing the transfer.</param>
+            <param name="dataSpec">Describes the data for which the transfer is initialized.</param>
+            <param name="isNetwork">Whether the data is transferred through a network.</param>
+            <summary>Called when a transfer is being initialized.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.ITransferListener.OnTransferStart(Com.Google.Android.Exoplayer2.Upstream.IDataSource,Com.Google.Android.Exoplayer2.Upstream.DataSpec,System.Boolean)">
+            <param name="source">The source performing the transfer.</param>
+            <param name="dataSpec">Describes the data being transferred.</param>
+            <param name="isNetwork">Whether the data is transferred through a network.</param>
+            <summary>Called when a transfer starts.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.PlaceholderDataSource">
+            <summary>A DataSource which provides no data.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.PriorityDataSource">
+            <summary>A <c>DataSource</c> that can be used as part of a task registered with a <c>PriorityTaskManager</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.RawResourceDataSource">
+            <summary>A <c>DataSource</c> for reading a raw resource inside the APK.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.RawResourceDataSource.RawResourceScheme">
+            <summary>The scheme part of a raw resource URI.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.ResolvingDataSource">
+            <summary>
+              <c>DataSource</c> wrapper allowing just-in-time resolution of <c>DataSpec DataSpecs</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.StatsDataSource">
+            <summary>
+              <c>DataSource</c> wrapper which keeps track of bytes transferred, redirected uris, and response
+            headers.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.StatsDataSource.#ctor(Com.Google.Android.Exoplayer2.Upstream.IDataSource)">
+            <param name="dataSource">The wrapped <c>DataSource</c>.</param>
+            <summary>Creates the stats data source.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.StatsDataSource.BytesRead">
+            <summary>Returns the total number of bytes that have been read from the data source.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.StatsDataSource.LastResponseHeaders">
+            <summary>Returns the response headers associated with the last <c>#open(DataSpec)</c> call.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.StatsDataSource.ResetBytesRead">
+            <summary>Resets the number of bytes read as returned from <c>#getBytesRead()</c> to zero.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.TeeDataSource">
+            <summary>Tees data into a <c>DataSink</c> as the data is read.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.TeeDataSource.#ctor(Com.Google.Android.Exoplayer2.Upstream.IDataSource,Com.Google.Android.Exoplayer2.Upstream.IDataSink)">
+            <param name="upstream">The upstream <c>DataSource</c>.</param>
+            <param name="dataSink">The <c>DataSink</c> into which data is written.</param>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Upstream.UdpDataSource">
+            <summary>A UDP <c>DataSource</c>.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.UdpDataSource.DefaultMaxPacketSize">
+            <summary>The default maximum datagram packet size, in bytes.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Upstream.UdpDataSource.DefaultSocketTimeoutMillis">
+            <summary>The default socket timeout, in milliseconds.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.UdpDataSource.#ctor(System.Int32)">
+            <param name="maxPacketSize">The maximum datagram packet size, in bytes.</param>
+            <summary>Constructs a new instance.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Upstream.UdpDataSource.#ctor(System.Int32,System.Int32)">
+            <param name="maxPacketSize">The maximum datagram packet size, in bytes.</param>
+            <param name="socketTimeoutMillis">The socket timeout in milliseconds. A timeout of zero is interpreted
+                as an infinite timeout.</param>
+            <summary>Constructs a new instance.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Upstream.UdpDataSource.LocalPort">
+            <summary>Returns the local port number opened for the UDP connection, or <c>#UDP_PORT_UNSET</c> if no
+            connection is open</summary>
+        </member>
+    </members>
+</doc>

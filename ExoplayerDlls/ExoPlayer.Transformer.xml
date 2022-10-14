@@ -1,0 +1,363 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ExoPlayer.Transformer</name>
+    </assembly>
+    <members>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.DefaultCodec">
+            <summary>A default <c>Codec</c> implementation that uses <c>MediaCodec</c>.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.DefaultCodec.InterfaceConsts.UnlimitedPendingFrameCount">
+            <summary>Default value for the pending frame count, which represents applying no limit.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.DefaultCodec.Name">
+            <summary>To be added</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.DefaultEncoderFactory">
+            <summary>A default implementation of <c>Codec.EncoderFactory</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.DefaultEncoderFactory.#ctor">
+            <summary>Creates a new instance using the <c>EncoderSelector#DEFAULT default encoder selector</c>, a
+            default <c>VideoEncoderSettings</c>, and with format fallback enabled.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.DefaultEncoderFactory.#ctor(Com.Google.Android.Exoplayer2.Transformer.IEncoderSelector,System.Boolean)">
+            <summary>Creates a new instance using a default <c>VideoEncoderSettings</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.DefaultEncoderFactory.#ctor(Com.Google.Android.Exoplayer2.Transformer.IEncoderSelector,Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings,System.Boolean)">
+            <param name="videoEncoderSelector">The <c>EncoderSelector</c>.</param>
+            <param name="requestedVideoEncoderSettings">The <c>VideoEncoderSettings</c>.</param>
+            <param name="enableFallback">Whether to enable fallback.</param>
+            <summary>Creates a new instance.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.EncoderUtil">
+            <summary>Utility methods for <c>MediaCodec</c> encoders.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.EncoderUtil.LevelUnset">
+            <summary>A value to indicate the encoding level is not set.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.FrameProcessingException">
+            <summary>Thrown when an exception occurs while applying effects to video frames.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.FrameProcessingException.PresentationTimeUs">
+            <summary>The microsecond timestamp of the frame being processed while the exception occurred or <c>C#TIME_UNSET</c> if unknown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.FrameProcessingException.#ctor(System.String)">
+            <param name="message">The detail message for this exception.</param>
+            <summary>Creates an instance.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.FrameProcessingException.#ctor(System.String,Java.Lang.Throwable)">
+            <param name="message">The detail message for this exception.</param>
+            <param name="cause">The cause of this exception.</param>
+            <summary>Creates an instance.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.FrameProcessingException.#ctor(System.String,Java.Lang.Throwable,System.Int64)">
+            <param name="message">The detail message for this exception.</param>
+            <param name="cause">The cause of this exception.</param>
+            <param name="presentationTimeUs">The timestamp of the frame for which the exception occurred.</param>
+            <summary>Creates an instance.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.FrameProcessingException.#ctor(System.String,System.Int64)">
+            <param name="message">The detail message for this exception.</param>
+            <param name="presentationTimeUs">The timestamp of the frame for which the exception occurred.</param>
+            <summary>Creates an instance.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.FrameProcessingException.#ctor(Java.Lang.Throwable)">
+            <param name="cause">The cause of this exception.</param>
+            <summary>Creates an instance.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.FrameProcessingException.#ctor(Java.Lang.Throwable,System.Int64)">
+            <param name="cause">The cause of this exception.</param>
+            <param name="presentationTimeUs">The timestamp of the frame for which the exception occurred.</param>
+            <summary>Creates an instance.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.Codec.UnlimitedPendingFrameCount">
+            <summary>Default value for the pending frame count, which represents applying no limit.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.ICodec">
+            <summary>Provides a layer of abstraction for interacting with decoders and encoders.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.ICodec.UnlimitedPendingFrameCount">
+            <summary>Default value for the pending frame count, which represents applying no limit.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.ICodec.MaxPendingFrameCount">
+            <summary>Returns the maximum number of frames that may be pending in the output <c>Codec</c> at a time,
+            or <c>#UNLIMITED_PENDING_FRAME_COUNT</c> if it's not necessary to enforce a limit.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.ICodec.Release">
+            <summary>Releases the <c>Codec</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.ICodec.ReleaseOutputBuffer(System.Boolean)">
+            <param name="render">Whether the buffer needs to be rendered to the output <c>Surface</c>.</param>
+            <summary>Releases the current output buffer.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.ICodec.SignalEndOfInputStream">
+            <summary>Signals end-of-stream on input to a video encoder.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.EncoderSelector.Default">
+            <summary>Default implementation of <c>EncoderSelector</c>, which returns the preferred encoders for the
+            given <c>MimeTypes MIME type</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.IEncoderSelector">
+            <summary>Selector of <c>MediaCodec</c> encoder instances.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.IEncoderSelector.Default">
+            <summary>Default implementation of <c>EncoderSelector</c>, which returns the preferred encoders for the
+            given <c>MimeTypes MIME type</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.IGlEffect">
+            <summary>Interface for a video frame effect with a <c>SingleFrameGlTextureProcessor</c> implementation.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.IGlEffect.ToGlTextureProcessor">
+            <summary>Returns a <c>SingleFrameGlTextureProcessor</c> that applies the effect.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.IGlMatrixTransformation">
+            <summary>Specifies a 4x4 transformation <c>Matrix</c> to apply in the vertex shader for each frame.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.IGlMatrixTransformation.GetGlMatrixArray(System.Int64)">
+            <summary>Returns the 4x4 transformation <c>Matrix</c> to apply to the frame with the given timestamp.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.IMatrixTransformation">
+            <summary>Specifies a 3x3 transformation <c>Matrix</c> to apply in the vertex shader for each frame.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.ISingleFrameGlTextureProcessor">
+            <summary>Manages a GLSL shader program for processing a frame.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.ISingleFrameGlTextureProcessor.DrawFrame(System.Int64)">
+            <param name="presentationTimeUs">The presentation timestamp of the current frame, in microseconds.</param>
+            <summary>Draws one frame.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.ISingleFrameGlTextureProcessor.Release">
+            <summary>Releases all resources.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.Presentation">
+            <summary>Controls how a frame is presented with options to set the output resolution, crop the input, and
+            choose how to map the input pixels onto the output frame geometry (for example, by stretching the
+            input frame to match the specified output frame, or fitting the input frame using letterboxing).</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.Presentation.LayoutScaleToFit">
+            <summary>Empty pixels added above and below the input frame (for letterboxing), or to the left and right
+            of the input frame (for pillarboxing), until the desired aspect ratio is achieved.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.Presentation.LayoutScaleToFitWithCrop">
+            <summary>Pixels cropped from the input frame, until the desired aspect ratio is achieved.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.Presentation.LayoutStretchToFit">
+            <summary>Frame stretched larger on the x or y axes to fit the desired aspect ratio.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.ProgressHolder">
+            <summary>Holds a progress percentage.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.ProgressHolder.Progress">
+            <summary>The held progress, expressed as an integer percentage.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.ScaleToFitTransformation">
+            <summary>Specifies a simple rotation and/or scale to apply in the vertex shader.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.TransformationException">
+            <summary>Thrown when a non-locally recoverable transformation failure occurs.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCode">
+            <summary>An error code which identifies the cause of the transformation failure.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeDecoderInitFailed">
+            <summary>Caused by a decoder initialization failure.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeDecodingFailed">
+            <summary>Caused by a failure while trying to decode media samples.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeDecodingFormatUnsupported">
+            <summary>Caused by trying to decode content whose format is not supported.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeEncoderInitFailed">
+            <summary>Caused by an encoder initialization failure.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeEncodingFailed">
+            <summary>Caused by a failure while trying to encode media samples.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeFailedRuntimeCheck">
+            <summary>Caused by a failed runtime check.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeGlInitFailed">
+            <summary>Caused by a GL initialization failure.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeGlProcessingFailed">
+            <summary>Caused by a failure while using or releasing a GL program.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeIoBadHttpStatus">
+            <summary>Caused by an HTTP server returning an unexpected HTTP response status code.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeIoCleartextNotPermitted">
+            <summary>Caused by the player trying to access cleartext HTTP traffic (meaning http:// rather than
+            https://) when the app's Network Security Configuration does not permit it.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeIoFileNotFound">
+            <summary>Caused by a non-existent file.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeIoInvalidHttpContentType">
+            <summary>Caused by a server returning a resource with an invalid "Content-Type" HTTP header value.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeIoNetworkConnectionFailed">
+            <summary>Caused by a network connection failure.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeIoNetworkConnectionTimeout">
+            <summary>Caused by a network timeout, meaning the server is taking too long to fulfill a request.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeIoNoPermission">
+            <summary>Caused by lack of permission to perform an IO operation.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeIoReadPositionOutOfRange">
+            <summary>Caused by reading data out of the data bound.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeIoUnspecified">
+            <summary>Caused by an Input/Output error which could not be identified.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeMuxingFailed">
+            <summary>Caused by a failure while muxing media samples.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeOutputFormatUnsupported">
+            <summary>Caused by the output format for a track not being supported.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeUnspecified">
+            <summary>Caused by an error whose cause could not be identified.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationException.TimestampMs">
+            <summary>The value of <c>SystemClock#elapsedRealtime()</c> when this exception was created.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorCodeName">
+            <summary>Equivalent to <c>TransformationException#getErrorCodeName(int)
+            TransformationException.getErrorCodeName(this.errorCode)</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.TransformationException.CreateForUnexpected(Java.Lang.Exception)">
+            <param name="cause">The cause of the failure.</param>
+            <summary>Creates an instance for an unexpected exception.</summary>
+            <returns>The created instance.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.TransformationException.ErrorInfoEquals(Com.Google.Android.Exoplayer2.Transformer.TransformationException)">
+            <summary>Returns whether the error data associated to this exception equals the error data associated to
+            <c>other</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.TransformationException.GetErrorCodeName(System.Int32)">
+            <summary>Returns the name of a given <c>errorCode</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.TransformationRequest">
+            <summary>A media transformation request.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationRequest.AudioMimeType">
+            <summary>The requested output audio sample MimeTypes MIME type, or <c>null</c> if inferred
+            from the input.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationRequest.EnableHdrEditing">
+            <summary>Whether to attempt to process any input video stream as a high dynamic range (HDR) signal.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationRequest.EnableRequestSdrToneMapping">
+            <summary>Whether to request tone-mapping to standard dynamic range (SDR).</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationRequest.FlattenForSlowMotion">
+            <summary>Whether the input should be flattened for media containing slow motion markers.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationRequest.OutputHeight">
+            <summary>The requested height of the output video, or <c>C#LENGTH_UNSET</c> if inferred from the input.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationRequest.RotationDegrees">
+            <summary>The requested rotation, in degrees, of the output video, or 0 if inferred from the input.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationRequest.ScaleX">
+            <summary>The requested scale factor, on the x-axis, of the output video, or 1 if inferred from the
+            input.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationRequest.ScaleY">
+            <summary>The requested scale factor, on the y-axis, of the output video, or 1 if inferred from the
+            input.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationRequest.VideoMimeType">
+            <summary>The requested output video sample MimeTypes MIME type, or <c>null</c> if inferred
+            from the input.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.TransformationResult">
+            <summary>Information about the result of a successful transformation.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationResult.AverageAudioBitrate">
+            <summary>The average bitrate of the audio track data, or <c>C#RATE_UNSET_INT</c> if unset or unknown.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationResult.AverageVideoBitrate">
+            <summary>The average bitrate of the video track data, or <c>C#RATE_UNSET_INT</c> if unset or unknown.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationResult.DurationMs">
+            <summary>The duration of the file in milliseconds, or <c>C#TIME_UNSET</c> if unset or unknown.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationResult.FileSizeBytes">
+            <summary>The size of the file in bytes, or <c>C#LENGTH_UNSET</c> if unset or unknown.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.TransformationResult.VideoFrameCount">
+            <summary>The number of video frames.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.Transformer">
+            <summary>A transformer to transform media inputs.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.Transformer.ProgressStateAvailable">
+            <summary>Indicates that the progress is available.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.Transformer.ProgressStateNoTransformation">
+            <summary>Indicates that there is no current transformation.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.Transformer.ProgressStateUnavailable">
+            <summary>Indicates that the progress is permanently unavailable for the current transformation.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.Transformer.ProgressStateWaitingForAvailability">
+            <summary>Indicates that the progress is unavailable for the current transformation, but might become
+            available.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.Transformer.Cancel">
+            <summary>Cancels the transformation that is currently in progress, if any.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.Transformer.GetProgress(Com.Google.Android.Exoplayer2.Transformer.ProgressHolder)">
+            <param name="progressHolder">A <c>ProgressHolder</c>, updated to hold the percentage progress if
+                <c>#PROGRESS_STATE_AVAILABLE available</c>.</param>
+            <summary>Returns the current <c>ProgressState</c> and updates <c>progressHolder</c> with the current
+            progress if it is <c>#PROGRESS_STATE_AVAILABLE available</c>.</summary>
+            <returns>The <c>ProgressState</c>.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Transformer.Transformer.RemoveAllListeners">
+            <summary>Removes all Transformer.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings">
+            <summary>Represents the video encoder settings.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings.Bitrate">
+            <summary>The encoding bitrate.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings.BitrateMode">
+            <summary>One of BitrateMode the allowed modes.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings.ColorProfile">
+            <summary>The encoding color profile.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings.Default">
+            <summary>A default <c>VideoEncoderSettings</c>.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings.DefaultColorProfile">
+            <summary>The default encoding color profile.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings.DefaultIFrameIntervalSeconds">
+            <summary>The default I-frame interval in seconds.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings.IFrameIntervalSeconds">
+            <summary>The encoding I-Frame interval in seconds.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings.Level">
+            <summary>The encoding level.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings.NoValue">
+            <summary>A value for various fields to indicate that the field's value is unknown or not applicable.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings.OperatingRate">
+            <summary>The encoder <c>MediaFormat#KEY_OPERATING_RATE operating rate</c>.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings.Priority">
+            <summary>The encoder <c>MediaFormat#KEY_PRIORITY priority</c>.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Transformer.VideoEncoderSettings.Profile">
+            <summary>The encoding profile.</summary>
+        </member>
+    </members>
+</doc>

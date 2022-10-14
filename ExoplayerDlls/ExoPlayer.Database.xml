@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ExoPlayer.Database</name>
+    </assembly>
+    <members>
+        <member name="T:Com.Google.Android.Exoplayer2.Database.DatabaseIOException">
+            <summary>An <c>IOException</c> whose cause is an <c>SQLException</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Database.DefaultDatabaseProvider">
+            <summary>A <c>DatabaseProvider</c> that provides instances obtained from a <c>SQLiteOpenHelper</c>.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Database.DefaultDatabaseProvider.InterfaceConsts.TablePrefix">
+            <summary>Prefix for tables that can be read and written by media library components.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Database.DatabaseProvider.TablePrefix">
+            <summary>Prefix for tables that can be read and written by media library components.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Database.IDatabaseProvider">
+            <summary>Provides <c>SQLiteDatabase</c> instances to media library components, which may read and write
+            tables prefixed with <c>#TABLE_PREFIX</c>.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Database.IDatabaseProvider.TablePrefix">
+            <summary>Prefix for tables that can be read and written by media library components.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Database.StandaloneDatabaseProvider">
+            <summary>An <c>SQLiteOpenHelper</c> that provides instances of a standalone database.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Database.StandaloneDatabaseProvider.InterfaceConsts.TablePrefix">
+            <summary>Prefix for tables that can be read and written by media library components.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Database.VersionTable">
+            <summary>Utility methods for accessing versions of media library database components.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Database.VersionTable.FeatureCacheContentMetadata">
+            <summary>Version of tables used for cache content metadata.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Database.VersionTable.FeatureCacheFileMetadata">
+            <summary>Version of tables used for cache file metadata.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Database.VersionTable.FeatureExternal">
+            <summary>Version of tables used from external features.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Database.VersionTable.FeatureOffline">
+            <summary>Version of tables used for offline functionality.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Database.VersionTable.VersionUnset">
+            <summary>Returned by <c>#getVersion(SQLiteDatabase, int, String)</c> if the version is unset.</summary>
+        </member>
+    </members>
+</doc>

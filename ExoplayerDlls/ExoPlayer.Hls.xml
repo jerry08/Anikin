@@ -1,0 +1,275 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ExoPlayer.Hls</name>
+    </assembly>
+    <members>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.BundledHlsMediaChunkExtractor">
+            <summary>
+              <c>HlsMediaChunkExtractor</c> implementation that uses ExoPlayer app-bundled <c>Extractor
+            Extractors</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.DefaultHlsDataSourceFactory">
+            <summary>Default implementation of <c>HlsDataSourceFactory</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.DefaultHlsExtractorFactory">
+            <summary>Default <c>HlsExtractorFactory</c> implementation.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.DefaultHlsExtractorFactory.#ctor">
+            <summary>Equivalent to <c>#DefaultHlsExtractorFactory(int, boolean) new
+            DefaultHlsExtractorFactory(payloadReaderFactoryFlags = 0, exposeCea608WhenMissingDeclarations =
+            true)</c></summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.DefaultHlsExtractorFactory.#ctor(System.Int32,System.Boolean)">
+            <param name="payloadReaderFactoryFlags">Flags to add when constructing any <c>DefaultTsPayloadReaderFactory</c> instances. Other flags may be added on top of <c>payloadReaderFactoryFlags</c> when creating <c>DefaultTsPayloadReaderFactory</c>.</param>
+            <param name="exposeCea608WhenMissingDeclarations">Whether created <c>TsExtractor</c> instances should
+                expose a CEA-608 track should the multivariant playlist contain no Closed Captions
+                declarations. If the multivariant playlist contains any Closed Captions declarations, this
+                flag is ignored.</param>
+            <summary>Creates a factory for HLS segment extractors.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.HlsManifest">
+            <summary>Holds a multivariant playlist along with a snapshot of one of its media playlists.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.HlsManifest.MediaPlaylist">
+            <summary>A snapshot of a media playlist referred to by <c>#multivariantPlaylist</c>.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.HlsManifest.MultivariantPlaylist">
+            <summary>The multivariant playlist of an HLS stream.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.HlsMediaPeriod">
+            <summary>A <c>MediaPeriod</c> that loads an HLS stream.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.HlsMediaSource">
+            <summary>An HLS <c>MediaSource</c>.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Source.Hls.HlsMediaSource.MetadataTypeEmsg">
+            <summary>Type for ESMG metadata in HLS streams.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Source.Hls.HlsMediaSource.MetadataTypeId3">
+            <summary>Type for ID3 metadata in HLS streams.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.HlsTrackMetadataEntry">
+            <summary>Holds metadata associated to an HLS media track.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.HlsTrackMetadataEntry.GroupId">
+            <summary>The GROUP-ID value of this track, if the track is derived from an EXT-X-MEDIA tag.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.HlsTrackMetadataEntry.Name">
+            <summary>The NAME value of this track, if the track is derived from an EXT-X-MEDIA tag.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.HlsTrackMetadataEntry.VariantInfos">
+            <summary>The EXT-X-STREAM-INF tags attributes associated with this track.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.HlsTrackMetadataEntry.#ctor(System.String,System.String,System.Collections.Generic.IList{Com.Google.Android.Exoplayer2.Source.Hls.HlsTrackMetadataEntry.VariantInfo})">
+            <param name="groupId">See <c>#groupId</c>.</param>
+            <param name="name">See <c>#name</c>.</param>
+            <param name="variantInfos">See <c>#variantInfos</c>.</param>
+            <summary>Creates an instance.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.IHlsDataSourceFactory">
+            <summary>Creates <c>DataSource</c>s for HLS playlists, encryption and media chunks.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.IHlsExtractorFactory">
+            <summary>Factory for HLS media chunk extractors.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.IHlsMediaChunkExtractor">
+            <summary>Extracts samples and track <c>Format Formats</c> from <c>HlsMediaChunk HlsMediaChunks</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.IHlsMediaChunkExtractor.OnTruncatedSegmentParsed">
+            <summary>Resets the sample parsing state.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.IHlsMediaChunkExtractor.Recreate">
+            <summary>Returns a new instance for extracting the same type of media as this one.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.MediaParserHlsMediaChunkExtractor">
+            <summary>
+              <c>HlsMediaChunkExtractor</c> implemented on top of the platform's <c>MediaParser</c>.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.MediaParserHlsMediaChunkExtractor.Factory">
+            <summary>
+              <c>HlsExtractorFactory</c> implementation that produces <c>MediaParserHlsMediaChunkExtractor</c> for all container formats except WebVTT, for which a <c>BundledHlsMediaChunkExtractor</c> is returned.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.Offline.HlsDownloader">
+            <summary>A downloader for HLS streams.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.DefaultHlsPlaylistParserFactory">
+            <summary>Default implementation for <c>HlsPlaylistParserFactory</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.DefaultHlsPlaylistTracker">
+            <summary>Default implementation for <c>HlsPlaylistTracker</c>.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.DefaultHlsPlaylistTracker.DefaultPlaylistStuckTargetDurationCoefficient">
+            <summary>Default coefficient applied on the target duration of a playlist to determine the amount of
+            time after which an unchanging playlist is considered stuck.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.FilteringHlsPlaylistParserFactory">
+            <summary>A <c>HlsPlaylistParserFactory</c> that includes only the streams identified by the given stream
+            keys.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist">
+            <summary>Represents an HLS media playlist.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.DiscontinuitySequence">
+            <summary>The discontinuity sequence number of the first media segment in the playlist, as defined by
+            #EXT-X-DISCONTINUITY-SEQUENCE.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.DurationUs">
+            <summary>The total duration of the playlist in microseconds.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.HasDiscontinuitySequence">
+            <summary>Whether the playlist contains the #EXT-X-DISCONTINUITY-SEQUENCE tag.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.HasEndTag">
+            <summary>Whether the playlist contains the #EXT-X-ENDLIST tag.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.HasPositiveStartOffset">
+            <summary>Whether the <c>#startOffsetUs</c> was explicitly defined by #EXT-X-START as a positive value
+            or zero.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.HasProgramDateTime">
+            <summary>Whether the playlist contains a #EXT-X-PROGRAM-DATE-TIME tag.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.MediaSequence">
+            <summary>The media sequence number of the first media segment in the playlist, as defined by
+            #EXT-X-MEDIA-SEQUENCE.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.PartTargetDurationUs">
+            <summary>The target duration for segment parts, as defined by #EXT-X-PART-INF, or <c>C#TIME_UNSET</c>
+            if undefined.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.PlaylistType">
+            <summary>The type of the playlist.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.PreciseStart">
+            <summary>Whether the start position should be precise, as defined by #EXT-X-START.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.Segments">
+            <summary>The list of segments in the playlist.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.StartOffsetUs">
+            <summary>The start offset in microseconds from the beginning of the playlist, as defined by
+            #EXT-X-START, or <c>C#TIME_UNSET</c> if undefined.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.StartTimeUs">
+            <summary>If <c>#hasProgramDateTime</c> is true, contains the datetime as microseconds since epoch.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.TargetDurationUs">
+            <summary>The target duration in microseconds, as defined by #EXT-X-TARGETDURATION.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.TrailingParts">
+            <summary>The list of parts at the end of the playlist for which the segment is not in the playlist yet.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.Version">
+            <summary>The compatibility version, as defined by #EXT-X-VERSION.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.EndTimeUs">
+            <summary>Returns the result of adding the duration of the playlist to its start time.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.CopyWith(System.Int64,System.Int32)">
+            <param name="startTimeUs">The start time for the returned playlist.</param>
+            <param name="discontinuitySequence">The discontinuity sequence for the returned playlist.</param>
+            <summary>Returns a playlist identical to this one except for the start time, the discontinuity sequence
+            and <c>hasDiscontinuitySequence</c> values.</summary>
+            <returns>An identical playlist including the provided discontinuity and timing information.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.CopyWithEndTag">
+            <summary>Returns a playlist identical to this one except that an end tag is added.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist.IsNewerThan(Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist)">
+            <param name="other">The playlist to compare.</param>
+            <summary>Returns whether this playlist is newer than <c>other</c>.</summary>
+            <returns>Whether this playlist is newer than <c>other</c>.</returns>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMultivariantPlaylist">
+            <summary>Represents an HLS multivariant playlist.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMultivariantPlaylist.Audios">
+            <summary>The audio renditions declared by the playlist.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMultivariantPlaylist.ClosedCaptions">
+            <summary>The closed caption renditions declared by the playlist.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMultivariantPlaylist.Empty">
+            <summary>Represents an empty multivariant playlist, from which no attributes can be inherited.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMultivariantPlaylist.Subtitles">
+            <summary>The subtitle renditions declared by the playlist.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMultivariantPlaylist.VariableDefinitions">
+            <summary>Contains variable definitions, as defined by the #EXT-X-DEFINE tag.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMultivariantPlaylist.Variants">
+            <summary>The variants declared by the playlist.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMultivariantPlaylist.Videos">
+            <summary>The video renditions declared by the playlist.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMultivariantPlaylist.CreateSingleVariantMultivariantPlaylist(System.String)">
+            <param name="variantUrl">The url of the single variant.</param>
+            <summary>Creates a playlist with a single variant.</summary>
+            <returns>A multivariant playlist with a single variant for the provided url.</returns>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsPlaylist">
+            <summary>Represents an HLS playlist.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsPlaylist.BaseUri">
+            <summary>The base uri.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsPlaylist.HasIndependentSegments">
+            <summary>Whether the media is formed of independent segments, as defined by the
+            #EXT-X-INDEPENDENT-SEGMENTS tag.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsPlaylist.Tags">
+            <summary>The list of tags in the playlist.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsPlaylist.#ctor(System.String,System.Collections.Generic.IList{System.String},System.Boolean)">
+            <param name="baseUri">See <c>#baseUri</c>.</param>
+            <param name="tags">See <c>#tags</c>.</param>
+            <param name="hasIndependentSegments">See <c>#hasIndependentSegments</c>.</param>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsPlaylistParser">
+            <summary>HLS playlists parsing logic.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsPlaylistParser.#ctor">
+            <summary>Creates an instance where media playlists are parsed without inheriting attributes from a
+            multivariant playlist.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsPlaylistParser.#ctor(Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMultivariantPlaylist,Com.Google.Android.Exoplayer2.Source.Hls.Playlist.HlsMediaPlaylist)">
+            <param name="multivariantPlaylist">The multivariant playlist from which media playlists will inherit
+                attributes.</param>
+            <param name="previousMediaPlaylist">The previous media playlist from which the new media playlist may
+                inherit skipped segments.</param>
+            <summary>Creates an instance where parsed media playlists inherit attributes from the given master
+            playlist.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.IHlsPlaylistParserFactory">
+            <summary>Factory for <c>HlsPlaylist</c> parsers.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.IHlsPlaylistTracker">
+            <summary>Tracks playlists associated to an HLS stream and provides snapshots.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.IHlsPlaylistTracker.MaybeThrowPrimaryPlaylistRefreshError">
+            <summary>If the tracker is having trouble refreshing the multivariant playlist or the primary playlist,
+            this method throws the underlying error.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.Playlist.IHlsPlaylistTracker.Stop">
+            <summary>Stops the playlist tracker and releases any acquired resources.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.SampleQueueMappingException">
+            <summary>Thrown when it is not possible to map a <c>TrackGroup</c> to a <c>SampleQueue</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.SampleQueueMappingException.#ctor(System.String)">
+            <param name="mimeType">The mime type of the track group whose mapping failed.</param>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.TimestampAdjusterProvider">
+            <summary>Provides <c>TimestampAdjuster</c> instances for use during HLS playbacks.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.Source.Hls.TimestampAdjusterProvider.Reset">
+            <summary>Resets the provider.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.Source.Hls.WebvttExtractor">
+            <summary>A special purpose extractor for WebVTT content in HLS.</summary>
+        </member>
+    </members>
+</doc>

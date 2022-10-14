@@ -1,0 +1,865 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ExoPlayer.UI</name>
+    </assembly>
+    <members>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar">
+            <summary>A time bar that shows a current position, buffered position, duration and ad markers.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.BarGravityBottom">
+            <summary>Vertical gravity for progress bar to be located at the bottom in the view.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.BarGravityCenter">
+            <summary>Vertical gravity for progress bar to be located at the center in the view.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.DefaultAdMarkerColor">
+            <summary>Default color for ad markers.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.DefaultAdMarkerWidthDp">
+            <summary>Default width for ad markers, in dp.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.DefaultBarHeightDp">
+            <summary>Default height for the time bar, in dp.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.DefaultBufferedColor">
+            <summary>Default color for the buffered portion of the time bar.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.DefaultPlayedAdMarkerColor">
+            <summary>Default color for played ad markers.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.DefaultPlayedColor">
+            <summary>Default color for the played portion of the time bar.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.DefaultScrubberColor">
+            <summary>Default color for the scrubber handle.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.DefaultScrubberDisabledSizeDp">
+            <summary>Default diameter for the scrubber when disabled, in dp.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.DefaultScrubberDraggedSizeDp">
+            <summary>Default diameter for the scrubber when dragged, in dp.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.DefaultScrubberEnabledSizeDp">
+            <summary>Default diameter for the scrubber when enabled, in dp.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.DefaultTouchTargetHeightDp">
+            <summary>Default height for the touch target, in dp.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.DefaultUnplayedColor">
+            <summary>Default color for the unplayed portion of the time bar.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.HideScrubber(System.Boolean)">
+            <summary>Hides the scrubber handle.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.HideScrubber(System.Int64)">
+            <param name="hideAnimationDurationMs">The duration for scrubber hiding animation.</param>
+            <summary>Hides the scrubber handle with animation.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.SetAdMarkerColor(System.Int32)">
+            <param name="adMarkerColor">The color for unplayed ad markers.</param>
+            <summary>Sets the color for unplayed ad markers.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.SetBufferedColor(System.Int32)">
+            <param name="bufferedColor">The color for the portion of the time bar after the current played
+                position up to the current buffered position.</param>
+            <summary>Sets the color for the portion of the time bar after the current played position up to the
+            current buffered position.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.SetPlayedAdMarkerColor(System.Int32)">
+            <param name="playedAdMarkerColor">The color for played ad markers.</param>
+            <summary>Sets the color for played ad markers.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.SetPlayedColor(System.Int32)">
+            <param name="playedColor">The color for the portion of the time bar representing media before the
+                playback position.</param>
+            <summary>Sets the color for the portion of the time bar representing media before the playback position.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.SetScrubberColor(System.Int32)">
+            <param name="scrubberColor">The color for the scrubber handle.</param>
+            <summary>Sets the color for the scrubber handle.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.SetUnplayedColor(System.Int32)">
+            <param name="unplayedColor">The color for the portion of the time bar after the current played
+                position.</param>
+            <summary>Sets the color for the portion of the time bar after the current played position.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.ShowScrubber">
+            <summary>Shows the scrubber handle.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.DefaultTimeBar.ShowScrubber(System.Int64)">
+            <param name="showAnimationDurationMs">The duration for scrubber showing animation.</param>
+            <summary>Shows the scrubber handle with animation.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.AspectRatioFrameLayout">
+            <summary>A <c>FrameLayout</c> that resizes itself to match a specified aspect ratio.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.AspectRatioFrameLayout.ResizeModeFill">
+            <summary>The specified aspect ratio is ignored.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.AspectRatioFrameLayout.ResizeModeFit">
+            <summary>Either the width or height is decreased to obtain the desired aspect ratio.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.AspectRatioFrameLayout.ResizeModeFixedHeight">
+            <summary>The height is fixed and the width is increased or decreased to obtain the desired aspect ratio.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.AspectRatioFrameLayout.ResizeModeFixedWidth">
+            <summary>The width is fixed and the height is increased or decreased to obtain the desired aspect ratio.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.AspectRatioFrameLayout.ResizeModeZoom">
+            <summary>Either the width or height is increased to obtain the desired aspect ratio.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.AspectRatioFrameLayout.ResizeMode">
+            <summary>Returns the <c>ResizeMode</c>. -or- Sets the <c>ResizeMode</c></summary>
+            <param name="resizeMode">The <c>ResizeMode</c>.</param>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.AspectRatioFrameLayout.SetAspectRatio(System.Single)">
+            <param name="widthHeightRatio">The width to height ratio.</param>
+            <summary>Sets the aspect ratio that this view should satisfy.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat">
+            <summary>A compatibility wrapper for <c>CaptionStyle</c>.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat.BackgroundColor">
+            <summary>The preferred background color.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat.Default">
+            <summary>Default caption style.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat.EdgeColor">
+            <summary>The preferred edge color, if using an edge type other than <c>#EDGE_TYPE_NONE</c>.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat.EdgeType">
+            <summary>The preferred edge type.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat.EdgeTypeDepressed">
+            <summary>Edge type value specifying depressed bevel character edges.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat.EdgeTypeDropShadow">
+            <summary>Edge type value specifying drop-shadowed character edges.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat.EdgeTypeNone">
+            <summary>Edge type value specifying no character edges.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat.EdgeTypeOutline">
+            <summary>Edge type value specifying uniformly outlined character edges.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat.EdgeTypeRaised">
+            <summary>Edge type value specifying raised bevel character edges.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat.ForegroundColor">
+            <summary>The preferred foreground color.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat.UseTrackColorSettings">
+            <summary>Use color setting specified by the track and fallback to default caption style.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat.WindowColor">
+            <summary>The preferred window color.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.DefaultMediaDescriptionAdapter">
+            <summary>Default implementation of <c>MediaDescriptionAdapter</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.DefaultTrackNameProvider">
+            <summary>A default <c>TrackNameProvider</c>.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.ITimeBar">
+            <summary>Interface for time bar views that can display a playback position, buffered position, duration
+            and ad markers, and that have a listener for scrubbing (seeking) events.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.ITimeBar.SetAdGroupTimesMs(System.Int64[],System.Boolean[],System.Int32)">
+            <param name="adGroupTimesMs">An array where the first <c>adGroupCount</c> elements are the times of
+                ad groups in milliseconds. May be <c>null</c> if there are no ad groups.</param>
+            <param name="playedAdGroups">An array where the first <c>adGroupCount</c> elements indicate whether
+                the corresponding ad groups have been played. May be <c>null</c> if there are no ad
+                groups.</param>
+            <param name="adGroupCount">The number of ad groups.</param>
+            <summary>Sets the times of ad groups and whether each ad group has been played.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.ITimeBar.SetBufferedPosition(System.Int64)">
+            <param name="bufferedPosition">The current buffered position to show, in milliseconds.</param>
+            <summary>Sets the buffered position.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.ITimeBar.SetDuration(System.Int64)">
+            <param name="duration">The duration to show, in milliseconds.</param>
+            <summary>Sets the duration.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.ITimeBar.SetKeyCountIncrement(System.Int32)">
+            <param name="count">The number of increments that divide the duration of the media.</param>
+            <summary>Sets the position increment for key presses and accessibility actions, as a number of
+            increments that divide the duration of the media.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.ITimeBar.SetKeyTimeIncrement(System.Int64)">
+            <param name="time">The time increment, in milliseconds.</param>
+            <summary>Sets the position increment for key presses and accessibility actions, in milliseconds.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.ITimeBar.SetPosition(System.Int64)">
+            <param name="position">The current position to show, in milliseconds.</param>
+            <summary>Sets the current position.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.ITrackNameProvider">
+            <summary>Converts <c>Format</c>s to user readable track names.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.PlayerControlView">
+            <summary>A view for controlling <c>Player</c> instances.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerControlView.DefaultRepeatToggleModes">
+            <summary>The default repeat toggle modes.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerControlView.DefaultShowTimeoutMs">
+            <summary>The default show timeout, in milliseconds.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerControlView.DefaultTimeBarMinUpdateIntervalMs">
+            <summary>The default minimum interval between time bar position updates.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerControlView.MaxWindowsForMultiWindowTimeBar">
+            <summary>The maximum number of windows that can be shown in a multi-window time bar.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerControlView.IsVisible">
+            <summary>Returns whether the controller is currently visible.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerControlView.RepeatToggleModes">
+            <summary>Returns which repeat toggle modes are enabled. -or- Sets which repeat toggle modes are enabled.</summary>
+            <returns>The currently enabled <c>RepeatModeUtil.RepeatToggleModes</c>.</returns>
+            <param name="repeatToggleModes">A set of <c>RepeatModeUtil.RepeatToggleModes</c>.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerControlView.ShowShuffleButton">
+            <summary>Returns whether the shuffle button is shown. -or- Sets whether the shuffle button is shown.</summary>
+            <param name="showShuffleButton">Whether the shuffle button is shown.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerControlView.ShowTimeoutMs">
+            <summary>Returns the playback controls timeout. -or- Sets the playback controls timeout.</summary>
+            <returns>The duration in milliseconds. A non-positive value indicates that the controls will
+                remain visible indefinitely.</returns>
+            <param name="showTimeoutMs">The duration in milliseconds. A non-positive value will cause the controls
+                to remain visible indefinitely.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerControlView.ShowVrButton">
+            <summary>Returns whether the VR button is shown. -or- Sets whether the VR button is shown.</summary>
+            <param name="showVrButton">Whether the VR button is shown.</param>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerControlView.Hide">
+            <summary>Hides the controller.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerControlView.SetExtraAdGroupMarkers(System.Int64[],System.Boolean[])">
+            <param name="extraAdGroupTimesMs">The millisecond timestamps of the extra ad markers to show, or
+                <c>null</c> to show no extra ad markers.</param>
+            <param name="extraPlayedAdGroups">Whether each ad has been played. Must be the same length as <c>extraAdGroupTimesMs</c>, or <c>null</c> if <c>extraAdGroupTimesMs</c> is <c>null</c>.</param>
+            <summary>Sets the millisecond positions of extra ad markers relative to the start of the window (or
+            timeline, if in multi-window mode) and whether each extra ad has been played or not.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerControlView.SetShowFastForwardButton(System.Boolean)">
+            <param name="showFastForwardButton">Whether the fast forward button is shown.</param>
+            <summary>Sets whether the fast forward button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerControlView.SetShowMultiWindowTimeBar(System.Boolean)">
+            <param name="showMultiWindowTimeBar">Whether the time bar should show all windows.</param>
+            <summary>Sets whether the time bar should show all windows, as opposed to just the current one.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerControlView.SetShowNextButton(System.Boolean)">
+            <param name="showNextButton">Whether the next button is shown.</param>
+            <summary>Sets whether the next button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerControlView.SetShowPreviousButton(System.Boolean)">
+            <param name="showPreviousButton">Whether the previous button is shown.</param>
+            <summary>Sets whether the previous button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerControlView.SetShowRewindButton(System.Boolean)">
+            <param name="showRewindButton">Whether the rewind button is shown.</param>
+            <summary>Sets whether the rewind button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerControlView.SetTimeBarMinUpdateInterval(System.Int32)">
+            <param name="minUpdateIntervalMs">The minimum interval between time bar position updates, in
+                milliseconds.</param>
+            <summary>Sets the minimum interval between time bar position updates.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerControlView.Show">
+            <summary>Shows the playback controls.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager">
+            <summary>Starts, updates and cancels a media style notification reflecting the player state.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.ActionFastForward">
+            <summary>The action which fast forwards.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.ActionNext">
+            <summary>The action which skips to the next media item.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.ActionPause">
+            <summary>The action which pauses playback.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.ActionPlay">
+            <summary>The action which starts playback.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.ActionPrevious">
+            <summary>The action which skips to the previous media item.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.ActionRewind">
+            <summary>The action which rewinds.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.ActionStop">
+            <summary>The action which stops playback.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.ExtraInstanceId">
+            <summary>The extra key of the instance id of the player notification manager.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.Invalidate">
+            <summary>Forces an update of the notification if already started.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetBadgeIconType(System.Int32)">
+            <param name="badgeIconType">The badge icon type.</param>
+            <summary>Sets the badge icon type of the notification.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetColor(System.Int32)">
+            <param name="color">The color, in ARGB integer form like the constants in <c>Color</c>.</param>
+            <summary>Sets the accent color of the notification.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetColorized(System.Boolean)">
+            <param name="colorized">Whether to colorize the notification.</param>
+            <summary>Sets whether the notification should be colorized.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetDefaults(System.Int32)">
+            <param name="defaults">The default notification options.</param>
+            <summary>Sets the defaults.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetPriority(System.Int32)">
+            <param name="priority">The priority which can be one of <c>NotificationCompat#PRIORITY_DEFAULT</c>,
+                <c>NotificationCompat#PRIORITY_MAX</c>, <c>NotificationCompat#PRIORITY_HIGH</c>, <c>NotificationCompat#PRIORITY_LOW</c> or <c>NotificationCompat#PRIORITY_MIN</c>. If not set
+                <c>NotificationCompat#PRIORITY_LOW</c> is used by default.</param>
+            <summary>Sets the priority of the notification required for API 25 and lower.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetSmallIcon(System.Int32)">
+            <param name="smallIconResourceId">The resource id of the small icon.</param>
+            <summary>Sets the small icon of the notification which is also shown in the system status bar.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetUseChronometer(System.Boolean)">
+            <param name="useChronometer">Whether to use chronometer.</param>
+            <summary>Sets whether the elapsed time of the media playback should be displayed.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetUseFastForwardAction(System.Boolean)">
+            <param name="useFastForwardAction">Whether to use the fast forward action.</param>
+            <summary>Sets whether the fast forward action should be used.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetUseFastForwardActionInCompactView(System.Boolean)">
+            <param name="useFastForwardActionInCompactView">Whether to use the fast forward action in compact
+                view.</param>
+            <summary>Sets whether the fast forward action should also be used in compact view.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetUseNextAction(System.Boolean)">
+            <param name="useNextAction">Whether to use the next action.</param>
+            <summary>Sets whether the next action should be used.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetUseNextActionInCompactView(System.Boolean)">
+            <param name="useNextActionInCompactView">Whether to use the next action in compact view.</param>
+            <summary>If <c>#setUseNextAction useNextAction</c> is <c>true</c>, sets whether the next action should
+            also be used in compact view.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetUsePlayPauseActions(System.Boolean)">
+            <param name="usePlayPauseActions">Whether to use play and pause actions.</param>
+            <summary>Sets whether the play and pause actions should be used.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetUsePreviousAction(System.Boolean)">
+            <param name="usePreviousAction">Whether to use the previous action.</param>
+            <summary>Sets whether the previous action should be used.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetUsePreviousActionInCompactView(System.Boolean)">
+            <param name="usePreviousActionInCompactView">Whether to use the previous action in compact view.</param>
+            <summary>If <c>#setUsePreviousAction usePreviousAction</c> is <c>true</c>, sets whether the previous
+            action should also be used in compact view.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetUseRewindAction(System.Boolean)">
+            <param name="useRewindAction">Whether to use the rewind action.</param>
+            <summary>Sets whether the rewind action should be used.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetUseRewindActionInCompactView(System.Boolean)">
+            <param name="useRewindActionInCompactView">Whether to use the rewind action in compact view.</param>
+            <summary>Sets whether the rewind action should also be used in compact view.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetUseStopAction(System.Boolean)">
+            <param name="useStopAction">Whether to use the stop action.</param>
+            <summary>Sets whether the stop action should be used.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerNotificationManager.SetVisibility(System.Int32)">
+            <param name="visibility">The visibility which must be one of <c>NotificationCompat#VISIBILITY_PUBLIC</c>, <c>NotificationCompat#VISIBILITY_PRIVATE</c> or
+                <c>NotificationCompat#VISIBILITY_SECRET</c>.</param>
+            <summary>Sets the visibility of the notification which determines whether and how the notification is
+            shown when the device is in lock screen mode.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.PlayerView">
+            <summary>A high level view for <c>Player</c> media playbacks.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerView.ShowBufferingAlways">
+            <summary>The buffering view is always shown when the player is in the <c>Player#STATE_BUFFERING
+            buffering</c> state.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerView.ShowBufferingNever">
+            <summary>The buffering view is never shown.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.PlayerView.ShowBufferingWhenPlaying">
+            <summary>The buffering view is shown when the player is in the <c>Player#STATE_BUFFERING buffering</c>
+            state and <c>Player#getPlayWhenReady() playWhenReady</c> is <c>true</c>.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerView.ControllerAutoShow">
+            <summary>Returns whether the playback controls are automatically shown when playback starts, pauses,
+            ends, or fails. -or- Sets whether the playback controls are automatically shown when playback starts, pauses, ends,
+            or fails.</summary>
+            <param name="controllerAutoShow">Whether the playback controls are allowed to show automatically.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerView.ControllerHideOnTouch">
+            <summary>Returns whether the playback controls are hidden by touch events. -or- Sets whether the playback controls are hidden by touch events.</summary>
+            <param name="controllerHideOnTouch">Whether the playback controls are hidden by touch events.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerView.ControllerShowTimeoutMs">
+            <summary>Returns the playback controls timeout. -or- Sets the playback controls timeout.</summary>
+            <returns>The timeout in milliseconds. A non-positive value will cause the controller to remain
+                visible indefinitely.</returns>
+            <param name="controllerShowTimeoutMs">The timeout in milliseconds. A non-positive value will cause the
+                controller to remain visible indefinitely.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerView.IsControllerVisible">
+            <summary>Returns whether the controller is currently visible.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerView.ResizeMode">
+            <summary>Returns the <c>ResizeMode</c>. -or- Sets the <c>ResizeMode</c>.</summary>
+            <param name="resizeMode">The <c>ResizeMode</c>.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerView.SubtitleView">
+            <summary>Gets the <c>SubtitleView</c>.</summary>
+            <returns>The <c>SubtitleView</c>, or <c>null</c> if the layout has been customized and the
+                subtitle view is not present.</returns>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerView.UseArtwork">
+            <summary>Returns whether artwork is displayed if present in the media. -or- Sets whether artwork is displayed if present in the media.</summary>
+            <param name="useArtwork">Whether artwork is displayed.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.PlayerView.UseController">
+            <summary>Returns whether the playback controls can be shown. -or- Sets whether the playback controls can be shown.</summary>
+            <param name="useController">Whether the playback controls can be shown.</param>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.HideController">
+            <summary>Hides the playback controls.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.OnContentAspectRatioChanged(Com.Google.Android.Exoplayer2.UI.AspectRatioFrameLayout,System.Single)">
+            <param name="contentFrame">The content frame, or <c>null</c>.</param>
+            <param name="aspectRatio">The aspect ratio to apply.</param>
+            <summary>Called when there's a change in the desired aspect ratio of the content frame.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.OnPause">
+            <summary>Should be called when the player is no longer visible to the user, if the <c>surface_type</c>
+            extends <c>GLSurfaceView</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.OnResume">
+            <summary>Should be called when the player is visible to the user, if the <c>surface_type</c> extends
+            <c>GLSurfaceView</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetControllerHideDuringAds(System.Boolean)">
+            <param name="controllerHideDuringAds">Whether the playback controls are hidden when ads are playing.</param>
+            <summary>Sets whether the playback controls are hidden when ads are playing.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetCustomErrorMessage(Java.Lang.ICharSequence)">
+            <param name="message">The message to display, or <c>null</c> to clear a previously set message.</param>
+            <summary>Sets a custom error message to be displayed by the view.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetCustomErrorMessage(System.String)">
+            <param name="message">The message to display, or <c>null</c> to clear a previously set message.</param>
+            <summary>Sets a custom error message to be displayed by the view.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetExtraAdGroupMarkers(System.Int64[],System.Boolean[])">
+            <param name="extraAdGroupTimesMs">The millisecond timestamps of the extra ad markers to show, or
+                <c>null</c> to show no extra ad markers.</param>
+            <param name="extraPlayedAdGroups">Whether each ad has been played, or <c>null</c> to show no extra ad
+                markers.</param>
+            <summary>Sets the millisecond positions of extra ad markers relative to the start of the window (or
+            timeline, if in multi-window mode) and whether each extra ad has been played or not.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetKeepContentOnPlayerReset(System.Boolean)">
+            <param name="keepContentOnPlayerReset">Whether the currently displayed video frame or media artwork is
+                kept visible when the player is reset.</param>
+            <summary>Sets whether the currently displayed video frame or media artwork is kept visible when the
+            player is reset.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetRepeatToggleModes(System.Int32)">
+            <param name="repeatToggleModes">A set of <c>RepeatModeUtil.RepeatToggleModes</c>.</param>
+            <summary>Sets which repeat toggle modes are enabled.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetShowBuffering(System.Int32)">
+            <param name="showBuffering">The mode that defines when the buffering spinner is displayed. One of
+                <c>#SHOW_BUFFERING_NEVER</c>, <c>#SHOW_BUFFERING_WHEN_PLAYING</c> and <c>#SHOW_BUFFERING_ALWAYS</c>.</param>
+            <summary>Sets whether a buffering spinner is displayed when the player is in the buffering state.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetShowFastForwardButton(System.Boolean)">
+            <param name="showFastForwardButton">Whether the fast forward button is shown.</param>
+            <summary>Sets whether the fast forward button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetShowMultiWindowTimeBar(System.Boolean)">
+            <param name="showMultiWindowTimeBar">Whether to show all windows.</param>
+            <summary>Sets whether the time bar should show all windows, as opposed to just the current one.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetShowNextButton(System.Boolean)">
+            <param name="showNextButton">Whether the next button is shown.</param>
+            <summary>Sets whether the next button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetShowPreviousButton(System.Boolean)">
+            <param name="showPreviousButton">Whether the previous button is shown.</param>
+            <summary>Sets whether the previous button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetShowRewindButton(System.Boolean)">
+            <param name="showRewindButton">Whether the rewind button is shown.</param>
+            <summary>Sets whether the rewind button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetShowShuffleButton(System.Boolean)">
+            <param name="showShuffleButton">Whether the shuffle button is shown.</param>
+            <summary>Sets whether the shuffle button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.PlayerView.SetShutterBackgroundColor(System.Int32)">
+            <param name="color">The background color.</param>
+            <summary>Sets the background color of the <c>exo_shutter</c> view.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView">
+            <summary>A view for controlling <c>Player</c> instances.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.DefaultRepeatToggleModes">
+            <summary>The default repeat toggle modes.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.DefaultShowTimeoutMs">
+            <summary>The default show timeout, in milliseconds.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.DefaultTimeBarMinUpdateIntervalMs">
+            <summary>The default minimum interval between time bar position updates.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.MaxWindowsForMultiWindowTimeBar">
+            <summary>The maximum number of windows that can be shown in a multi-window time bar.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.AnimationEnabled">
+            <summary>Returns whether an animation is used to show and hide the playback controls. -or- Sets whether an animation is used to show and hide the playback controls.</summary>
+            <param name="animationEnabled">Whether an animation is applied to show and hide playback controls.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.IsFullyVisible">
+            <summary>Returns whether the controller is fully visible, which means all UI controls are visible.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.IsVisible">
+            <summary>Returns whether the controller is currently visible.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.RepeatToggleModes">
+            <summary>Returns which repeat toggle modes are enabled. -or- Sets which repeat toggle modes are enabled.</summary>
+            <returns>The currently enabled <c>RepeatModeUtil.RepeatToggleModes</c>.</returns>
+            <param name="repeatToggleModes">A set of <c>RepeatModeUtil.RepeatToggleModes</c>.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.ShowShuffleButton">
+            <summary>Returns whether the shuffle button is shown. -or- Sets whether the shuffle button is shown.</summary>
+            <param name="showShuffleButton">Whether the shuffle button is shown.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.ShowSubtitleButton">
+            <summary>Returns whether the subtitle button is shown. -or- Sets whether the subtitle button is shown.</summary>
+            <param name="showSubtitleButton">Whether the subtitle button is shown.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.ShowTimeoutMs">
+            <summary>Returns the playback controls timeout. -or- Sets the playback controls timeout.</summary>
+            <returns>The duration in milliseconds. A non-positive value indicates that the controls will
+                remain visible indefinitely.</returns>
+            <param name="showTimeoutMs">The duration in milliseconds. A non-positive value will cause the controls
+                to remain visible indefinitely.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.ShowVrButton">
+            <summary>Returns whether the VR button is shown. -or- Sets whether the VR button is shown.</summary>
+            <param name="showVrButton">Whether the VR button is shown.</param>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.Hide">
+            <summary>Hides the controller.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.HideImmediately">
+            <summary>Hides the controller without any animation.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.SetExtraAdGroupMarkers(System.Int64[],System.Boolean[])">
+            <param name="extraAdGroupTimesMs">The millisecond timestamps of the extra ad markers to show, or
+                <c>null</c> to show no extra ad markers.</param>
+            <param name="extraPlayedAdGroups">Whether each ad has been played. Must be the same length as <c>extraAdGroupTimesMs</c>, or <c>null</c> if <c>extraAdGroupTimesMs</c> is <c>null</c>.</param>
+            <summary>Sets the millisecond positions of extra ad markers relative to the start of the window (or
+            timeline, if in multi-window mode) and whether each extra ad has been played or not.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.SetShowFastForwardButton(System.Boolean)">
+            <param name="showFastForwardButton">Whether the fast forward button is shown.</param>
+            <summary>Sets whether the fast forward button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.SetShowMultiWindowTimeBar(System.Boolean)">
+            <param name="showMultiWindowTimeBar">Whether the time bar should show all windows.</param>
+            <summary>Sets whether the time bar should show all windows, as opposed to just the current one.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.SetShowNextButton(System.Boolean)">
+            <param name="showNextButton">Whether the next button is shown.</param>
+            <summary>Sets whether the next button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.SetShowPreviousButton(System.Boolean)">
+            <param name="showPreviousButton">Whether the previous button is shown.</param>
+            <summary>Sets whether the previous button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.SetShowRewindButton(System.Boolean)">
+            <param name="showRewindButton">Whether the rewind button is shown.</param>
+            <summary>Sets whether the rewind button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.SetTimeBarMinUpdateInterval(System.Int32)">
+            <param name="minUpdateIntervalMs">The minimum interval between time bar position updates, in
+                milliseconds.</param>
+            <summary>Sets the minimum interval between time bar position updates.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerControlView.Show">
+            <summary>Shows the playback controls.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.StyledPlayerView">
+            <summary>A high level view for <c>Player</c> media playbacks.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.ShowBufferingAlways">
+            <summary>The buffering view is always shown when the player is in the <c>Player#STATE_BUFFERING
+            buffering</c> state.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.ShowBufferingNever">
+            <summary>The buffering view is never shown.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.ShowBufferingWhenPlaying">
+            <summary>The buffering view is shown when the player is in the <c>Player#STATE_BUFFERING buffering</c>
+            state and <c>Player#getPlayWhenReady() playWhenReady</c> is <c>true</c>.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.ControllerAutoShow">
+            <summary>Returns whether the playback controls are automatically shown when playback starts, pauses,
+            ends, or fails. -or- Sets whether the playback controls are automatically shown when playback starts, pauses, ends,
+            or fails.</summary>
+            <param name="controllerAutoShow">Whether the playback controls are allowed to show automatically.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.ControllerHideOnTouch">
+            <summary>Returns whether the playback controls are hidden by touch events. -or- Sets whether the playback controls are hidden by touch events.</summary>
+            <param name="controllerHideOnTouch">Whether the playback controls are hidden by touch events.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.ControllerShowTimeoutMs">
+            <summary>Returns the playback controls timeout. -or- Sets the playback controls timeout.</summary>
+            <returns>The timeout in milliseconds. A non-positive value will cause the controller to remain
+                visible indefinitely.</returns>
+            <param name="controllerShowTimeoutMs">The timeout in milliseconds. A non-positive value will cause the
+                controller to remain visible indefinitely.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.IsControllerFullyVisible">
+            <summary>Returns whether the controller is currently fully visible.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.ResizeMode">
+            <summary>Returns the <c>ResizeMode</c>. -or- Sets the <c>ResizeMode</c>.</summary>
+            <param name="resizeMode">The <c>ResizeMode</c>.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SubtitleView">
+            <summary>Gets the <c>SubtitleView</c>.</summary>
+            <returns>The <c>SubtitleView</c>, or <c>null</c> if the layout has been customized and the
+                subtitle view is not present.</returns>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.UseArtwork">
+            <summary>Returns whether artwork is displayed if present in the media. -or- Sets whether artwork is displayed if present in the media.</summary>
+            <param name="useArtwork">Whether artwork is displayed.</param>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.UseController">
+            <summary>Returns whether the playback controls can be shown. -or- Sets whether the playback controls can be shown.</summary>
+            <param name="useController">Whether the playback controls can be shown.</param>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.HideController">
+            <summary>Hides the playback controls.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.OnContentAspectRatioChanged(Com.Google.Android.Exoplayer2.UI.AspectRatioFrameLayout,System.Single)">
+            <param name="contentFrame">The content frame, or <c>null</c>.</param>
+            <param name="aspectRatio">The aspect ratio to apply.</param>
+            <summary>Called when there's a change in the desired aspect ratio of the content frame.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.OnPause">
+            <summary>Should be called when the player is no longer visible to the user, if the <c>surface_type</c>
+            extends <c>GLSurfaceView</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.OnResume">
+            <summary>Should be called when the player is visible to the user, if the <c>surface_type</c> extends
+            <c>GLSurfaceView</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetControllerHideDuringAds(System.Boolean)">
+            <param name="controllerHideDuringAds">Whether the playback controls are hidden when ads are playing.</param>
+            <summary>Sets whether the playback controls are hidden when ads are playing.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetCustomErrorMessage(Java.Lang.ICharSequence)">
+            <param name="message">The message to display, or <c>null</c> to clear a previously set message.</param>
+            <summary>Sets a custom error message to be displayed by the view.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetCustomErrorMessage(System.String)">
+            <param name="message">The message to display, or <c>null</c> to clear a previously set message.</param>
+            <summary>Sets a custom error message to be displayed by the view.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetExtraAdGroupMarkers(System.Int64[],System.Boolean[])">
+            <param name="extraAdGroupTimesMs">The millisecond timestamps of the extra ad markers to show, or
+                <c>null</c> to show no extra ad markers.</param>
+            <param name="extraPlayedAdGroups">Whether each ad has been played, or <c>null</c> to show no extra ad
+                markers.</param>
+            <summary>Sets the millisecond positions of extra ad markers relative to the start of the window (or
+            timeline, if in multi-window mode) and whether each extra ad has been played or not.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetKeepContentOnPlayerReset(System.Boolean)">
+            <param name="keepContentOnPlayerReset">Whether the currently displayed video frame or media artwork is
+                kept visible when the player is reset.</param>
+            <summary>Sets whether the currently displayed video frame or media artwork is kept visible when the
+            player is reset.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetRepeatToggleModes(System.Int32)">
+            <param name="repeatToggleModes">A set of <c>RepeatModeUtil.RepeatToggleModes</c>.</param>
+            <summary>Sets which repeat toggle modes are enabled.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetShowBuffering(System.Int32)">
+            <param name="showBuffering">The mode that defines when the buffering spinner is displayed. One of
+                <c>#SHOW_BUFFERING_NEVER</c>, <c>#SHOW_BUFFERING_WHEN_PLAYING</c> and <c>#SHOW_BUFFERING_ALWAYS</c>.</param>
+            <summary>Sets whether a buffering spinner is displayed when the player is in the buffering state.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetShowFastForwardButton(System.Boolean)">
+            <param name="showFastForwardButton">Whether the fast forward button is shown.</param>
+            <summary>Sets whether the fast forward button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetShowMultiWindowTimeBar(System.Boolean)">
+            <param name="showMultiWindowTimeBar">Whether to show all windows.</param>
+            <summary>Sets whether the time bar should show all windows, as opposed to just the current one.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetShowNextButton(System.Boolean)">
+            <param name="showNextButton">Whether the next button is shown.</param>
+            <summary>Sets whether the next button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetShowPreviousButton(System.Boolean)">
+            <param name="showPreviousButton">Whether the previous button is shown.</param>
+            <summary>Sets whether the previous button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetShowRewindButton(System.Boolean)">
+            <param name="showRewindButton">Whether the rewind button is shown.</param>
+            <summary>Sets whether the rewind button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetShowShuffleButton(System.Boolean)">
+            <param name="showShuffleButton">Whether the shuffle button is shown.</param>
+            <summary>Sets whether the shuffle button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetShowSubtitleButton(System.Boolean)">
+            <param name="showSubtitleButton">Whether the subtitle button is shown.</param>
+            <summary>Sets whether the subtitle button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetShowVrButton(System.Boolean)">
+            <param name="showVrButton">Whether the vr button is shown.</param>
+            <summary>Sets whether the vr button is shown.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.StyledPlayerView.SetShutterBackgroundColor(System.Int32)">
+            <param name="color">The background color.</param>
+            <summary>Sets the background color of the <c>exo_shutter</c> view.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.SubtitleView">
+            <summary>A view for displaying subtitle <c>Cue</c>s.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.SubtitleView.DefaultBottomPaddingFraction">
+            <summary>The default bottom padding to apply when <c>Cue#line</c> is <c>Cue#DIMEN_UNSET</c>, as a
+            fraction of the viewport height.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.SubtitleView.DefaultTextSizeFraction">
+            <summary>The default fractional text size.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.SubtitleView.ViewTypeCanvas">
+            <summary>Indicates subtitles should be displayed using a <c>Canvas</c>.</summary>
+        </member>
+        <member name="F:Com.Google.Android.Exoplayer2.UI.SubtitleView.ViewTypeWeb">
+            <summary>Indicates subtitles should be displayed using a <c>WebView</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.SubtitleView.SetApplyEmbeddedFontSizes(System.Boolean)">
+            <param name="applyEmbeddedFontSizes">Whether font sizes embedded within the cues should be applied.</param>
+            <summary>Sets whether font sizes embedded within the cues should be applied.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.SubtitleView.SetApplyEmbeddedStyles(System.Boolean)">
+            <param name="applyEmbeddedStyles">Whether styling embedded within the cues should be applied.</param>
+            <summary>Sets whether styling embedded within the cues should be applied.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.SubtitleView.SetBottomPaddingFraction(System.Single)">
+            <param name="bottomPaddingFraction">The bottom padding fraction.</param>
+            <summary>Sets the bottom padding fraction to apply when <c>Cue#line</c> is <c>Cue#DIMEN_UNSET</c>, as
+            a fraction of the view's remaining height after its top and bottom padding have been
+            subtracted.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.SubtitleView.SetFixedTextSize(System.Int32,System.Single)">
+            <param name="unit">The desired dimension unit.</param>
+            <param name="size">The desired size in the given units.</param>
+            <summary>Sets the text size to a given unit and value.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.SubtitleView.SetFractionalTextSize(System.Single)">
+            <param name="fractionOfHeight">A fraction between 0 and 1.</param>
+            <summary>Sets the text size to be a fraction of the view's remaining height after its top and bottom
+            padding have been subtracted.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.SubtitleView.SetFractionalTextSize(System.Single,System.Boolean)">
+            <param name="fractionOfHeight">A fraction between 0 and 1.</param>
+            <param name="ignorePadding">Set to true if <c>fractionOfHeight</c> should be interpreted as a
+                fraction of this view's height ignoring any top and bottom padding. Set to false if <c>fractionOfHeight</c> should be interpreted as a fraction of this view's remaining height after
+                the top and bottom padding has been subtracted.</param>
+            <summary>Sets the text size to be a fraction of the height of this view.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.SubtitleView.SetStyle(Com.Google.Android.Exoplayer2.UI.CaptionStyleCompat)">
+            <param name="style">A style for the view.</param>
+            <summary>Sets the caption style.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.SubtitleView.SetUserDefaultStyle">
+            <summary>Styles the captions using <c>CaptioningManager#getUserStyle()</c> if <c>CaptioningManager</c>
+            is available and enabled.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.SubtitleView.SetUserDefaultTextSize">
+            <summary>Sets the text size based on <c>CaptioningManager#getFontScale()</c> if <c>CaptioningManager</c> is available and enabled.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.SubtitleView.SetViewType(System.Int32)">
+            <param name="viewType">The <c>ViewType</c> to use.</param>
+            <summary>Sets the type of <c>View</c> used to display subtitles.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.TrackSelectionDialogBuilder">
+            <summary>Builder for a dialog with a <c>TrackSelectionView</c>.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.TrackSelectionDialogBuilder.SetAllowAdaptiveSelections(System.Boolean)">
+            <param name="allowAdaptiveSelections">Whether adaptive selection is enabled.</param>
+            <summary>Sets whether adaptive selections (consisting of more than one track) can be made.</summary>
+            <returns>This builder, for convenience.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.TrackSelectionDialogBuilder.SetAllowMultipleOverrides(System.Boolean)">
+            <param name="allowMultipleOverrides">Whether multiple track selection overrides are allowed.</param>
+            <summary>Sets whether multiple overrides can be set and selected, i.</summary>
+            <returns>This builder, for convenience.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.TrackSelectionDialogBuilder.SetIsDisabled(System.Boolean)">
+            <param name="isDisabled">Whether the selection is initially shown as disabled.</param>
+            <summary>Sets whether the selection is initially shown as disabled.</summary>
+            <returns>This builder, for convenience.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.TrackSelectionDialogBuilder.SetShowDisableOption(System.Boolean)">
+            <param name="showDisableOption">Whether the disable option is shown.</param>
+            <summary>Sets whether an option is available for disabling the renderer.</summary>
+            <returns>This builder, for convenience.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.TrackSelectionDialogBuilder.SetTheme(System.Int32)">
+            <param name="themeResId">The resource ID of the theme.</param>
+            <summary>Sets the resource ID of the theme used to inflate this dialog.</summary>
+            <returns>This builder, for convenience.</returns>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.TrackSelectionDialogBuilder.SetTrackNameProvider(Com.Google.Android.Exoplayer2.UI.ITrackNameProvider)">
+            <param name="trackNameProvider">The <c>TrackNameProvider</c> to use, or null to use the default.</param>
+            <summary>Sets the <c>TrackNameProvider</c> used to generate the user visible name of each track and
+            updates the view with track names queried from the specified provider.</summary>
+        </member>
+        <member name="T:Com.Google.Android.Exoplayer2.UI.TrackSelectionView">
+            <summary>A view for making track selections.</summary>
+        </member>
+        <member name="P:Com.Google.Android.Exoplayer2.UI.TrackSelectionView.IsDisabled">
+            <summary>Returns whether the disabled option is selected.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.TrackSelectionView.SetAllowAdaptiveSelections(System.Boolean)">
+            <param name="allowAdaptiveSelections">Whether adaptive selection is enabled.</param>
+            <summary>Sets whether adaptive selections (consisting of more than one track) can be made using this
+            selection view.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.TrackSelectionView.SetAllowMultipleOverrides(System.Boolean)">
+            <param name="allowMultipleOverrides">Whether tracks from multiple track groups can be selected.</param>
+            <summary>Sets whether tracks from multiple track groups can be selected.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.TrackSelectionView.SetShowDisableOption(System.Boolean)">
+            <param name="showDisableOption">Whether the disabled option can be selected.</param>
+            <summary>Sets whether the disabled option can be selected.</summary>
+        </member>
+        <member name="M:Com.Google.Android.Exoplayer2.UI.TrackSelectionView.SetTrackNameProvider(Com.Google.Android.Exoplayer2.UI.ITrackNameProvider)">
+            <param name="trackNameProvider">The <c>TrackNameProvider</c> to use.</param>
+            <summary>Sets the <c>TrackNameProvider</c> used to generate the user visible name of each track and
+            updates the view with track names queried from the specified provider.</summary>
+        </member>
+    </members>
+</doc>
