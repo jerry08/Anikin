@@ -71,11 +71,9 @@ namespace AniStream.Fragments
 
             _client.OnAnimesLoaded += (s, e) =>
             {
-                if (WeebUtils.AnimeSite == AnimeSites.GogoAnime
-                    || WeebUtils.AnimeSite == AnimeSites.Tenshi)
-                {
+                if (WeebUtils.AnimeSite == AnimeSites.GogoAnime || WeebUtils.AnimeSite == AnimeSites.Tenshi)
                     Page++;
-                }
+                
 
                 var animes = e.Animes;
 
@@ -87,13 +85,9 @@ namespace AniStream.Fragments
                     animeRecyclerAdapter.Animes.RemoveAll(x => x.Id == -1);
 
                     if (_client.Site == AnimeSites.GogoAnime)
-                    {
                         if (animes.Count > 0)
-                        {
                             animes.Add(new Anime() { Id = -1 });
-                        }
-                    }
-
+                        
                     animeRecyclerAdapter.Animes.AddRange(animes);
                     mRecyclerView.SetItemViewCacheSize(animeRecyclerAdapter.Animes.Count + 5);
                     //animeRecyclerAdapter.NotifyDataSetChanged();
@@ -107,9 +101,8 @@ namespace AniStream.Fragments
                 else
                 {
                     if (_client.Site == AnimeSites.GogoAnime)
-                    {
                         animes.Add(new Anime() { Id = -1 });
-                    }
+                    
 
                     //var mDataAdapter = new AnimeRecyclerAdapter(view.Context, animes, this);
                     var mDataAdapter = new AnimeRecyclerAdapter(Activity, animes, this);

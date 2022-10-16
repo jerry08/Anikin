@@ -86,9 +86,8 @@ namespace AniStream
 
             var animeSiteStr = await SecureStorage.GetAsync("AnimeSite");
             if (!string.IsNullOrEmpty(animeSiteStr))
-            {
                 WeebUtils.AnimeSite = (AnimeSites)Convert.ToInt32(animeSiteStr);
-            }
+            
 
             _client = new AnimeClient(WeebUtils.AnimeSite);
             _client.OnAnimesLoaded += Client_OnAnimesLoaded;
@@ -130,10 +129,7 @@ namespace AniStream
                 base.OnBackPressed();
             });
 
-            alert.SetNegativeButton("Cancel", (s, e) =>
-            {
-
-            });
+            alert.SetNegativeButton("Cancel", (s, e) =>{});
 
             alert.SetCancelable(false);
             var dialog = alert.Create();
@@ -309,10 +305,8 @@ namespace AniStream
                 return false;
             }
             else
-            {
                 SaveSelectedSource(id);
-            }
-
+            
             return base.OnOptionsItemSelected(item);
         }
 
@@ -323,20 +317,13 @@ namespace AniStream
             var lastAnimeSite = WeebUtils.AnimeSite;
 
             if (id == Resource.Id.source_gogoanime)
-            {
                 WeebUtils.AnimeSite = AnimeSites.GogoAnime;
-            }
             else if (id == Resource.Id.source_tenshi)
-            {
                 WeebUtils.AnimeSite = AnimeSites.Tenshi;
-            }
             else if (id == Resource.Id.source_zoro)
-            {
                 WeebUtils.AnimeSite = AnimeSites.Zoro;
-            }
 
-            if (lastAnimeSite != WeebUtils.AnimeSite
-                || shouldUpdateMainView)
+            if (lastAnimeSite != WeebUtils.AnimeSite || shouldUpdateMainView)
             {
                 await SecureStorage.SetAsync("AnimeSite", ((int)WeebUtils.AnimeSite).ToString());
 

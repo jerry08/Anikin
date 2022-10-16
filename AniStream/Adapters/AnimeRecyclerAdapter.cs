@@ -58,10 +58,8 @@ namespace AniStream.Adapters
 
         public override int ItemCount => Animes.Count;
 
-        public override long GetItemId(int position)
-        {
-            return position;
-        }
+        public override long GetItemId(int position) => position;
+        
 
         public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
         {
@@ -130,8 +128,7 @@ namespace AniStream.Adapters
             //        : Resource.Animation.down_from_top);
             //holder2.ItemView.StartAnimation(animation);
 
-            Animation animation = AnimationUtils.LoadAnimation(Activity,
-                Resource.Animation.up_from_bottom);
+            Animation animation = AnimationUtils.LoadAnimation(Activity, Resource.Animation.up_from_bottom);
             holder2.ItemView.StartAnimation(animation);
 
             lastPosition = position;

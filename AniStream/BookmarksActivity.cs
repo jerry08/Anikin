@@ -72,9 +72,8 @@ namespace AniStream
             SearchView.QueryTextChange += (s, e) =>
             {
                 if (string.IsNullOrEmpty(e.NewText))
-                {
                     return;
-                }
+                
 
                 if (recyclerView.GetAdapter() is AnimeRecyclerAdapter animeRecyclerAdapter)
                 {
@@ -130,7 +129,6 @@ namespace AniStream
             var animes = await BookmarkManager.GetBookmarks();
 
             if (recyclerView != null && recyclerView.GetAdapter() is AnimeRecyclerAdapter animeRecyclerAdapter)
-            {
                 if (animes.Count != animeRecyclerAdapter.Animes.Count)
                 {
                     AnimeRecyclerAdapter mDataAdapter = new AnimeRecyclerAdapter(this, animes);
@@ -141,7 +139,6 @@ namespace AniStream
                     recyclerView.SetItemViewCacheSize(20);
                     recyclerView.SetAdapter(mDataAdapter);
                 }
-            }
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)

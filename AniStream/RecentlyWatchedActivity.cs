@@ -72,10 +72,8 @@ namespace AniStream
             SearchView.QueryTextChange += (s, e) =>
             {
                 if (string.IsNullOrEmpty(e.NewText))
-                {
                     return;
-                }
-
+                
                 if (recyclerView.GetAdapter() is AnimeRecyclerAdapter animeRecyclerAdapter)
                 {
                     animeRecyclerAdapter.Animes = animes

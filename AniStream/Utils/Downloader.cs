@@ -22,15 +22,11 @@ namespace AniStream.Utils
 
             bool hasStoragePermission = androidStoragePermission.HasStoragePermission();
             if (!hasStoragePermission)
-            {
                 hasStoragePermission = await androidStoragePermission.RequestStoragePermission();
-            }
 
-            if (!hasStoragePermission)
-            {
+            if (!hasStoragePermission)    
                 return;
-            }
-
+        
             MimeTypeMap mime = MimeTypeMap.Singleton;
             var mimeType = mime.GetMimeTypeFromExtension("mp4");
             var mimeTypem4a = mime.GetMimeTypeFromExtension("m4a");
@@ -46,10 +42,8 @@ namespace AniStream.Utils
             var request = new DownloadManager.Request(Android.Net.Uri.Parse(url));
 
             if (headers is not null)
-            {
                 for (int i = 0; i < headers.Count; i++)
                     request.AddRequestHeader(headers.Keys[i], headers[i]);
-            }
 
             request.SetMimeType(mimeType);
             request.AllowScanningByMediaScanner();

@@ -66,10 +66,8 @@ namespace AniStream
             bool dontShow = false;
             var dontShowStr = await SecureStorage.GetAsync($"dont_ask_for_update_{packageInfo.VersionName}");
             if (!string.IsNullOrEmpty(dontShowStr))
-            {
                 dontShow = System.Convert.ToBoolean(dontShowStr);
-            }
-
+            
             dontAskForUpdate.Checked = dontShow;
 
             dontAskForUpdate.CheckedChange += async (s, e) =>
@@ -85,10 +83,8 @@ namespace AniStream
 
                 bool hasStoragePermission = AndroidStoragePermission.HasStoragePermission();
                 if (!hasStoragePermission)
-                {
                     hasStoragePermission = await AndroidStoragePermission.RequestStoragePermission();
-                }
-
+                
                 if (hasStoragePermission)
                 {
                     //var intent = new Intent(Intent.ActionOpenDocument);
@@ -134,9 +130,7 @@ namespace AniStream
                     Toast.MakeText(this, "Export completed", ToastLength.Short).Show();
                 }
                 else
-                {
                     Toast.MakeText(this, "No permission granted", ToastLength.Short).Show();
-                }
             };
 
             buttonrestore.Click += async (s, e) =>
@@ -149,28 +143,18 @@ namespace AniStream
 
                 bool hasStoragePermission = AndroidStoragePermission.HasStoragePermission();
                 if (!hasStoragePermission)
-                {
                     hasStoragePermission = await AndroidStoragePermission.RequestStoragePermission();
-                }
 
                 if (hasStoragePermission)
                 {
                     var bookmarkManager = new BookmarkManager("bookmarks");
                     var rwBookmarkManager = new BookmarkManager("recently_watched");
-
-                    
                 }
             };
 
-            buttongithub.Click += (s, e) =>
-            {
-                OpenLink("https://github.com/jerry08/AniStream");
-            };
+            buttongithub.Click += (s, e) =>{ OpenLink("https://github.com/jerry08/AniStream"); };
             
-            buttondiscord.Click += (s, e) =>
-            {
-                OpenLink("https://discord.gg/mhxsSMy2Nf");
-            };
+            buttondiscord.Click += (s, e) =>{ OpenLink("https://discord.gg/mhxsSMy2Nf"); };
 
             button_check_for_updates.Click += async (s, e) =>
             {

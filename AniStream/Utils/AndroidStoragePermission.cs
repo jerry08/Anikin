@@ -42,13 +42,11 @@ namespace AniStream.Utils
                 hasPermissions =
                     (activity.PackageManager.CheckPermission(Manifest.Permission.ReadExternalStorage, activity.PackageName) == Permission.Granted
                     && activity.PackageManager.CheckPermission(Manifest.Permission.WriteExternalStorage, activity.PackageName) == Permission.Granted);
-
             }
             else
-            {
-                // sdk bellow 23 no permissions needed
                 hasPermissions = true;
-            }
+                // sdk bellow 23 no permissions needed
+            
 
             return hasPermissions;
         }
@@ -58,9 +56,8 @@ namespace AniStream.Utils
             var SDK = Build.VERSION.SdkInt;
 
             if (SDK <= BuildVersionCodes.M)
-            {
                 return Task.FromResult(true);
-            }
+            
             else if (SDK <= BuildVersionCodes.Q)
             {
                 requestPermissionResult ??= new TaskCompletionSource<bool>();
@@ -76,7 +73,6 @@ namespace AniStream.Utils
             else
             {
                 requestPermissionResult ??= new TaskCompletionSource<bool>();
-
                 try
                 {
                     Intent intent = new Intent(Android.Provider.Settings.ActionManageAppAllFilesAccessPermission);
@@ -92,7 +88,6 @@ namespace AniStream.Utils
                     // this bad! (probably outdated 'permission model' as android likes to change them every once in a while)
                     return Task.FromResult<bool>(false);
                 }
-
                 return requestPermissionResult.Task;
             }
         }
@@ -105,13 +100,9 @@ namespace AniStream.Utils
                 if (Build.VERSION.SdkInt > BuildVersionCodes.Q)
                 {
                     if (Android.OS.Environment.IsExternalStorageManager)
-                    {
                         requestPermissionResult?.TrySetResult(true);
-                    }
                     else
-                    {
                         requestPermissionResult?.TrySetResult(false);
-                    }
                 }
             }
         }
@@ -124,13 +115,9 @@ namespace AniStream.Utils
             {
                 //
                 if (grantResults.Any(item => item.HasFlag((Permission.Denied))))
-                {
                     requestPermissionResult?.TrySetResult(false);
-                }
                 else
-                {
                     requestPermissionResult?.TrySetResult(true);
-                }
             }
         }
     }

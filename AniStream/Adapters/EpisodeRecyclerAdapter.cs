@@ -43,10 +43,8 @@ namespace AniStream.Adapters
 
         public override int ItemCount => Episodes.Count;
 
-        public override long GetItemId(int position)
-        {
-            return position;
-        }
+        public override long GetItemId(int position)=> position;
+        
 
         public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
         {
