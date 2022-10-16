@@ -38,9 +38,7 @@ namespace AniStream.Utils
                     System.Environment.SpecialFolder.Personal) + "/user/database";
 
                 if (!Directory.Exists(pathToMyFolder))
-                {
                     Directory.CreateDirectory(pathToMyFolder);
-                }
 
                 return pathToMyFolder;
             }
@@ -94,9 +92,7 @@ namespace AniStream.Utils
             ll.Orientation = Orientation.Horizontal;
             ll.SetPadding(llPadding, llPadding, llPadding, llPadding);
             ll.SetGravity(GravityFlags.Center);
-            var llParam = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WrapContent,
-                    ViewGroup.LayoutParams.WrapContent);
+            var llParam = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
             llParam.Gravity = GravityFlags.Center;
             ll.LayoutParameters = llParam;
 
@@ -105,8 +101,7 @@ namespace AniStream.Utils
             progressBar.SetPadding(0, 0, llPadding, 0);
             progressBar.LayoutParameters = llParam;
 
-            llParam = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent,
-                ViewGroup.LayoutParams.WrapContent);
+            llParam = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
             llParam.Gravity = GravityFlags.Center;
 
             var tvText = new TextView(context);
@@ -147,7 +142,9 @@ namespace AniStream.Utils
             if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
             {
                 Network nw = connectivityManager.ActiveNetwork;
+                
                 if (nw == null) return false;
+
                 NetworkCapabilities actNw = connectivityManager.GetNetworkCapabilities(nw);
                 //return actNw != null && (actNw.HasTransport(Android.Net.TransportType.Wifi) || actNw.HasTransport(Android.Net.TransportType.Cellular) || actNw.HasTransport(Android.Net.TransportType.Ethernet) || actNw.HasTransport(Android.Net.TransportType.Bluetooth));
                 return actNw != null && (actNw.HasTransport(Android.Net.TransportType.Wifi) || actNw.HasTransport(Android.Net.TransportType.Cellular));

@@ -19,9 +19,9 @@ namespace AniStream.Utils.Extensions
     {
         public static void MakeTextViewResizable(TextView tv, int maxLine, string expandText, bool viewMore) 
         {
-            if (tv.Tag == null) {
+            if (tv.Tag == null)
                 tv.Tag = tv.Text;
-            }
+            
             ViewTreeObserver vto = tv.ViewTreeObserver;
             //vto.GlobalLayout += (s, e) =>
             //{

@@ -26,10 +26,8 @@ namespace AniStream.Utils
             Anime animeBookmarked = list.Where(x => x.Category == anime.Category)
                 .FirstOrDefault();
             if (animeBookmarked != null)
-            {
                 return true;
-            }
-
+            
             return false;
         }
 
@@ -67,20 +65,16 @@ namespace AniStream.Utils
 
             var animeToRemove = animes.Where(x => x.Category == anime.Category)
                 .FirstOrDefault();
+
             if (animeToRemove != null)
-            {
                 animes.Remove(animeToRemove);
-            }
 
             var json = JsonConvert.SerializeObject(animes);
 
             SecureStorage.SetAsync(_name, json).Wait();
         }
 
-        public void RemoveAllBookmarks()
-        {
-            SecureStorage.SetAsync(_name, "").Wait();
-        }
+        public void RemoveAllBookmarks(){ SecureStorage.SetAsync(_name, "").Wait(); }
 
         public static float GetLastWatchedEp(Context context, Anime anime)
         {
@@ -90,18 +84,16 @@ namespace AniStream.Utils
 
             var lastWatchedStr = bookmarksPref.GetString("lastWatched", string.Empty);
             if (!string.IsNullOrEmpty(lastWatchedStr))
-            {
                 list = JsonConvert.DeserializeObject<List<Anime>>(lastWatchedStr);
-            }
+            
 
             if (list != null)
             {
                 var anime2 = list.Where(x => x.Category == anime.Category)
                     .FirstOrDefault();
+
                 if (anime2 != null)
-                {
                     return anime2.LastWatchedEp;
-                }
             }
 
             return 0;
@@ -131,18 +123,14 @@ namespace AniStream.Utils
                     .FirstOrDefault();
 
                 if (anime2 == null)
-                {
                     list.Add(anime);
-                }
                 else
-                {
                     if (anime.LastWatchedEp >= anime2.LastWatchedEp)
                     {
                         list.Remove(anime2);
                         list.Add(anime);
                     }
-                }
-
+                
                 lastWatched.PutString("lastWatched", JsonConvert.SerializeObject(list));
                 lastWatched.Commit();
             }

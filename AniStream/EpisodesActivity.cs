@@ -60,9 +60,7 @@ namespace AniStream
 
             string animeString = Intent.GetStringExtra("anime");
             if (!string.IsNullOrEmpty(animeString))
-            {
                 anime = JsonConvert.DeserializeObject<Anime>(animeString);
-            }
             
             var animeInfoTitle = FindViewById<TextView>(Resource.Id.animeInfoTitle);
             var type = FindViewById<TextView>(Resource.Id.animeInfoType);
@@ -77,10 +75,7 @@ namespace AniStream
             var back = FindViewById<AppCompatImageView>(Resource.Id.back);
             var menu = FindViewById<AppCompatImageView>(Resource.Id.menu);
 
-            back.Click += (s, e) =>
-            {
-                OnBackPressed();
-            };
+            back.Click += (s, e) =>{ OnBackPressed(); };
 
             menu.Click += (s, e) =>
             {
@@ -91,13 +86,9 @@ namespace AniStream
                 IMenuItem sortDescending = popupMenu.Menu.FindItem(Resource.Id.sort_descending);
 
                 if (IsAscending)
-                {
                     sortAscending.SetChecked(true);
-                }
                 else
-                {
                     sortDescending.SetChecked(false);
-                }
 
                 popupMenu.MenuItemClick += PopupMenu_MenuItemClick;
                 popupMenu.Show();
@@ -107,10 +98,8 @@ namespace AniStream
 
             animeInfoTitle.Text = anime.Title;
 
-            if (!string.IsNullOrEmpty(anime.Image))
-            {
+            if (!string.IsNullOrEmpty(anime.Image))    
                 Picasso.Get().Load(anime.Image).Into(imageofanime);
-            }
 
             loading.Visibility = ViewStates.Visible;
             episodesRecyclerView.Visibility = ViewStates.Visible;
@@ -137,26 +126,16 @@ namespace AniStream
             bookmarkbtn.Click += async (s, e) =>
             {
                 if (IsBooked)
-                {
                     _bookmarkManager.RemoveBookmark(anime);
-                }
                 else
-                {
                     _bookmarkManager.SaveBookmark(anime);
-                }
 
                 IsBooked = await _bookmarkManager.IsBookmarked(anime);
 
                 if (IsBooked)
-                {
-                    bookmarkbtn.SetImageDrawable(ResourcesCompat
-                        .GetDrawable(Resources, Resource.Drawable.ic_favorite, null));
-                }
+                    bookmarkbtn.SetImageDrawable(ResourcesCompat.GetDrawable(Resources, Resource.Drawable.ic_favorite, null));
                 else
-                {
-                    bookmarkbtn.SetImageDrawable(ResourcesCompat
-                        .GetDrawable(Resources, Resource.Drawable.ic_unfavorite, null));
-                }
+                    bookmarkbtn.SetImageDrawable(ResourcesCompat.GetDrawable(Resources, Resource.Drawable.ic_unfavorite, null));
             };
 
             _client.OnEpisodesLoaded += (s, e) =>
@@ -170,13 +149,10 @@ namespace AniStream
                 Episodes = e.Episodes;
 
                 if (!IsAscending)
-                {
                     Episodes = Episodes.OrderByDescending(x => x.Number).ToList();
-                }
+                
                 else
-                {
                     Episodes = Episodes.OrderBy(x => x.Number).ToList();
-                }
 
                 anime = e.Anime;
 
@@ -189,9 +165,7 @@ namespace AniStream
                 //TextViewExtensions.MakeTextViewResizable(animeInfoSummary, 2, "See More", true);
 
                 foreach (var genre in e.Anime.Genres)
-                {
                     genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genre.Name));
-                }
 
                 var adapter = new EpisodeRecyclerAdapter(Episodes, this, anime);
 
@@ -214,9 +188,7 @@ namespace AniStream
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.SetTitle("Details");
 
-                builder.SetPositiveButton("OK", (s, e) => 
-                { 
-                });
+                builder.SetPositiveButton("OK", (s, e) => { });
 
                 // set the custom layout
                 View view = LayoutInflater.Inflate(Resource.Layout.animeinfo_details, null);
@@ -232,9 +204,7 @@ namespace AniStream
                 var imageofanime = view.FindViewById<AppCompatImageView>(Resource.Id.details_Image);
 
                 if (!string.IsNullOrEmpty(anime.Image))
-                {
                     Picasso.Get().Load(anime.Image).Into(imageofanime);
-                }
 
                 animeInfoTitle.Text = "Title: " + anime.Title;
                 type.Text = anime.Type;
@@ -252,9 +222,7 @@ namespace AniStream
                 plotSummary.SetText(TextViewExtensions.MakeSectionOfTextBold(plotSummary.Text, "Plot Summary:"), TextView.BufferType.Spannable);
 
                 foreach (var genre in anime.Genres)
-                {
                     genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genre.Name));
-                }
 
                 builder.SetCancelable(true);
                 //Dialog dialog = builder.Create();

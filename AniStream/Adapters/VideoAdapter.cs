@@ -46,10 +46,7 @@ namespace AniStream.Adapters
 
         public override int ItemCount => Videos.Count;
 
-        public override long GetItemId(int position)
-        {
-            return position;
-        }
+        public override long GetItemId(int position)=> position;
 
         public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
         {
@@ -58,13 +55,9 @@ namespace AniStream.Adapters
             var video = Videos[urlViewHolder.BindingAdapterPosition];
 
             if (!string.IsNullOrEmpty(video.Resolution))
-            {
                 urlViewHolder.urlQuality.Text = video.Resolution;
-            }
             else
-            {
-                urlViewHolder.urlQuality.Text = "Default Quality";
-            }
+                urlViewHolder.urlQuality.Text = "Default Quality";            
 
             if (video.Format == VideoType.Container)
             {

@@ -111,29 +111,22 @@ namespace AniStream
 
             string animeString = Intent.GetStringExtra("anime");
             if (!string.IsNullOrEmpty(animeString))
-            {
                 anime = JsonConvert.DeserializeObject<Anime>(animeString);
-            }
 
             string episodeString = Intent.GetStringExtra("episode");
             if (!string.IsNullOrEmpty(episodeString))
-            {
                 episode = JsonConvert.DeserializeObject<Episode>(episodeString);
-            }
             
             string videoString = Intent.GetStringExtra("video");
             if (!string.IsNullOrEmpty(videoString))
-            {
                 video = JsonConvert.DeserializeObject<Video>(videoString);
-            }
 
             var bookmarkManager = new BookmarkManager("recently_watched");
+
             var isBooked = await bookmarkManager.IsBookmarked(anime);
             if (isBooked)
-            {
                 bookmarkManager.RemoveBookmark(anime);
-            }
-
+            
             bookmarkManager.SaveBookmark(anime, true);
 
             NetworkStateReceiver = new NetworkStateReceiver();
@@ -424,9 +417,7 @@ namespace AniStream
                 //Play next video?
             }
             else if (playbackState == IPlayer.StateBuffering)
-            {
                 progressBar.Visibility = ViewStates.Visible;
-            }
             else
             {
                 progressBar.Visibility = ViewStates.Invisible;
@@ -490,9 +481,7 @@ namespace AniStream
             base.OnWindowFocusChanged(hasFocus);
 
             if (hasFocus)
-            {
                 HideSystemUI();
-            }
         }
 
         public void OnPlayerError(PlaybackException? error)

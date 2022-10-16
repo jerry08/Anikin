@@ -39,11 +39,9 @@ namespace AniStream.Fragments
             _anime = anime;
         }
 
-        public static SelectorDialogFragment NewInstance(
-            Anime anime, Episode episode, VideoActivity? videoActivity = null)
-        {
-            return new SelectorDialogFragment(anime, episode, videoActivity);
-        }
+        public static SelectorDialogFragment NewInstance(Anime anime, Episode episode, VideoActivity? videoActivity = null) 
+            => new SelectorDialogFragment(anime, episode, videoActivity);
+        
 
         public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -82,13 +80,9 @@ namespace AniStream.Fragments
                     totalServersLoaded++;
 
                     if (totalServersLoaded >= _client.VideoServers.Count)
-                    {
                         selectorProgressBar.Visibility = ViewStates.Gone;
-                    }
                     else
-                    {
                         _client.GetVideos(_client.VideoServers[totalServersLoaded]);
-                    }
 
                     if (e.Videos.Count <= 0)
                         return;
@@ -158,10 +152,8 @@ namespace AniStream.Fragments
                             selectorProgressBar.Visibility = ViewStates.Gone;
                             return;
                         }
-                        else
-                        {
+                        else    
                             _client.GetVideos(_client.VideoServers[totalServersLoaded]);
-                        }
 
                         if (e.Videos.Count <= 0)
                             return;

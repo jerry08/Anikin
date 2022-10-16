@@ -29,10 +29,8 @@ public class AppUpdater
         bool dontShow = false;
         var dontShowStr = await SecureStorage.GetAsync($"dont_ask_for_update_{packageInfo.VersionName}");
         if (!string.IsNullOrEmpty(dontShowStr))
-        {
             dontShow = Convert.ToBoolean(dontShowStr);
-        }
-
+        
         if (dontShow)
             return false;
 
@@ -64,10 +62,7 @@ public class AppUpdater
                 downloader.Download(asset.Name, asset.BrowserDownloadUrl);
             });
 
-            builder.SetNegativeButton("OK", (s, e) =>
-            {
-
-            });
+            builder.SetNegativeButton("OK", (s, e) =>{});
 
             builder.Show();
 
