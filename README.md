@@ -77,3 +77,6 @@ AniStream parses website data and filter required info, thus It removes the ads 
 * By using AniStream, you comply to the fact that the developer of the app is not responsible for any of the contents found in the app; nonetheless they may or may not be from their legitimate sources. 
 
 * If the internet infringement issues are involved, please contact the source website. The developer does not assume any legal responsibility.
+
+### Credits
+- [hailrakeqq](https://github.com/hailrakeqq) For code cleanup
