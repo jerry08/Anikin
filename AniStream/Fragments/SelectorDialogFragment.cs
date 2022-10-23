@@ -27,9 +27,9 @@ namespace AniStream.Fragments
         private readonly Anime _anime;
         private readonly Episode _episode;
 
-        private readonly VideoActivity _videoActivity;
+        private readonly VideoActivity? _videoActivity;
 
-        private View _view;
+        private View _view = default!;
 
         SelectorDialogFragment(Anime anime, Episode episode,
             VideoActivity? videoActivity = null)
@@ -40,22 +40,21 @@ namespace AniStream.Fragments
         }
 
         public static SelectorDialogFragment NewInstance(Anime anime, Episode episode, VideoActivity? videoActivity = null) 
-            => new SelectorDialogFragment(anime, episode, videoActivity);
-        
+            => new(anime, episode, videoActivity);
 
-        public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        public override View OnCreateView(LayoutInflater inflater, ViewGroup? container, Bundle? savedInstanceState)
         {
-            _view = inflater.Inflate(Resource.Layout.bottom_sheet_selector, container, false);
+            _view = inflater.Inflate(Resource.Layout.bottom_sheet_selector, container, false)!;
             var autoLayout = _view.FindViewById<LinearLayout>(Resource.Id.selectorAutoListContainer);
             var layout = _view.FindViewById<LinearLayout>(Resource.Id.selectorListContainer);
             
-            var selectorMakeDefault = _view.FindViewById<CheckBox>(Resource.Id.selectorMakeDefault);
-            var serversRecyclerView = _view.FindViewById<RecyclerView>(Resource.Id.selectorRecyclerView);
-            var selectorProgressBar = _view.FindViewById<ProgressBar>(Resource.Id.selectorProgressBar);
+            var selectorMakeDefault = _view.FindViewById<CheckBox>(Resource.Id.selectorMakeDefault)!;
+            var serversRecyclerView = _view.FindViewById<RecyclerView>(Resource.Id.selectorRecyclerView)!;
+            var selectorProgressBar = _view.FindViewById<ProgressBar>(Resource.Id.selectorProgressBar)!;
 
             selectorMakeDefault.Visibility = ViewStates.Gone;
 
-            var activity = _videoActivity ?? Activity;
+            var activity = (_videoActivity ?? Activity)!;
 
             var cache = Cache.GetValueOrDefault(_episode.Link);
             if (cache is null)
@@ -200,7 +199,7 @@ namespace AniStream.Fragments
             return _view;
         }
 
-        public override void OnViewCreated(View view, Bundle savedInstanceState)
+        public override void OnViewCreated(View view, Bundle? savedInstanceState)
         {
             base.OnViewCreated(view, savedInstanceState);
         }

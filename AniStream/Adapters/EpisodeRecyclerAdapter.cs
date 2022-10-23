@@ -9,11 +9,15 @@ using AniStream.Utils;
 using AniStream.Fragments;
 using AnimeDl.Models;
 using AndroidX.CardView.Widget;
+using AniStream.Models;
+using Android.Content;
 
 namespace AniStream.Adapters
 {
     public class EpisodeRecyclerAdapter : RecyclerView.Adapter
     {
+        private readonly PlayerSettings _playerSettings = new();
+
         private readonly Anime _anime;
 
         private readonly EpisodesActivity _episodesActivity;
@@ -25,8 +29,10 @@ namespace AniStream.Adapters
             Anime anime)
         {
             _anime = anime;
-            Episodes = episodes;
             _episodesActivity = activity;
+            Episodes = episodes;
+
+            _playerSettings.Load();
         }
 
         class EpisodeViewHolder : RecyclerView.ViewHolder
@@ -44,7 +50,6 @@ namespace AniStream.Adapters
         public override int ItemCount => Episodes.Count;
 
         public override long GetItemId(int position)=> position;
-        
 
         public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
         {
@@ -57,12 +62,33 @@ namespace AniStream.Adapters
             if (episodeViewHolder.cardView.HasOnClickListeners)
                 return;
 
-            episodeViewHolder.cardView.Click += (s, e) =>
+            episodeViewHolder.cardView.LongClick += (s, e) =>
             {
                 var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
 
                 var selector = SelectorDialogFragment.NewInstance(_anime, episode);
                 selector.Show(_episodesActivity.SupportFragmentManager, "dialog");
+            };
+
+            episodeViewHolder.cardView.Click += (s, e) =>
+            {
+                var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
+
+                if (_playerSettings.SelectServerBeforePlaying)
+                {
+                    var selector = SelectorDialogFragment.NewInstance(_anime, episode);
+                    selector.Show(_episodesActivity.SupportFragmentManager, "dialog");
+                }
+                else
+                {
+                    var intent = new Intent(_episodesActivity, typeof(VideoActivity));
+
+                    intent.PutExtra("anime", JsonConvert.SerializeObject(_anime));
+                    intent.PutExtra("episode", JsonConvert.SerializeObject(episode));
+                    intent.SetFlags(ActivityFlags.NewTask);
+
+                    _episodesActivity.ApplicationContext.StartActivity(intent);
+                }
             };
         }
 

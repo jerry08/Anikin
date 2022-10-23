@@ -3,12 +3,12 @@
     <TargetFramework>net6.0-android33.0</TargetFramework>
     <SupportedOSPlatformVersion>33</SupportedOSPlatformVersion>
     <OutputType>Exe</OutputType>
-    <!--<Nullable>enable</Nullable>
-    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <Nullable>enable</Nullable>
+    <!--<WarningsAsErrors>nullable</WarningsAsErrors>
     <ImplicitUsings>enable</ImplicitUsings>-->
     <ApplicationId>com.oneb.anistream</ApplicationId>
-    <ApplicationVersion>14</ApplicationVersion>
-    <ApplicationDisplayVersion>1.7.9</ApplicationDisplayVersion>
+    <ApplicationVersion>15</ApplicationVersion>
+    <ApplicationDisplayVersion>1.8.0</ApplicationDisplayVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -16,16 +16,43 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AndroidResource Remove="Resources\layout\exo_styled_player_view.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Utils\CacheDataSourceFactory.cs" />
+    <Compile Remove="VideoActivity - Copy.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Resources\drawable\anim_pause_to_play.xml" />
     <None Remove="Resources\drawable\anim_play_to_pause.xml" />
-    <None Remove="Resources\drawable\ic_round_fast_forward_24.xml" />
-    <None Remove="Resources\drawable\ic_round_fast_rewind_24.xml" />
-    <None Remove="Resources\drawable\ic_round_skip_next_24.xml" />
-    <None Remove="Resources\drawable\ic_round_skip_previous_24.xml" />
+    <None Remove="Resources\drawable\anim_rewind.xml" />
+    <None Remove="Resources\drawable\anim_skip.xml" />
+    <None Remove="Resources\drawable\control_background_40dp.xml" />
+    <None Remove="Resources\drawable\ic_brightness.xml" />
+    <None Remove="Resources\drawable\ic_media_pause.xml" />
+    <None Remove="Resources\drawable\ic_media_play.xml" />
+    <None Remove="Resources\drawable\ic_media_seek_backward.xml" />
+    <None Remove="Resources\drawable\ic_media_seek_forward.xml" />
+    <None Remove="Resources\drawable\ic_more.xml" />
+    <None Remove="Resources\drawable\ic_page_numbering.xml" />
+    <None Remove="Resources\drawable\ic_play_button.xml" />
+    <None Remove="Resources\drawable\ic_settings.xml" />
+    <None Remove="Resources\drawable\ic_skip.xml" />
+    <None Remove="Resources\drawable\ic_volume.xml" />
+    <None Remove="Resources\drawable\linear_gradient_bg.xml" />
+    <None Remove="Resources\drawable\linear_gradient_black.xml" />
+    <None Remove="Resources\drawable\linear_gradient_black_horizontal.xml" />
+    <None Remove="Resources\drawable\linear_gradient_nav.xml" />
+    <None Remove="Resources\drawable\spinner_icon.xml" />
+    <None Remove="Resources\layout\activity_exoplayer.xml" />
+    <None Remove="Resources\layout\error_screen_video_player.xml" />
+    <None Remove="Resources\layout\exo_styled_player_control_view.xml" />
+    <None Remove="Resources\layout\exo_styled_player_view - Copy.xml" />
+    <None Remove="Resources\layout\exo_styled_player_view.xml" />
+    <None Remove="Resources\layout\fragment_video_player_placeholder.xml" />
     <None Remove="Resources\layout\recycler_episode_item.xml" />
+    <None Remove="Resources\layout\videoviewer.xml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AnimeDl" Version="1.6.5" />
@@ -33,6 +60,7 @@
     <PackageReference Include="Octokit" Version="4.0.0" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xamarin.Android.Flowlayout" Version="1.0.0.4" />
+    <PackageReference Include="Xamarin.Android.Glide" Version="4.13.2.2" />
     <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.5.1" />
     <PackageReference Include="Xamarin.AndroidX.ConstraintLayout" Version="2.1.4.1" />
     <PackageReference Include="Xamarin.AndroidX.ExifInterface" Version="1.3.4" />

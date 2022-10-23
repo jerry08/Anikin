@@ -40,18 +40,11 @@ using Com.Google.Android.Exoplayer2.Video;
 using Google.Android.Material.BottomSheet;
 using AnimeDl.Utils;
 using Com.Google.Android.Exoplayer2.Ext.Okhttp;
-using Android.Graphics.Drawables;
-using static Android.Icu.Text.Transliterator;
-using Bumptech.Glide;
-using AndroidX.CardView.Widget;
-using AniStream.Models;
-using Google.Android.Material.Card;
-using Java.Nio.Channels;
 
 namespace AniStream
 {
     //[Activity(Label = "VideoActivity", ScreenOrientation = ScreenOrientation.Landscape,
-    [Activity(Label = "VideoActivity", Theme = "@style/VideoPlayerTheme",
+    [Activity(Label = "VideoActivity",
         ResizeableActivity = true, LaunchMode = LaunchMode.SingleTask, SupportsPictureInPicture = true,
         //ResizeableActivity = true, NoHistory = true, LaunchMode = LaunchMode.Multiple, SupportsPictureInPicture = true, Exported = true,
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.SmallestScreenSize | ConfigChanges.ScreenLayout | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden)]
@@ -61,8 +54,6 @@ namespace AniStream
     {
         private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
 
-        private readonly PlayerSettings _playerSettings = new();
-        
         private Anime anime = default!;
         private Episode episode = default!;
         private Video video = default!;
@@ -76,11 +67,9 @@ namespace AniStream
 
         private ProgressBar progressBar = default!;
         private ImageButton exoplay = default!;
-        private ImageButton exoQuality = default!;
         //private int currentVideoIndex;
         //private LinearLayout controls = default!;
-        private TextView animeTitle = default!;
-        private TextView episodeTitle = default!;
+        private TextView title = default!;
         private TextView errorText = default!;
         private ImageButton nextEpisodeButton = default!;
         private ImageButton previousEpisodeButton = default!;
@@ -92,8 +81,6 @@ namespace AniStream
         private Android.Net.Uri videoUri = default!;
 
         private SelectorDialogFragment? selector;
-
-        private bool IsBuffering { get; set; } = true;
 
         protected async override void OnCreate(Bundle? savedInstanceState)
         {
@@ -116,17 +103,12 @@ namespace AniStream
 
             };
 
-            _playerSettings.Load();
-
             //SetVideoOptions();
 
-            if (_playerSettings.AlwaysInLandscapeMode)
-            {
-                if (Build.VERSION.SdkInt >= BuildVersionCodes.Gingerbread)
-                {
-                    RequestedOrientation = ScreenOrientation.SensorLandscape;
-                }
-            }
+            //if (Build.VERSION.SdkInt >= BuildVersionCodes.Gingerbread)
+            //{
+            //    RequestedOrientation = ScreenOrientation.SensorLandscape;
+            //}
 
             var animeString = Intent!.GetStringExtra("anime");
             if (!string.IsNullOrEmpty(animeString))
@@ -135,6 +117,10 @@ namespace AniStream
             var episodeString = Intent.GetStringExtra("episode");
             if (!string.IsNullOrEmpty(episodeString))
                 episode = JsonConvert.DeserializeObject<Episode>(episodeString)!;
+
+            var videoString = Intent.GetStringExtra("video");
+            if (!string.IsNullOrEmpty(videoString))
+                video = JsonConvert.DeserializeObject<Video>(videoString)!;
 
             var bookmarkManager = new BookmarkManager("recently_watched");
 
@@ -148,92 +134,19 @@ namespace AniStream
             NetworkStateReceiver.AddListener(this);
             RegisterReceiver(NetworkStateReceiver, new IntentFilter(Android.Net.ConnectivityManager.ConnectivityAction));
 
-            animeTitle = FindViewById<TextView>(Resource.Id.exo_anime_title)!;
-            episodeTitle = FindViewById<TextView>(Resource.Id.exo_ep_sel)!;
-
             playerView = FindViewById<StyledPlayerView>(Resource.Id.player_view)!;
             exoplay = FindViewById<ImageButton>(Resource.Id.exo_play)!;
-            exoQuality = FindViewById<ImageButton>(Resource.Id.exo_quality)!;
             progressBar = FindViewById<ProgressBar>(Resource.Id.buffer)!;
-            
+            title = FindViewById<TextView>(Resource.Id.exo_anime_title)!;
             videoChangerButton = FindViewById<ImageButton>(Resource.Id.qualitychanger)!;
             nextEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_nextvideo)!;
             previousEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_prevvideo)!;
             errorText = FindViewById<TextView>(Resource.Id.errorText)!;
 
-            var skipButton = FindViewById<MaterialCardView>(Resource.Id.exo_skip)!;
-
-            var prevButton = FindViewById<ImageButton>(Resource.Id.exo_prev_ep)!;
-            var nextButton = FindViewById<ImageButton>(Resource.Id.exo_next_ep)!;
-
-            var settingsButton = FindViewById<ImageButton>(Resource.Id.exo_settings)!;
-            var sourceButton = FindViewById<ImageButton>(Resource.Id.exo_source)!;
-            var subButton = FindViewById<ImageButton>(Resource.Id.exo_sub)!;
-            var downloadButton = FindViewById<ImageButton>(Resource.Id.exo_download)!;
-            var pipButton = FindViewById<ImageButton>(Resource.Id.exo_pip)!;
-            var playBackSpeedButton = FindViewById<ImageButton>(Resource.Id.exo_playback_speed)!;
-            var screenButton = FindViewById<ImageButton>(Resource.Id.exo_screen)!;
-            
-            var backButton = FindViewById<ImageButton>(Resource.Id.exo_back)!;
-            var lockButton = FindViewById<ImageButton>(Resource.Id.exo_lock)!;
-
-            //TODO: Implement these
-            prevButton.Visibility = ViewStates.Gone;
-            nextButton.Visibility = ViewStates.Gone;
-
-            settingsButton.Visibility = ViewStates.Gone;
-            subButton.Visibility = ViewStates.Gone;
-            pipButton.Visibility = ViewStates.Gone;
-            playBackSpeedButton.Visibility = ViewStates.Gone;
-            lockButton.Visibility = ViewStates.Gone;
-            screenButton.Visibility = ViewStates.Gone;
-
-            sourceButton.Click += (s, e) =>
-            {
-                selector = SelectorDialogFragment.NewInstance(anime, episode, this);
-                selector.Show(SupportFragmentManager, "dialog");
-            };
-
-            backButton.Click += (s, e) =>
-            {
-                this.OnBackPressed();
-            };
-
-            skipButton.Click += (s, e) =>
-            {
-                exoPlayer.SeekTo(exoPlayer.CurrentPosition + 85000);
-            };
-
-            var fastForwardCont = FindViewById<CardView>(Resource.Id.exo_fast_forward_button_cont);
-            var fastRewindCont = FindViewById<CardView>(Resource.Id.exo_fast_rewind_button_cont);
-            var fastForwardButton = FindViewById<ImageButton>(Resource.Id.exo_fast_forward_button);
-            var rewindButton = FindViewById<ImageButton>(Resource.Id.exo_fast_rewind_button);
-
-            fastForwardCont.Visibility = ViewStates.Visible;
-            fastRewindCont.Visibility = ViewStates.Visible;
-
-            fastForwardButton.Click += (s, e) =>
-            {
-                exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime);
-            };
-
-            rewindButton.Click += (s, e) =>
-            {
-                exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime);
-            };
-
-            animeTitle.Text = anime.Title;
-            episodeTitle.Text = episode.Name;
+            title.Text = episode.Name;
 
             var trackSelectionFactory = new AdaptiveTrackSelection.Factory();
             trackSelector = new DefaultTrackSelector(this, trackSelectionFactory);
-
-            //var ff = trackSelector.BuildUponParameters();
-            //ff.SetMinVideoSize(720, 480).SetMaxVideoSize(1, 1);
-            //
-            //trackSelector.SetParameters(ff);
-
-            playerView.ControllerShowTimeoutMs = 5000;
 
             exoPlayer = new IExoPlayer.Builder(this)
                 .SetTrackSelector(trackSelector)!
@@ -244,76 +157,7 @@ namespace AniStream
 
             //progressBar.Visibility = ViewStates.Visible;
 
-            //Play Pause
-            exoplay.Click += (s, e) =>
-            {
-                (exoplay.Drawable as IAnimatable)?.Start();
-
-                if (exoPlayer.IsPlaying)
-                {
-                    Glide.With(this).Load(Resource.Drawable.anim_play_to_pause)
-                        .Into(exoplay);
-
-                    //Picasso.Get().Load(Resource.Drawable.anim_play_to_pause)
-                    //    //.Transform(new RoundedTransformation())
-                    //    .Fit().CenterCrop().Into(exoplay);
-
-                    exoPlayer.Pause();
-                }
-                else
-                {
-                    Glide.With(this).Load(Resource.Drawable.anim_pause_to_play)
-                        .Into(exoplay);
-
-                    //Picasso.Get().Load(Resource.Drawable.anim_pause_to_play)
-                    //     .Fit().CenterCrop().Into(exoplay);
-
-                    exoPlayer.Play();
-                }
-            };
-
-            if (_playerSettings.SelectServerBeforePlaying)
-            {
-                var videoString = Intent.GetStringExtra("video");
-                if (!string.IsNullOrEmpty(videoString))
-                    video = JsonConvert.DeserializeObject<Video>(videoString)!;
-
-                PlayVideo(video);
-            }
-            else
-            {
-                var progressBar = FindViewById<ProgressBar>(Resource.Id.exo_init_buffer);
-                progressBar.Visibility = ViewStates.Visible;
-
-                _client.OnVideosLoaded += (s, e) =>
-                {
-                    if (e.Videos.Count > 0)
-                    {
-                        PlayVideo(e.Videos[0]);
-                        progressBar.Visibility = ViewStates.Gone;
-                    }
-                    else
-                    {
-                        progressBar.Visibility = ViewStates.Gone;
-                        Toast.MakeText(this, "Failed to play video", ToastLength.Short).Show();
-                    }
-                };
-
-                _client.OnVideoServersLoaded += (s, e) =>
-                {
-                    if (e.VideoServers.Count > 0)
-                    {
-                        _client.GetVideos(e.VideoServers[0]);
-                    }
-                    else
-                    {
-                        progressBar.Visibility = ViewStates.Gone;
-                        Toast.MakeText(this, "Failed to find video", ToastLength.Short).Show();
-                    }
-                };
-
-                _client.GetVideoServers(episode);
-            }
+            PlayVideo(video);
 
             return;
 
@@ -321,7 +165,7 @@ namespace AniStream
             //controls = FindViewById<LinearLayout>(Resource.Id.wholecontroller)!;
             exoplay = FindViewById<ImageButton>(Resource.Id.exo_play)!;
             progressBar = FindViewById<ProgressBar>(Resource.Id.buffer)!;
-            animeTitle = FindViewById<TextView>(Resource.Id.titleofanime)!;
+            title = FindViewById<TextView>(Resource.Id.titleofanime)!;
             videoChangerButton = FindViewById<ImageButton>(Resource.Id.qualitychanger)!;
             nextEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_nextvideo)!;
             previousEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_prevvideo)!;
@@ -330,7 +174,7 @@ namespace AniStream
             nextEpisodeButton.Visibility = ViewStates.Gone;
             previousEpisodeButton.Visibility = ViewStates.Gone;
 
-            animeTitle.Text = episode.Name;
+            title.Text = episode.Name;
 
             //var trackSelectionFactory = new AdaptiveTrackSelection.Factory();
             //trackSelector = new DefaultTrackSelector(this, trackSelectionFactory);
@@ -383,11 +227,6 @@ namespace AniStream
             };
         }
 
-        public void InitPlayer()
-        {
-
-        }
-
         private long lastCurrentPosition = 0;
 
         public void OnClick(IDialogInterface dialog, int which)
@@ -420,7 +259,6 @@ namespace AniStream
             {
                 exoPlayer.Stop();
                 exoPlayer.Release();
-                _client.CancelGetVideoServers();
                 _client.CancelGetVideos();
                 VideoCache.Release();
 
@@ -440,16 +278,11 @@ namespace AniStream
         // QUALITY SELECTOR
         private void ShowM3U8TrackSelector()
         {
-            var mappedTrackInfo = trackSelector.CurrentMappedTrackInfo;
-
-            //var trackSelectionDialogBuilder = new TrackSelectionDialogBuilder(this,
-            //    new Java.Lang.String("Available Qualities"), exoPlayer, C.TrackTypeVideo);
-
             var trackSelectionDialogBuilder = new TrackSelectionDialogBuilder(this,
                 new Java.Lang.String("Available Qualities"), exoPlayer, C.TrackTypeVideo);
 
             trackSelectionDialogBuilder.SetTheme(Resource.Style.DialogTheme);
-            //trackSelectionDialogBuilder.SetTrackNameProvider(this);
+            trackSelectionDialogBuilder.SetTrackNameProvider(this);
 
             var trackDialog = trackSelectionDialogBuilder.Build()!;
             //trackDialog.DismissEvent += (s, e) =>
@@ -568,23 +401,25 @@ namespace AniStream
 
         public void OnPlaybackStateChanged(int playbackState)
         {
-            IsBuffering = playbackState == IPlayer.StateBuffering;
-
             return;
 
             if (playbackState == IPlayer.StateReady)
             {
                 progressBar.Visibility = ViewStates.Invisible;
                 errorText.Visibility = ViewStates.Gone;
+
+                //if (lastCurrentPosition > 0)
+                //{
+                //    exoPlayer.SeekTo(lastCurrentPosition);
+                //    lastCurrentPosition = 0;
+                //}
             }
             else if (playbackState == IPlayer.StateEnded)
             {
                 //Play next video?
             }
             else if (playbackState == IPlayer.StateBuffering)
-            {
                 progressBar.Visibility = ViewStates.Visible;
-            }
             else
             {
                 progressBar.Visibility = ViewStates.Invisible;
@@ -609,26 +444,7 @@ namespace AniStream
 
         public void OnTracksChanged(Tracks? tracks)
         {
-            //TODO: Bind exoplayer correctly to include "Groups" in tracks
 
-            if (tracks is null)
-                return;
-
-            if (tracks.IsEmpty)
-            {
-                exoQuality.Visibility = ViewStates.Gone;
-                return;
-            }
-
-            exoQuality.Visibility = ViewStates.Visible;
-
-            if (exoQuality.HasOnClickListeners)
-                return;
-
-            exoQuality.Click += (s, e) =>
-            {
-                ShowM3U8TrackSelector();
-            };
         }
 
         public void OnTimelineChanged(Timeline? timeline, int reason)
@@ -697,26 +513,7 @@ namespace AniStream
 
         public void OnIsPlayingChanged(bool isPlaying)
         {
-            if (!IsBuffering)
-            {
-                playerView.KeepScreenOn = isPlaying;
 
-                (exoplay.Drawable as IAnimatable)?.Start();
-
-                if (!this.IsDestroyed)
-                {
-                    if (isPlaying)
-                    {
-                        Glide.With(this).Load(Resource.Drawable.anim_play_to_pause)
-                            .Into(exoplay);
-                    }
-                    else
-                    {
-                        Glide.With(this).Load(Resource.Drawable.anim_pause_to_play)
-                            .Into(exoplay);
-                    }
-                }
-            }
         }
 
         public void OnLoadingChanged(bool isLoading)
@@ -818,12 +615,7 @@ namespace AniStream
                     return $"{format.Height}p (fps : N/A)";
             }
 
-            return null;
-        }
-
-        public void OnTrackSelectionParametersChanged(TrackSelectionParameters? parameters)
-        {
-
+            return "";
         }
     }
 }

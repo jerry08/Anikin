@@ -10,12 +10,14 @@
     >
 
     <com.google.android.exoplayer2.ui.PlayerView
-        android:layout_width="match_parent"
         android:id="@+id/exoplayer"
-        android:background="#000"
         app:controller_layout_id="@layout/exoplayer"
-        android:layout_gravity="center"
-        android:layout_height="match_parent">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        app:animation_enabled="false"
+        app:resize_mode="fit"
+        app:show_buffering="when_playing">
 
     </com.google.android.exoplayer2.ui.PlayerView>
 
@@ -26,6 +28,7 @@
         android:layout_marginBottom="20dp"
         android:id="@+id/errorText"
         android:layout_height="wrap_content" />
+
     <ProgressBar
         android:layout_width="wrap_content"
         android:layout_gravity="center"
