@@ -32,6 +32,10 @@ using PopupMenu = AndroidX.AppCompat.Widget.PopupMenu;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using AnimeDl.Models;
 using AniStream.Fragments;
+using Bumptech.Glide;
+using Com.Google.Android.Exoplayer2;
+using Bumptech.Glide.Load.Model;
+using AnimeDl.Scrapers;
 
 namespace AniStream
 {
@@ -75,11 +79,11 @@ namespace AniStream
             var back = FindViewById<AppCompatImageView>(Resource.Id.back);
             var menu = FindViewById<AppCompatImageView>(Resource.Id.menu);
 
-            back.Click += (s, e) =>{ OnBackPressed(); };
+            back.Click += (s, e) => { OnBackPressed(); };
 
             menu.Click += (s, e) =>
             {
-                PopupMenu popupMenu = new PopupMenu(this, menu);
+                var popupMenu = new PopupMenu(this, menu);
                 popupMenu.Inflate(Resource.Menu.drawer_epsiodes);
 
                 IMenuItem sortAscending = popupMenu.Menu.FindItem(Resource.Id.sort_ascending);
@@ -98,8 +102,21 @@ namespace AniStream
 
             animeInfoTitle.Text = anime.Title;
 
-            if (!string.IsNullOrEmpty(anime.Image))    
-                Picasso.Get().Load(anime.Image).Into(imageofanime);
+            if (!string.IsNullOrEmpty(anime.Image))
+            {
+                if (WeebUtils.AnimeSite == AnimeSites.Tenshi)
+                {
+                    var glideUrl = new GlideUrl(anime.Image, new LazyHeaders.Builder()
+                        .AddHeader("Cookie", "__ddg1_=;__ddg2_=;loop-view=thumb").Build());
+
+                    Glide.With(this).Load(glideUrl)
+                        .FitCenter().CenterCrop().Into(imageofanime);
+                }
+                else
+                {
+                    Picasso.Get().Load(anime.Image).Into(imageofanime);
+                }
+            }
 
             loading.Visibility = ViewStates.Visible;
             episodesRecyclerView.Visibility = ViewStates.Visible;
@@ -138,54 +155,64 @@ namespace AniStream
                     bookmarkbtn.SetImageDrawable(ResourcesCompat.GetDrawable(Resources, Resource.Drawable.ic_unfavorite, null));
             };
 
-            _client.OnEpisodesLoaded += (s, e) =>
+            _client.OnAnimeInfoLoaded += (s, e) =>
             {
-                loading.Visibility = ViewStates.Gone;
-                rootLayout.Visibility = ViewStates.Visible;
-                episodesRecyclerView.Visibility = ViewStates.Visible;
-                //animeInfoSummary.Visibility = ViewStates.Visible;
-                imageofanime.Visibility = ViewStates.Visible;
+                this.RunOnUiThread(() =>
+                {
+                    anime = e.Anime;
 
-                Episodes = e.Episodes;
+                    type.Text = e.Anime.Type?.Replace("Type:", "");
+                    //animeInfoSummary.Text = e.Anime.Summary?.Replace("Plot Summary:", "");
+                    released.Text = e.Anime.Released?.Replace("Released:", "");
+                    status.Text = e.Anime.Status?.Replace("Status:", "");
+                    //othernames.Text = e.Anime.OtherNames?.Replace("Other name:", "");
 
-                if (!IsAscending)
-                    Episodes = Episodes.OrderByDescending(x => x.Number).ToList();
-                
-                else
-                    Episodes = Episodes.OrderBy(x => x.Number).ToList();
+                    //TextViewExtensions.MakeTextViewResizable(animeInfoSummary, 2, "See More", true);
 
-                anime = e.Anime;
+                    foreach (var genre in e.Anime.Genres)
+                        genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genre.Name));
 
-                type.Text = e.Anime.Type?.Replace("Type:", "");
-                //animeInfoSummary.Text = e.Anime.Summary?.Replace("Plot Summary:", "");
-                released.Text = e.Anime.Released?.Replace("Released:", "");
-                status.Text = e.Anime.Status?.Replace("Status:", "");
-                //othernames.Text = e.Anime.OtherNames?.Replace("Other name:", "");
-
-                //TextViewExtensions.MakeTextViewResizable(animeInfoSummary, 2, "See More", true);
-
-                foreach (var genre in e.Anime.Genres)
-                    genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genre.Name));
-
-                var adapter = new EpisodeRecyclerAdapter(Episodes, this, anime);
-
-                //episodesRecyclerView.SetLayoutManager(new LinearLayoutManager(this));
-                episodesRecyclerView.SetLayoutManager(new GridLayoutManager(this, 4));
-                episodesRecyclerView.HasFixedSize = true;
-                episodesRecyclerView.DrawingCacheEnabled = true;
-                episodesRecyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
-                episodesRecyclerView.SetItemViewCacheSize(20);
-                episodesRecyclerView.SetAdapter(adapter);
+                    _client.GetEpisodes(anime.Id);
+                });
             };
 
-            _client.GetEpisodes(anime);
+            _client.OnEpisodesLoaded += (s, e) =>
+            {
+                this.RunOnUiThread(() =>
+                {
+                    loading.Visibility = ViewStates.Gone;
+                    rootLayout.Visibility = ViewStates.Visible;
+                    episodesRecyclerView.Visibility = ViewStates.Visible;
+                    //animeInfoSummary.Visibility = ViewStates.Visible;
+                    imageofanime.Visibility = ViewStates.Visible;
+
+                    Episodes = e.Episodes;
+
+                    if (!IsAscending)
+                        Episodes = Episodes.OrderByDescending(x => x.Number).ToList();
+                    else
+                        Episodes = Episodes.OrderBy(x => x.Number).ToList();
+
+                    var adapter = new EpisodeRecyclerAdapter(Episodes, this, anime);
+
+                    //episodesRecyclerView.SetLayoutManager(new LinearLayoutManager(this));
+                    episodesRecyclerView.SetLayoutManager(new GridLayoutManager(this, 4));
+                    episodesRecyclerView.HasFixedSize = true;
+                    episodesRecyclerView.DrawingCacheEnabled = true;
+                    episodesRecyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
+                    episodesRecyclerView.SetItemViewCacheSize(20);
+                    episodesRecyclerView.SetAdapter(adapter);
+                });
+            };
+
+            _client.GetAnimeInfo(anime.Id);
         }
 
         private void PopupMenu_MenuItemClick(object sender, PopupMenu.MenuItemClickEventArgs e)
         {
             if (e.Item.ItemId == Resource.Id.anime_info_details)
             {
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                var builder = new AlertDialog.Builder(this);
                 builder.SetTitle("Details");
 
                 builder.SetPositiveButton("OK", (s, e) => { });
@@ -204,7 +231,20 @@ namespace AniStream
                 var imageofanime = view.FindViewById<AppCompatImageView>(Resource.Id.details_Image);
 
                 if (!string.IsNullOrEmpty(anime.Image))
-                    Picasso.Get().Load(anime.Image).Into(imageofanime);
+                {
+                    if (WeebUtils.AnimeSite == AnimeSites.Tenshi)
+                    {
+                        var glideUrl = new GlideUrl(anime.Image, new LazyHeaders.Builder()
+                            .AddHeader("Cookie", "__ddg1_=;__ddg2_=;loop-view=thumb").Build());
+
+                        Glide.With(this).Load(glideUrl)
+                            .FitCenter().CenterCrop().Into(imageofanime);
+                    }
+                    else
+                    {
+                        Picasso.Get().Load(anime.Image).Into(imageofanime);
+                    }
+                }
 
                 animeInfoTitle.Text = "Title: " + anime.Title;
                 type.Text = anime.Type;
@@ -295,7 +335,7 @@ namespace AniStream
                     // permissions this app might request
             }
 
-            EventArgs eventArgs = new EventArgs();
+            var eventArgs = new EventArgs();
 
             OnPermissionsResult?.Invoke(this, eventArgs);
         }

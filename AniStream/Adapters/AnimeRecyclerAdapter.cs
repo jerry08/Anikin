@@ -19,6 +19,10 @@ using Square.Picasso;
 using AniStream.Fragments;
 using AnimeDl;
 using AnimeDl.Models;
+using Bumptech.Glide.Load.Model;
+using Bumptech.Glide;
+using AniStream.Utils;
+using AnimeDl.Scrapers;
 
 namespace AniStream.Adapters
 {
@@ -63,12 +67,12 @@ namespace AniStream.Adapters
 
         public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
         {
-            MyViewHolder holder2 = holder as MyViewHolder;
+            var holder2 = holder as MyViewHolder;
 
             //var anime = Animes[position];
             var anime = Animes[holder2.BindingAdapterPosition];
 
-            if (anime != null && anime.Id == -1 && AnimeFragment != null)
+            if (anime != null && anime.Id == "-1" && AnimeFragment != null)
             {
                 holder2.loadMoreProgressBar.Visibility = ViewStates.Visible;
                 //holder2.episodeno.Visibility = ViewStates.Visible;
@@ -135,8 +139,22 @@ namespace AniStream.Adapters
 
             if (!string.IsNullOrEmpty(Animes[position].Image))
             {
-                Picasso.Get().Load(Animes[position].Image)
-                    .Fit().CenterCrop().Into(holder2.imageofanime);
+                //Picasso.Get().Load(Animes[position].Image)
+                //    .Fit().CenterCrop().Into(holder2.imageofanime);
+
+                if (WeebUtils.AnimeSite == AnimeSites.Tenshi)
+                {
+                    var glideUrl = new GlideUrl(anime.Image, new LazyHeaders.Builder()
+                        .AddHeader("Cookie", "__ddg1_=;__ddg2_=;loop-view=thumb").Build());
+
+                    Glide.With(Activity).Load(glideUrl)
+                        .FitCenter().CenterCrop().Into(holder2.imageofanime);
+                }
+                else
+                {
+                    Picasso.Get().Load(anime.Image)
+                        .Fit().CenterCrop().Into(holder2.imageofanime);
+                }
             }
         }
 
