@@ -287,32 +287,38 @@ namespace AniStream
 
                 _client.OnVideosLoaded += (s, e) =>
                 {
-                    if (e.Videos.Count > 0)
+                    this.RunOnUiThread(() =>
                     {
-                        PlayVideo(e.Videos[0]);
-                        progressBar.Visibility = ViewStates.Gone;
-                    }
-                    else
-                    {
-                        progressBar.Visibility = ViewStates.Gone;
-                        Toast.MakeText(this, "Failed to play video", ToastLength.Short).Show();
-                    }
+                        if (e.Videos.Count > 0)
+                        {
+                            PlayVideo(e.Videos[0]);
+                            progressBar.Visibility = ViewStates.Gone;
+                        }
+                        else
+                        {
+                            progressBar.Visibility = ViewStates.Gone;
+                            Toast.MakeText(this, "Failed to play video", ToastLength.Short).Show();
+                        }
+                    });
                 };
 
                 _client.OnVideoServersLoaded += (s, e) =>
                 {
-                    if (e.VideoServers.Count > 0)
+                    this.RunOnUiThread(() =>
                     {
-                        _client.GetVideos(e.VideoServers[0]);
-                    }
-                    else
-                    {
-                        progressBar.Visibility = ViewStates.Gone;
-                        Toast.MakeText(this, "Failed to find video", ToastLength.Short).Show();
-                    }
+                        if (e.VideoServers.Count > 0)
+                        {
+                            _client.GetVideos(e.VideoServers[0]);
+                        }
+                        else
+                        {
+                            progressBar.Visibility = ViewStates.Gone;
+                            Toast.MakeText(this, "Failed to find video", ToastLength.Short).Show();
+                        }
+                    });
                 };
 
-                _client.GetVideoServers(episode);
+                _client.GetVideoServers(episode.Id);
             }
 
             return;
@@ -547,7 +553,7 @@ namespace AniStream
             exoPlayer.Prepare();
             exoPlayer.PlayWhenReady = true;
 
-            anime.LastWatchedEp = episode.Number;
+            //anime.LastWatchedEp = episode.Number;
 
             //WeebUtils.SaveLastWatchedEp(this, anime);
 

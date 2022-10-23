@@ -65,7 +65,7 @@ namespace AniStream.Adapters
                 urlViewHolder.urlDownload.Click += (s, e) =>
                 {
                     var downloader = new Downloader(Activity);
-                    downloader.Download($"{_anime.Title} - Ep-{_episode.Number}", video.VideoUrl, video.Headers);
+                    downloader.Download($"{_anime.Title} - Ep-{_episode.Number}.mp4", video.VideoUrl, video.Headers);
                 };
             }
 

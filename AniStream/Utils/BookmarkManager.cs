@@ -76,7 +76,7 @@ namespace AniStream.Utils
 
         public void RemoveAllBookmarks(){ SecureStorage.SetAsync(_name, "").Wait(); }
 
-        public static float GetLastWatchedEp(Context context, Anime anime)
+        /*public static float GetLastWatchedEp(Context context, Anime anime)
         {
             var bookmarksPref = context.GetSharedPreferences("lastWatchedPref", FileCreationMode.Private);
 
@@ -134,6 +134,6 @@ namespace AniStream.Utils
                 lastWatched.PutString("lastWatched", JsonConvert.SerializeObject(list));
                 lastWatched.Commit();
             }
-        }
+        }*/
     }
 }

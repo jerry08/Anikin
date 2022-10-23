@@ -101,14 +101,17 @@ namespace AniStream
 
         private void Client_OnAnimesLoaded(object? sender, AnimeEventArgs e)
         {
-            var mDataAdapter = new AnimeRecyclerAdapter(this, e.Animes);
+            this.RunOnUiThread(() =>
+            {
+                var mDataAdapter = new AnimeRecyclerAdapter(this, e.Animes);
 
-            recyclerView.HasFixedSize = true;
-            recyclerView.DrawingCacheEnabled = true;
-            recyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
-            recyclerView.SetItemViewCacheSize(20);
-            recyclerView.SetAdapter(mDataAdapter);
-            ProgressBar.Visibility = ViewStates.Gone;
+                recyclerView.HasFixedSize = true;
+                recyclerView.DrawingCacheEnabled = true;
+                recyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
+                recyclerView.SetItemViewCacheSize(20);
+                recyclerView.SetAdapter(mDataAdapter);
+                ProgressBar.Visibility = ViewStates.Gone;
+            });
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
@@ -146,7 +149,7 @@ namespace AniStream
 
             bottomNavigationView.Menu.Clear();
 
-            switch (_client.Site)
+            switch (WeebUtils.AnimeSite)
             {
                 case AnimeSites.GogoAnime:
                     bottomNavigationView.InflateMenu(Resource.Menu.bottommenu2);

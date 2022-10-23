@@ -22,7 +22,10 @@ namespace AniStream.Utils
 
             bool hasStoragePermission = androidStoragePermission.HasStoragePermission();
             if (!hasStoragePermission)
+            {
+                Toast.MakeText(_activity, "Please grant storage permission then retry", ToastLength.Short).Show();
                 hasStoragePermission = await androidStoragePermission.RequestStoragePermission();
+            }
 
             if (!hasStoragePermission)    
                 return;
@@ -52,7 +55,7 @@ namespace AniStream.Utils
             //request.SetDestinationInExternalPublicDir(Android.OS.Environment.DirectoryMusic, songFullName + ".mp3");
 
             //request.SetDestinationInExternalPublicDir(WeebUtils.AppFolderName, invalidCharsRemoved + ".mp4");
-            request.SetDestinationInExternalPublicDir(Android.OS.Environment.DirectoryDownloads, invalidCharsRemoved + ".mp4");
+            request.SetDestinationInExternalPublicDir(Android.OS.Environment.DirectoryDownloads, invalidCharsRemoved);
             var dm = (DownloadManager)Application.Context.GetSystemService(Application.DownloadService);
             long id = dm.Enqueue(request);
 

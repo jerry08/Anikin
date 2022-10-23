@@ -71,52 +71,53 @@ namespace AniStream.Fragments
 
             _client.OnAnimesLoaded += (s, e) =>
             {
-                if (WeebUtils.AnimeSite == AnimeSites.GogoAnime || WeebUtils.AnimeSite == AnimeSites.Tenshi)
-                    Page++;
-                
-
-                var animes = e.Animes;
-
-                if (mRecyclerView.GetAdapter() is AnimeRecyclerAdapter animeRecyclerAdapter)
+                Activity.RunOnUiThread(() =>
                 {
-                    int positionStart = animeRecyclerAdapter.Animes.Count;
-                    int itemCount = animeRecyclerAdapter.Animes.Count;
+                    if (WeebUtils.AnimeSite == AnimeSites.GogoAnime || WeebUtils.AnimeSite == AnimeSites.Tenshi)
+                        Page++;
 
-                    animeRecyclerAdapter.Animes.RemoveAll(x => x.Id == -1);
+                    var animes = e.Animes;
 
-                    if (_client.Site == AnimeSites.GogoAnime)
-                        if (animes.Count > 0)
-                            animes.Add(new Anime() { Id = -1 });
-                        
-                    animeRecyclerAdapter.Animes.AddRange(animes);
-                    mRecyclerView.SetItemViewCacheSize(animeRecyclerAdapter.Animes.Count + 5);
-                    //animeRecyclerAdapter.NotifyDataSetChanged();
+                    if (mRecyclerView.GetAdapter() is AnimeRecyclerAdapter animeRecyclerAdapter)
+                    {
+                        int positionStart = animeRecyclerAdapter.Animes.Count;
+                        int itemCount = animeRecyclerAdapter.Animes.Count;
 
-                    itemCount = animeRecyclerAdapter.Animes.Count;
+                        animeRecyclerAdapter.Animes.RemoveAll(x => x.Id == "-1");
 
-                    //animeRecyclerAdapter.NotifyItemRangeChanged(positionStart, itemCount);
-                    //animeRecyclerAdapter.NotifyItemRangeInserted(positionStart, animes.Count); //OR
-                    animeRecyclerAdapter.NotifyItemRangeChanged(positionStart - 1, itemCount);
-                }
-                else
-                {
-                    if (_client.Site == AnimeSites.GogoAnime)
-                        animes.Add(new Anime() { Id = -1 });
-                    
+                        if (WeebUtils.AnimeSite == AnimeSites.GogoAnime)
+                            if (animes.Count > 0)
+                                animes.Add(new Anime() { Id = "-1" });
 
-                    //var mDataAdapter = new AnimeRecyclerAdapter(view.Context, animes, this);
-                    var mDataAdapter = new AnimeRecyclerAdapter(Activity, animes, this);
+                        animeRecyclerAdapter.Animes.AddRange(animes);
+                        mRecyclerView.SetItemViewCacheSize(animeRecyclerAdapter.Animes.Count + 5);
+                        //animeRecyclerAdapter.NotifyDataSetChanged();
 
-                    mRecyclerView.HasFixedSize = true;
-                    mRecyclerView.DrawingCacheEnabled = true;
-                    mRecyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
-                    mRecyclerView.SetItemViewCacheSize(20);
-                    mRecyclerView.SetAdapter(mDataAdapter);
-                }
+                        itemCount = animeRecyclerAdapter.Animes.Count;
 
-                progressBar.Visibility = ViewStates.Gone;
+                        //animeRecyclerAdapter.NotifyItemRangeChanged(positionStart, itemCount);
+                        //animeRecyclerAdapter.NotifyItemRangeInserted(positionStart, animes.Count); //OR
+                        animeRecyclerAdapter.NotifyItemRangeChanged(positionStart - 1, itemCount);
+                    }
+                    else
+                    {
+                        if (WeebUtils.AnimeSite == AnimeSites.GogoAnime)
+                            animes.Add(new Anime() { Id = "-1" });
 
-                swipeRefreshLayout.Refreshing = false;
+                        //var mDataAdapter = new AnimeRecyclerAdapter(view.Context, animes, this);
+                        var mDataAdapter = new AnimeRecyclerAdapter(Activity, animes, this);
+
+                        mRecyclerView.HasFixedSize = true;
+                        mRecyclerView.DrawingCacheEnabled = true;
+                        mRecyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
+                        mRecyclerView.SetItemViewCacheSize(20);
+                        mRecyclerView.SetAdapter(mDataAdapter);
+                    }
+
+                    progressBar.Visibility = ViewStates.Gone;
+
+                    swipeRefreshLayout.Refreshing = false;
+                });
             };
 
             _client.Search("", _searchFilter);

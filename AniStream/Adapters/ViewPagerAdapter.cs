@@ -40,7 +40,6 @@ namespace AniStream.Adapters
         public override int Count { get { return Fragments.Count; } }
 
         public override Fragment GetItem(int position) => Fragments[position];
-        
 
         public override int GetItemPosition(Java.Lang.Object @object)=> base.GetItemPosition(@object);
         

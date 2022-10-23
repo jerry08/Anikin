@@ -65,97 +65,38 @@ namespace AniStream.Fragments
 
                 _client.OnVideoServersLoaded += (s, e) =>
                 {
-                    var serverWithVideos = e.VideoServers
-                        .Select(x => new ServerWithVideos(x, new())).ToList();
+                    Activity.RunOnUiThread(() =>
+                    {
+                        var serverWithVideos = e.VideoServers
+                            .Select(x => new ServerWithVideos(x, new())).ToList();
 
-                    Cache.Add(_episode.Link, serverWithVideos);
+                        Cache.Add(_episode.Link, serverWithVideos);
 
-                    if (e.VideoServers.Count > 0)
-                        _client.GetVideos(e.VideoServers[0]);
+                        if (e.VideoServers.Count > 0)
+                            _client.GetVideos(e.VideoServers[0]);
+                    });
                 };
 
                 _client.OnVideosLoaded += (s, e) =>
                 {
-                    totalServersLoaded++;
-
-                    if (totalServersLoaded >= _client.VideoServers.Count)
-                        selectorProgressBar.Visibility = ViewStates.Gone;
-                    else
-                        _client.GetVideos(_client.VideoServers[totalServersLoaded]);
-
-                    if (e.Videos.Count <= 0)
-                        return;
-
-                    if (serversRecyclerView.GetAdapter() is ExtractorAdapter adapter)
-                    {
-                        adapter.Containers.Add(new(e.VideoServer, e.Videos)
-                        {
-                            IsLoaded = true
-                        });
-
-                        cache = adapter.Containers;
-                    }
-                    else
-                    {
-                        var containers = new List<ServerWithVideos>
-                        {
-                            new(e.VideoServer, e.Videos)
-                            {
-                                IsLoaded = true
-                            }
-                        };
-
-                        cache.AddRange(containers);
-
-                        adapter = new ExtractorAdapter(activity, _anime, _episode, containers);
-
-                        serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
-                        serversRecyclerView.HasFixedSize = true;
-                        serversRecyclerView.SetItemViewCacheSize(20);
-                        serversRecyclerView.SetAdapter(adapter);
-                    }
-
-                    Cache.Remove(_episode.Link);
-                    Cache.Add(_episode.Link, cache);
-
-                    adapter.NotifyDataSetChanged();
-                };
-
-                _client.GetVideoServers(_episode);
-            }
-            else
-            {
-                var notLoadedServers = cache.Where(x => !x.IsLoaded)
-                    .Select(x => x.VideoServer).ToList();
-                if (notLoadedServers.Count <= 0)
-                {
-                    var adapter = new ExtractorAdapter(activity, _anime, _episode, cache);
-
-                    serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
-                    serversRecyclerView.HasFixedSize = true;
-                    serversRecyclerView.SetItemViewCacheSize(20);
-                    serversRecyclerView.SetAdapter(adapter);
-
-                    selectorProgressBar.Visibility = ViewStates.Gone;
-                }
-                else
-                {
-                    int totalServersLoaded = 0;
-
-                    _client.OnVideosLoaded += (s, e) =>
+                    Activity.RunOnUiThread(() =>
                     {
                         totalServersLoaded++;
 
-                        if (totalServersLoaded >= notLoadedServers.Count)
-                        {
+                        if (totalServersLoaded >= _client.VideoServers.Count)
                             selectorProgressBar.Visibility = ViewStates.Gone;
-                            return;
-                        }
-                        else    
+                        else
                             _client.GetVideos(_client.VideoServers[totalServersLoaded]);
 
                         if (e.Videos.Count <= 0)
+                        {
+                            Cache[_episode.Link][totalServersLoaded - 1] = new(e.VideoServer, e.Videos)
+                            {
+                                IsLoaded = true
+                            };
+
                             return;
+                        }
 
                         if (serversRecyclerView.GetAdapter() is ExtractorAdapter adapter)
                         {
@@ -186,10 +127,105 @@ namespace AniStream.Fragments
                             serversRecyclerView.SetAdapter(adapter);
                         }
 
-                        Cache.Remove(_episode.Link);
-                        Cache.Add(_episode.Link, cache);
+                        //Cache.Remove(_episode.Link);
+                        //Cache.Add(_episode.Link, cache);
+
+                        Cache[_episode.Link][totalServersLoaded - 1] = new(e.VideoServer, e.Videos)
+                        {
+                            IsLoaded = true
+                        };
 
                         adapter.NotifyDataSetChanged();
+                    });
+                };
+
+                _client.GetVideoServers(_episode.Id);
+            }
+            else
+            {
+                var notLoadedServers = cache.Where(x => !x.IsLoaded)
+                    .Select(x => x.VideoServer).ToList();
+                if (notLoadedServers.Count <= 0)
+                {
+                    cache = cache.Where(x => x.IsLoaded && x.Videos.Count > 0).ToList();
+
+                    var adapter = new ExtractorAdapter(activity, _anime, _episode, cache);
+
+                    serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
+                    serversRecyclerView.HasFixedSize = true;
+                    serversRecyclerView.SetItemViewCacheSize(20);
+                    serversRecyclerView.SetAdapter(adapter);
+
+                    selectorProgressBar.Visibility = ViewStates.Gone;
+                }
+                else
+                {
+                    int totalServersLoaded = 0;
+
+                    var adapter = new ExtractorAdapter(activity, _anime, _episode,
+                        cache.Where(x => x.IsLoaded && x.Videos.Count > 0).ToList());
+
+                    serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
+                    serversRecyclerView.HasFixedSize = true;
+                    serversRecyclerView.SetItemViewCacheSize(20);
+                    serversRecyclerView.SetAdapter(adapter);
+
+                    _client.OnVideosLoaded += (s, e) =>
+                    {
+                        Activity.RunOnUiThread(() =>
+                        {
+                            totalServersLoaded++;
+
+                            if (totalServersLoaded >= notLoadedServers.Count)
+                            {
+                                selectorProgressBar.Visibility = ViewStates.Gone;
+                                return;
+                            }
+                            else
+                            {
+                                _client.GetVideos(notLoadedServers[totalServersLoaded]);
+                            }
+
+                            var notLoadedServer = notLoadedServers[totalServersLoaded - 1];
+                            var item = Cache[_episode.Link].Where(x => x.VideoServer == notLoadedServer).FirstOrDefault();
+
+                            if (e.Videos.Count <= 0)
+                            {
+                                item.IsLoaded = true;
+
+                                //Cache[_episode.Link][totalServersLoaded - 1] = new(e.VideoServer, e.Videos)
+                                //{
+                                //    IsLoaded = true
+                                //};
+
+                                return;
+                            }
+
+                            var adapter = (ExtractorAdapter)serversRecyclerView.GetAdapter()!;
+
+                            adapter.Containers.Add(new(e.VideoServer, e.Videos)
+                            {
+                                IsLoaded = true
+                            });
+
+                            cache = adapter.Containers;
+
+                            //Cache.Remove(_episode.Link);
+                            //Cache.Add(_episode.Link, cache);
+
+                            //Cache[_episode.Link] = cache;
+
+                            item.IsLoaded = true;
+                            item.VideoServer = e.VideoServer;
+                            item.Videos = e.Videos;
+
+                            //Cache[_episode.Link][notLoadedServer] = new(e.VideoServer, e.Videos)
+                            //{
+                            //    IsLoaded = true
+                            //};
+
+                            adapter.NotifyDataSetChanged();
+                        });
                     };
 
                     _client.GetVideos(notLoadedServers[0]);
