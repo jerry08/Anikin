@@ -1,50 +1,40 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
 using Android.Graphics;
-using Android.OS;
-using Android.Runtime;
 using Android.Text;
 using Android.Text.Style;
 using Android.Views;
-using Android.Widget;
 
-namespace AniStream.Utils
+namespace AniStream.Utils;
+
+public class MySpannableEventArgs :EventArgs
 {
-    public class MySpannableEventArgs :EventArgs
+    public View View = default!;
+}
+
+public class MySpannable : ClickableSpan
+{
+    public event EventHandler<MySpannableEventArgs>? MyClickEvent;
+
+    private bool IsUnderline = true;
+
+    public MySpannable(bool isUnderline)
     {
-        public View View;
+        IsUnderline = isUnderline;
     }
 
-    public class MySpannable : ClickableSpan
+    public override void UpdateDrawState(TextPaint ds)
     {
-        public event EventHandler<MySpannableEventArgs> MyClickEvent;
+        ds.UnderlineText = IsUnderline;
+        ds.Color = Color.White;
 
-        private bool isUnderline = true;
+        //base.UpdateDrawState(ds);
+    }
 
-        public MySpannable(bool isUnderline)
-        {
-            this.isUnderline = isUnderline;
-        }
+    public override void OnClick(View widget)
+    {
+        var myClickEvent = new MySpannableEventArgs();
+        myClickEvent.View = widget;
 
-        public override void UpdateDrawState(TextPaint ds)
-        {
-            ds.UnderlineText = isUnderline;
-            ds.Color = Color.White;
-
-            //base.UpdateDrawState(ds);
-        }
-
-        public override void OnClick(View widget)
-        {
-            var myClickEvent = new MySpannableEventArgs();
-            myClickEvent.View = widget;
-
-            MyClickEvent(this, myClickEvent);
-        }
+        MyClickEvent?.Invoke(this, myClickEvent);
     }
 }

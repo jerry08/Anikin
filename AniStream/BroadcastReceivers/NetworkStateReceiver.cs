@@ -1,71 +1,53 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Android.App;
+﻿using System.Collections.Generic;
 using Android.Content;
-using Android.Net;
+using AniStream.Utils;
 
-namespace AniStream.BroadcastReceivers
+namespace AniStream.BroadcastReceivers;
+
+public class NetworkStateReceiver : BroadcastReceiver
 {
-    public class NetworkStateReceiver : BroadcastReceiver
+    protected List<INetworkStateReceiverListener> listeners = new();
+    protected bool? connected;
+
+    public NetworkStateReceiver()
     {
-        protected List<INetworkStateReceiverListener> listeners;
-        protected bool? connected;
+    }
 
-        public NetworkStateReceiver()
-        {
-            listeners = new List<INetworkStateReceiverListener>();
-            connected = null;
-        }
+    public override void OnReceive(Context? context, Intent? intent)
+    {
+        if (intent is null || intent.Extras is null)
+            return;
 
-        public override void OnReceive(Context context, Intent intent)
-        {
-            if (intent == null || intent.Extras == null)
-                return;
+        connected = WeebUtils.HasNetworkConnection(context!);
 
-            ConnectivityManager manager = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService);
-            NetworkInfo ni = manager.ActiveNetworkInfo;
+        NotifyStateToAll();
+    }
 
-            if (ni != null && ni.GetState() == NetworkInfo.State.Connected)
-            {
-                connected = true;
-            }
-            else if (intent.GetBooleanExtra(ConnectivityManager.ExtraNoConnectivity, false))
-            {
-                connected = false;
-            }
+    private void NotifyStateToAll()
+    {
+        foreach (INetworkStateReceiverListener listener in listeners)
+            NotifyState(listener);
+    }
 
-            NotifyStateToAll();
-        }
+    private void NotifyState(INetworkStateReceiverListener listener)
+    {
+        if (connected is null || listener is null)
+            return;
 
-        private void NotifyStateToAll()
-        {
-            foreach (INetworkStateReceiverListener listener in listeners)
-                NotifyState(listener);
-        }
+        if (connected == true)
+            listener.NetworkAvailable();
+        else
+            listener.NetworkUnavailable();
+    }
 
-        private void NotifyState(INetworkStateReceiverListener listener)
-        {
-            if (connected == null || listener == null)
-                return;
+    public void AddListener(INetworkStateReceiverListener listener)
+    {
+        listeners.Add(listener);
+        NotifyState(listener);
+    }
 
-            if (connected == true)
-                listener.NetworkAvailable();
-            else
-                listener.NetworkUnavailable();
-        }
-
-        public void AddListener(INetworkStateReceiverListener l)
-        {
-            listeners.Add(l);
-            NotifyState(l);
-        }
-
-        public void RemoveListener(INetworkStateReceiverListener l)
-        {
-            listeners.Remove(l);
-        }
+    public void RemoveListener(INetworkStateReceiverListener listener)
+    {
+        listeners.Remove(listener);
     }
 }

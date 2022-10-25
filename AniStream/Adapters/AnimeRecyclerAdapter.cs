@@ -24,152 +24,146 @@ using Bumptech.Glide;
 using AniStream.Utils;
 using AnimeDl.Scrapers;
 
-namespace AniStream.Adapters
+namespace AniStream.Adapters;
+
+public class AnimeRecyclerAdapter : RecyclerView.Adapter
 {
-    public class AnimeRecyclerAdapter : RecyclerView.Adapter
+    Activity Activity { get; set; }
+    public List<Anime> Animes { get; set; }
+
+    private int lastPosition = -1;
+
+    private AnimeFragment? AnimeFragment;
+
+    public AnimeRecyclerAdapter(Activity activity, List<Anime> animes,
+        AnimeFragment? animeFragment = null)
     {
-        Activity Activity { get; set; }
-        public List<Anime> Animes { get; set; }
-        int lastPosition = -1;
-        AnimeFragment AnimeFragment;
+        Animes = animes;
+        Activity = activity;
+        AnimeFragment = animeFragment;
+    }
 
-        public AnimeRecyclerAdapter(Activity activity, List<Anime> animes, AnimeFragment animeFragment = null)
+    public class MyViewHolder : RecyclerView.ViewHolder
+    {
+        public CardView cardView = default!;
+        public TextView title, episodeno = default!;
+        public Uri animeuri = default!, imageuri = default!;
+        public ImageView imageofanime = default!;
+        public ProgressBar loadMoreProgressBar = default!;
+
+        public MyViewHolder(View view) : base(view)
         {
-            Animes = animes;
-            Activity = activity;
-            AnimeFragment = animeFragment;
+            title = view.FindViewById<TextView>(Resource.Id.animename)!;
+            episodeno = view.FindViewById<TextView>(Resource.Id.episodeno)!;
+            imageofanime = view.FindViewById<ImageView>(Resource.Id.img)!;
+            cardView = view.FindViewById<CardView>(Resource.Id.cardview)!;
+            loadMoreProgressBar = view.FindViewById<ProgressBar>(Resource.Id.loadMoreProgressBar)!;
+
+            episodeno.Visibility = ViewStates.Gone;
         }
+    }
 
-        public class MyViewHolder : RecyclerView.ViewHolder
+    public override int ItemCount => Animes.Count;
+
+    public override long GetItemId(int position) => position;
+    
+
+    public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
+    {
+        var animeViewholder = (holder as MyViewHolder)!;
+
+        var anime = Animes[animeViewholder.BindingAdapterPosition];
+
+        if (anime != null && anime.Id == "-1" && AnimeFragment != null)
         {
-            public CardView cardView;
-            public TextView title, episodeno;
-            public Uri animeuri, imageuri;
-            public ImageView imageofanime;
-            public ProgressBar loadMoreProgressBar;
+            animeViewholder.loadMoreProgressBar.Visibility = ViewStates.Visible;
+            //animeViewholder.episodeno.Visibility = ViewStates.Visible;
+            //animeViewholder.episodeno.Text = "Loading More...";
+            animeViewholder.title.Text = "Loading More...";
+            //animeViewholder.cardView.SetBackgroundColor(Color.Transparent);
+            animeViewholder.cardView.CardElevation = 0f;
 
-            public MyViewHolder(View view) : base(view)
-            {
-                title = view.FindViewById<TextView>(Resource.Id.animename);
-                episodeno = view.FindViewById<TextView>(Resource.Id.episodeno);
-                imageofanime = view.FindViewById<ImageView>(Resource.Id.img);
-                cardView = view.FindViewById<CardView>(Resource.Id.cardview);
-                loadMoreProgressBar = view.FindViewById<ProgressBar>(Resource.Id.loadMoreProgressBar);
-
-                episodeno.Visibility = ViewStates.Gone;
-            }
-        }
-
-        public override int ItemCount => Animes.Count;
-
-        public override long GetItemId(int position) => position;
-        
-
-        public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
-        {
-            var holder2 = holder as MyViewHolder;
-
-            //var anime = Animes[position];
-            var anime = Animes[holder2.BindingAdapterPosition];
-
-            if (anime != null && anime.Id == "-1" && AnimeFragment != null)
-            {
-                holder2.loadMoreProgressBar.Visibility = ViewStates.Visible;
-                //holder2.episodeno.Visibility = ViewStates.Visible;
-                //holder2.episodeno.Text = "Loading More...";
-                holder2.title.Text = "Loading More...";
-                //holder2.cardView.SetBackgroundColor(Color.Transparent);
-                holder2.cardView.CardElevation = 0f;
-
-                //Animation animation2 = AnimationUtils.LoadAnimation(Context,
-                //    (position > lastPosition) ? Resource.Animation.up_from_bottom
-                //        : Resource.Animation.down_from_top);
-
-                //Animation animation2 = AnimationUtils.LoadAnimation(Context, 
-                //    Resource.Animation.up_from_bottom);
-                //
-                //holder2.ItemView.StartAnimation(animation2);
-                //lastPosition = position;
-
-                AnimeFragment.Search();
-
-                return;
-            }
-
-            if (holder2.loadMoreProgressBar.Visibility == ViewStates.Visible)
-            {
-                holder2.loadMoreProgressBar.Visibility = ViewStates.Gone;
-                holder2.cardView.CardElevation = 4;
-            }
-
-            //holder2.animeuri = Uri.Parse(mSiteLink.get(position));
-
-            holder2.title.Text = Animes[position].Title;
-            //holder2.episodeno.Text = mEpisodeList.get(position);
-
-            if (!holder2.cardView.HasOnClickListeners)
-            {
-                holder2.cardView.Click += (s, e) =>
-                {
-                    //var test = Animes[position].Name; 
-                    //var anime2 = anime.Name;
-                    //var test3 = holder2.title.Text;
-
-                    Anime anime2 = Animes[holder2.BindingAdapterPosition];
-                    //Anime anime3 = Animes[position];
-
-                    Intent intent = new Intent(Activity, typeof(EpisodesActivity));
-                    intent.PutExtra("anime", JsonConvert.SerializeObject(anime2));
-                    intent.SetFlags(ActivityFlags.NewTask);
-                    Activity.StartActivity(intent);
-
-                    Activity.OverridePendingTransition(Resource.Animation.anime_slide_in_top, Resource.Animation.anime_slide_out_top);
-                };
-            }
-
-            //Animation animation = AnimationUtils.LoadAnimation(Context,
+            //Animation animation2 = AnimationUtils.LoadAnimation(Context,
             //    (position > lastPosition) ? Resource.Animation.up_from_bottom
             //        : Resource.Animation.down_from_top);
-            //holder2.ItemView.StartAnimation(animation);
 
-            Animation animation = AnimationUtils.LoadAnimation(Activity, Resource.Animation.up_from_bottom);
-            holder2.ItemView.StartAnimation(animation);
+            //Animation animation2 = AnimationUtils.LoadAnimation(Context, 
+            //    Resource.Animation.up_from_bottom);
+            //
+            //animeViewholder.ItemView.StartAnimation(animation2);
+            //lastPosition = position;
 
-            lastPosition = position;
+            AnimeFragment.Search();
 
-            if (!string.IsNullOrEmpty(Animes[position].Image))
+            return;
+        }
+
+        if (animeViewholder.loadMoreProgressBar.Visibility == ViewStates.Visible)
+        {
+            animeViewholder.loadMoreProgressBar.Visibility = ViewStates.Gone;
+            animeViewholder.cardView.CardElevation = 4;
+        }
+
+        animeViewholder.title.Text = Animes[position].Title;
+
+        if (!animeViewholder.cardView.HasOnClickListeners)
+        {
+            animeViewholder.cardView.Click += (s, e) =>
             {
-                //Picasso.Get().Load(Animes[position].Image)
-                //    .Fit().CenterCrop().Into(holder2.imageofanime);
+                var anime2 = Animes[animeViewholder.BindingAdapterPosition];
 
-                if (WeebUtils.AnimeSite == AnimeSites.Tenshi)
-                {
-                    var glideUrl = new GlideUrl(anime.Image, new LazyHeaders.Builder()
-                        .AddHeader("Cookie", "__ddg1_=;__ddg2_=;loop-view=thumb").Build());
+                var intent = new Intent(Activity, typeof(EpisodesActivity));
+                intent.PutExtra("anime", JsonConvert.SerializeObject(anime2));
+                intent.SetFlags(ActivityFlags.NewTask);
 
-                    Glide.With(Activity).Load(glideUrl)
-                        .FitCenter().CenterCrop().Into(holder2.imageofanime);
-                }
-                else
-                {
-                    Picasso.Get().Load(anime.Image)
-                        .Fit().CenterCrop().Into(holder2.imageofanime);
-                }
+                Activity.StartActivity(intent);
+
+                Activity.OverridePendingTransition(Resource.Animation.anime_slide_in_top, Resource.Animation.anime_slide_out_top);
+            };
+        }
+
+        //Animation animation = AnimationUtils.LoadAnimation(Context,
+        //    (position > lastPosition) ? Resource.Animation.up_from_bottom
+        //        : Resource.Animation.down_from_top);
+        //animeViewholder.ItemView.StartAnimation(animation);
+
+        var animation = AnimationUtils.LoadAnimation(Activity, Resource.Animation.up_from_bottom);
+        animeViewholder.ItemView.StartAnimation(animation);
+
+        lastPosition = position;
+
+        if (!string.IsNullOrEmpty(Animes[position].Image))
+        {
+            //Picasso.Get().Load(Animes[position].Image)
+            //    .Fit().CenterCrop().Into(animeViewholder.imageofanime);
+
+            if (WeebUtils.AnimeSite == AnimeSites.Tenshi)
+            {
+                var glideUrl = new GlideUrl(anime?.Image, new LazyHeaders.Builder()
+                    .AddHeader("Cookie", "__ddg1_=;__ddg2_=;loop-view=thumb").Build());
+
+                Glide.With(Activity).Load(glideUrl)
+                    .FitCenter().CenterCrop().Into(animeViewholder.imageofanime);
+            }
+            else
+            {
+                Picasso.Get().Load(anime?.Image)
+                    .Fit().CenterCrop().Into(animeViewholder.imageofanime);
             }
         }
+    }
 
-        public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
-        {
-            View itemView = LayoutInflater.From(parent.Context)
-                .Inflate(Resource.Layout.row_data, parent, false);
+    public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
+    {
+        var itemView = LayoutInflater.From(parent.Context)!
+            .Inflate(Resource.Layout.row_data, parent, false)!;
 
-            return new MyViewHolder(itemView);
-        }
+        return new MyViewHolder(itemView);
+    }
 
-        public override void OnViewDetachedFromWindow(Object holder)
-        {
-            base.OnViewDetachedFromWindow(holder);
-            (holder as MyViewHolder).ItemView.ClearAnimation();
-        }
+    public override void OnViewDetachedFromWindow(Object holder)
+    {
+        base.OnViewDetachedFromWindow(holder);
+        (holder as MyViewHolder)!.ItemView.ClearAnimation();
     }
 }

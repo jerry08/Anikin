@@ -12,92 +12,91 @@ using AndroidX.CardView.Widget;
 using AniStream.Models;
 using Android.Content;
 
-namespace AniStream.Adapters
+namespace AniStream.Adapters;
+
+public class EpisodeRecyclerAdapter : RecyclerView.Adapter
 {
-    public class EpisodeRecyclerAdapter : RecyclerView.Adapter
+    private readonly PlayerSettings _playerSettings = new();
+
+    private readonly Anime _anime;
+
+    private readonly EpisodesActivity _episodesActivity;
+
+    public List<Episode> Episodes { get; set; }
+
+    public EpisodeRecyclerAdapter(List<Episode> episodes,
+        EpisodesActivity activity,
+        Anime anime)
     {
-        private readonly PlayerSettings _playerSettings = new();
+        _anime = anime;
+        _episodesActivity = activity;
+        Episodes = episodes;
 
-        private readonly Anime _anime;
+        _playerSettings.Load();
+    }
 
-        private readonly EpisodesActivity _episodesActivity;
+    class EpisodeViewHolder : RecyclerView.ViewHolder
+    {
+        public CardView cardView = default!;
+        public TextView episodeNumber = default!;
 
-        public List<Episode> Episodes { get; set; }
-
-        public EpisodeRecyclerAdapter(List<Episode> episodes,
-            EpisodesActivity activity,
-            Anime anime)
+        public EpisodeViewHolder(View view) : base (view)
         {
-            _anime = anime;
-            _episodesActivity = activity;
-            Episodes = episodes;
-
-            _playerSettings.Load();
+            cardView = view.FindViewById<CardView>(Resource.Id.cardView)!;
+            episodeNumber = view.FindViewById<TextView>(Resource.Id.episodeNumber)!;
         }
+    }
 
-        class EpisodeViewHolder : RecyclerView.ViewHolder
+    public override int ItemCount => Episodes.Count;
+
+    public override long GetItemId(int position)=> position;
+
+    public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
+    {
+        var episodeViewHolder = (holder as EpisodeViewHolder)!;
+
+        var ep = $"EP {Episodes[position].Number}";
+
+        episodeViewHolder.episodeNumber.Text = ep;
+
+        if (episodeViewHolder.cardView.HasOnClickListeners)
+            return;
+
+        episodeViewHolder.cardView.LongClick += (s, e) =>
         {
-            public CardView cardView;
-            public TextView episodeNumber;
+            var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
 
-            public EpisodeViewHolder(View view) : base (view)
-            {
-                cardView = view.FindViewById<CardView>(Resource.Id.cardView);
-                episodeNumber = view.FindViewById<TextView>(Resource.Id.episodeNumber);
-            }
-        }
+            var selector = SelectorDialogFragment.NewInstance(_anime, episode);
+            selector.Show(_episodesActivity.SupportFragmentManager, "dialog");
+        };
 
-        public override int ItemCount => Episodes.Count;
-
-        public override long GetItemId(int position)=> position;
-
-        public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
+        episodeViewHolder.cardView.Click += (s, e) =>
         {
-            var episodeViewHolder = holder as EpisodeViewHolder;
+            var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
 
-            var ep = $"EP {Episodes[position].Number}";
-
-            episodeViewHolder.episodeNumber.Text = ep;
-
-            if (episodeViewHolder.cardView.HasOnClickListeners)
-                return;
-
-            episodeViewHolder.cardView.LongClick += (s, e) =>
+            if (_playerSettings.SelectServerBeforePlaying)
             {
-                var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
-
                 var selector = SelectorDialogFragment.NewInstance(_anime, episode);
                 selector.Show(_episodesActivity.SupportFragmentManager, "dialog");
-            };
-
-            episodeViewHolder.cardView.Click += (s, e) =>
+            }
+            else
             {
-                var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
+                var intent = new Intent(_episodesActivity, typeof(VideoActivity));
 
-                if (_playerSettings.SelectServerBeforePlaying)
-                {
-                    var selector = SelectorDialogFragment.NewInstance(_anime, episode);
-                    selector.Show(_episodesActivity.SupportFragmentManager, "dialog");
-                }
-                else
-                {
-                    var intent = new Intent(_episodesActivity, typeof(VideoActivity));
+                intent.PutExtra("anime", JsonConvert.SerializeObject(_anime));
+                intent.PutExtra("episode", JsonConvert.SerializeObject(episode));
+                intent.SetFlags(ActivityFlags.NewTask);
 
-                    intent.PutExtra("anime", JsonConvert.SerializeObject(_anime));
-                    intent.PutExtra("episode", JsonConvert.SerializeObject(episode));
-                    intent.SetFlags(ActivityFlags.NewTask);
+                _episodesActivity.ApplicationContext!.StartActivity(intent);
+            }
+        };
+    }
 
-                    _episodesActivity.ApplicationContext.StartActivity(intent);
-                }
-            };
-        }
+    public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
+    {
+        var itemView = LayoutInflater.From(parent.Context)!
+            .Inflate(Resource.Layout.recycler_episode_item, parent, false)!;
 
-        public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
-        {
-            View itemView = LayoutInflater.From(parent.Context)
-                .Inflate(Resource.Layout.recycler_episode_item, parent, false);
-
-            return new EpisodeViewHolder(itemView);
-        }
+        return new EpisodeViewHolder(itemView);
     }
 }

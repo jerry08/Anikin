@@ -41,7 +41,6 @@ using Google.Android.Material.BottomSheet;
 using AnimeDl.Utils;
 using Com.Google.Android.Exoplayer2.Ext.Okhttp;
 using Android.Graphics.Drawables;
-using static Android.Icu.Text.Transliterator;
 using Bumptech.Glide;
 using AndroidX.CardView.Widget;
 using AniStream.Models;
@@ -59,7 +58,7 @@ namespace AniStream
         //IDialogInterfaceOnClickListener, IMediaSourceEventListener, 
         INetworkStateReceiverListener, ITrackNameProvider
     {
-        private readonly AnimeClient _client = new AnimeClient(WeebUtils.AnimeSite);
+        private readonly AnimeClient _client = new(WeebUtils.AnimeSite);
 
         private readonly PlayerSettings _playerSettings = new();
         
@@ -320,73 +319,6 @@ namespace AniStream
 
                 _client.GetVideoServers(episode.Id);
             }
-
-            return;
-
-            playerView = FindViewById<StyledPlayerView>(Resource.Id.exoplayer)!;
-            //controls = FindViewById<LinearLayout>(Resource.Id.wholecontroller)!;
-            exoplay = FindViewById<ImageButton>(Resource.Id.exo_play)!;
-            progressBar = FindViewById<ProgressBar>(Resource.Id.buffer)!;
-            animeTitle = FindViewById<TextView>(Resource.Id.titleofanime)!;
-            videoChangerButton = FindViewById<ImageButton>(Resource.Id.qualitychanger)!;
-            nextEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_nextvideo)!;
-            previousEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_prevvideo)!;
-            errorText = FindViewById<TextView>(Resource.Id.errorText)!;
-
-            nextEpisodeButton.Visibility = ViewStates.Gone;
-            previousEpisodeButton.Visibility = ViewStates.Gone;
-
-            animeTitle.Text = episode.Name;
-
-            //var trackSelectionFactory = new AdaptiveTrackSelection.Factory();
-            //trackSelector = new DefaultTrackSelector(this, trackSelectionFactory);
-            //
-            //exoPlayer = new IExoPlayer.Builder(this)
-            //    .SetTrackSelector(trackSelector)!
-            //    .Build()!;
-
-            playerView.Player = exoPlayer;
-            exoPlayer.AddListener(this);
-
-            progressBar.Visibility = ViewStates.Visible;
-
-            //exoplay.Click += (s, e) =>
-            //{
-            //    if (exoPlayer.IsPlaying)
-            //    {
-            //        Picasso.Get().Load(Resource.Drawable.anim_play_to_pause)
-            //            .Into(exoplay);
-            //        exoPlayer.Pause();
-            //    }
-            //    else
-            //    {
-            //        Picasso.Get().Load(Resource.Drawable.anim_pause_to_play)
-            //            .Into(exoplay);
-            //        exoPlayer.Play();
-            //    }
-            //};
-
-            PlayVideo(video);
-
-            videoChangerButton.Click += (s, e) =>
-            {
-                //var gs = exoPlayer.PlayerError;
-                //return;
-
-                //var res = _client.Videos.Select(x => x.Resolution).ToArray();
-                //
-                //var builder = new Android.App.AlertDialog.Builder(this,
-                //    Android.App.AlertDialog.ThemeDeviceDefaultLight);
-                //builder.SetTitle("Resolution");
-                //builder.SetItems(res, this);
-                //builder.Show();
-
-                selector = SelectorDialogFragment.NewInstance(anime, episode, this);
-                //var test = (selector.Dialog as BottomSheetDialog);
-                //var behavior = BottomSheetBehavior.From(selector);
-                //behavior.State = BottomSheetBehavior.StateExpanded;
-                selector.Show(SupportFragmentManager, "dialog");
-            };
         }
 
         public void InitPlayer()
@@ -420,33 +352,17 @@ namespace AniStream
 
         public override void OnBackPressed()
         {
-            var alert = new AlertDialog.Builder(this);
-            alert.SetMessage("Are you sure you want to go back?");
-            alert.SetPositiveButton("Yes", (s, e) =>
-            {
-                exoPlayer.Stop();
-                exoPlayer.Release();
-                _client.CancelGetVideoServers();
-                _client.CancelGetVideos();
-                VideoCache.Release();
-
-                base.OnBackPressed();
-            });
-
-            alert.SetNegativeButton("Cancel", (s, e) =>
-            {
-
-            });
-
-            alert.SetCancelable(false);
-            var dialog = alert.Create();
-            dialog.Show();
+            exoPlayer.Stop();
+            exoPlayer.Release();
+            _client.CancelGetVideoServers();
+            _client.CancelGetVideos();
+            VideoCache.Release();
         }
 
         // QUALITY SELECTOR
         private void ShowM3U8TrackSelector()
         {
-            var mappedTrackInfo = trackSelector.CurrentMappedTrackInfo;
+            //var mappedTrackInfo = trackSelector.CurrentMappedTrackInfo;
 
             //var trackSelectionDialogBuilder = new TrackSelectionDialogBuilder(this,
             //    new Java.Lang.String("Available Qualities"), exoPlayer, C.TrackTypeVideo);
@@ -575,27 +491,6 @@ namespace AniStream
         public void OnPlaybackStateChanged(int playbackState)
         {
             IsBuffering = playbackState == IPlayer.StateBuffering;
-
-            return;
-
-            if (playbackState == IPlayer.StateReady)
-            {
-                progressBar.Visibility = ViewStates.Invisible;
-                errorText.Visibility = ViewStates.Gone;
-            }
-            else if (playbackState == IPlayer.StateEnded)
-            {
-                //Play next video?
-            }
-            else if (playbackState == IPlayer.StateBuffering)
-            {
-                progressBar.Visibility = ViewStates.Visible;
-            }
-            else
-            {
-                progressBar.Visibility = ViewStates.Invisible;
-                errorText.Visibility = ViewStates.Gone;
-            }
         }
 
         public void OnPlaybackSuppressionReasonChanged(int playbackSuppressionReason)
@@ -644,11 +539,6 @@ namespace AniStream
 
         void SetVideoOptions()
         {
-            //View decorView = Window.DecorView;
-            //SystemUiFlags uiOptions = SystemUiFlags.HideNavigation
-            //        | SystemUiFlags.Fullscreen | SystemUiFlags.ImmersiveSticky;
-            //decorView.WindowSystemUiVisibility = uiOptions;
-
             Window.DecorView.SystemUiVisibility = (StatusBarVisibility)SystemUiFlags.HideNavigation
                 | (StatusBarVisibility)SystemUiFlags.Fullscreen
                 | (StatusBarVisibility)SystemUiFlags.ImmersiveSticky;

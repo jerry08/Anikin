@@ -73,16 +73,16 @@ namespace AniStream.Utils
             }
         }
 
-        public static string AppFolderName { get; set; }
+        public static string AppFolderName { get; set; } = default!;
 
         public static void CopyToClipboard(Activity activity,
             string text, bool toast = true)
         {
-            var clipboard = (ClipboardManager)activity.GetSystemService(Context.ClipboardService);
+            var clipboard = (ClipboardManager)activity.GetSystemService(Context.ClipboardService)!;
             var clip = ClipData.NewPlainText("label", text);
             clipboard.PrimaryClip = clip;
             if (toast)
-                Toast.MakeText(activity, $"Copied \"{text}\"", ToastLength.Short).Show();
+                Toast.MakeText(activity, $"Copied \"{text}\"", ToastLength.Short)!.Show();
         }
 
         public static AlertDialog SetProgressDialog(Context context, string text, bool cancelable)
@@ -121,8 +121,8 @@ namespace AniStream.Utils
             AlertDialog dialog = builder.Create();
             dialog.Show();
 
-            Window window = dialog.Window;
-            if (window != null)
+            var window = dialog.Window;
+            if (window is not null)
             {
                 //IWindowManager windowManager = this.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
 
@@ -138,38 +138,39 @@ namespace AniStream.Utils
 
         public static bool HasNetworkConnection(Context context)
         {
-            ConnectivityManager connectivityManager = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService);
+            var manager = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService)!;
             if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
             {
-                Network nw = connectivityManager.ActiveNetwork;
+                var network = manager.ActiveNetwork;
                 
-                if (nw == null) return false;
+                if (network is null)
+                    return false;
 
-                NetworkCapabilities actNw = connectivityManager.GetNetworkCapabilities(nw);
-                //return actNw != null && (actNw.HasTransport(Android.Net.TransportType.Wifi) || actNw.HasTransport(Android.Net.TransportType.Cellular) || actNw.HasTransport(Android.Net.TransportType.Ethernet) || actNw.HasTransport(Android.Net.TransportType.Bluetooth));
-                return actNw != null && (actNw.HasTransport(Android.Net.TransportType.Wifi) || actNw.HasTransport(Android.Net.TransportType.Cellular));
+                var actNw = manager.GetNetworkCapabilities(network);
+                //return actNw != null && (actNw.HasTransport(TransportType.Wifi) || actNw.HasTransport(TransportType.Cellular) || actNw.HasTransport(TransportType.Ethernet) || actNw.HasTransport(TransportType.Bluetooth));
+                return actNw != null && (actNw.HasTransport(TransportType.Wifi) || actNw.HasTransport(TransportType.Cellular));
             }
             else
             {
-                NetworkInfo nwInfo = connectivityManager.ActiveNetworkInfo;
-                return nwInfo != null && nwInfo.IsConnected;
+                var nwInfo = manager.ActiveNetworkInfo;
+                return nwInfo is not null && nwInfo.IsConnected;
             }
 
-            //bool haveConnectedWifi = false;
-            //bool haveConnectedMobile = false;
+            //bool hasConnectedWifi = false;
+            //bool hasConnectedMobile = false;
             //
-            //ConnectivityManager cm = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService);
+            //var cm = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService);
             //NetworkInfo[] netInfo = cm.GetAllNetworkInfo();
             //foreach (NetworkInfo ni in netInfo)
             //{
             //    if (ni.TypeName.ToLower().Equals("wifi"))
             //        if (ni.IsConnected)
-            //            haveConnectedWifi = true;
+            //            hasConnectedWifi = true;
             //    if (ni.TypeName.ToLower().Equals("mobile"))
             //        if (ni.IsConnected)
-            //            haveConnectedMobile = true;
+            //            hasConnectedMobile = true;
             //}
-            //return haveConnectedWifi || haveConnectedMobile;
+            //return hasConnectedWifi || hasConnectedMobile;
         }
     }
 }

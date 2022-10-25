@@ -5,85 +5,84 @@ using Android.Widget;
 using AndroidX.RecyclerView.Widget;
 using AnimeDl.Models;
 
-namespace AniStream.Adapters
+namespace AniStream.Adapters;
+
+public class ServerWithVideos
 {
-    public class ServerWithVideos
+    public bool IsLoaded { get; set; }
+
+    public VideoServer VideoServer { get; set; }
+
+    public List<Video> Videos { get; set; }
+
+    public ServerWithVideos(VideoServer videoServer,
+        List<Video> videos)
     {
-        public bool IsLoaded { get; set; }
+        VideoServer = videoServer;
+        Videos = videos;
+    }
+}
 
-        public VideoServer VideoServer { get; set; }
+public class ExtractorAdapter : RecyclerView.Adapter
+{
+    private readonly Anime _anime;
+    private readonly Episode _episode;
 
-        public List<Video> Videos { get; set; }
+    public Activity Activity { get; set; }
 
-        public ServerWithVideos(VideoServer videoServer,
-            List<Video> videos)
+    public List<ServerWithVideos> Containers { get; set; }
+
+    public ExtractorAdapter(Activity activity, Anime anime, Episode episode,
+        List<ServerWithVideos> containers)
+    {
+        Activity = activity;
+        _anime = anime;
+        _episode = episode;
+        Containers = containers;
+    }
+
+    class StreamViewHolder : RecyclerView.ViewHolder
+    {
+        public TextView streamName = default!;
+        public RecyclerView streamRecyclerView = default!;
+
+        public StreamViewHolder(View view) : base (view)
         {
-            VideoServer = videoServer;
-            Videos = videos;
+            streamName = view.FindViewById<TextView>(Resource.Id.streamName)!;
+            streamRecyclerView = view.FindViewById<RecyclerView>(Resource.Id.streamRecyclerView)!;
         }
     }
 
-    public class ExtractorAdapter : RecyclerView.Adapter
+    public override int ItemCount => Containers.Count;
+
+    public override long GetItemId(int position)=> position;
+    
+
+    public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
     {
-        private readonly Anime _anime;
-        private readonly Episode _episode;
+        var streamViewHolder = (holder as StreamViewHolder)!;
 
-        public Activity Activity { get; set; }
+        var server = Containers[streamViewHolder.BindingAdapterPosition].VideoServer;
+        var videos = Containers[streamViewHolder.BindingAdapterPosition].Videos;
 
-        public List<ServerWithVideos> Containers { get; set; }
+        streamViewHolder.streamName.Text = server.Name;
 
-        public ExtractorAdapter(Activity activity, Anime anime, Episode episode,
-            List<ServerWithVideos> containers)
+        if (streamViewHolder.streamRecyclerView.GetAdapter() is not VideoAdapter)
         {
-            Activity = activity;
-            _anime = anime;
-            _episode = episode;
-            Containers = containers;
+            var adapter = new VideoAdapter(Activity, _anime, _episode, videos);
+
+            streamViewHolder.streamRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
+            streamViewHolder.streamRecyclerView.HasFixedSize = true;
+            streamViewHolder.streamRecyclerView.SetItemViewCacheSize(20);
+            streamViewHolder.streamRecyclerView.SetAdapter(adapter);
         }
+    }
 
-        class StreamViewHolder : RecyclerView.ViewHolder
-        {
-            public TextView streamName;
-            public RecyclerView streamRecyclerView;
+    public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
+    {
+        var itemView = LayoutInflater.From(parent.Context)!
+            .Inflate(Resource.Layout.item_stream, parent, false)!;
 
-            public StreamViewHolder(View view) : base (view)
-            {
-                streamName = view.FindViewById<TextView>(Resource.Id.streamName);
-                streamRecyclerView = view.FindViewById<RecyclerView>(Resource.Id.streamRecyclerView);
-            }
-        }
-
-        public override int ItemCount => Containers.Count;
-
-        public override long GetItemId(int position)=> position;
-        
-
-        public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
-        {
-            var streamViewHolder = holder as StreamViewHolder;
-
-            var server = Containers[streamViewHolder.BindingAdapterPosition].VideoServer;
-            var videos = Containers[streamViewHolder.BindingAdapterPosition].Videos;
-
-            streamViewHolder.streamName.Text = server.Name;
-
-            if (streamViewHolder.streamRecyclerView.GetAdapter() is not VideoAdapter)
-            {
-                var adapter = new VideoAdapter(Activity, _anime, _episode, videos);
-
-                streamViewHolder.streamRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
-                streamViewHolder.streamRecyclerView.HasFixedSize = true;
-                streamViewHolder.streamRecyclerView.SetItemViewCacheSize(20);
-                streamViewHolder.streamRecyclerView.SetAdapter(adapter);
-            }
-        }
-
-        public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
-        {
-            View itemView = LayoutInflater.From(parent.Context)
-                .Inflate(Resource.Layout.item_stream, parent, false);
-
-            return new StreamViewHolder(itemView);
-        }
+        return new StreamViewHolder(itemView);
     }
 }
