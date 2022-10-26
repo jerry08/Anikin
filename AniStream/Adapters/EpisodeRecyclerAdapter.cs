@@ -9,7 +9,7 @@ using AniStream.Utils;
 using AniStream.Fragments;
 using AnimeDl.Models;
 using AndroidX.CardView.Widget;
-using AniStream.Models;
+using AniStream.Settings;
 using Android.Content;
 
 namespace AniStream.Adapters;

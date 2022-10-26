@@ -7,170 +7,191 @@ using Android.OS;
 using Android.Views;
 using Android.Widget;
 using AnimeDl.Scrapers;
+using Google.Android.Material.Snackbar;
 using Java.Net;
 using Xamarin.Essentials;
+using static Com.Google.Android.Exoplayer2.Timeline;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 
-namespace AniStream.Utils
+namespace AniStream.Utils;
+
+public static class WeebUtils
 {
-    public static class WeebUtils
+    public static AnimeSites AnimeSite { get; set; } = AnimeSites.GogoAnime;
+
+    public static bool IsDubSelected { get; set; } = false;
+
+    public static CookieManager DEFAULT_COOKIE_MANAGER 
+    { 
+        get 
+        {
+            var cm = new CookieManager();
+            //cm.SetCookiePolicy(CookiePolicy.AcceptOriginalServer);
+            cm.SetCookiePolicy(CookiePolicy.AcceptAll);
+            return cm;
+        } 
+    }
+
+    public static string PersonalDatabaseFolder
     {
-        public static AnimeSites AnimeSite { get; set; } = AnimeSites.GogoAnime;
-
-        public static bool IsDubSelected { get; set; } = false;
-
-        public static CookieManager DEFAULT_COOKIE_MANAGER 
-        { 
-            get 
-            {
-                var cm = new CookieManager();
-                //cm.SetCookiePolicy(CookiePolicy.AcceptOriginalServer);
-                cm.SetCookiePolicy(CookiePolicy.AcceptAll);
-                return cm;
-            } 
-        }
-
-        public static string PersonalDatabaseFolder
+        get
         {
-            get
-            {
-                string pathToMyFolder = System.Environment.GetFolderPath(
-                    System.Environment.SpecialFolder.Personal) + "/user/database";
+            string pathToMyFolder = System.Environment.GetFolderPath(
+                System.Environment.SpecialFolder.Personal) + "/user/database";
 
-                if (!Directory.Exists(pathToMyFolder))
-                    Directory.CreateDirectory(pathToMyFolder);
+            if (!Directory.Exists(pathToMyFolder))
+                Directory.CreateDirectory(pathToMyFolder);
 
-                return pathToMyFolder;
-            }
+            return pathToMyFolder;
         }
+    }
 
-        public static string AppFolder
+    public static string AppFolder
+    {
+        get
         {
-            get
-            {
-                //Java.IO.File jFolder;
-                //
-                //if (Android.OS.Build.VERSION.SdkInt >= BuildVersionCodes.Q)
-                //{
-                //    jFolder = new Java.IO.File(Android.App.Application.Context.GetExternalFilesDir(Android.OS.Environment.DirectoryDcim), "Test1");
-                //}
-                //else
-                //{
-                //    jFolder = new Java.IO.File(Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDcim), "Test1");
-                //}
-                //
-                //if (!jFolder.Exists())
-                //    jFolder.Mkdirs();
-
-                //string pathToMyFolder = MainActivity.AppFolder + "/" + AppFolderName;
-                string pathToMyFolder = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal), AppFolderName);
-                //if (!Directory.Exists(pathToMyFolder))
-                //{
-                //    Directory.CreateDirectory(pathToMyFolder);
-                //}
-
-                return pathToMyFolder;
-            }
-        }
-
-        public static string AppFolderName { get; set; } = default!;
-
-        public static void CopyToClipboard(Activity activity,
-            string text, bool toast = true)
-        {
-            var clipboard = (ClipboardManager)activity.GetSystemService(Context.ClipboardService)!;
-            var clip = ClipData.NewPlainText("label", text);
-            clipboard.PrimaryClip = clip;
-            if (toast)
-                Toast.MakeText(activity, $"Copied \"{text}\"", ToastLength.Short)!.Show();
-        }
-
-        public static AlertDialog SetProgressDialog(Context context, string text, bool cancelable)
-        {
-            int llPadding = 20;
-            var ll = new LinearLayout(context);
-            ll.Orientation = Orientation.Horizontal;
-            ll.SetPadding(llPadding, llPadding, llPadding, llPadding);
-            ll.SetGravity(GravityFlags.Center);
-            var llParam = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
-            llParam.Gravity = GravityFlags.Center;
-            ll.LayoutParameters = llParam;
-
-            var progressBar = new ProgressBar(context);
-            progressBar.Indeterminate = true;
-            progressBar.SetPadding(0, 0, llPadding, 0);
-            progressBar.LayoutParameters = llParam;
-
-            llParam = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
-            llParam.Gravity = GravityFlags.Center;
-
-            var tvText = new TextView(context);
-            tvText.Text = text;
-            tvText.SetTextColor(Color.ParseColor("#ffffff"));
-            tvText.TextSize = 18;
-            tvText.LayoutParameters = llParam;
-            tvText.Id = 12345;
-
-            ll.AddView(progressBar);
-            ll.AddView(tvText);
-
-            var builder = new AlertDialog.Builder(context);
-            builder.SetCancelable(cancelable);
-            builder.SetView(ll);
-
-            AlertDialog dialog = builder.Create();
-            dialog.Show();
-
-            var window = dialog.Window;
-            if (window is not null)
-            {
-                //IWindowManager windowManager = this.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
-
-                var layoutParams = new WindowManagerLayoutParams();
-                layoutParams.CopyFrom(dialog.Window.Attributes);
-                layoutParams.Width = ViewGroup.LayoutParams.WrapContent;
-                layoutParams.Height = ViewGroup.LayoutParams.WrapContent;
-                dialog.Window.Attributes = layoutParams;
-            }
-
-            return dialog;
-        }
-
-        public static bool HasNetworkConnection(Context context)
-        {
-            var manager = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService)!;
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
-            {
-                var network = manager.ActiveNetwork;
-                
-                if (network is null)
-                    return false;
-
-                var actNw = manager.GetNetworkCapabilities(network);
-                //return actNw != null && (actNw.HasTransport(TransportType.Wifi) || actNw.HasTransport(TransportType.Cellular) || actNw.HasTransport(TransportType.Ethernet) || actNw.HasTransport(TransportType.Bluetooth));
-                return actNw != null && (actNw.HasTransport(TransportType.Wifi) || actNw.HasTransport(TransportType.Cellular));
-            }
-            else
-            {
-                var nwInfo = manager.ActiveNetworkInfo;
-                return nwInfo is not null && nwInfo.IsConnected;
-            }
-
-            //bool hasConnectedWifi = false;
-            //bool hasConnectedMobile = false;
+            //Java.IO.File jFolder;
             //
-            //var cm = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService);
-            //NetworkInfo[] netInfo = cm.GetAllNetworkInfo();
-            //foreach (NetworkInfo ni in netInfo)
+            //if (Android.OS.Build.VERSION.SdkInt >= BuildVersionCodes.Q)
             //{
-            //    if (ni.TypeName.ToLower().Equals("wifi"))
-            //        if (ni.IsConnected)
-            //            hasConnectedWifi = true;
-            //    if (ni.TypeName.ToLower().Equals("mobile"))
-            //        if (ni.IsConnected)
-            //            hasConnectedMobile = true;
+            //    jFolder = new Java.IO.File(Android.App.Application.Context.GetExternalFilesDir(Android.OS.Environment.DirectoryDcim), "Test1");
             //}
-            //return hasConnectedWifi || hasConnectedMobile;
+            //else
+            //{
+            //    jFolder = new Java.IO.File(Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDcim), "Test1");
+            //}
+            //
+            //if (!jFolder.Exists())
+            //    jFolder.Mkdirs();
+
+            //string pathToMyFolder = MainActivity.AppFolder + "/" + AppFolderName;
+            string pathToMyFolder = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal), AppFolderName);
+            //if (!Directory.Exists(pathToMyFolder))
+            //{
+            //    Directory.CreateDirectory(pathToMyFolder);
+            //}
+
+            return pathToMyFolder;
         }
+    }
+
+    public static string AppFolderName { get; set; } = default!;
+
+    public static void CopyToClipboard(Activity? activity,
+        string text, bool toast = true)
+    {
+        if (activity is null)
+            return;
+
+        var clipboard = (ClipboardManager)activity.GetSystemService(Context.ClipboardService)!;
+        var clip = ClipData.NewPlainText("label", text);
+        clipboard.PrimaryClip = clip;
+        if (toast)
+            Toast.MakeText(activity, $"Copied \"{text}\"", ToastLength.Short)!.Show();
+    }
+
+    //public static void ToastString(Activity? activity, string? text)
+    //{
+    //    if (activity is null || text is null)
+    //        return;
+    //
+    //    activity.RunOnUiThread(() =>
+    //    {
+    //        var snackBar = Snackbar.Make(activity.Window!.DecorView!.FindViewById(Android.Resource.Id.Content)!, text, Snackbar.LengthLong);
+    //        snackBar.View.LayoutParameters = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent)
+    //        {
+    //            Gravity = GravityFlags.CenterHorizontal | GravityFlags.Bottom
+    //        };
+    //
+    //        snackBar.View.TranslationY = ;
+    //    });
+    //}
+
+    public static AlertDialog SetProgressDialog(Context context, string text, bool cancelable)
+    {
+        int llPadding = 20;
+        var ll = new LinearLayout(context);
+        ll.Orientation = Orientation.Horizontal;
+        ll.SetPadding(llPadding, llPadding, llPadding, llPadding);
+        ll.SetGravity(GravityFlags.Center);
+        var llParam = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
+        llParam.Gravity = GravityFlags.Center;
+        ll.LayoutParameters = llParam;
+
+        var progressBar = new ProgressBar(context);
+        progressBar.Indeterminate = true;
+        progressBar.SetPadding(0, 0, llPadding, 0);
+        progressBar.LayoutParameters = llParam;
+
+        llParam = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
+        llParam.Gravity = GravityFlags.Center;
+
+        var tvText = new TextView(context);
+        tvText.Text = text;
+        tvText.SetTextColor(Color.ParseColor("#ffffff"));
+        tvText.TextSize = 18;
+        tvText.LayoutParameters = llParam;
+        tvText.Id = 12345;
+
+        ll.AddView(progressBar);
+        ll.AddView(tvText);
+
+        var builder = new AlertDialog.Builder(context);
+        builder.SetCancelable(cancelable);
+        builder.SetView(ll);
+
+        AlertDialog dialog = builder.Create();
+        dialog.Show();
+
+        var window = dialog.Window;
+        if (window is not null)
+        {
+            //IWindowManager windowManager = this.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
+
+            var layoutParams = new WindowManagerLayoutParams();
+            layoutParams.CopyFrom(dialog.Window.Attributes);
+            layoutParams.Width = ViewGroup.LayoutParams.WrapContent;
+            layoutParams.Height = ViewGroup.LayoutParams.WrapContent;
+            dialog.Window.Attributes = layoutParams;
+        }
+
+        return dialog;
+    }
+
+    public static bool HasNetworkConnection(Context context)
+    {
+        var manager = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService)!;
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
+        {
+            var network = manager.ActiveNetwork;
+            
+            if (network is null)
+                return false;
+
+            var actNw = manager.GetNetworkCapabilities(network);
+            //return actNw != null && (actNw.HasTransport(TransportType.Wifi) || actNw.HasTransport(TransportType.Cellular) || actNw.HasTransport(TransportType.Ethernet) || actNw.HasTransport(TransportType.Bluetooth));
+            return actNw != null && (actNw.HasTransport(TransportType.Wifi) || actNw.HasTransport(TransportType.Cellular));
+        }
+        else
+        {
+            var nwInfo = manager.ActiveNetworkInfo;
+            return nwInfo is not null && nwInfo.IsConnected;
+        }
+
+        //bool hasConnectedWifi = false;
+        //bool hasConnectedMobile = false;
+        //
+        //var cm = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService);
+        //NetworkInfo[] netInfo = cm.GetAllNetworkInfo();
+        //foreach (NetworkInfo ni in netInfo)
+        //{
+        //    if (ni.TypeName.ToLower().Equals("wifi"))
+        //        if (ni.IsConnected)
+        //            hasConnectedWifi = true;
+        //    if (ni.TypeName.ToLower().Equals("mobile"))
+        //        if (ni.IsConnected)
+        //            hasConnectedMobile = true;
+        //}
+        //return hasConnectedWifi || hasConnectedMobile;
     }
 }
