@@ -18,7 +18,7 @@
     <item name="android:navigationBarColor">@color/colorPrimary</item>
     <item name="colorControlHighlight">@color/colorAccent</item>
 
-    <item name="colorPrimary">@color/colorPrimary</item>
+    <item name="colorPrimary">@color/white</item>
     <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
     <item name="colorAccent">@color/colorAccent</item>
     <item name="white">#FFF</item>

@@ -4,12 +4,14 @@ using Android.OS;
 using Android.Content;
 using Android.Views;
 using Android.Widget;
+using Orientation = Android.Content.Res.Orientation;
 using AndroidX.RecyclerView.Widget;
 using AniStream.Adapters;
 using AniStream.Utils;
 using AnimeDl;
 using AnimeDl.Models;
 using Google.Android.Material.BottomSheet;
+using AndroidX.Fragment.App;
 
 namespace AniStream.Fragments;
 
@@ -36,6 +38,17 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
 
     public static SelectorDialogFragment NewInstance(Anime anime, Episode episode, VideoActivity? videoActivity = null) 
         => new(anime, episode, videoActivity);
+
+    public override void OnStart()
+    {
+        base.OnStart();
+
+        if (this.Resources.Configuration!.Orientation != Orientation.Portrait)
+        {
+            var behavior = BottomSheetBehavior.From((RequireView().Parent as View)!);
+            behavior.State = BottomSheetBehavior.StateExpanded;
+        }
+    }
 
     public override View OnCreateView(LayoutInflater inflater, ViewGroup? container, Bundle? savedInstanceState)
     {
@@ -230,9 +243,12 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
         return _view;
     }
 
-    public override void OnViewCreated(View view, Bundle? savedInstanceState)
+    public override void Show(FragmentManager manager, string? tag)
     {
-        base.OnViewCreated(view, savedInstanceState);
+        var ft = manager.BeginTransaction();
+        ft.Add(this, tag);
+        ft.CommitAllowingStateLoss();
+        //base.Show(manager, tag);
     }
 
     public override void OnDismiss(IDialogInterface dialog)

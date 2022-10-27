@@ -6,12 +6,9 @@ using Android.Net;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
-using AnimeDl.Scrapers;
-using Google.Android.Material.Snackbar;
-using Java.Net;
-using Xamarin.Essentials;
-using static Com.Google.Android.Exoplayer2.Timeline;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
+using Java.Net;
+using AnimeDl.Scrapers;
 
 namespace AniStream.Utils;
 
@@ -50,62 +47,11 @@ public static class WeebUtils
     {
         get
         {
-            //Java.IO.File jFolder;
-            //
-            //if (Android.OS.Build.VERSION.SdkInt >= BuildVersionCodes.Q)
-            //{
-            //    jFolder = new Java.IO.File(Android.App.Application.Context.GetExternalFilesDir(Android.OS.Environment.DirectoryDcim), "Test1");
-            //}
-            //else
-            //{
-            //    jFolder = new Java.IO.File(Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDcim), "Test1");
-            //}
-            //
-            //if (!jFolder.Exists())
-            //    jFolder.Mkdirs();
-
-            //string pathToMyFolder = MainActivity.AppFolder + "/" + AppFolderName;
-            string pathToMyFolder = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal), AppFolderName);
-            //if (!Directory.Exists(pathToMyFolder))
-            //{
-            //    Directory.CreateDirectory(pathToMyFolder);
-            //}
-
-            return pathToMyFolder;
+            return System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal), AppFolderName);
         }
     }
 
     public static string AppFolderName { get; set; } = default!;
-
-    public static void CopyToClipboard(Activity? activity,
-        string text, bool toast = true)
-    {
-        if (activity is null)
-            return;
-
-        var clipboard = (ClipboardManager)activity.GetSystemService(Context.ClipboardService)!;
-        var clip = ClipData.NewPlainText("label", text);
-        clipboard.PrimaryClip = clip;
-        if (toast)
-            Toast.MakeText(activity, $"Copied \"{text}\"", ToastLength.Short)!.Show();
-    }
-
-    //public static void ToastString(Activity? activity, string? text)
-    //{
-    //    if (activity is null || text is null)
-    //        return;
-    //
-    //    activity.RunOnUiThread(() =>
-    //    {
-    //        var snackBar = Snackbar.Make(activity.Window!.DecorView!.FindViewById(Android.Resource.Id.Content)!, text, Snackbar.LengthLong);
-    //        snackBar.View.LayoutParameters = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent)
-    //        {
-    //            Gravity = GravityFlags.CenterHorizontal | GravityFlags.Bottom
-    //        };
-    //
-    //        snackBar.View.TranslationY = ;
-    //    });
-    //}
 
     public static AlertDialog SetProgressDialog(Context context, string text, bool cancelable)
     {

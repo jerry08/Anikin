@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using AniStream.Utils;
 using AndroidX.RecyclerView.Widget;
 using AnimeDl.Models;
+using AniStream.Utils.Extensions;
 
 namespace AniStream.Adapters;
 
@@ -102,7 +103,7 @@ public class VideoAdapter : RecyclerView.Adapter
             intent.SetDataAndType(videoUri, "video/*");
             intent.SetFlags(ActivityFlags.NewTask);
 
-            WeebUtils.CopyToClipboard(Activity, url);
+            Activity.CopyToClipboard(url);
 
             var i = Intent.CreateChooser(intent, "Open Video in :")!;
             i.SetFlags(ActivityFlags.NewTask);

@@ -51,6 +51,7 @@ using Java.Util.Logging;
 using Handler = Android.OS.Handler;
 using System.Runtime.InteropServices;
 using AnimeDl.Aniskip;
+using AniStream.Utils.Extensions;
 
 namespace AniStream;
 
@@ -119,7 +120,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         SetContentView(Resource.Layout.activity_exoplayer);
 
         WindowCompat.SetDecorFitsSystemWindows(Window!, false);
-        HideSystemBars();
+        this.HideSystemBars();
 
         //Enable unhandled exceptions for testing
         //AndroidEnvironment.UnhandledExceptionRaiser += (s, e) =>
@@ -246,18 +247,18 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
             {
                 case PlayerResizeMode.Original:
                     playerView.ResizeMode = AspectRatioFrameLayout.ResizeModeFit;
-                    Toast.MakeText(this, "Original", ToastLength.Short)!.Show();
+                    this.ToastString("Original");
                     break;
                 case PlayerResizeMode.Zoom:
                     playerView.ResizeMode = AspectRatioFrameLayout.ResizeModeZoom;
-                    Toast.MakeText(this, "Zoom", ToastLength.Short)!.Show();
+                    this.ToastString("Zoom");
                     break;
                 case PlayerResizeMode.Stretch:
                     playerView.ResizeMode = AspectRatioFrameLayout.ResizeModeFill;
-                    Toast.MakeText(this, "Stretch", ToastLength.Short)!.Show();
+                    this.ToastString("Stretch");
                     break;
                 default:
-                    Toast.MakeText(this, "Original", ToastLength.Short)!.Show();
+                    this.ToastString("Original");
                     break;
             }
         };
@@ -373,7 +374,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         }
         else
         {
-            var progressBar = FindViewById<ProgressBar>(Resource.Id.exo_init_buffer);
+            var progressBar = FindViewById<ProgressBar>(Resource.Id.exo_init_buffer)!;
             progressBar.Visibility = ViewStates.Visible;
 
             _client.OnVideosLoaded += (s, e) =>
@@ -388,7 +389,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
                     else
                     {
                         progressBar.Visibility = ViewStates.Gone;
-                        Toast.MakeText(this, "Failed to play video", ToastLength.Short).Show();
+                        this.ToastString("Failed to play video");
                     }
                 });
             };
@@ -404,7 +405,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
                     else
                     {
                         progressBar.Visibility = ViewStates.Gone;
-                        Toast.MakeText(this, "Failed to find video", ToastLength.Short).Show();
+                        this.ToastString("Failed to play video");
                     }
                 });
             };
@@ -416,22 +417,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     public void InitPlayer()
     {
 
-    }
-
-    private void HideSystemBars()
-    {
-        var windowInsetsController =
-            //ViewCompat.GetWindowInsetsController(Window!.DecorView!);
-           WindowCompat.GetInsetsController(Window!, Window!.DecorView!);
-        if (windowInsetsController is null)
-            return;
-
-        // Configure the behavior of the hidden system bars
-        windowInsetsController.SystemBarsBehavior = WindowInsetsControllerCompat
-            .BehaviorShowTransientBarsBySwipe;
-
-        // Hide both the status bar and the navigation bar
-        windowInsetsController.Hide(WindowInsetsCompat.Type.SystemBars());
     }
 
     private long lastCurrentPosition = 0;
@@ -564,7 +549,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         var trackDialog = trackSelectionDialogBuilder.Build()!;
         //trackDialog.DismissEvent += (s, e) =>
         //{
-        //    HideSystemUI();
+        //    this.HideSystemUI();
         //};
 
         trackDialog.Show();
@@ -730,7 +715,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         base.OnWindowFocusChanged(hasFocus);
 
         if (hasFocus)
-            HideSystemBars();
+            this.HideSystemBars();
     }
 
     public void OnPlayerError(PlaybackException? error)
@@ -842,7 +827,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         errorText.Visibility = ViewStates.Visible;
 
         if (error is not null && error.Message is not null)
-            Toast.MakeText(this, error?.Message, ToastLength.Short)!.Show();
+            this.ShowToast("Failed to play video");
     }
 
     public void OnDeviceVolumeChanged(int volume, bool muted)

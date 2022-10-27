@@ -14,6 +14,7 @@ using Android.Views;
 using Android.Widget;
 using AndroidX.AppCompat.App;
 using AniStream.Utils;
+using AniStream.Utils.Extensions;
 using Google.Android.Material.SwitchMaterial;
 using Java.Lang;
 using Java.Util;
@@ -29,24 +30,27 @@ namespace AniStream
         private static int REQUEST_DIRECTORY_PICKER = 1;
         private static int REQUEST_OPEN_FILE_DIALOG = 2;
 
-        AndroidStoragePermission AndroidStoragePermission;
+        AndroidStoragePermission AndroidStoragePermission = default!;
 
-        Button buttonbackup, buttonrestore, buttondiscord, buttongithub;
-        Button button_check_for_updates;
-        SwitchMaterial dontAskForUpdate;
+        Button buttonbackup = default!;
+        Button buttonrestore = default!;
+        Button buttondiscord = default!;
+        Button buttongithub = default!;
+        Button button_check_for_updates = default!;
+        SwitchMaterial dontAskForUpdate = default!;
 
         protected override async void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            Xamarin.Essentials.Platform.Init(this, savedInstanceState);
+            Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.settings);
 
-            Toolbar toolbar = FindViewById<Toolbar>(Resource.Id.settingstoolbar);
+            var toolbar = FindViewById<Toolbar>(Resource.Id.settingstoolbar);
             SetSupportActionBar(toolbar);
 
             Objects.RequireNonNull(SupportActionBar, "SupportActionBar is null");
 
-            SupportActionBar.SetDisplayHomeAsUpEnabled(true);
+            SupportActionBar!.SetDisplayHomeAsUpEnabled(true);
             SupportActionBar.SetDisplayShowHomeEnabled(true);
 
             //toolbar.Click += (s, e) =>
@@ -54,14 +58,14 @@ namespace AniStream
             //    base.OnBackPressed();
             //};
 
-            buttonbackup = FindViewById<Button>(Resource.Id.buttonbackup);
-            buttonrestore = FindViewById<Button>(Resource.Id.buttonrestore);
-            buttongithub = FindViewById<Button>(Resource.Id.buttongithub);
-            buttondiscord = FindViewById<Button>(Resource.Id.buttondiscord);
-            button_check_for_updates = FindViewById<Button>(Resource.Id.button_check_for_updates);
-            dontAskForUpdate = FindViewById<SwitchMaterial>(Resource.Id.dontAskForUpdate);
+            buttonbackup = FindViewById<Button>(Resource.Id.buttonbackup)!;
+            buttonrestore = FindViewById<Button>(Resource.Id.buttonrestore)!;
+            buttongithub = FindViewById<Button>(Resource.Id.buttongithub)!;
+            buttondiscord = FindViewById<Button>(Resource.Id.buttondiscord)!;
+            button_check_for_updates = FindViewById<Button>(Resource.Id.button_check_for_updates)!;
+            dontAskForUpdate = FindViewById<SwitchMaterial>(Resource.Id.dontAskForUpdate)!;
 
-            var packageInfo = PackageManager.GetPackageInfo(PackageName, 0);
+            var packageInfo = PackageManager!.GetPackageInfo(PackageName!, 0)!;
 
             bool dontShow = false;
             var dontShowStr = await SecureStorage.GetAsync($"dont_ask_for_update_{packageInfo.VersionName}");
@@ -127,15 +131,17 @@ namespace AniStream
                         sw.WriteLine(jsonData);
                     }
 
-                    Toast.MakeText(this, "Export completed", ToastLength.Short).Show();
+                    this.ShowToast("Export completed");
                 }
                 else
-                    Toast.MakeText(this, "No permission granted", ToastLength.Short).Show();
+                {
+                    this.ShowToast("No permission granted");
+                }
             };
 
             buttonrestore.Click += async (s, e) =>
             {
-                Toast.MakeText(this, "This feature will be implemented in the next update", ToastLength.Short).Show();
+                this.ShowToast("This feature will be implemented in the next update");
 
                 return;
 
@@ -167,7 +173,7 @@ namespace AniStream
                 dialog.Dismiss();
 
                 if (!updateAvailable)
-                    Toast.MakeText(this, "No updates available", ToastLength.Short).Show();
+                    this.ShowToast("No updates available");
             };
 
             //Button2 = FindViewById<Button>(Resource.Id.buttonrestore);
@@ -206,7 +212,7 @@ namespace AniStream
             StartActivity(launchBrowser);
         }
 
-        protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
+        protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent? data)
         {
             base.OnActivityResult(requestCode, resultCode, data);
             AndroidStoragePermission.OnActivityResult(requestCode, resultCode, data);

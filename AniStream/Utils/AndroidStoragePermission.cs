@@ -93,7 +93,7 @@ namespace AniStream.Utils
         }
 
         /// <summary> Call this in activity OnActivityResult override </summary>
-        public void OnActivityResult(int requestCode, Result resultCode, Intent data)
+        public void OnActivityResult(int requestCode, Result resultCode, Intent? data)
         {
             if (requestCode == RequestForManageAllFiles)
             {
