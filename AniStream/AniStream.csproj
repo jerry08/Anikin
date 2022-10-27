@@ -16,10 +16,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AndroidResource Remove="Resources\layout\exo_styled_player_view.xml" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Remove="Utils\CacheDataSourceFactory.cs" />
     <Compile Remove="VideoActivity - Copy.cs" />
   </ItemGroup>
@@ -55,9 +51,9 @@
     <None Remove="Resources\layout\videoviewer.xml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AnimeDl" Version="1.6.6" />
+    <PackageReference Include="AnimeDl" Version="1.6.8" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Octokit" Version="4.0.0" />
+    <PackageReference Include="Octokit" Version="4.0.1" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xamarin.Android.Flowlayout" Version="1.0.0.4" />
     <PackageReference Include="Xamarin.Android.Glide" Version="4.13.2.2" />
