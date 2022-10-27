@@ -14,6 +14,12 @@ public class PlayerSettings
 
     public PlayerResizeMode ResizeMode { get; set; }
 
+    public bool AutoSkipOPED { get; set; }
+
+    public bool TimeStampsEnabled { get; set; } = true;
+
+    public bool ShowTimeStampButton { get; set; } = true;
+
     public void Load()
     {
         //TODO: Load settings from json file later

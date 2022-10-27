@@ -45,6 +45,12 @@ using AndroidX.Core.View;
 using Android.Util;
 using AndroidX.Startup;
 using Android.Content.Res;
+using AnimeDl.Anilist;
+using AnimeDl.Scrapers;
+using Java.Util.Logging;
+using Handler = Android.OS.Handler;
+using System.Runtime.InteropServices;
+using AnimeDl.Aniskip;
 
 namespace AniStream;
 
@@ -58,9 +64,9 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
     private readonly PlayerSettings _playerSettings = new();
     
-    private Anime anime = default!;
-    private Episode episode = default!;
-    private Video video = default!;
+    private Anime Anime = default!;
+    private Episode Episode = default!;
+    private Video Video = default!;
 
     private NetworkStateReceiver NetworkStateReceiver = default!;
 
@@ -83,9 +89,14 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     private ImageButton nextEpisodeButton = default!;
     private ImageButton previousEpisodeButton = default!;
     private ImageButton videoChangerButton = default!;
-    private View mVideoLayout = default!;
 
-    private bool isFullscreen;
+    private MaterialCardView ExoSkip = default!;
+    private ImageButton ExoSkipOpEd = default!;
+    private MaterialCardView SkipTimeButton = default!;
+    private TextView SkipTimeText = default!;
+    private TextView TimeStampText = default!;
+
+    private Handler Handler { get; set; } = new Handler(Looper.MainLooper!);
 
     private bool IsPipEnabled { get; set; } = false;
     private Rational AspectRatio { get; set; } = new(16, 9);
@@ -98,6 +109,8 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     private SelectorDialogFragment? selector;
 
     private bool IsBuffering { get; set; } = true;
+
+    private bool IsTimeStampsLoaded { get; set; }
 
     protected async override void OnCreate(Bundle? savedInstanceState)
     {
@@ -131,19 +144,19 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
         var animeString = Intent!.GetStringExtra("anime");
         if (!string.IsNullOrEmpty(animeString))
-            anime = JsonConvert.DeserializeObject<Anime>(animeString)!;
+            Anime = JsonConvert.DeserializeObject<Anime>(animeString)!;
 
         var episodeString = Intent.GetStringExtra("episode");
         if (!string.IsNullOrEmpty(episodeString))
-            episode = JsonConvert.DeserializeObject<Episode>(episodeString)!;
+            Episode = JsonConvert.DeserializeObject<Episode>(episodeString)!;
 
         var bookmarkManager = new BookmarkManager("recently_watched");
 
-        var isBooked = await bookmarkManager.IsBookmarked(anime);
+        var isBooked = await bookmarkManager.IsBookmarked(Anime);
         if (isBooked)
-            bookmarkManager.RemoveBookmark(anime);
+            bookmarkManager.RemoveBookmark(Anime);
         
-        bookmarkManager.SaveBookmark(anime, true);
+        bookmarkManager.SaveBookmark(Anime, true);
 
         NetworkStateReceiver = new NetworkStateReceiver();
         NetworkStateReceiver.AddListener(this);
@@ -167,7 +180,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
         VideoName.Selected = true;
 
-        var skipButton = FindViewById<MaterialCardView>(Resource.Id.exo_skip)!;
+        ExoSkip = FindViewById<MaterialCardView>(Resource.Id.exo_skip)!;
 
         var prevButton = FindViewById<ImageButton>(Resource.Id.exo_prev_ep)!;
         var nextButton = FindViewById<ImageButton>(Resource.Id.exo_next_ep)!;
@@ -177,6 +190,10 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         var subButton = FindViewById<ImageButton>(Resource.Id.exo_sub)!;
         var downloadButton = FindViewById<ImageButton>(Resource.Id.exo_download)!;
         var exoPip = FindViewById<ImageButton>(Resource.Id.exo_pip)!;
+        ExoSkipOpEd = FindViewById<ImageButton>(Resource.Id.exo_skip_op_ed)!;
+        SkipTimeButton = FindViewById<MaterialCardView>(Resource.Id.exo_skip_timestamp)!;
+        SkipTimeText = FindViewById<TextView>(Resource.Id.exo_skip_timestamp_text)!;
+        TimeStampText = FindViewById<TextView>(Resource.Id.exo_time_stamp_text)!;
         var exoSpeed = FindViewById<ImageButton>(Resource.Id.exo_playback_speed)!;
         var exoScreen = FindViewById<ImageButton>(Resource.Id.exo_screen)!;
         
@@ -192,10 +209,10 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         exoPip.Visibility = ViewStates.Gone;
         lockButton.Visibility = ViewStates.Gone;
 
-        if (Android.Provider.Settings.System.GetInt(ContentResolver, Android.Provider.Settings.System.AccelerometerRotation, 0) != 1)
-        {
-
-        }
+        //if (Android.Provider.Settings.System.GetInt(ContentResolver, Android.Provider.Settings.System.AccelerometerRotation, 0) != 1)
+        //{
+        //
+        //}
 
         if (Build.VERSION.SdkInt >= BuildVersionCodes.N)
         {
@@ -211,6 +228,12 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
                 };
             }
         }
+
+        SkipTimeButton.Click += (s, e) =>
+        {
+            if (CurrentTimeStamp is not null)
+                exoPlayer.SeekTo((long)(CurrentTimeStamp.Interval.EndTime * 1000));
+        };
 
         exoScreen.Click += (s, e) =>
         {
@@ -258,7 +281,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
         sourceButton.Click += (s, e) =>
         {
-            selector = SelectorDialogFragment.NewInstance(anime, episode, this);
+            selector = SelectorDialogFragment.NewInstance(Anime, Episode, this);
             selector.Show(SupportFragmentManager, "dialog");
         };
 
@@ -267,7 +290,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
             this.OnBackPressed();
         };
 
-        skipButton.Click += (s, e) =>
+        ExoSkip.Click += (s, e) =>
         {
             exoPlayer.SeekTo(exoPlayer.CurrentPosition + 85000);
         };
@@ -290,8 +313,8 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
             exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime);
         };
 
-        animeTitle.Text = anime.Title;
-        episodeTitle.Text = episode.Name;
+        animeTitle.Text = Anime.Title;
+        episodeTitle.Text = Episode.Name;
 
         var trackSelectionFactory = new AdaptiveTrackSelection.Factory();
         trackSelector = new DefaultTrackSelector(this, trackSelectionFactory);
@@ -344,9 +367,9 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         {
             var videoString = Intent.GetStringExtra("video");
             if (!string.IsNullOrEmpty(videoString))
-                video = JsonConvert.DeserializeObject<Video>(videoString)!;
+                Video = JsonConvert.DeserializeObject<Video>(videoString)!;
 
-            PlayVideo(video);
+            PlayVideo(Video);
         }
         else
         {
@@ -386,7 +409,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
                 });
             };
 
-            _client.GetVideoServers(episode.Id);
+            _client.GetVideoServers(Episode.Id);
         }
     }
 
@@ -430,6 +453,98 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         VideoCache.Release();
 
         base.OnBackPressed();
+    }
+
+    private List<Stamp> SkippedTimeStamps { get; set; } = new();
+    private Stamp? CurrentTimeStamp { get; set; }
+    private async void LoadTimeStamps()
+    {
+        if (IsTimeStampsLoaded || WeebUtils.AnimeSite != AnimeSites.GogoAnime)
+            return;
+
+        var client = new AnilistClient();
+
+        var searchResults = await client.SearchAsync("ANIME", search: Anime.Title);
+        if (searchResults is null)
+            return;
+
+        var animes = searchResults?.Results.Where(x => x.IdMal is not null).ToList();
+        if (animes is null || animes.Count <= 0)
+            return;
+
+        var media = await client.GetMediaDetailsAsync(animes[0]);
+        if (media is null || media.IdMal is null)
+            return;
+
+        var timeStamps = await client.Aniskip.GetAsync(media.IdMal.Value, (int)Episode.Number, exoPlayer.Duration / 1000);
+        if (timeStamps is null)
+            return;
+
+        SkippedTimeStamps.AddRange(timeStamps);
+
+        var adGroups = new List<long>();
+        for (int i = 0; i < timeStamps.Count; i++)
+        {
+            adGroups.Add((long)(timeStamps[i].Interval.StartTime * 1000));
+            adGroups.Add((long)(timeStamps[i].Interval.EndTime * 1000));
+        }
+
+        var playedAdGroups = new List<bool>();
+        for (int i = 0; i < timeStamps.Count; i++)
+        {
+            playedAdGroups.Add(false);
+            playedAdGroups.Add(false);
+        }
+
+        playerView.SetExtraAdGroupMarkers(adGroups.ToArray(), playedAdGroups.ToArray());
+
+        ExoSkipOpEd.Alpha = 1f;
+        ExoSkipOpEd.Visibility = ViewStates.Visible;
+
+        if (_playerSettings.TimeStampsEnabled && _playerSettings.ShowTimeStampButton)
+            UpdateTimeStamp();
+    }
+
+    private void UpdateTimeStamp()
+    {
+        var playerCurrentTime = exoPlayer.CurrentPosition / 1000;
+        CurrentTimeStamp = SkippedTimeStamps.Where(x => x.Interval.StartTime <= playerCurrentTime
+            && playerCurrentTime < x.Interval.EndTime - 1).FirstOrDefault();
+
+        if (CurrentTimeStamp is not null)
+        {
+            SkipTimeButton.Visibility = ViewStates.Visible;
+            ExoSkip.Visibility = ViewStates.Gone;
+
+            switch (CurrentTimeStamp.SkipType)
+            {
+                case SkipType.Opening:
+                    SkipTimeText.Text = "Opening";
+                    break;
+                case SkipType.Ending:
+                    SkipTimeText.Text = "Ending";
+                    break;
+                case SkipType.Recap:
+                    SkipTimeText.Text = "Recap";
+                    break;
+                case SkipType.MixedOpening:
+                    SkipTimeText.Text = "Mixed Opening";
+                    break;
+                case SkipType.MixedEnding:
+                    SkipTimeText.Text = "Mixed Ending";
+                    break;
+            }
+        }
+        else
+        {
+            SkipTimeButton.Visibility = ViewStates.Gone;
+            ExoSkip.Visibility= ViewStates.Visible;
+        }
+
+        Handler.PostDelayed(() =>
+        {
+            UpdateTimeStamp();
+        }, 500);
     }
 
     // QUALITY SELECTOR
@@ -716,6 +831,9 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         AspectRatio = new(exoPlayer.VideoFormat.Height, exoPlayer.VideoFormat.Width);
 
         VideoInfo.Text = $"{exoPlayer.VideoFormat.Width} x {exoPlayer.VideoFormat.Height}";
+
+        if (!IsTimeStampsLoaded)
+            LoadTimeStamps();
     }
 
     public void OnPlayerErrorChanged(PlaybackException? error)
