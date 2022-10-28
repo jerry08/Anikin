@@ -52,6 +52,8 @@ using Handler = Android.OS.Handler;
 using System.Runtime.InteropServices;
 using AnimeDl.Aniskip;
 using AniStream.Utils.Extensions;
+using Configuration = Android.Content.Res.Configuration;
+using AniStream.Models;
 
 namespace AniStream;
 
@@ -105,13 +107,13 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
     private OrientationEventListener? OrientationListener { get; set; }
 
-    private Android.Net.Uri videoUri = default!;
-
     private SelectorDialogFragment? selector;
 
     private bool IsBuffering { get; set; } = true;
 
     private bool IsTimeStampsLoaded { get; set; }
+
+    private bool CanSaveProgress { get; set; }
 
     protected async override void OnCreate(Bundle? savedInstanceState)
     {
@@ -138,7 +140,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         //
         //};
 
-        _playerSettings.Load();
+        await _playerSettings.LoadAsync();
 
         if (_playerSettings.AlwaysInLandscapeMode && Build.VERSION.SdkInt >= BuildVersionCodes.Gingerbread)
             RequestedOrientation = ScreenOrientation.SensorLandscape;
@@ -414,13 +416,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         }
     }
 
-    public void InitPlayer()
-    {
-
-    }
-
-    private long lastCurrentPosition = 0;
-
     protected override void OnDestroy()
     {
         base.OnDestroy();
@@ -439,6 +434,21 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
         base.OnBackPressed();
     }
+
+    //TODO: Implement when automatically going to next episode
+    //private bool IsPreloading { get; set; }
+    //public void UpdateProgress()
+    //{
+    //    if (exoPlayer.CurrentPosition / exoPlayer.Duration > 99)
+    //    {
+    //
+    //    }
+    //
+    //    Handler.PostDelayed(() =>
+    //    {
+    //        UpdateProgress();
+    //    }, 2500);
+    //}
 
     private List<Stamp> SkippedTimeStamps { get; set; } = new();
     private Stamp? CurrentTimeStamp { get; set; }
@@ -555,14 +565,38 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         trackDialog.Show();
     }
 
-    protected override void OnPause()
+    protected override async void OnPause()
     {
         base.OnPause();
 
         exoPlayer.PlayWhenReady = false;
+        exoPlayer.Pause();
+
+        await UpdateProgress();
     }
 
-    public void PlayVideo(Video video)
+    public async Task UpdateProgress()
+    {
+        if (CanSaveProgress)
+        {
+            _playerSettings.WatchedEpisodes.TryGetValue(Episode.Link,
+                out WatchedEpisode? watchedEpisode);
+
+            watchedEpisode ??= new();
+
+            watchedEpisode.Id = Episode.Id;
+            watchedEpisode.AnimeName = Anime.Title;
+            watchedEpisode.WatchedPercentage = (float)exoPlayer.CurrentPosition / exoPlayer.Duration * 100f;
+            watchedEpisode.WatchedDuration = exoPlayer.CurrentPosition;
+
+            _playerSettings.WatchedEpisodes.Remove(Episode.Link);
+            _playerSettings.WatchedEpisodes.Add(Episode.Link, watchedEpisode);
+
+            await _playerSettings.SaveAsync();
+        }
+    }
+
+    public async void PlayVideo(Video video)
     {
         if (selector is not null)
         {
@@ -570,11 +604,11 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
             selector = null;
         }
 
+        await UpdateProgress();
+
         //var test = await Http.Client.SendHttpRequestAsync(video.VideoUrl, video.Headers);
 
-        lastCurrentPosition = exoPlayer.CurrentPosition;
-
-        videoUri = Android.Net.Uri.Parse(video.VideoUrl.Replace(" ", "%20"))!;
+        var videoUri = Android.Net.Uri.Parse(video.VideoUrl.Replace(" ", "%20"))!;
 
         var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36";
 
@@ -642,13 +676,11 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         exoPlayer.Prepare();
         exoPlayer.PlayWhenReady = true;
 
-        //anime.LastWatchedEp = episode.Number;
+        _playerSettings.WatchedEpisodes.TryGetValue(Episode.Link,
+            out WatchedEpisode? watchedEpisode);
 
-        //WeebUtils.SaveLastWatchedEp(this, anime);
-
-        exoPlayer.SeekTo(lastCurrentPosition);
-
-        lastCurrentPosition = 0;
+        if (watchedEpisode is not null)
+            exoPlayer.SeekTo(watchedEpisode.WatchedDuration);
     }
 
     public void OnMediaItemTransition(MediaItem? mediaItem, int reason)
@@ -720,6 +752,8 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
     public void OnPlayerError(PlaybackException? error)
     {
+        CanSaveProgress = false;
+
         errorText.Text = "Video not found.";
         errorText.Visibility = ViewStates.Visible;
     }
@@ -819,10 +853,14 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
         if (!IsTimeStampsLoaded)
             LoadTimeStamps();
+
+        CanSaveProgress = true;
     }
 
     public void OnPlayerErrorChanged(PlaybackException? error)
     {
+        CanSaveProgress = false;
+
         errorText.Text = "Video not found.";
         errorText.Visibility = ViewStates.Visible;
 

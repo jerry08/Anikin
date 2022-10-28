@@ -1,22 +1,19 @@
 ﻿using System.Collections.Generic;
 using Android.Views;
 using Android.Widget;
-using AndroidX.RecyclerView.Widget;
-using Square.Picasso;
-using Newtonsoft.Json;
-using AnimeDl;
-using AniStream.Utils;
-using AniStream.Fragments;
-using AnimeDl.Models;
-using AndroidX.CardView.Widget;
-using AniStream.Settings;
 using Android.Content;
+using AndroidX.CardView.Widget;
+using AndroidX.RecyclerView.Widget;
+using Newtonsoft.Json;
+using AnimeDl.Models;
+using AniStream.Settings;
+using AniStream.Fragments;
 
 namespace AniStream.Adapters;
 
 public class EpisodeRecyclerAdapter : RecyclerView.Adapter
 {
-    private readonly PlayerSettings _playerSettings = new();
+    private readonly PlayerSettings _playerSettings;
 
     private readonly Anime _anime;
 
@@ -26,24 +23,27 @@ public class EpisodeRecyclerAdapter : RecyclerView.Adapter
 
     public EpisodeRecyclerAdapter(List<Episode> episodes,
         EpisodesActivity activity,
-        Anime anime)
+        Anime anime,
+        PlayerSettings playerSettings)
     {
         _anime = anime;
         _episodesActivity = activity;
         Episodes = episodes;
 
-        _playerSettings.Load();
+        _playerSettings = playerSettings;
     }
 
     class EpisodeViewHolder : RecyclerView.ViewHolder
     {
-        public CardView cardView = default!;
-        public TextView episodeNumber = default!;
+        public CardView CardView = default!;
+        public TextView EpisodeNumber = default!;
+        public ProgressBar WatchedProgress = default!;
 
         public EpisodeViewHolder(View view) : base (view)
         {
-            cardView = view.FindViewById<CardView>(Resource.Id.cardView)!;
-            episodeNumber = view.FindViewById<TextView>(Resource.Id.episodeNumber)!;
+            CardView = view.FindViewById<CardView>(Resource.Id.cardView)!;
+            EpisodeNumber = view.FindViewById<TextView>(Resource.Id.episodeNumber)!;
+            WatchedProgress = view.FindViewById<ProgressBar>(Resource.Id.watchedProgress)!;
         }
     }
 
@@ -55,25 +55,29 @@ public class EpisodeRecyclerAdapter : RecyclerView.Adapter
     {
         var episodeViewHolder = (holder as EpisodeViewHolder)!;
 
-        var ep = $"EP {Episodes[position].Number}";
+        var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
 
-        episodeViewHolder.episodeNumber.Text = ep;
+        var ep = $"EP {episode.Number}";
+        episodeViewHolder.EpisodeNumber.Text = ep;
 
-        if (episodeViewHolder.cardView.HasOnClickListeners)
+        if (_playerSettings.WatchedEpisodes.ContainsKey(episode.Link))
+        {
+            var watchedEpisode = _playerSettings.WatchedEpisodes[episode.Link];
+            if (watchedEpisode is not null)
+                episodeViewHolder.WatchedProgress.Progress = (int)watchedEpisode.WatchedPercentage;
+        }
+
+        if (episodeViewHolder.CardView.HasOnClickListeners)
             return;
 
-        episodeViewHolder.cardView.LongClick += (s, e) =>
+        episodeViewHolder.CardView.LongClick += (s, e) =>
         {
-            var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
-
             var selector = SelectorDialogFragment.NewInstance(_anime, episode);
             selector.Show(_episodesActivity.SupportFragmentManager, "dialog");
         };
 
-        episodeViewHolder.cardView.Click += (s, e) =>
+        episodeViewHolder.CardView.Click += (s, e) =>
         {
-            var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
-
             if (_playerSettings.SelectServerBeforePlaying)
             {
                 var selector = SelectorDialogFragment.NewInstance(_anime, episode);

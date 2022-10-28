@@ -31,7 +31,8 @@
     <color name="app_background">#303030</color>
     <color name="header">#FFFFFF</color>
     <color name="text_default">#808080</color>
-    <color name="progress">#e5e5e5</color>
+    <!--<color name="progress">#e5e5e5</color>-->
+    <color name="progress">#c9c9c9</color>
     <color name="secondary_background">#808080</color>
 
     <!--Home Fragment-->

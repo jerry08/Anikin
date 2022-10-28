@@ -1,7 +1,12 @@
-﻿namespace AniStream.Settings;
+﻿using System.Collections.Generic;
+using AniStream.Models;
 
-public class PlayerSettings
+namespace AniStream.Settings;
+
+public class PlayerSettings : SettingsManager
 {
+    public Dictionary<string, WatchedEpisode> WatchedEpisodes { get; set; } = new();
+
     public bool AlwaysInLandscapeMode { get; set; } = true;
 
     public bool SelectServerBeforePlaying { get; set; }
@@ -19,11 +24,6 @@ public class PlayerSettings
     public bool TimeStampsEnabled { get; set; } = true;
 
     public bool ShowTimeStampButton { get; set; } = true;
-
-    public void Load()
-    {
-        //TODO: Load settings from json file later
-    }
 
     public float[] GetSpeeds()
     {

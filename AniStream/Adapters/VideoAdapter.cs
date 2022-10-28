@@ -8,6 +8,7 @@ using AniStream.Utils;
 using AndroidX.RecyclerView.Widget;
 using AnimeDl.Models;
 using AniStream.Utils.Extensions;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace AniStream.Adapters;
 
@@ -103,7 +104,8 @@ public class VideoAdapter : RecyclerView.Adapter
             intent.SetDataAndType(videoUri, "video/*");
             intent.SetFlags(ActivityFlags.NewTask);
 
-            Activity.CopyToClipboard(url);
+            Activity.CopyToClipboard(url, false);
+            Activity.ShowToast($"Copied \"{url}\"");
 
             var i = Intent.CreateChooser(intent, "Open Video in :")!;
             i.SetFlags(ActivityFlags.NewTask);
