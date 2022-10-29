@@ -20,7 +20,7 @@ public class BookmarkManager
     {
         var list = await GetBookmarks();
 
-        var animeBookmarked = list.Where(x => x.Category == anime.Category)
+        var animeBookmarked = list.Where(x => x.Id == anime.Id)
             .FirstOrDefault();
 
         if (animeBookmarked is not null)
@@ -61,7 +61,7 @@ public class BookmarkManager
     {
         var animes = await GetBookmarks();
 
-        var animeToRemove = animes.Where(x => x.Category == anime.Category)
+        var animeToRemove = animes.Where(x => x.Id == anime.Id)
             .FirstOrDefault();
 
         if (animeToRemove is not null)
@@ -73,5 +73,5 @@ public class BookmarkManager
     }
 
     public void RemoveAllBookmarks()
-        => SecureStorage.SetAsync(_name, "").Wait();
+        => SecureStorage.Remove(_name);
 }
