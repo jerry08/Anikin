@@ -72,12 +72,18 @@ public class EpisodeRecyclerAdapter : RecyclerView.Adapter
 
         episodeViewHolder.CardView.LongClick += (s, e) =>
         {
+            //Declare episode variable after click to get correct episode after fast scroll
+            var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
+
             var selector = SelectorDialogFragment.NewInstance(_anime, episode);
             selector.Show(_episodesActivity.SupportFragmentManager, "dialog");
         };
 
         episodeViewHolder.CardView.Click += (s, e) =>
         {
+            //Declare episode variable after click to get correct episode after fast scroll
+            var episode = Episodes[episodeViewHolder.BindingAdapterPosition];
+
             if (_playerSettings.SelectServerBeforePlaying)
             {
                 var selector = SelectorDialogFragment.NewInstance(_anime, episode);
