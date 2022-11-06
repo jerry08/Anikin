@@ -85,7 +85,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     //private LinearLayout controls = default!;
     private TextView animeTitle = default!;
     private TextView episodeTitle = default!;
-    private TextView errorText = default!;
+    //private TextView errorText = default!;
     private TextView VideoInfo = default!;
     private TextView VideoName = default!;
     private TextView ServerInfo = default!;
@@ -125,20 +125,20 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         this.HideSystemBars();
 
         //Enable unhandled exceptions for testing
-        //AndroidEnvironment.UnhandledExceptionRaiser += (s, e) =>
-        //{
-        //
-        //};
-        //
-        //AppDomain.CurrentDomain.UnhandledException += (s, e) =>
-        //{
-        //
-        //};
-        //
-        //TaskScheduler.UnobservedTaskException += (s, e) =>
-        //{
-        //
-        //};
+        AndroidEnvironment.UnhandledExceptionRaiser += (s, e) =>
+        {
+        
+        };
+        
+        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+        {
+        
+        };
+        
+        TaskScheduler.UnobservedTaskException += (s, e) =>
+        {
+        
+        };
 
         await _playerSettings.LoadAsync();
 
@@ -176,7 +176,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         videoChangerButton = FindViewById<ImageButton>(Resource.Id.qualitychanger)!;
         nextEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_nextvideo)!;
         previousEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_prevvideo)!;
-        errorText = FindViewById<TextView>(Resource.Id.errorText)!;
+        //errorText = FindViewById<TextView>(Resource.Id.errorText)!;
         VideoInfo = FindViewById<TextView>(Resource.Id.exo_video_info)!;
         VideoName = FindViewById<TextView>(Resource.Id.exo_video_name)!;
         ServerInfo = FindViewById<TextView>(Resource.Id.exo_server_info)!;
@@ -754,8 +754,8 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     {
         CanSaveProgress = false;
 
-        errorText.Text = "Video not found.";
-        errorText.Visibility = ViewStates.Visible;
+        //errorText.Text = "Video not found.";
+        //errorText.Visibility = ViewStates.Visible;
     }
 
     public void OnIsPlayingChanged(bool isPlaying)
@@ -861,8 +861,8 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     {
         CanSaveProgress = false;
 
-        errorText.Text = "Video not found.";
-        errorText.Visibility = ViewStates.Visible;
+        //errorText.Text = "Video not found.";
+        //errorText.Visibility = ViewStates.Visible;
 
         if (error is not null && error.Message is not null)
             this.ShowToast("Failed to play video");
