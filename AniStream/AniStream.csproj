@@ -7,8 +7,8 @@
     <!--<WarningsAsErrors>nullable</WarningsAsErrors>
     <ImplicitUsings>enable</ImplicitUsings>-->
     <ApplicationId>com.oneb.anistream</ApplicationId>
-    <ApplicationVersion>16</ApplicationVersion>
-    <ApplicationDisplayVersion>1.8.1</ApplicationDisplayVersion>
+    <ApplicationVersion>18</ApplicationVersion>
+    <ApplicationDisplayVersion>1.8.3</ApplicationDisplayVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -51,7 +51,7 @@
     <None Remove="Resources\layout\videoviewer.xml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AnimeDl" Version="1.6.8" />
+    <PackageReference Include="AnimeDl" Version="1.6.9" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Octokit" Version="4.0.1" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
