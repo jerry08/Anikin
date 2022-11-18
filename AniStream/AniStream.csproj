@@ -55,6 +55,8 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Octokit" Version="4.0.1" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
+    <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.18.5" />
+    <PackageReference Include="Xam.Plugins.Android.ExoPlayer.OkHttp" Version="2.18.5" />
     <PackageReference Include="Xamarin.Android.Flowlayout" Version="1.0.0.4" />
     <PackageReference Include="Xamarin.Android.Glide" Version="4.13.2.2" />
     <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.5.1" />
@@ -65,49 +67,5 @@
     <PackageReference Include="Xamarin.Google.Android.Material" Version="1.6.1.1" />
     <PackageReference Include="Xamarin.Essentials" Version="1.7.3" />
     <PackageReference Include="Xamarin.Google.Guava" Version="31.1.0.3" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="ExoPlayer">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.Common">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.Common.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.Core">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.Dash">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.Dash.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.Database">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.Database.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.DataSource">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.DataSource.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.Decoder">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.Decoder.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.Ext.OkHttp">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.Ext.OkHttp.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.Extractor">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.Extractor.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.Hls">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.Hls.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.Rtsp">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.Rtsp.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.SmoothStreaming">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.SmoothStreaming.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.Transformer">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.Transformer.dll</HintPath>
-    </Reference>
-    <Reference Include="ExoPlayer.UI">
-      <HintPath>..\ExoplayerDlls\ExoPlayer.UI.dll</HintPath>
-    </Reference>
   </ItemGroup>
 </Project>
