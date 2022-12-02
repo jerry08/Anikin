@@ -54,6 +54,8 @@ using AnimeDl.Aniskip;
 using AniStream.Utils.Extensions;
 using Configuration = Android.Content.Res.Configuration;
 using AniStream.Models;
+using AnimeDl.Scrapers.Events;
+using AniStream.Adapters;
 
 namespace AniStream;
 
@@ -71,7 +73,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     private Episode Episode = default!;
     private Video Video = default!;
 
-    private NetworkStateReceiver NetworkStateReceiver = default!;
+    //private NetworkStateReceiver NetworkStateReceiver = default!;
 
     private IExoPlayer exoPlayer = default!;
     private StyledPlayerView playerView = default!;
@@ -92,6 +94,9 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     private ImageButton nextEpisodeButton = default!;
     private ImageButton previousEpisodeButton = default!;
     private ImageButton videoChangerButton = default!;
+
+    private ImageButton PrevButton = default!;
+    private ImageButton NextButton = default!;
 
     private MaterialCardView ExoSkip = default!;
     private ImageButton ExoSkipOpEd = default!;
@@ -152,7 +157,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         var episodeString = Intent.GetStringExtra("episode");
         if (!string.IsNullOrEmpty(episodeString))
             Episode = JsonConvert.DeserializeObject<Episode>(episodeString)!;
-
+        
         var bookmarkManager = new BookmarkManager("recently_watched");
 
         var isBooked = await bookmarkManager.IsBookmarked(Anime);
@@ -161,9 +166,9 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         
         bookmarkManager.SaveBookmark(Anime, true);
 
-        NetworkStateReceiver = new NetworkStateReceiver();
-        NetworkStateReceiver.AddListener(this);
-        RegisterReceiver(NetworkStateReceiver, new IntentFilter(Android.Net.ConnectivityManager.ConnectivityAction));
+        //NetworkStateReceiver = new NetworkStateReceiver();
+        //NetworkStateReceiver.AddListener(this);
+        //RegisterReceiver(NetworkStateReceiver, new IntentFilter(Android.Net.ConnectivityManager.ConnectivityAction));
 
         animeTitle = FindViewById<TextView>(Resource.Id.exo_anime_title)!;
         episodeTitle = FindViewById<TextView>(Resource.Id.exo_ep_sel)!;
@@ -171,7 +176,8 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         playerView = FindViewById<StyledPlayerView>(Resource.Id.player_view)!;
         exoplay = FindViewById<ImageButton>(Resource.Id.exo_play)!;
         exoQuality = FindViewById<ImageButton>(Resource.Id.exo_quality)!;
-        progressBar = FindViewById<ProgressBar>(Resource.Id.buffer)!;
+        //progressBar = FindViewById<ProgressBar>(Resource.Id.buffer)!;
+        progressBar = FindViewById<ProgressBar>(Resource.Id.exo_init_buffer)!;
         
         videoChangerButton = FindViewById<ImageButton>(Resource.Id.qualitychanger)!;
         nextEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_nextvideo)!;
@@ -185,8 +191,18 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
         ExoSkip = FindViewById<MaterialCardView>(Resource.Id.exo_skip)!;
 
-        var prevButton = FindViewById<ImageButton>(Resource.Id.exo_prev_ep)!;
-        var nextButton = FindViewById<ImageButton>(Resource.Id.exo_next_ep)!;
+        PrevButton = FindViewById<ImageButton>(Resource.Id.exo_prev_ep)!;
+        NextButton = FindViewById<ImageButton>(Resource.Id.exo_next_ep)!;
+
+        PrevButton.Click += (s, e) =>
+        {
+            PlayPreviousEpisode();
+        };
+
+        NextButton.Click += (s, e) =>
+        {
+            PlayNextEpisode();
+        };
 
         var settingsButton = FindViewById<ImageButton>(Resource.Id.exo_settings)!;
         var sourceButton = FindViewById<ImageButton>(Resource.Id.exo_source)!;
@@ -204,13 +220,11 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         var lockButton = FindViewById<ImageButton>(Resource.Id.exo_lock)!;
 
         //TODO: Implement these
-        prevButton.Visibility = ViewStates.Gone;
-        nextButton.Visibility = ViewStates.Gone;
-
         settingsButton.Visibility = ViewStates.Gone;
         subButton.Visibility = ViewStates.Gone;
-        exoPip.Visibility = ViewStates.Gone;
         lockButton.Visibility = ViewStates.Gone;
+
+        SetNextAndPrev();
 
         //if (Android.Provider.Settings.System.GetInt(ContentResolver, Android.Provider.Settings.System.AccelerometerRotation, 0) != 1)
         //{
@@ -229,6 +243,10 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
                     PlayAfterEnteringPipMode = true;
                     EnterPipMode();
                 };
+            }
+            else
+            {
+                exoPip.Visibility = ViewStates.Gone;
             }
         }
 
@@ -268,7 +286,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         exoSpeed.Click += (s, e) =>
         {
             var speeds = _playerSettings.GetSpeeds();
-
             var speedsName = speeds.Select(x => $"{x}x").ToArray();
 
             var speedDialog = new AlertDialog.Builder(this, Resource.Style.DialogTheme);
@@ -319,15 +336,39 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         animeTitle.Text = Anime.Title;
         episodeTitle.Text = Episode.Name;
 
-        var trackSelectionFactory = new AdaptiveTrackSelection.Factory();
-        trackSelector = new DefaultTrackSelector(this, trackSelectionFactory);
-
         //var ff = trackSelector.BuildUponParameters();
         //ff.SetMinVideoSize(720, 480).SetMaxVideoSize(1, 1);
         //
         //trackSelector.SetParameters(ff);
 
         playerView.ControllerShowTimeoutMs = 5000;
+
+        SetupExoPlayer();
+
+        if (_playerSettings.SelectServerBeforePlaying)
+        {
+            var videoString = Intent.GetStringExtra("video");
+            if (!string.IsNullOrEmpty(videoString))
+                Video = JsonConvert.DeserializeObject<Video>(videoString)!;
+
+            PlayVideo(Video);
+        }
+        else
+        {
+            var progressBar = FindViewById<ProgressBar>(Resource.Id.exo_init_buffer)!;
+            progressBar.Visibility = ViewStates.Visible;
+
+            _client.OnVideosLoaded += OnVideosLoaded;
+            _client.OnVideoServersLoaded += OnVideoServersLoaded;
+
+            _client.GetVideoServers(Episode.Id);
+        }
+    }
+
+    private void SetupExoPlayer()
+    {
+        var trackSelectionFactory = new AdaptiveTrackSelection.Factory();
+        trackSelector = new DefaultTrackSelector(this, trackSelectionFactory);
 
         exoPlayer = new IExoPlayer.Builder(this)
             .SetTrackSelector(trackSelector)!
@@ -365,63 +406,202 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
                 exoPlayer.Play();
             }
         };
+    }
 
-        if (_playerSettings.SelectServerBeforePlaying)
+    /// <summary>
+    /// Load next or previous episode
+    /// </summary>
+    /// <param name="episode">Next or previous episode</param>
+    private async Task LoadEpisode(Episode? episode)
+    {
+        if (episode is null) return;
+
+        var videoServers = await _client.GetVideoServersAsync(episode.Id);
+        if (videoServers.Count == 0)
+            return;
+
+        var allVideos = (await Task.WhenAll(videoServers
+            .Select(x => _client.GetVideosAsync(x)))).SelectMany(x => x).ToList();
+
+        if (!SelectorDialogFragment.Cache.ContainsKey(episode.Link))
         {
-            var videoString = Intent.GetStringExtra("video");
-            if (!string.IsNullOrEmpty(videoString))
-                Video = JsonConvert.DeserializeObject<Video>(videoString)!;
+            var serverWithVideos = videoServers
+                .Select(x => new ServerWithVideos(x, allVideos)).ToList();
 
-            PlayVideo(Video);
+            SelectorDialogFragment.Cache.Add(episode.Link, serverWithVideos);
+        }
+
+        RunOnUiThread(() =>
+        {
+            SetNextAndPrev();
+        });
+    }
+
+    private void SetNextAndPrev()
+    {
+        PrevButton.Visibility = ViewStates.Visible;
+        NextButton.Visibility = ViewStates.Visible;
+
+        var prevEpisode = GetPreviousEpisode();
+        if (prevEpisode is not null
+            && SelectorDialogFragment.Cache.ContainsKey(prevEpisode.Link))
+        {
+            PrevButton.Enabled = true;
+            PrevButton.Alpha = 1f;
         }
         else
         {
-            var progressBar = FindViewById<ProgressBar>(Resource.Id.exo_init_buffer)!;
-            progressBar.Visibility = ViewStates.Visible;
-
-            _client.OnVideosLoaded += (s, e) =>
-            {
-                this.RunOnUiThread(() =>
-                {
-                    if (e.Videos.Count > 0)
-                    {
-                        PlayVideo(e.Videos[0]);
-                        progressBar.Visibility = ViewStates.Gone;
-                    }
-                    else
-                    {
-                        progressBar.Visibility = ViewStates.Gone;
-                        this.ToastString("Failed to play video");
-                    }
-                });
-            };
-
-            _client.OnVideoServersLoaded += (s, e) =>
-            {
-                this.RunOnUiThread(() =>
-                {
-                    if (e.VideoServers.Count > 0)
-                    {
-                        _client.GetVideos(e.VideoServers[0]);
-                    }
-                    else
-                    {
-                        progressBar.Visibility = ViewStates.Gone;
-                        this.ToastString("Failed to play video");
-                    }
-                });
-            };
-
-            _client.GetVideoServers(Episode.Id);
+            PrevButton.Enabled = false;
+            PrevButton.Alpha = 0.5f;
         }
+
+        var nextEpisode = GetNextEpisode();
+        if (nextEpisode is not null
+            && SelectorDialogFragment.Cache.ContainsKey(nextEpisode.Link))
+        {
+            NextButton.Enabled = true;
+            NextButton.Alpha = 1f;
+        }
+        else
+        {
+            NextButton.Enabled = false;
+            NextButton.Alpha = 0.5f;
+        }
+    }
+
+    private void OnVideosLoaded(object? sender, VideoEventArgs e)
+    {
+        RunOnUiThread(() =>
+        {
+            if (e.Videos.Count > 0)
+            {
+                PlayVideo(e.Videos[0]);
+                progressBar.Visibility = ViewStates.Gone;
+            }
+            else
+            {
+                progressBar.Visibility = ViewStates.Gone;
+                this.ToastString("No videos found");
+            }
+        });
+    }
+
+    private void OnVideoServersLoaded(object? sender, VideoServerEventArgs e)
+    {
+        RunOnUiThread(() =>
+        {
+            if (e.VideoServers.Count > 0)
+            {
+                _client.GetVideos(e.VideoServers[0]);
+            }
+            else
+            {
+                progressBar.Visibility = ViewStates.Gone;
+                this.ToastString("No servers found");
+            }
+        });
+    }
+
+    public Episode? GetPreviousEpisode()
+    {
+        var currentEpisode = EpisodesActivity.Episodes.Where(x => x.Id == Episode.Id)
+            .FirstOrDefault();
+        if (currentEpisode is null)
+            return null;
+
+        var index = EpisodesActivity.Episodes.OrderBy(x => x.Number).ToList()
+            .IndexOf(currentEpisode);
+
+        var prevEpisode = EpisodesActivity.Episodes.OrderBy(x => x.Number)
+            .ElementAtOrDefault(index - 1);
+
+        return prevEpisode;
+    }
+
+    private void PlayPreviousEpisode()
+    {
+        var prevEpisode = GetPreviousEpisode();
+        if (prevEpisode is null)
+            return;
+
+        Episode = prevEpisode;
+
+        exoPlayer.Stop();
+        exoPlayer.SeekTo(0);
+        //exoPlayer.Release();
+        _client.CancelGetVideoServers();
+        _client.CancelGetVideos();
+        VideoCache.Release();
+        //SetupExoPlayer();
+
+        animeTitle.Text = Anime.Title;
+        episodeTitle.Text = Episode.Name;
+
+        //progressBar.Visibility = ViewStates.Visible;
+
+        _client.OnVideosLoaded -= OnVideosLoaded;
+        _client.OnVideoServersLoaded -= OnVideoServersLoaded;
+
+        _client.OnVideosLoaded += OnVideosLoaded;
+        _client.OnVideoServersLoaded += OnVideoServersLoaded;
+
+        _client.GetVideoServers(prevEpisode.Id);
+        SetNextAndPrev();
+    }
+
+    public Episode? GetNextEpisode()
+    {
+        var currentEpisode = EpisodesActivity.Episodes.Where(x => x.Id == Episode.Id)
+            .FirstOrDefault();
+        if (currentEpisode is null)
+            return null;
+
+        var index = EpisodesActivity.Episodes.OrderBy(x => x.Number).ToList()
+            .IndexOf(currentEpisode);
+
+        var nextEpisode = EpisodesActivity.Episodes.OrderBy(x => x.Number)
+            .ElementAtOrDefault(index + 1);
+
+        return nextEpisode;
+    }
+
+    private void PlayNextEpisode()
+    {
+        var nextEpisode = GetNextEpisode();
+        if (nextEpisode is null)
+            return;
+
+        Episode = nextEpisode;
+
+        exoPlayer.Stop();
+        exoPlayer.SeekTo(0);
+        //exoPlayer.Release();
+        _client.CancelGetVideoServers();
+        _client.CancelGetVideos();
+        VideoCache.Release();
+        //SetupExoPlayer();
+
+        animeTitle.Text = Anime.Title;
+        episodeTitle.Text = Episode.Name;
+
+        //progressBar.Visibility = ViewStates.Visible;
+
+        _client.OnVideosLoaded -= OnVideosLoaded;
+        _client.OnVideoServersLoaded -= OnVideoServersLoaded;
+
+        _client.OnVideosLoaded += OnVideosLoaded;
+        _client.OnVideoServersLoaded += OnVideoServersLoaded;
+
+        _client.GetVideoServers(Episode.Id);
+        SetNextAndPrev();
     }
 
     protected override void OnDestroy()
     {
         base.OnDestroy();
 
-        NetworkStateReceiver.RemoveListener(this);
-        UnregisterReceiver(NetworkStateReceiver);
+        //NetworkStateReceiver.RemoveListener(this);
+        //UnregisterReceiver(NetworkStateReceiver);
     }
 
     public override void OnBackPressed()
@@ -577,23 +757,23 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
     public async Task UpdateProgress()
     {
-        if (CanSaveProgress)
-        {
-            _playerSettings.WatchedEpisodes.TryGetValue(Episode.Link,
-                out WatchedEpisode? watchedEpisode);
+        if (!CanSaveProgress)
+            return;
 
-            watchedEpisode ??= new();
+        _playerSettings.WatchedEpisodes.TryGetValue(Episode.Link,
+            out WatchedEpisode? watchedEpisode);
 
-            watchedEpisode.Id = Episode.Id;
-            watchedEpisode.AnimeName = Anime.Title;
-            watchedEpisode.WatchedPercentage = (float)exoPlayer.CurrentPosition / exoPlayer.Duration * 100f;
-            watchedEpisode.WatchedDuration = exoPlayer.CurrentPosition;
+        watchedEpisode ??= new();
 
-            _playerSettings.WatchedEpisodes.Remove(Episode.Link);
-            _playerSettings.WatchedEpisodes.Add(Episode.Link, watchedEpisode);
+        watchedEpisode.Id = Episode.Id;
+        watchedEpisode.AnimeName = Anime.Title;
+        watchedEpisode.WatchedPercentage = (float)exoPlayer.CurrentPosition / exoPlayer.Duration * 100f;
+        watchedEpisode.WatchedDuration = exoPlayer.CurrentPosition;
 
-            await _playerSettings.SaveAsync();
-        }
+        _playerSettings.WatchedEpisodes.Remove(Episode.Link);
+        _playerSettings.WatchedEpisodes.Add(Episode.Link, watchedEpisode);
+
+        await _playerSettings.SaveAsync();
     }
 
     public async void PlayVideo(Video video)
@@ -647,7 +827,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
             _ => MimeTypes.ApplicationMp4,
         };
 
-
         var mediaItem = new MediaItem.Builder()
             .SetUri(videoUri)!
             .SetMimeType(mimeType)!
@@ -681,6 +860,12 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
         if (watchedEpisode is not null)
             exoPlayer.SeekTo(watchedEpisode.WatchedDuration);
+
+        await Task.Run(async () =>
+        {
+            await LoadEpisode(GetNextEpisode());
+            await LoadEpisode(GetPreviousEpisode());
+        });
     }
 
     public void OnMediaItemTransition(MediaItem? mediaItem, int reason)
@@ -696,6 +881,11 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     public void OnPlaybackStateChanged(int playbackState)
     {
         IsBuffering = playbackState == IPlayer.StateBuffering;
+
+        if (playbackState == StateReady)
+        {
+            var isPlaying = exoPlayer.IsPlaying;
+        }
     }
 
     public void OnPlaybackSuppressionReasonChanged(int playbackSuppressionReason)
@@ -803,11 +993,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     }
 
     public void OnShuffleModeEnabledChanged(bool shuffleModeEnabled)
-    {
-
-    }
-
-    public void OnTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections)
     {
 
     }
