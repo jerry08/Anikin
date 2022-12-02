@@ -1,6 +1,7 @@
 <resources>
-
     <string name="repo">jerry08/AniStream</string>
+
+    <string name="exo_download_notification_channel_name">Downloads</string>
 
     <string name="app_name">AniStream</string>
     <string name="action_settings">Settings</string>
@@ -23,7 +24,6 @@
       &lt;<u>Previous Episode</u>
     </string>
     <string name="back_button">Back Button</string>
-    <string name="search">Search</string>
     <string name="something_went_wrong">Something Went Wrong</string>
 
     <string name="no_internet">No Internet Connection</string>
@@ -73,4 +73,45 @@
       <item>MAL support? bruh.</item>
       <item>Novels? more like NO vels.</item>
     </string-array>
+
+    <string name="home">Home</string>
+    <string name="anime">Anime</string>
+    <string name="browse_anime">Browse Anime</string>
+    
+    <string name="search">Search</string>
+    <string name="search_results">Search Results</string>
+    <string name="sort_by">Sort By</string>
+    <string name="genre">Genre</string>
+    <string name="top_score">Top Score</string>
+    <string name="updated">Recently Updated</string>
+    <string name="trending_anime">Trending Anime</string>
+    <string name="popular_anime">Popular Anime</string>
+    <string name="trending_manga">Trending Manga</string>
+    <string name="trending_novel">Trending Novel</string>
+    <string name="popular_manga">Popular Manga</string>
+    
+    <string name="name">Name</string>
+    <string name="name_romaji">Name Romaji</string>
+    <string name="mean_score">Mean Score</string>
+    <string name="format">Format</string>
+    <string name="status_title">Status</string>
+    <string name="total_eps">Total Episodes</string>
+    <string name="total_chaps">Total Chapters</string>
+    <string name="ep_duration">Average Duration</string>
+    <string name="min">\u0008min</string>
+    <string name="season">Season</string>
+    <string name="start_date">Start Date</string>
+    <string name="end_date">End Date</string>
+    <string name="source">Source</string>
+    <string name="main_studio">Studio</string>
+    <string name="genres">Genres</string>
+    <string name="description">Synopsis</string>
+    <string name="characters">Characters</string>
+    <string name="relations">Relations</string>
+    
+    <string name="this_season">This Season</string>
+    <string name="next_season">Next Season</string>
+    <string name="previous_season">Previous Season</string>
+    <string name="include_media_in_list">Include List</string>
+    <string name="release_calendar">Calendar</string>
 </resources>
