@@ -45,7 +45,7 @@ public class EpisodesActivity : AppCompatActivity
     public event EventHandler<EventArgs>? OnPermissionsResult;
 
     private RecyclerView EpisodesRecyclerView = default!;
-    private List<Episode> Episodes = new();
+    public static List<Episode> Episodes = new();
     private Anime Anime = default!;
 
     private bool IsBooked;
@@ -57,6 +57,7 @@ public class EpisodesActivity : AppCompatActivity
         
         SetContentView(Resource.Layout.animeinfo);
 
+        Episodes = new();
         SelectorDialogFragment.Cache.Clear();
 
         await _playerSettings.LoadAsync();

@@ -21,6 +21,7 @@ using Google.Android.Material.Navigation;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using Xamarin.Essentials;
 using AnimeDl.Scrapers.Events;
+using Laerdal.FFmpeg.Android;
 
 namespace AniStream;
 
@@ -51,6 +52,9 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
 
         var toolbar = FindViewById<Toolbar>(Resource.Id.tool)!;
         SetSupportActionBar(toolbar);
+
+        //This allows ffmpeg to return result and continue operations in app
+        Config.IgnoreSignal(Laerdal.FFmpeg.Android.Signal.Sigxcpu);
 
         ProgressBar = FindViewById<Android.Widget.ProgressBar>(Resource.Id.progress2)!;
         recyclerView = FindViewById<RecyclerView>(Resource.Id.recyclerview2)!;
@@ -87,6 +91,8 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
 
         var updater = new AppUpdater();
         await updater.CheckAsync(this);
+
+        //ScheduleNotificationGroup();
     }
 
     private void Client_OnAnimesLoaded(object? sender, AnimeEventArgs e)
