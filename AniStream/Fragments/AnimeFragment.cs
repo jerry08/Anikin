@@ -50,9 +50,9 @@ public class AnimeFragment : Fragment
         _client.Search("", _searchFilter, Page);
     }
 
-    public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+    public override View OnCreateView(LayoutInflater? inflater, ViewGroup? container, Bundle? savedInstanceState)
     {
-        view = inflater.Inflate(Resource.Layout.dublayout, container, false)!;
+        view = inflater?.Inflate(Resource.Layout.dublayout, container, false)!;
         swipeRefreshLayout = view.FindViewById<SwipeRefreshLayout>(Resource.Id.swiperefresh)!;
         RecyclerView mRecyclerView = view.FindViewById<RecyclerView>(Resource.Id.act_recyclerview)!;
         RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(view.Context, 2);
@@ -70,7 +70,7 @@ public class AnimeFragment : Fragment
 
         _client.OnAnimesLoaded += (s, e) =>
         {
-            Activity.RunOnUiThread(() =>
+            Activity?.RunOnUiThread(() =>
             {
                 if (WeebUtils.AnimeSite == AnimeSites.GogoAnime || WeebUtils.AnimeSite == AnimeSites.Tenshi)
                     Page++;
