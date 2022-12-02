@@ -9,6 +9,9 @@ using Android.Widget;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using Java.Net;
 using AnimeDl.Scrapers;
+using Android.Provider;
+using Android.Webkit;
+using System.Threading.Tasks;
 
 namespace AniStream.Utils;
 
@@ -17,17 +20,6 @@ public static class WeebUtils
     public static AnimeSites AnimeSite { get; set; } = AnimeSites.GogoAnime;
 
     public static bool IsDubSelected { get; set; } = false;
-
-    public static CookieManager DEFAULT_COOKIE_MANAGER 
-    { 
-        get 
-        {
-            var cm = new CookieManager();
-            //cm.SetCookiePolicy(CookiePolicy.AcceptOriginalServer);
-            cm.SetCookiePolicy(CookiePolicy.AcceptAll);
-            return cm;
-        } 
-    }
 
     public static string PersonalDatabaseFolder
     {
@@ -53,7 +45,10 @@ public static class WeebUtils
 
     public static string AppFolderName { get; set; } = default!;
 
-    public static AlertDialog SetProgressDialog(Context context, string text, bool cancelable)
+    public static AlertDialog SetProgressDialog(
+        Context context,
+        string text,
+        bool cancelable)
     {
         int llPadding = 20;
         var ll = new LinearLayout(context);
@@ -108,15 +103,21 @@ public static class WeebUtils
     {
         var manager = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService)!;
         if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
-        {
-            var network = manager.ActiveNetwork;
-            
-            if (network is null)
+        {            
+            if (manager.ActiveNetwork is null)
                 return false;
 
-            var actNw = manager.GetNetworkCapabilities(network);
-            //return actNw != null && (actNw.HasTransport(TransportType.Wifi) || actNw.HasTransport(TransportType.Cellular) || actNw.HasTransport(TransportType.Ethernet) || actNw.HasTransport(TransportType.Bluetooth));
-            return actNw != null && (actNw.HasTransport(TransportType.Wifi) || actNw.HasTransport(TransportType.Cellular));
+            var actNw = manager.GetNetworkCapabilities(manager.ActiveNetwork);
+            //return actNw is not null && (actNw.HasTransport(TransportType.Wifi) || actNw.HasTransport(TransportType.Cellular) || actNw.HasTransport(TransportType.Ethernet) || actNw.HasTransport(TransportType.Bluetooth));
+            //return actNw is not null && (actNw.HasTransport(TransportType.Wifi) || actNw.HasTransport(TransportType.Cellular));
+            return actNw is not null &&
+                (actNw.HasTransport(TransportType.Wifi)
+                || actNw.HasTransport(TransportType.Cellular)
+                || actNw.HasTransport(TransportType.Ethernet)
+                || actNw.HasTransport(TransportType.Lowpan)
+                || actNw.HasTransport(TransportType.Usb)
+                || actNw.HasTransport(TransportType.Vpn)
+                || actNw.HasTransport(TransportType.WifiAware));
         }
         else
         {
@@ -139,5 +140,43 @@ public static class WeebUtils
         //            hasConnectedMobile = true;
         //}
         //return hasConnectedWifi || hasConnectedMobile;
+    }
+
+    public static async Task CopyFileUsingMediaStore(
+        this Context context,
+        string filePath,
+        string newFilePath)
+    {
+        if (!File.Exists(filePath))
+            return;
+
+        var ext = System.IO.Path.GetExtension(newFilePath).Replace(".", "");
+        //var dir = System.IO.Directory.GetParent(newFilePath)?.FullName;
+        var fileName = System.IO.Path.GetFileNameWithoutExtension(newFilePath);
+
+        var mime = MimeTypeMap.Singleton!;
+        var mimeType = mime.GetMimeTypeFromExtension(ext);
+
+        var fileInfo = new FileInfo(filePath);
+
+        var contentValues = new ContentValues();
+        //contentValues.Put(MediaStore.IMediaColumns.DisplayName, newFilePath);
+        contentValues.Put(MediaStore.IMediaColumns.DisplayName, fileName);
+        contentValues.Put(MediaStore.IMediaColumns.MimeType, mimeType);
+        contentValues.Put(MediaStore.IMediaColumns.RelativePath, Android.OS.Environment.DirectoryDownloads);
+        //contentValues.Put(MediaStore.IMediaColumns.RelativePath, dir);
+        contentValues.Put(MediaStore.IMediaColumns.Size, fileInfo.Length);
+
+        var resolver = context.ContentResolver;
+        var uri = resolver?.Insert(MediaStore.Downloads.ExternalContentUri, contentValues);
+        if (uri is not null)
+        {
+            int defaultBufferSize = 4096;
+
+            using var input = File.OpenRead(filePath);
+            var output = resolver?.OpenOutputStream(uri);
+            if (output is not null)
+                await input.CopyToAsync(output, defaultBufferSize);
+        }
     }
 }

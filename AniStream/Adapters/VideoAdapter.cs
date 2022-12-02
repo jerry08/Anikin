@@ -5,10 +5,11 @@ using Android.Views;
 using Android.Widget;
 using Newtonsoft.Json;
 using AniStream.Utils;
+using AniStream.Utils.Downloading;
 using AndroidX.RecyclerView.Widget;
 using AnimeDl.Models;
 using AniStream.Utils.Extensions;
-using static System.Net.Mime.MediaTypeNames;
+using System.Threading.Tasks;
 
 namespace AniStream.Adapters;
 
@@ -59,17 +60,27 @@ public class VideoAdapter : RecyclerView.Adapter
         if (!string.IsNullOrEmpty(video.Resolution))
             urlViewHolder.urlQuality.Text = video.Resolution;
         else
-            urlViewHolder.urlQuality.Text = "Default Quality";            
+            urlViewHolder.urlQuality.Text = "Default Quality";
 
-        if (video.Format == VideoType.Container)
+        //if (video.Format == VideoType.Container)
+        //{
+        //    urlViewHolder.urlDownload.Visibility = ViewStates.Visible;
+        //    urlViewHolder.urlDownload.Click += (s, e) =>
+        //    {
+        //        var downloader = new Downloader(Activity);
+        //        downloader.Download($"{_anime.Title} - Ep-{_episode.Number}.mp4", video.VideoUrl, video.Headers);
+        //    };
+        //}
+        //Test below
+        urlViewHolder.urlDownload.Visibility = ViewStates.Visible;
+        urlViewHolder.urlDownload.Click += async (s, e) =>
         {
-            urlViewHolder.urlDownload.Visibility = ViewStates.Visible;
-            urlViewHolder.urlDownload.Click += (s, e) =>
-            {
-                var downloader = new Downloader(Activity);
+            var downloader = new Downloader(Activity);
+            if (video.Format == VideoType.Container)
                 downloader.Download($"{_anime.Title} - Ep-{_episode.Number}.mp4", video.VideoUrl, video.Headers);
-            };
-        }
+            else
+                await downloader.DownloadHls($"{_anime.Title} - Ep-{_episode.Number}.mp4", video.VideoUrl, video.Headers);
+        };
 
         if (video.Size != null && video.Size > 0)
         {

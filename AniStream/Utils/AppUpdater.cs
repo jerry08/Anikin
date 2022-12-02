@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using AndroidX.Fragment.App;
+using AniStream.Utils.Downloading;
 using Octokit;
 using Xamarin.Essentials;
 
