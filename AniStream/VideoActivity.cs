@@ -518,7 +518,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         return prevEpisode;
     }
 
-    private void PlayPreviousEpisode()
+    private async void PlayPreviousEpisode()
     {
         var prevEpisode = GetPreviousEpisode();
         if (prevEpisode is null)
@@ -526,9 +526,15 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
         Episode = prevEpisode;
 
+        exoPlayer.Pause();
+        await UpdateProgress();
+
+        Episode = prevEpisode;
+
         exoPlayer.Stop();
         exoPlayer.SeekTo(0);
         //exoPlayer.Release();
+
         _client.CancelGetVideoServers();
         _client.CancelGetVideos();
         VideoCache.Release();
@@ -565,17 +571,21 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         return nextEpisode;
     }
 
-    private void PlayNextEpisode()
+    private async void PlayNextEpisode()
     {
         var nextEpisode = GetNextEpisode();
         if (nextEpisode is null)
             return;
+
+        exoPlayer.Pause();
+        await UpdateProgress();
 
         Episode = nextEpisode;
 
         exoPlayer.Stop();
         exoPlayer.SeekTo(0);
         //exoPlayer.Release();
+
         _client.CancelGetVideoServers();
         _client.CancelGetVideos();
         VideoCache.Release();
