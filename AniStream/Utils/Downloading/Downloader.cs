@@ -101,7 +101,9 @@ public class Downloader
         {
         });
 
-        var items = metadataResources.Select(x => x.Resolution.ToString()).ToArray();
+        var items = metadataResources.Select(x => x.Resolution?.ToString()
+            ?? "Default quality").ToArray();
+
         builder.SetItems(items, listener);
         builder.SetCancelable(true);
         var dialog = builder.Create()!;
@@ -160,7 +162,7 @@ public class Downloader
             {
                 IconSmallName =
                 {
-                    ResourceName = "logo_transparent_bg",
+                    ResourceName = "logo",
                 },
                 Color =
                 {
@@ -188,7 +190,7 @@ public class Downloader
             {
                 IconSmallName =
                 {
-                    ResourceName = "logo_transparent_bg",
+                    ResourceName = "logo",
                 },
                 Color =
                 {
