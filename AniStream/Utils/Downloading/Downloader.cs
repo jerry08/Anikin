@@ -97,7 +97,7 @@ public class Downloader
         var builder = new AlertDialog.Builder(_activity);
         builder.SetTitle(fileName);
 
-        builder.SetNegativeButton("Cancel", (sender2, ev2) =>
+        builder.SetNegativeButton("Cancel", (s, e) =>
         {
         });
 
