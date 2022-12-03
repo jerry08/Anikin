@@ -16,45 +16,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Utils\CacheDataSourceFactory.cs" />
-    <Compile Remove="Utils\Downloader_Test.cs" />
-    <Compile Remove="Utils\Downloading\Downloader_Test.cs" />
-    <Compile Remove="Utils\Downloading\FFmpegEx.cs" />
-    <Compile Remove="Utils\FFmpegEx.cs" />
-    <Compile Remove="VideoActivity - Copy.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="Resources\drawable\anim_pause_to_play.xml" />
-    <None Remove="Resources\drawable\anim_play_to_pause.xml" />
-    <None Remove="Resources\drawable\anim_rewind.xml" />
-    <None Remove="Resources\drawable\anim_skip.xml" />
-    <None Remove="Resources\drawable\control_background_40dp.xml" />
-    <None Remove="Resources\drawable\ic_brightness.xml" />
-    <None Remove="Resources\drawable\ic_media_pause.xml" />
-    <None Remove="Resources\drawable\ic_media_play.xml" />
-    <None Remove="Resources\drawable\ic_media_seek_backward.xml" />
-    <None Remove="Resources\drawable\ic_media_seek_forward.xml" />
-    <None Remove="Resources\drawable\ic_more.xml" />
-    <None Remove="Resources\drawable\ic_page_numbering.xml" />
-    <None Remove="Resources\drawable\ic_play_button.xml" />
-    <None Remove="Resources\drawable\ic_settings.xml" />
-    <None Remove="Resources\drawable\ic_skip.xml" />
-    <None Remove="Resources\drawable\ic_volume.xml" />
-    <None Remove="Resources\drawable\linear_gradient_bg.xml" />
-    <None Remove="Resources\drawable\linear_gradient_black.xml" />
-    <None Remove="Resources\drawable\linear_gradient_black_horizontal.xml" />
-    <None Remove="Resources\drawable\linear_gradient_nav.xml" />
-    <None Remove="Resources\drawable\spinner_icon.xml" />
-    <None Remove="Resources\layout\activity_exoplayer.xml" />
-    <None Remove="Resources\layout\error_screen_video_player.xml" />
-    <None Remove="Resources\layout\exo_styled_player_control_view.xml" />
-    <None Remove="Resources\layout\exo_styled_player_view - Copy.xml" />
-    <None Remove="Resources\layout\exo_styled_player_view.xml" />
-    <None Remove="Resources\layout\fragment_video_player_placeholder.xml" />
-    <None Remove="Resources\layout\recycler_episode_item.xml" />
-    <None Remove="Resources\layout\videoviewer.xml" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="AnimeDl" Version="1.7.3" />
     <PackageReference Include="Laerdal.FFmpeg.Full" Version="4.4.27" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.3" />
