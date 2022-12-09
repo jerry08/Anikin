@@ -21,7 +21,6 @@ using Google.Android.Material.Navigation;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using Xamarin.Essentials;
 using AnimeDl.Scrapers.Events;
-using Laerdal.FFmpeg.Android;
 
 namespace AniStream;
 
@@ -52,9 +51,6 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
 
         var toolbar = FindViewById<Toolbar>(Resource.Id.tool)!;
         SetSupportActionBar(toolbar);
-
-        //This allows ffmpeg to return result and continue operations in app
-        Config.IgnoreSignal(Laerdal.FFmpeg.Android.Signal.Sigxcpu);
 
         ProgressBar = FindViewById<Android.Widget.ProgressBar>(Resource.Id.progress2)!;
         recyclerView = FindViewById<RecyclerView>(Resource.Id.recyclerview2)!;
@@ -88,11 +84,34 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
         _client.OnAnimesLoaded += Client_OnAnimesLoaded;
 
         SetupViewPager();
+        CreateNotificationChannel();
 
         var updater = new AppUpdater();
         await updater.CheckAsync(this);
+    }
 
-        //ScheduleNotificationGroup();
+    public void CreateNotificationChannel()
+    {
+        if (Build.VERSION.SdkInt < BuildVersionCodes.O)
+        {
+            // Notification channels are new in API 26 (and not a part of the
+            // support library). There is no need to create a notification
+            // channel on older versions of Android.
+            return;
+        }
+
+        var channelId = $"{PackageName}.general";
+
+        var channel = new NotificationChannel(channelId, "General", NotificationImportance.Low)
+        {
+            Description = "General"
+        };
+
+        channel.EnableLights(true);
+        channel.SetShowBadge(true);
+
+        var notificationManager = (NotificationManager?)GetSystemService(Android.Content.Context.NotificationService);
+        notificationManager?.CreateNotificationChannel(channel);
     }
 
     private void Client_OnAnimesLoaded(object? sender, AnimeEventArgs e)

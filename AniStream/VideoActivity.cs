@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
@@ -17,7 +16,6 @@ using Com.Google.Android.Exoplayer2.Trackselection;
 using Com.Google.Android.Exoplayer2.UI;
 using Com.Google.Android.Exoplayer2.Upstream;
 using Com.Google.Android.Exoplayer2.Util;
-using Java.IO;
 using Newtonsoft.Json;
 using AniStream.Utils;
 using AnimeDl;
@@ -27,11 +25,9 @@ using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using AnimeDl.Models;
 using AniStream.Fragments;
 using AnimeDl.Utils.Extensions;
-using Square.Picasso;
 using Com.Google.Android.Exoplayer2.Upstream.Cache;
 using static Com.Google.Android.Exoplayer2.IPlayer;
 using Square.OkHttp3;
-using AndroidX.Fragment.App;
 using System.Threading.Tasks;
 using Com.Google.Android.Exoplayer2.Video;
 using Com.Google.Android.Exoplayer2.Ext.Okhttp;
@@ -40,16 +36,11 @@ using Bumptech.Glide;
 using AndroidX.CardView.Widget;
 using AniStream.Settings;
 using Google.Android.Material.Card;
-using Java.Nio.Channels;
 using AndroidX.Core.View;
 using Android.Util;
-using AndroidX.Startup;
-using Android.Content.Res;
 using AnimeDl.Anilist;
 using AnimeDl.Scrapers;
-using Java.Util.Logging;
 using Handler = Android.OS.Handler;
-using System.Runtime.InteropServices;
 using AnimeDl.Aniskip;
 using AniStream.Utils.Extensions;
 using Configuration = Android.Content.Res.Configuration;
@@ -91,9 +82,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     private TextView VideoInfo = default!;
     private TextView VideoName = default!;
     private TextView ServerInfo = default!;
-    private ImageButton nextEpisodeButton = default!;
-    private ImageButton previousEpisodeButton = default!;
-    private ImageButton videoChangerButton = default!;
 
     private ImageButton PrevButton = default!;
     private ImageButton NextButton = default!;
@@ -179,9 +167,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         //progressBar = FindViewById<ProgressBar>(Resource.Id.buffer)!;
         progressBar = FindViewById<ProgressBar>(Resource.Id.exo_init_buffer)!;
         
-        videoChangerButton = FindViewById<ImageButton>(Resource.Id.qualitychanger)!;
-        nextEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_nextvideo)!;
-        previousEpisodeButton = FindViewById<ImageButton>(Resource.Id.exo_prevvideo)!;
         //errorText = FindViewById<TextView>(Resource.Id.errorText)!;
         VideoInfo = FindViewById<TextView>(Resource.Id.exo_video_info)!;
         VideoName = FindViewById<TextView>(Resource.Id.exo_video_name)!;
@@ -490,9 +475,13 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     {
         RunOnUiThread(() =>
         {
+            var selectedVideoServer = e.VideoServers
+                .Where(x => x.Name?.ToLower().Contains("streamsb") == true
+                || x.Name?.ToLower().Contains("vidstream") == true).FirstOrDefault();
+
             if (e.VideoServers.Count > 0)
             {
-                _client.GetVideos(e.VideoServers[0]);
+                _client.GetVideos(selectedVideoServer ?? e.VideoServers[0]);
             }
             else
             {
