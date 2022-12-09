@@ -12,6 +12,8 @@ using AndroidX.Core.Content;
 using AndroidX.Core.App;
 using System.Threading;
 using AniStream.Services;
+using Android.Webkit;
+using FileProvider = AndroidX.Core.Content.FileProvider;
 
 namespace AniStream.Utils.Downloading;
 
@@ -79,14 +81,31 @@ public class HlsDownloader
         if (returnCode == Config.ReturnCodeSuccess)
         {
             await _service.CopyFileUsingMediaStore(newFilePath, saveFilePath, cancellationToken);
+
+            var ext = System.IO.Path.GetExtension(saveFilePath).Replace(".", "");
+            var type = MimeTypeMap.Singleton!.GetMimeTypeFromExtension(ext)!;
+
+            //var uri = Android.Net.Uri.FromFile(new Java.IO.File(saveFilePath));
+            //var uri = FileProvider.GetUriForFile(_service,
+            //    _service.PackageName + ".provider", new Java.IO.File(saveFilePath));
+            var uri = Android.Net.Uri.Parse(saveFilePath);
             
+            var intent = new Intent(Intent.ActionView);
+            intent.SetFlags(ActivityFlags.ClearTop);
+            intent.SetDataAndType(uri, type);
+
+            var pendingIntent = PendingIntent.GetActivity(_service, 0, intent, PendingIntentFlags.Immutable)!;
+
             if (!cancellationToken.IsCancellationRequested)
-                ShowCompletedNotification(fileName, "Completed");
+                ShowCompletedNotification(fileName, "Completed", pendingIntent);
         }
         else
         {
+            var intent = new Intent(_service, typeof(MainActivity));
+            var pendingIntent = PendingIntent.GetActivity(_service, 0, intent, PendingIntentFlags.Immutable)!;
+
             if (!cancellationToken.IsCancellationRequested)
-                ShowCompletedNotification(fileName, "Failed to convert video");
+                ShowCompletedNotification(fileName, "Failed to convert video", pendingIntent);
         }
 
         if (System.IO.File.Exists(filePath))
@@ -126,10 +145,10 @@ public class HlsDownloader
         _service.StartForeground(_notificationId, builder.Build());
     }
 
-    private void ShowCompletedNotification(string title, string message)
+    private void ShowCompletedNotification(string title, string message, PendingIntent pendingIntent)
     {
-        var intent = new Intent(_service, typeof(MainActivity));
-        var pendingIntent = PendingIntent.GetActivity(_service, 0, intent, PendingIntentFlags.Immutable);
+        //var intent = new Intent(_service, typeof(MainActivity));
+        //var pendingIntent = PendingIntent.GetActivity(_service, 0, intent, PendingIntentFlags.Immutable);
 
         var channelId = $"{_service.PackageName}.general";
 
