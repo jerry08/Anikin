@@ -3,18 +3,13 @@ using System.Linq;
 using System.Collections.Specialized;
 using Android.App;
 using Android.Webkit;
-using Android.Widget;
 using AniStream.Utils.Extensions;
-using Xamarin.Essentials;
-using System.Threading.Tasks;
 using AnimeDl;
-using Laerdal.FFmpeg.Android;
-using Plugin.LocalNotification;
-using AnimeDl.Models;
-using AnimeDl.Scrapers.Interfaces;
-using DotNetTools.JGrabber.Grabbed;
-using System.Collections.Generic;
-using Java.Nio.FileNio.Attributes;
+using Android.Content;
+using Newtonsoft.Json;
+using System.Threading.Tasks;
+using AniStream.Services;
+using AnimeDl.Utils.Extensions;
 
 namespace AniStream.Utils.Downloading;
 
@@ -83,23 +78,30 @@ public class Downloader
         NameValueCollection headers)
     {
         var loadingDialog = WeebUtils.SetProgressDialog(_activity, "Getting qualities. Please wait...", false);
-
         var metadataResources = await _client.GetHlsStreamMetadatasAsync(url, headers);
-
         loadingDialog.Dismiss();
 
         var listener = new DialogClickListener();
         listener.OnItemClick += async (s, which) =>
         {
-            await DownloadHls(fileName, metadataResources[which], headers);
+            loadingDialog = WeebUtils.SetProgressDialog(_activity, "Loading...", false);
+            var stream = await metadataResources[which].Stream;
+            loadingDialog.Dismiss();
+
+            var intent = new Intent(_activity, typeof(DownloadService));
+            intent.PutExtra("stream", JsonConvert.SerializeObject(stream));
+            intent.PutExtra("headers", JsonConvert.SerializeObject(headers.ToDictionary()));
+            intent.PutExtra("fileName", fileName);
+            //StartService(intent);
+            _activity.StartForegroundService(intent);
+
+            //await Download(fileName, stream, headers);
         };
 
         var builder = new AlertDialog.Builder(_activity);
         builder.SetTitle(fileName);
 
-        builder.SetNegativeButton("Cancel", (s, e) =>
-        {
-        });
+        builder.SetNegativeButton("Cancel", (s, e) => { });
 
         var items = metadataResources.Select(x => x.Resolution?.ToString()
             ?? "Default quality").ToArray();
@@ -109,96 +111,5 @@ public class Downloader
         var dialog = builder.Create()!;
         dialog.SetCanceledOnTouchOutside(false);
         dialog.Show();
-    }
-
-    public async Task DownloadHls(
-        string fileName,
-        GrabbedHlsStreamMetadata metadataResource,
-        NameValueCollection headers)
-    {
-        var cacheDir = FileSystem.CacheDirectory;
-
-        var fileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(fileName);
-
-        var filePath = System.IO.Path.Combine(cacheDir, $"{fileNameWithoutExtension}.ts");
-        var newFilePath = System.IO.Path.Combine(cacheDir, fileName);
-        var saveFilePath = System.IO.Path.Combine(Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath, $"{fileNameWithoutExtension}.mp4");
-
-        _activity.RunOnUiThread(() =>
-        {
-            Toast.MakeText(_activity, "Started", ToastLength.Short)!.Show();
-        });
-
-        using (var progress = new DownloaderProgress(_notificationId, fileName))
-            await _client.DownloadTsAsync(metadataResource, headers, filePath, progress);
-
-        ShowProcessingNotification(fileName);
-
-        var cmd = $@"-i ""{filePath}"" -acodec copy -vcodec copy ""{newFilePath}""";
-        var returnCode = FFmpeg.Execute(cmd);
-        if (returnCode == Config.ReturnCodeSuccess)
-        {
-            await _activity.CopyFileUsingMediaStore(newFilePath, saveFilePath);
-            ShowCompletedNotification(fileName, "Completed");
-        }
-        else
-        {
-            ShowCompletedNotification(fileName, "Failed to convert video");
-        }
-
-        System.IO.File.Delete(filePath);
-        System.IO.File.Delete(newFilePath);
-    }
-
-    private void ShowProcessingNotification(string title)
-    {
-        var notification = new NotificationRequest
-        {
-            Silent = true,
-            NotificationId = _notificationId,
-            Title = title,
-            Description = "Converting video",
-            Android =
-            {
-                IconSmallName =
-                {
-                    ResourceName = "logo",
-                },
-                Color =
-                {
-                    ResourceName = "colorPrimary"
-                },
-                IsProgressBarIndeterminate = true,
-                ProgressBarMax = 100,
-                ProgressBarProgress = 100,
-                Ongoing = true
-            }
-        };
-
-        LocalNotificationCenter.Current.Show(notification);
-    }
-
-    private void ShowCompletedNotification(string title, string message)
-    {
-        var notification = new NotificationRequest
-        {
-            Silent = true,
-            NotificationId = _notificationId,
-            Title = title,
-            Description = message,
-            Android =
-            {
-                IconSmallName =
-                {
-                    ResourceName = "logo",
-                },
-                Color =
-                {
-                    ResourceName = "colorPrimary"
-                }
-            }
-        };
-
-        LocalNotificationCenter.Current.Show(notification);
     }
 }

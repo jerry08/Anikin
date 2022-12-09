@@ -12,6 +12,11 @@ using AnimeDl.Scrapers;
 using Android.Provider;
 using Android.Webkit;
 using System.Threading.Tasks;
+using Android.Media;
+using Com.Google.Android.Exoplayer2.Video;
+using Java.Lang;
+using Orientation = Android.Widget.Orientation;
+using System.Threading;
 
 namespace AniStream.Utils;
 
@@ -145,7 +150,8 @@ public static class WeebUtils
     public static async Task CopyFileUsingMediaStore(
         this Context context,
         string filePath,
-        string newFilePath)
+        string newFilePath,
+        CancellationToken cancellationToken = default)
     {
         if (!File.Exists(filePath))
             return;
@@ -157,6 +163,9 @@ public static class WeebUtils
         var mime = MimeTypeMap.Singleton!;
         var mimeType = mime.GetMimeTypeFromExtension(ext);
 
+        if (mimeType is null)
+            return;
+
         var fileInfo = new FileInfo(filePath);
 
         var contentValues = new ContentValues();
@@ -167,6 +176,16 @@ public static class WeebUtils
         //contentValues.Put(MediaStore.IMediaColumns.RelativePath, dir);
         contentValues.Put(MediaStore.IMediaColumns.Size, fileInfo.Length);
 
+        if (mimeType.StartsWith("image") || mimeType.StartsWith("video"))
+        {
+            //Set media duration
+            var retriever = new MediaMetadataRetriever();
+            retriever.SetDataSource(context, Uri.FromFile(new Java.IO.File(filePath)));
+            var time = retriever.ExtractMetadata(MetadataKey.Duration) ?? string.Empty;
+            long timeInMillisec = long.Parse(time);
+            contentValues.Put(MediaStore.IMediaColumns.Duration, timeInMillisec);
+        }
+
         var resolver = context.ContentResolver;
         var uri = resolver?.Insert(MediaStore.Downloads.ExternalContentUri, contentValues);
         if (uri is not null)
@@ -176,7 +195,7 @@ public static class WeebUtils
             using var input = File.OpenRead(filePath);
             var output = resolver?.OpenOutputStream(uri);
             if (output is not null)
-                await input.CopyToAsync(output, defaultBufferSize);
+                await input.CopyToAsync(output, defaultBufferSize, cancellationToken);
         }
     }
 }

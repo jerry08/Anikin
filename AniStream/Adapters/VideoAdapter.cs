@@ -17,15 +17,14 @@ public class VideoAdapter : RecyclerView.Adapter
 {
     private readonly Anime _anime;
     private readonly Episode _episode;
-
-    public Activity Activity { get; set; }
+    private readonly Activity _activity;
 
     public List<Video> Videos { get; set; }
 
     public VideoAdapter(Activity activity, Anime anime, Episode episode,
         List<Video> videos)
     {
-        Activity = activity;
+        _activity = activity;
         _anime = anime;
         _episode = episode;
         Videos = videos;
@@ -75,7 +74,20 @@ public class VideoAdapter : RecyclerView.Adapter
         urlViewHolder.urlDownload.Visibility = ViewStates.Visible;
         urlViewHolder.urlDownload.Click += async (s, e) =>
         {
-            var downloader = new Downloader(Activity);
+            var androidStoragePermission = new AndroidStoragePermission(_activity);
+
+            bool hasStoragePermission = androidStoragePermission.HasStoragePermission();
+            if (!hasStoragePermission)
+            {
+                _activity.ShowToast("Please grant storage permission then retry");
+                hasStoragePermission = await androidStoragePermission.RequestStoragePermission();
+            }
+
+            if (!hasStoragePermission)
+                return;
+
+            var downloader = new Downloader(_activity);
+
             if (video.Format == VideoType.Container)
                 downloader.Download($"{_anime.Title} - Ep-{_episode.Number}.mp4", video.VideoUrl, video.Headers);
             else
@@ -90,20 +102,20 @@ public class VideoAdapter : RecyclerView.Adapter
 
         urlViewHolder.ItemView.Click += (s, e) =>
         {
-            if (Activity is VideoActivity videoActivity)
+            if (_activity is VideoActivity videoActivity)
             {
                 videoActivity.PlayVideo(video);
                 return;
             }
 
-            var intent = new Intent(Activity, typeof(VideoActivity));
+            var intent = new Intent(_activity, typeof(VideoActivity));
 
             intent.PutExtra("anime", JsonConvert.SerializeObject(_anime));
             intent.PutExtra("episode", JsonConvert.SerializeObject(_episode));
             intent.PutExtra("video", JsonConvert.SerializeObject(video));
             intent.SetFlags(ActivityFlags.NewTask);
 
-            Activity.ApplicationContext!.StartActivity(intent);
+            _activity.ApplicationContext!.StartActivity(intent);
         };
 
         urlViewHolder.ItemView.LongClick += (s, e) =>
@@ -115,13 +127,13 @@ public class VideoAdapter : RecyclerView.Adapter
             intent.SetDataAndType(videoUri, "video/*");
             intent.SetFlags(ActivityFlags.NewTask);
 
-            Activity.CopyToClipboard(url, false);
-            Activity.ShowToast($"Copied \"{url}\"");
+            _activity.CopyToClipboard(url, false);
+            _activity.ShowToast($"Copied \"{url}\"");
 
             var i = Intent.CreateChooser(intent, "Open Video in :")!;
             i.SetFlags(ActivityFlags.NewTask);
 
-            Activity.ApplicationContext!.StartActivity(i);
+            _activity.ApplicationContext!.StartActivity(i);
         };
     }
 
