@@ -8,7 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>-->
     <ApplicationId>com.oneb.anistream</ApplicationId>
     <ApplicationVersion>18</ApplicationVersion>
-    <ApplicationDisplayVersion>1.8.3</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>1.8.4</ApplicationDisplayVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -16,15 +16,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AnimeDl" Version="1.7.3" />
+    <PackageReference Include="AnimeDl" Version="1.7.4" />
     <PackageReference Include="Laerdal.FFmpeg.Full" Version="4.4.27" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.3" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Octokit" Version="4.0.1" />
-    <PackageReference Include="Plugin.LocalNotification" Version="10.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="Octokit" Version="4.0.3" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
-    <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.18.5" />
-    <PackageReference Include="Xam.Plugins.Android.ExoPlayer.OkHttp" Version="2.18.5" />
+    <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.18.6" />
+    <PackageReference Include="Xam.Plugins.Android.ExoPlayer.OkHttp" Version="2.18.6" />
     <PackageReference Include="Xamarin.Android.Flowlayout" Version="1.0.0.4" />
     <PackageReference Include="Xamarin.Android.Glide" Version="4.13.2.2" />
     <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.5.1" />
@@ -32,6 +31,7 @@
     <PackageReference Include="Xamarin.AndroidX.ExifInterface" Version="1.3.4" />
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData" Version="2.5.1" />
     <PackageReference Include="Xamarin.AndroidX.SwipeRefreshLayout" Version="1.1.0.9" />
+    <PackageReference Include="Xamarin.AndroidX.Work.Runtime" Version="2.5.0.1" />
     <PackageReference Include="Xamarin.Google.Android.Material" Version="1.6.1.1" />
     <PackageReference Include="Xamarin.Essentials" Version="1.7.3" />
     <!--<PackageReference Include="Xamarin.Google.Guava" Version="31.1.0.3" />-->
