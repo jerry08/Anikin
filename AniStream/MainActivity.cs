@@ -21,12 +21,16 @@ using Google.Android.Material.Navigation;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using Xamarin.Essentials;
 using AnimeDl.Scrapers.Events;
+using AndroidX.Core.Content;
+using AndroidX.Core.App;
 
 namespace AniStream;
 
 [Activity(Label = "@string/app_name", MainLauncher = true, ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
 public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.IOnPageChangeListener
 {
+    private readonly static int PostNotificationsRequestCode = 1005;
+
     private AnimeClient _client = default!;
 
     private Android.Widget.ProgressBar ProgressBar = default!;
@@ -84,6 +88,19 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
         _client.OnAnimesLoaded += Client_OnAnimesLoaded;
 
         SetupViewPager();
+
+        if (Build.VERSION.SdkInt > BuildVersionCodes.S)
+        {
+            if (ContextCompat.CheckSelfPermission(this,
+                Manifest.Permission.PostNotifications)
+                != Permission.Granted)
+            {
+                ActivityCompat.RequestPermissions(this,
+                    new string[] { Manifest.Permission.PostNotifications },
+                    PostNotificationsRequestCode);
+            }
+        }
+
         CreateNotificationChannel();
 
         var updater = new AppUpdater();
