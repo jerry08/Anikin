@@ -406,7 +406,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
             return;
 
         var allVideos = (await Task.WhenAll(videoServers
-            .Select(x => _client.GetVideosAsync(x)))).SelectMany(x => x).ToList();
+            .Select(x => _client.GetVideosAsync(x, false)))).SelectMany(x => x).ToList();
 
         if (!SelectorDialogFragment.Cache.ContainsKey(episode.Link))
         {
