@@ -56,41 +56,52 @@ public static class WeebUtils
         bool cancelable)
     {
         int llPadding = 20;
-        var ll = new LinearLayout(context);
-        ll.Orientation = Orientation.Horizontal;
+
+        var ll = new LinearLayout(context)
+        {
+            Orientation = Orientation.Horizontal
+        };
         ll.SetPadding(llPadding, llPadding, llPadding, llPadding);
         ll.SetGravity(GravityFlags.Center);
-        var llParam = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
-        llParam.Gravity = GravityFlags.Center;
+
+        var llParam = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent)
+        {
+            Gravity = GravityFlags.Center,
+        };
         ll.LayoutParameters = llParam;
 
-        var progressBar = new ProgressBar(context);
-        progressBar.Indeterminate = true;
+        var progressBar = new ProgressBar(context)
+        {
+            Indeterminate = true,
+            LayoutParameters = llParam
+        };
         progressBar.SetPadding(0, 0, llPadding, 0);
-        progressBar.LayoutParameters = llParam;
 
-        llParam = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent);
-        llParam.Gravity = GravityFlags.Center;
+        llParam = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent, ViewGroup.LayoutParams.WrapContent)
+        {
+            Gravity = GravityFlags.Center
+        };
 
-        var tvText = new TextView(context);
-        tvText.Text = text;
-        tvText.SetTextColor(Color.ParseColor("#ffffff"));
-        tvText.TextSize = 18;
-        tvText.LayoutParameters = llParam;
-        tvText.Id = 12345;
+        var tvText = new TextView(context)
+        {
+            Text = text,
+            TextSize = 18,
+            LayoutParameters = llParam,
+            Id = 12345
+        };
+        tvText.SetTextColor(Color.ParseColor("#000000"));
 
         ll.AddView(progressBar);
         ll.AddView(tvText);
 
-        var builder = new AlertDialog.Builder(context);
+        var builder = new AlertDialog.Builder(context, Resource.Style.DialogTheme);
         builder.SetCancelable(cancelable);
         builder.SetView(ll);
 
-        AlertDialog dialog = builder.Create();
+        var dialog = builder.Create();
         dialog.Show();
 
-        var window = dialog.Window;
-        if (window is not null)
+        if (dialog.Window is not null)
         {
             //IWindowManager windowManager = this.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
 
