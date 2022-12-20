@@ -10,22 +10,22 @@ namespace AniStream.Utils;
 
 public class AppUpdater
 {
-    private IReleasesClient _releaseClient;
-    private GitHubClient Github;
+    private readonly IReleasesClient _releaseClient;
+    private readonly GitHubClient _github;
 
-    private string RepositoryOwner = "jerry08";
-    private string RepostoryName = "Anistream";
-    private Release LatestRelease;
+    private readonly string _repositoryOwner = "jerry08";
+    private readonly string _repostoryName = "Anistream";
+    private Release LatestRelease = default!;
 
     public AppUpdater()
     {
-        Github = new GitHubClient(new ProductHeaderValue(RepostoryName + @"-UpdateCheck"));
-        _releaseClient = Github.Repository.Release;
+        _github = new GitHubClient(new ProductHeaderValue(_repostoryName + @"-UpdateCheck"));
+        _releaseClient = _github.Repository.Release;
     }
 
     public async Task<bool> CheckAsync(FragmentActivity activity)
     {
-        var packageInfo = activity.PackageManager.GetPackageInfo(activity.PackageName, 0);
+        var packageInfo = activity.PackageManager!.GetPackageInfo(activity.PackageName!, 0)!;
 
         bool dontShow = false;
         var dontShowStr = await SecureStorage.GetAsync($"dont_ask_for_update_{packageInfo.VersionName}");
@@ -35,20 +35,11 @@ public class AppUpdater
         if (dontShow)
             return false;
 
-        //var repo = activity.GetString(Resource.String.repo);
-
-        //var github = new GitHubClient(new ProductHeaderValue("jerry08"));
-        //
-        //var tt = github.Repository.Get("jerry08", "AniStream");
-        //tt.Wait();
-        //
-        //var gs = tt.Result;
-
-        var releases = await _releaseClient.GetAll(RepositoryOwner, RepostoryName);
-        var latestRelease = releases.FirstOrDefault();
+        var releases = await _releaseClient.GetAll(_repositoryOwner, _repostoryName);
+        var latestRelease = releases.FirstOrDefault()!;
 
         var latestVersionName = new Version(latestRelease.Name);
-        var currentVersionName = new Version(packageInfo.VersionName);
+        var currentVersionName = new Version(packageInfo.VersionName!);
 
         if (currentVersionName < latestVersionName)
         {
@@ -57,7 +48,7 @@ public class AppUpdater
             builder.SetTitle("Update available");
             builder.SetPositiveButton("Download", (s, e) =>
             {
-                var asset = latestRelease.Assets.FirstOrDefault();
+                var asset = latestRelease.Assets.FirstOrDefault()!;
 
                 var downloader = new Downloader(activity);
                 downloader.Download(asset.Name, asset.BrowserDownloadUrl);
@@ -75,9 +66,9 @@ public class AppUpdater
 
     public async Task<string> RenderReleaseNotes()
     {
-        if (LatestRelease == null)
+        if (LatestRelease is null)
             throw new InvalidOperationException();
 
-        return await Github.Markdown.RenderRawMarkdown(LatestRelease.Body);
+        return await _github.Markdown.RenderRawMarkdown(LatestRelease.Body);
     }
 }
