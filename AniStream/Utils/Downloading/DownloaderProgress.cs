@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Android.App;
 using Android.Content;
 using AndroidX.Core.App;
@@ -12,6 +13,9 @@ public class DownloaderProgress : IProgress<double>, IDisposable
     private readonly Service _service;
     private readonly int _notificationId;
     private readonly string _title;
+    
+    private Timer? timer;
+    private double currentProgress = 0;
 
     public DownloaderProgress(
         Service service,
@@ -27,7 +31,15 @@ public class DownloaderProgress : IProgress<double>, IDisposable
 
     public void Report(double progress)
     {
-        ShowProgressNotification((int)(progress * 100));
+        //ShowProgressNotification((int)(progress * 100));
+        
+        timer ??= new Timer(TimerHandler, null, 0, 1000);
+        currentProgress = progress;
+    }
+
+    private void TimerHandler(object? state)
+    {
+        ShowProgressNotification((int)(currentProgress * 100));
     }
 
     private void ShowProgressNotification(int progress)
@@ -55,5 +67,10 @@ public class DownloaderProgress : IProgress<double>, IDisposable
         _service.StartForeground(_notificationId, builder.Build());
     }
 
-    public void Dispose() => GC.SuppressFinalize(this);
+    public void Dispose()
+    {
+        timer?.Dispose();
+        timer = null;
+        GC.SuppressFinalize(this);
+    }
 }

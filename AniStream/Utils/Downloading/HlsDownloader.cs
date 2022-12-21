@@ -47,7 +47,8 @@ public class HlsDownloader
         {
             try
             {
-                await _client.DownloadTsAsync(stream, headers, filePath, progress, cancellationToken);
+                //await _client.DownloadTsAsync(stream, headers, filePath, progress, cancellationToken);
+                await _client.DownloadAllTsThenMergeAsync(stream, headers, filePath, progress, 15, cancellationToken);
             }
             catch
             {
