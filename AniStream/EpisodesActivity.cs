@@ -32,6 +32,8 @@ using AnimeDl.Models;
 using AnimeDl.Scrapers;
 using AndroidX.Activity;
 using AniStream.Settings;
+using Firebase;
+using Firebase.Crashlytics;
 
 namespace AniStream;
 
@@ -56,6 +58,9 @@ public class EpisodesActivity : AppCompatActivity
         base.OnCreate(savedInstanceState);
         
         SetContentView(Resource.Layout.animeinfo);
+
+        FirebaseApp.InitializeApp(this);
+        FirebaseCrashlytics.Instance.SetCrashlyticsCollectionEnabled(true);
 
         Episodes = new();
         SelectorDialogFragment.Cache.Clear();

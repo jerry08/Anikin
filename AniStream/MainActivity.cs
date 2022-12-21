@@ -23,6 +23,8 @@ using Xamarin.Essentials;
 using AnimeDl.Scrapers.Events;
 using AndroidX.Core.Content;
 using AndroidX.Core.App;
+using Firebase.Crashlytics;
+using Firebase;
 
 namespace AniStream;
 
@@ -49,6 +51,9 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
         base.OnCreate(savedInstanceState);
         Platform.Init(this, savedInstanceState);
         SetContentView(Resource.Layout.activity_main);
+
+        FirebaseApp.InitializeApp(this);
+        FirebaseCrashlytics.Instance.SetCrashlyticsCollectionEnabled(true);
 
         WeebUtils.AppFolderName = Resources!.GetString(Resource.String.app_name)!;
         //WeebUtils.AppFolder = GetExternalFilesDir(null).AbsolutePath;
@@ -155,7 +160,7 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
 
     public override void OnBackPressed()
     {
-        var alert = new AlertDialog.Builder(this);
+        var alert = new AlertDialog.Builder(this, Resource.Style.DialogTheme);
         alert.SetMessage("Are you sure you want to exit?");
         alert.SetPositiveButton("Yes", (s, e) =>
         {

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1018117642382",
+    "project_id": "anistream-e4d6d",
+    "storage_bucket": "anistream-e4d6d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1018117642382:android:77bd87f2a99b39af8751df",
+        "android_client_info": {
+          "package_name": "com.oneb.anistream"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1018117642382-c6avui7h23fdfd4rgc20mo70bn4rljob.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYHcjIRLXTqPafu2wU4DBkUhajPOD9evY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1018117642382-c6avui7h23fdfd4rgc20mo70bn4rljob.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

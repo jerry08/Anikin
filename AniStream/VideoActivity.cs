@@ -47,6 +47,8 @@ using Configuration = Android.Content.Res.Configuration;
 using AniStream.Models;
 using AnimeDl.Scrapers.Events;
 using AniStream.Adapters;
+using Firebase.Crashlytics;
+using Firebase;
 
 namespace AniStream;
 
@@ -85,6 +87,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
     private ImageButton PrevButton = default!;
     private ImageButton NextButton = default!;
+    private ImageButton SourceButton = default!;
 
     private MaterialCardView ExoSkip = default!;
     private ImageButton ExoSkipOpEd = default!;
@@ -116,6 +119,9 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
         WindowCompat.SetDecorFitsSystemWindows(Window!, false);
         this.HideSystemBars();
+
+        FirebaseApp.InitializeApp(this);
+        FirebaseCrashlytics.Instance.SetCrashlyticsCollectionEnabled(true);
 
         //Enable unhandled exceptions for testing
         AndroidEnvironment.UnhandledExceptionRaiser += (s, e) =>
@@ -190,7 +196,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         };
 
         var settingsButton = FindViewById<ImageButton>(Resource.Id.exo_settings)!;
-        var sourceButton = FindViewById<ImageButton>(Resource.Id.exo_source)!;
+        SourceButton = FindViewById<ImageButton>(Resource.Id.exo_source)!;
         var subButton = FindViewById<ImageButton>(Resource.Id.exo_sub)!;
         var downloadButton = FindViewById<ImageButton>(Resource.Id.exo_download)!;
         var exoPip = FindViewById<ImageButton>(Resource.Id.exo_pip)!;
@@ -284,7 +290,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
             speedDialog.Show();
         };
 
-        sourceButton.Click += (s, e) =>
+        SourceButton.Click += (s, e) =>
         {
             selector = SelectorDialogFragment.NewInstance(Anime, Episode, this);
             selector.Show(SupportFragmentManager, "dialog");
@@ -1049,7 +1055,11 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         //errorText.Visibility = ViewStates.Visible;
 
         if (error is not null && error.Message is not null)
+        {
             this.ShowToast("Failed to play video");
+
+            SourceButton.PerformClick();
+        }
     }
 
     public void OnDeviceVolumeChanged(int volume, bool muted)
