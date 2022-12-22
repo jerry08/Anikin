@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AnimeDl" Version="1.7.8" />
+    <PackageReference Include="AnimeDl" Version="1.7.9" />
     <PackageReference Include="Laerdal.FFmpeg.Android.Min" Version="4.4.28" />
     <!--<PackageReference Include="Laerdal.FFmpeg.Full" Version="4.4.27" />-->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.3" />
