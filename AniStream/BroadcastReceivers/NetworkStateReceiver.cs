@@ -25,7 +25,7 @@ public class NetworkStateReceiver : BroadcastReceiver
 
     private void NotifyStateToAll()
     {
-        foreach (INetworkStateReceiverListener listener in listeners)
+        foreach (var listener in listeners)
             NotifyState(listener);
     }
 

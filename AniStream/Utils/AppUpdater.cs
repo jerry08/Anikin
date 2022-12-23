@@ -27,11 +27,11 @@ public class AppUpdater
     {
         var packageInfo = activity.PackageManager!.GetPackageInfo(activity.PackageName!, 0)!;
 
-        bool dontShow = false;
+        var dontShow = false;
         var dontShowStr = await SecureStorage.GetAsync($"dont_ask_for_update_{packageInfo.VersionName}");
         if (!string.IsNullOrEmpty(dontShowStr))
             dontShow = Convert.ToBoolean(dontShowStr);
-        
+
         if (dontShow)
             return false;
 
@@ -54,7 +54,7 @@ public class AppUpdater
                 downloader.Download(asset.Name, asset.BrowserDownloadUrl);
             });
 
-            builder.SetNegativeButton("OK", (s, e) =>{});
+            builder.SetNegativeButton("OK", (s, e) => { });
 
             builder.Show();
 

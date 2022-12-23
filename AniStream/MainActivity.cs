@@ -75,7 +75,7 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
 
         if (!WeebUtils.HasNetworkConnection(this))
         {
-            Android.Widget.LinearLayout linearLayout1 = FindViewById<Android.Widget.LinearLayout>(Resource.Id.notvisiblelinearlayout)!;
+            var linearLayout1 = FindViewById<Android.Widget.LinearLayout>(Resource.Id.notvisiblelinearlayout)!;
             linearLayout1.Visibility = ViewStates.Visible;
             viewPager.Visibility = ViewStates.Gone;
 
@@ -88,7 +88,7 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
         var animeSiteStr = await SecureStorage.GetAsync("AnimeSite");
         if (!string.IsNullOrEmpty(animeSiteStr))
             WeebUtils.AnimeSite = (AnimeSites)Convert.ToInt32(animeSiteStr);
-        
+
         _client = new(WeebUtils.AnimeSite);
         _client.OnAnimesLoaded += Client_OnAnimesLoaded;
 
@@ -317,7 +317,7 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
 
     public override bool OnOptionsItemSelected(IMenuItem item)
     {
-        int id = item.ItemId;
+        var id = item.ItemId;
 
         if (id == Resource.Id.settings)
         {
@@ -336,7 +336,7 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
             var i = new Intent(this, typeof(BookmarksActivity));
             StartActivity(i);
             OverridePendingTransition(Resource.Animation.anim_slide_in_left, Resource.Animation.anim_slide_out_left);
-            
+
             return false;
         }
         else if (id == Resource.Id.donate)
@@ -347,13 +347,13 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
         }
         else
             SaveSelectedSource(id);
-        
+
         return base.OnOptionsItemSelected(item);
     }
 
     private async void SaveSelectedSource(int id)
     {
-        bool shouldUpdateMainView = false;
+        var shouldUpdateMainView = false;
 
         var lastAnimeSite = WeebUtils.AnimeSite;
 
@@ -383,12 +383,10 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
 
     public void OnPageScrollStateChanged(int state)
     {
-        
     }
 
     public void OnPageScrolled(int position, float positionOffset, int positionOffsetPixels)
     {
-        
     }
 
     public void OnPageSelected(int position)

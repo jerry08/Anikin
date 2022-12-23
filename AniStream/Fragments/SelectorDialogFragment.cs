@@ -36,7 +36,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
         _anime = anime;
     }
 
-    public static SelectorDialogFragment NewInstance(Anime anime, Episode episode, VideoActivity? videoActivity = null) 
+    public static SelectorDialogFragment NewInstance(Anime anime, Episode episode, VideoActivity? videoActivity = null)
         => new(anime, episode, videoActivity);
 
     public override void OnStart()
@@ -55,7 +55,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
         _view = inflater.Inflate(Resource.Layout.bottom_sheet_selector, container, false)!;
         var autoLayout = _view.FindViewById<LinearLayout>(Resource.Id.selectorAutoListContainer);
         var layout = _view.FindViewById<LinearLayout>(Resource.Id.selectorListContainer);
-        
+
         var selectorMakeDefault = _view.FindViewById<CheckBox>(Resource.Id.selectorMakeDefault)!;
         var serversRecyclerView = _view.FindViewById<RecyclerView>(Resource.Id.selectorRecyclerView)!;
         var selectorProgressBar = _view.FindViewById<ProgressBar>(Resource.Id.selectorProgressBar)!;
@@ -69,7 +69,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
         {
             cache = new();
 
-            int totalServersLoaded = 0;
+            var totalServersLoaded = 0;
 
             _client.OnVideoServersLoaded += (s, e) =>
             {
@@ -168,7 +168,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
             }
             else
             {
-                int totalServersLoaded = 0;
+                var totalServersLoaded = 0;
 
                 var adapter = new ExtractorAdapter(activity, _anime, _episode,
                     cache.Where(x => x.IsLoaded && x.Videos.Count > 0).ToList());

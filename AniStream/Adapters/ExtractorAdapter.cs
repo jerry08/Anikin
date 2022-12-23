@@ -46,7 +46,7 @@ public class ExtractorAdapter : RecyclerView.Adapter
         public TextView streamName = default!;
         public RecyclerView streamRecyclerView = default!;
 
-        public StreamViewHolder(View view) : base (view)
+        public StreamViewHolder(View view) : base(view)
         {
             streamName = view.FindViewById<TextView>(Resource.Id.streamName)!;
             streamRecyclerView = view.FindViewById<RecyclerView>(Resource.Id.streamRecyclerView)!;
@@ -55,8 +55,7 @@ public class ExtractorAdapter : RecyclerView.Adapter
 
     public override int ItemCount => Containers.Count;
 
-    public override long GetItemId(int position)=> position;
-    
+    public override long GetItemId(int position) => position;
 
     public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
     {

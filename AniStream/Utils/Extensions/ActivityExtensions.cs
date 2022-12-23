@@ -38,7 +38,7 @@ public static class ActivityExtensions
     {
         if (activity is null || text is null)
             return;
-    
+
         activity.RunOnUiThread(() =>
         {
             var snackBar = Snackbar.Make(activity.Window!.DecorView!.FindViewById(Android.Resource.Id.Content)!, text, Snackbar.LengthLong);

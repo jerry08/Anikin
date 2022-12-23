@@ -13,7 +13,7 @@ public class DownloaderProgress : IProgress<double>, IDisposable
     private readonly Service _service;
     private readonly int _notificationId;
     private readonly string _title;
-    
+
     private Timer? timer;
     private double currentProgress = 0;
 
@@ -32,7 +32,7 @@ public class DownloaderProgress : IProgress<double>, IDisposable
     public void Report(double progress)
     {
         //ShowProgressNotification((int)(progress * 100));
-        
+
         timer ??= new Timer(TimerHandler, null, 0, 1000);
         currentProgress = progress;
     }

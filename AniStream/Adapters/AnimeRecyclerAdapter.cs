@@ -66,7 +66,6 @@ public class AnimeRecyclerAdapter : RecyclerView.Adapter
     public override int ItemCount => Animes.Count;
 
     public override long GetItemId(int position) => position;
-    
 
     public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
     {

@@ -45,8 +45,7 @@ namespace AniStream.Utils
             }
             else
                 hasPermissions = true;
-                // sdk bellow 23 no permissions needed
-            
+            // sdk bellow 23 no permissions needed
 
             return hasPermissions;
         }
@@ -57,7 +56,6 @@ namespace AniStream.Utils
 
             if (SDK <= BuildVersionCodes.M)
                 return Task.FromResult(true);
-            
             else if (SDK <= BuildVersionCodes.Q)
             {
                 requestPermissionResult ??= new TaskCompletionSource<bool>();
@@ -75,13 +73,12 @@ namespace AniStream.Utils
                 requestPermissionResult ??= new TaskCompletionSource<bool>();
                 try
                 {
-                    Intent intent = new Intent(Android.Provider.Settings.ActionManageAppAllFilesAccessPermission);
+                    var intent = new Intent(Android.Provider.Settings.ActionManageAppAllFilesAccessPermission);
                     intent.AddCategory(Intent.CategoryDefault);
                     intent.SetData(Android.Net.Uri.FromParts("package", activity.PackageName, null));
 
                     // navigates to settings, when user dismisses them calls OnActivityResult with our constant
                     activity.StartActivityForResult(intent, RequestForManageAllFiles);
-
                 }
                 catch (Exception)
                 {

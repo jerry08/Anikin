@@ -9,7 +9,6 @@ public class BackPressedCallback : OnBackPressedCallback
 
     public BackPressedCallback(bool enabled) : base(enabled)
     {
-
     }
 
     public BackPressedCallback(bool enabled,

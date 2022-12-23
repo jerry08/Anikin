@@ -30,9 +30,9 @@ public class AnimeFragment : Fragment
 
     public static AnimeFragment NewInstance(SearchFilter searchFilter)
     {
-        Bundle bundle = new Bundle();
+        var bundle = new Bundle();
         bundle.PutInt("searchFilter", (int)searchFilter);
-        AnimeFragment fragment = new AnimeFragment(searchFilter);
+        var fragment = new AnimeFragment(searchFilter);
         fragment.Arguments = bundle;
         return fragment;
     }
@@ -54,7 +54,7 @@ public class AnimeFragment : Fragment
     {
         view = inflater?.Inflate(Resource.Layout.dublayout, container, false)!;
         swipeRefreshLayout = view.FindViewById<SwipeRefreshLayout>(Resource.Id.swiperefresh)!;
-        RecyclerView mRecyclerView = view.FindViewById<RecyclerView>(Resource.Id.act_recyclerview)!;
+        var mRecyclerView = view.FindViewById<RecyclerView>(Resource.Id.act_recyclerview)!;
         RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(view.Context, 2);
         mRecyclerView.SetLayoutManager(mLayoutManager);
 
@@ -79,8 +79,8 @@ public class AnimeFragment : Fragment
 
                 if (mRecyclerView.GetAdapter() is AnimeRecyclerAdapter animeRecyclerAdapter)
                 {
-                    int positionStart = animeRecyclerAdapter.Animes.Count;
-                    int itemCount = animeRecyclerAdapter.Animes.Count;
+                    var positionStart = animeRecyclerAdapter.Animes.Count;
+                    var itemCount = animeRecyclerAdapter.Animes.Count;
 
                     animeRecyclerAdapter.Animes.RemoveAll(x => x.Id == "-1");
 

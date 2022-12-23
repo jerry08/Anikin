@@ -73,7 +73,7 @@ public class RecentlyWatchedActivity : AndroidX.AppCompat.App.AppCompatActivity
         {
             if (string.IsNullOrEmpty(e.NewText))
                 return;
-            
+
             if (recyclerView.GetAdapter() is AnimeRecyclerAdapter adapter)
             {
                 adapter.Animes = animes
@@ -89,7 +89,7 @@ public class RecentlyWatchedActivity : AndroidX.AppCompat.App.AppCompatActivity
 
     public override bool OnOptionsItemSelected(IMenuItem item)
     {
-        int id = item.ItemId;
+        var id = item.ItemId;
 
         if (id == Resource.Id.settings)
         {

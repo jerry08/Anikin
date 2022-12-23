@@ -25,7 +25,7 @@ public class BookmarkManager
 
         if (animeBookmarked is not null)
             return true;
-        
+
         return false;
     }
 

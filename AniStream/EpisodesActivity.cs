@@ -56,7 +56,7 @@ public class EpisodesActivity : AppCompatActivity
     protected override async void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
-        
+
         SetContentView(Resource.Layout.animeinfo);
 
         FirebaseApp.InitializeApp(this);
@@ -70,7 +70,7 @@ public class EpisodesActivity : AppCompatActivity
         var animeString = Intent?.GetStringExtra("anime");
         if (!string.IsNullOrEmpty(animeString))
             Anime = JsonConvert.DeserializeObject<Anime>(animeString)!;
-        
+
         var animeInfoTitle = FindViewById<TextView>(Resource.Id.animeInfoTitle)!;
         var type = FindViewById<TextView>(Resource.Id.animeInfoType)!;
         var genresFlowLayout = FindViewById<FlowLayout>(Resource.Id.flowLayout)!;
@@ -88,7 +88,7 @@ public class EpisodesActivity : AppCompatActivity
         //    new BackPressedCallback(true, (s, e) => { }));
         //
         //OnBackPressedDispatcher.OnBackPressed();
-        
+
         back.Click += (s, e) => { OnBackPressedDispatcher.OnBackPressed(); };
 
         menu.Click += (s, e) =>
@@ -276,7 +276,7 @@ public class EpisodesActivity : AppCompatActivity
 
             builder.SetCancelable(true);
             //Dialog dialog = builder.Create();
-            AlertDialog dialog = builder.Create();
+            var dialog = builder.Create();
             dialog.SetCanceledOnTouchOutside(true);
 
             dialog.Show();
@@ -343,7 +343,7 @@ public class EpisodesActivity : AppCompatActivity
             case 1:
                 {
                     // If request is cancelled, the result arrays are empty.
-                    if (grantResults.Length > 0 
+                    if (grantResults.Length > 0
                         && grantResults[0] == Permission.Granted)
                     {
                         //ContinueInitialize();
@@ -352,7 +352,7 @@ public class EpisodesActivity : AppCompatActivity
                     else
                     {
                         //Toast.makeText(MainActivity.this, "Permission denied to read your External storage", Toast.LENGTH_SHORT).show();
-                        
+
                         //Finish();
                     }
                 }

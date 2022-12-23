@@ -8,10 +8,10 @@ namespace AniStream.Utils.Extensions;
 
 public class TextViewExtensions
 {
-    public static void MakeTextViewResizable(TextView tv, int maxLine, string expandText, bool viewMore) 
+    public static void MakeTextViewResizable(TextView tv, int maxLine, string expandText, bool viewMore)
     {
         tv.Tag ??= tv.Text;
-        
+
         var vto = tv.ViewTreeObserver!;
         //vto.GlobalLayout += (s, e) =>
         //{
@@ -27,8 +27,8 @@ public class TextViewExtensions
             vto.GlobalLayout -= Vto_GlobalLayout;
             if (maxLine == 0)
             {
-                int lineEndIndex = tv.Layout!.GetLineEnd(0);
-                string text = tv.Text!.Substring(0, lineEndIndex - expandText.Length + 1) + " " + expandText;
+                var lineEndIndex = tv.Layout!.GetLineEnd(0);
+                var text = tv.Text!.Substring(0, lineEndIndex - expandText.Length + 1) + " " + expandText;
                 tv.Text = text;
                 tv.MovementMethod = LinkMovementMethod.Instance;
                 tv.SetText(AddClickablePartTextViewResizable(Html.FromHtml(tv.Text.ToString()),
@@ -36,7 +36,7 @@ public class TextViewExtensions
             }
             else if (maxLine > 0 && tv.LineCount >= maxLine)
             {
-                int lineEndIndex = tv.Layout!.GetLineEnd(maxLine - 1);
+                var lineEndIndex = tv.Layout!.GetLineEnd(maxLine - 1);
                 var text = tv.Text!.Substring(0, lineEndIndex - expandText.Length + 1) + " " + expandText;
                 tv.Text = text;
                 tv.MovementMethod = LinkMovementMethod.Instance;
@@ -45,8 +45,8 @@ public class TextViewExtensions
             }
             else
             {
-                int lineEndIndex = tv.Layout!.GetLineEnd(tv.Layout.LineCount - 1);
-                string text = tv.Text!.Substring(0, lineEndIndex) + " " + expandText;
+                var lineEndIndex = tv.Layout!.GetLineEnd(tv.Layout.LineCount - 1);
+                var text = tv.Text!.Substring(0, lineEndIndex) + " " + expandText;
                 tv.Text = text;
                 tv.MovementMethod = LinkMovementMethod.Instance;
                 tv.SetText(AddClickablePartTextViewResizable(Html.FromHtml(tv.Text.ToString()),
@@ -55,10 +55,10 @@ public class TextViewExtensions
         }
     }
 
-    static SpannableStringBuilder AddClickablePartTextViewResizable(ISpanned strSpanned, 
-        TextView tv, int maxLine, string spanableText, bool viewMore) 
+    static SpannableStringBuilder AddClickablePartTextViewResizable(ISpanned strSpanned,
+        TextView tv, int maxLine, string spanableText, bool viewMore)
     {
-        string str = strSpanned.ToString();
+        var str = strSpanned.ToString();
         var ssb = new SpannableStringBuilder(strSpanned);
 
         if (str.Contains(spanableText))
@@ -82,7 +82,7 @@ public class TextViewExtensions
                 }
             };
 
-            ssb.SetSpan(mySpannable, str.IndexOf(spanableText), 
+            ssb.SetSpan(mySpannable, str.IndexOf(spanableText),
                 str.IndexOf(spanableText) + spanableText.Length, 0);
         }
 
@@ -98,10 +98,10 @@ public class TextViewExtensions
             var cl = new System.Globalization.CultureInfo("en-US");
 
             //for counting start/end indexes
-            string testText = text.ToLower(cl);
-            string testTextToBold = textToBold.ToLower(cl);
-            int startingIndex = testText.IndexOf(testTextToBold);
-            int endingIndex = startingIndex + testTextToBold.Length;
+            var testText = text.ToLower(cl);
+            var testTextToBold = textToBold.ToLower(cl);
+            var startingIndex = testText.IndexOf(testTextToBold);
+            var endingIndex = startingIndex + testTextToBold.Length;
             //for counting start/end indexes
 
             if (startingIndex < 0 || endingIndex < 0)
@@ -112,7 +112,6 @@ public class TextViewExtensions
             }
             else if (startingIndex >= 0 && endingIndex >= 0)
             {
-
                 builder.Append(text);
                 builder.SetSpan(new StyleSpan(Android.Graphics.TypefaceStyle.Bold), startingIndex, endingIndex, 0);
             }

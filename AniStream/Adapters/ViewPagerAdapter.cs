@@ -41,6 +41,5 @@ public class ViewPagerAdapter : FragmentStatePagerAdapter
 
     public override Fragment GetItem(int position) => Fragments[position];
 
-    public override int GetItemPosition(Java.Lang.Object @object)=> base.GetItemPosition(@object);
-    
+    public override int GetItemPosition(Java.Lang.Object @object) => base.GetItemPosition(@object);
 }

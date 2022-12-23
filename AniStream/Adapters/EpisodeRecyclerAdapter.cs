@@ -39,7 +39,7 @@ public class EpisodeRecyclerAdapter : RecyclerView.Adapter
         public TextView EpisodeNumber = default!;
         public ProgressBar WatchedProgress = default!;
 
-        public EpisodeViewHolder(View view) : base (view)
+        public EpisodeViewHolder(View view) : base(view)
         {
             CardView = view.FindViewById<CardView>(Resource.Id.cardView)!;
             EpisodeNumber = view.FindViewById<TextView>(Resource.Id.episodeNumber)!;
@@ -49,7 +49,7 @@ public class EpisodeRecyclerAdapter : RecyclerView.Adapter
 
     public override int ItemCount => Episodes.Count;
 
-    public override long GetItemId(int position)=> position;
+    public override long GetItemId(int position) => position;
 
     public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
     {

@@ -30,7 +30,7 @@ public static class WeebUtils
     {
         get
         {
-            string pathToMyFolder = System.Environment.GetFolderPath(
+            var pathToMyFolder = System.Environment.GetFolderPath(
                 System.Environment.SpecialFolder.Personal) + "/user/database";
 
             if (!Directory.Exists(pathToMyFolder))
@@ -55,7 +55,7 @@ public static class WeebUtils
         string text,
         bool cancelable)
     {
-        int llPadding = 20;
+        var llPadding = 20;
 
         var ll = new LinearLayout(context)
         {
@@ -119,7 +119,7 @@ public static class WeebUtils
     {
         var manager = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService)!;
         if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
-        {            
+        {
             if (manager.ActiveNetwork is null)
                 return false;
 
@@ -193,7 +193,7 @@ public static class WeebUtils
             var retriever = new MediaMetadataRetriever();
             retriever.SetDataSource(context, Uri.FromFile(new Java.IO.File(filePath)));
             var time = retriever.ExtractMetadata(MetadataKey.Duration) ?? string.Empty;
-            long timeInMillisec = long.Parse(time);
+            var timeInMillisec = long.Parse(time);
             contentValues.Put(MediaStore.IMediaColumns.Duration, timeInMillisec);
         }
 
@@ -201,7 +201,7 @@ public static class WeebUtils
         var uri = resolver?.Insert(MediaStore.Downloads.ExternalContentUri, contentValues);
         if (uri is not null)
         {
-            int defaultBufferSize = 4096;
+            var defaultBufferSize = 4096;
 
             using var input = File.OpenRead(filePath);
             var output = resolver?.OpenOutputStream(uri);

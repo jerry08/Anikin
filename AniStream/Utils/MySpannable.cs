@@ -6,7 +6,7 @@ using Android.Views;
 
 namespace AniStream.Utils;
 
-public class MySpannableEventArgs :EventArgs
+public class MySpannableEventArgs : EventArgs
 {
     public View View = default!;
 }

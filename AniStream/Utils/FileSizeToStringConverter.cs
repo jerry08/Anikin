@@ -8,7 +8,7 @@ public class FileSizeToStringConverter
 
     public string Convert(double value)
     {
-        double size = value;
+        var size = value;
         var unit = 0;
 
         while (size >= 1024)

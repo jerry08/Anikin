@@ -67,11 +67,11 @@ namespace AniStream
 
             var packageInfo = PackageManager!.GetPackageInfo(PackageName!, 0)!;
 
-            bool dontShow = false;
+            var dontShow = false;
             var dontShowStr = await SecureStorage.GetAsync($"dont_ask_for_update_{packageInfo.VersionName}");
             if (!string.IsNullOrEmpty(dontShowStr))
                 dontShow = System.Convert.ToBoolean(dontShowStr);
-            
+
             dontAskForUpdate.Checked = dontShow;
 
             dontAskForUpdate.CheckedChange += async (s, e) =>
@@ -85,10 +85,10 @@ namespace AniStream
             {
                 AndroidStoragePermission = new AndroidStoragePermission(this);
 
-                bool hasStoragePermission = AndroidStoragePermission.HasStoragePermission();
+                var hasStoragePermission = AndroidStoragePermission.HasStoragePermission();
                 if (!hasStoragePermission)
                     hasStoragePermission = await AndroidStoragePermission.RequestStoragePermission();
-                
+
                 if (hasStoragePermission)
                 {
                     //var intent = new Intent(Intent.ActionOpenDocument);
@@ -116,7 +116,7 @@ namespace AniStream
                     var jsonData = JsonConvert.SerializeObject(data);
 
                     var path = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + "/test.json";
-                    int tryCount = 1;
+                    var tryCount = 1;
                     while (File.Exists(path))
                     {
                         tryCount++;
@@ -126,7 +126,7 @@ namespace AniStream
                     //File.Create(path);
                     //File.WriteAllText(path, jsonData);
 
-                    using (StreamWriter sw = File.CreateText(path))
+                    using (var sw = File.CreateText(path))
                     {
                         sw.WriteLine(jsonData);
                     }
@@ -147,7 +147,7 @@ namespace AniStream
 
                 AndroidStoragePermission = new AndroidStoragePermission(this);
 
-                bool hasStoragePermission = AndroidStoragePermission.HasStoragePermission();
+                var hasStoragePermission = AndroidStoragePermission.HasStoragePermission();
                 if (!hasStoragePermission)
                     hasStoragePermission = await AndroidStoragePermission.RequestStoragePermission();
 
@@ -158,9 +158,9 @@ namespace AniStream
                 }
             };
 
-            buttongithub.Click += (s, e) =>{ OpenLink("https://github.com/jerry08/AniStream"); };
-            
-            buttondiscord.Click += (s, e) =>{ OpenLink("https://discord.gg/mhxsSMy2Nf"); };
+            buttongithub.Click += (s, e) => { OpenLink("https://github.com/jerry08/AniStream"); };
+
+            buttondiscord.Click += (s, e) => { OpenLink("https://discord.gg/mhxsSMy2Nf"); };
 
             button_check_for_updates.Click += async (s, e) =>
             {
@@ -197,12 +197,10 @@ namespace AniStream
 
         private void SignIn()
         {
-            
         }
 
-        private void HandleSignInResult(Intent result) 
+        private void HandleSignInResult(Intent result)
         {
-            
         }
 
         private void OpenLink(string url)

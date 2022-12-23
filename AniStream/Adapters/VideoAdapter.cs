@@ -37,7 +37,7 @@ public class VideoAdapter : RecyclerView.Adapter
         public TextView urlSize = default!;
         public ImageButton urlDownload = default!;
 
-        public UrlViewHolder(View view) : base (view)
+        public UrlViewHolder(View view) : base(view)
         {
             urlQuality = view.FindViewById<TextView>(Resource.Id.urlQuality)!;
             urlNote = view.FindViewById<TextView>(Resource.Id.urlNote)!;
@@ -48,7 +48,7 @@ public class VideoAdapter : RecyclerView.Adapter
 
     public override int ItemCount => Videos.Count;
 
-    public override long GetItemId(int position)=> position;
+    public override long GetItemId(int position) => position;
 
     public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
     {
@@ -76,12 +76,9 @@ public class VideoAdapter : RecyclerView.Adapter
         {
             var androidStoragePermission = new AndroidStoragePermission(_activity);
 
-            bool hasStoragePermission = androidStoragePermission.HasStoragePermission();
+            var hasStoragePermission = androidStoragePermission.HasStoragePermission();
             if (!hasStoragePermission)
-            {
-                _activity.ShowToast("Please grant storage permission then retry");
                 hasStoragePermission = await androidStoragePermission.RequestStoragePermission();
-            }
 
             if (!hasStoragePermission)
                 return;

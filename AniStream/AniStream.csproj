@@ -41,4 +41,8 @@
     <PackageReference Include="Xamarin.Essentials" Version="1.7.3" />
     <!--<PackageReference Include="Xamarin.Google.Guava" Version="31.1.0.3" />-->
   </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\Users\jerem\source\repos\Xamarin Projects\AniStream\AniStream\.editorconfig" />
+  </ItemGroup>
 </Project>

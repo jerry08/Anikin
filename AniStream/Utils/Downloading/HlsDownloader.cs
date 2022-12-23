@@ -90,7 +90,7 @@ public class HlsDownloader
             //var uri = FileProvider.GetUriForFile(_service,
             //    _service.PackageName + ".provider", new Java.IO.File(saveFilePath));
             var uri = Android.Net.Uri.Parse(saveFilePath);
-            
+
             var intent = new Intent(Intent.ActionView);
             intent.SetFlags(ActivityFlags.ClearTop);
             intent.SetDataAndType(uri, type);

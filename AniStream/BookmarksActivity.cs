@@ -83,7 +83,7 @@ public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
 
     public override bool OnOptionsItemSelected(IMenuItem item)
     {
-        int id = item.ItemId;
+        var id = item.ItemId;
 
         if (id == Resource.Id.settings)
         {

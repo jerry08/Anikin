@@ -32,7 +32,7 @@ public class Downloader
     {
         var androidStoragePermission = new AndroidStoragePermission(_activity);
 
-        bool hasStoragePermission = androidStoragePermission.HasStoragePermission();
+        var hasStoragePermission = androidStoragePermission.HasStoragePermission();
         if (!hasStoragePermission)
         {
             //_activity.ShowToast("Please grant storage permission then retry");
@@ -56,7 +56,7 @@ public class Downloader
 
         var request = new DownloadManager.Request(Android.Net.Uri.Parse(url));
 
-        for (int i = 0; i < headers?.Count; i++)
+        for (var i = 0; i < headers?.Count; i++)
             request.AddRequestHeader(headers.Keys[i], headers[i]);
 
         request.SetMimeType(mimeType);
@@ -68,7 +68,7 @@ public class Downloader
         //request.SetDestinationInExternalPublicDir(WeebUtils.AppFolderName, invalidCharsRemoved + ".mp4");
         request.SetDestinationInExternalPublicDir(Android.OS.Environment.DirectoryDownloads, invalidCharsRemoved);
         var dm = (DownloadManager)Application.Context.GetSystemService(Android.Content.Context.DownloadService)!;
-        long id = dm.Enqueue(request);
+        var id = dm.Enqueue(request);
 
         _activity.ShowToast("Download started");
     }
