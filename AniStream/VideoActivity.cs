@@ -61,7 +61,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     private readonly AnimeClient _client = new(WeebUtils.AnimeSite);
 
     private readonly PlayerSettings _playerSettings = new();
-    
+
     private Anime Anime = default!;
     private Episode Episode = default!;
     private Video Video = default!;
@@ -97,7 +97,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
     private Handler Handler { get; set; } = new Handler(Looper.MainLooper!);
 
-    private bool IsPipEnabled { get; set; } = false;
+    private bool IsPipEnabled { get; set; }
     private Rational AspectRatio { get; set; } = new(16, 9);
     private bool PlayAfterEnteringPipMode { get; set; } = false;
 
@@ -126,17 +126,14 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         //Enable unhandled exceptions for testing
         AndroidEnvironment.UnhandledExceptionRaiser += (s, e) =>
         {
-        
         };
-        
+
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
         {
-        
         };
-        
+
         TaskScheduler.UnobservedTaskException += (s, e) =>
         {
-        
         };
 
         await _playerSettings.LoadAsync();
@@ -151,13 +148,13 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         var episodeString = Intent.GetStringExtra("episode");
         if (!string.IsNullOrEmpty(episodeString))
             Episode = JsonConvert.DeserializeObject<Episode>(episodeString)!;
-        
+
         var bookmarkManager = new BookmarkManager("recently_watched");
 
         var isBooked = await bookmarkManager.IsBookmarked(Anime);
         if (isBooked)
             bookmarkManager.RemoveBookmark(Anime);
-        
+
         bookmarkManager.SaveBookmark(Anime, true);
 
         //NetworkStateReceiver = new NetworkStateReceiver();
@@ -172,7 +169,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         exoQuality = FindViewById<ImageButton>(Resource.Id.exo_quality)!;
         //progressBar = FindViewById<ProgressBar>(Resource.Id.buffer)!;
         progressBar = FindViewById<ProgressBar>(Resource.Id.exo_init_buffer)!;
-        
+
         //errorText = FindViewById<TextView>(Resource.Id.errorText)!;
         VideoInfo = FindViewById<TextView>(Resource.Id.exo_video_info)!;
         VideoName = FindViewById<TextView>(Resource.Id.exo_video_name)!;
@@ -206,7 +203,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         TimeStampText = FindViewById<TextView>(Resource.Id.exo_time_stamp_text)!;
         var exoSpeed = FindViewById<ImageButton>(Resource.Id.exo_playback_speed)!;
         var exoScreen = FindViewById<ImageButton>(Resource.Id.exo_screen)!;
-        
+
         var backButton = FindViewById<ImageButton>(Resource.Id.exo_back)!;
         var lockButton = FindViewById<ImageButton>(Resource.Id.exo_lock)!;
 
@@ -225,7 +222,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         if (Build.VERSION.SdkInt >= BuildVersionCodes.N)
         {
             IsPipEnabled = PackageManager!.HasSystemFeature(PackageManager.FeaturePictureInPicture);
-            
+
             if (IsPipEnabled)
             {
                 exoPip.Visibility = ViewStates.Visible;
@@ -663,14 +660,14 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         SkippedTimeStamps.AddRange(timeStamps);
 
         var adGroups = new List<long>();
-        for (int i = 0; i < timeStamps.Count; i++)
+        for (var i = 0; i < timeStamps.Count; i++)
         {
             adGroups.Add((long)(timeStamps[i].Interval.StartTime * 1000));
             adGroups.Add((long)(timeStamps[i].Interval.EndTime * 1000));
         }
 
         var playedAdGroups = new List<bool>();
-        for (int i = 0; i < timeStamps.Count; i++)
+        for (var i = 0; i < timeStamps.Count; i++)
         {
             playedAdGroups.Add(false);
             playedAdGroups.Add(false);
@@ -718,7 +715,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         else
         {
             SkipTimeButton.Visibility = ViewStates.Gone;
-            ExoSkip.Visibility= ViewStates.Visible;
+            ExoSkip.Visibility = ViewStates.Visible;
         }
 
         Handler.PostDelayed(() =>
@@ -766,7 +763,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
             return;
 
         _playerSettings.WatchedEpisodes.TryGetValue(Episode.Link,
-            out WatchedEpisode? watchedEpisode);
+            out var watchedEpisode);
 
         watchedEpisode ??= new();
 
@@ -861,7 +858,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         exoPlayer.PlayWhenReady = true;
 
         _playerSettings.WatchedEpisodes.TryGetValue(Episode.Link,
-            out WatchedEpisode? watchedEpisode);
+            out var watchedEpisode);
 
         if (watchedEpisode is not null)
             exoPlayer.SeekTo(watchedEpisode.WatchedDuration);
@@ -875,12 +872,10 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
     public void OnMediaItemTransition(MediaItem? mediaItem, int reason)
     {
-
     }
 
     public void OnAvailableCommandsChanged(Commands? availableCommands)
     {
-
     }
 
     public void OnPlaybackStateChanged(int playbackState)
@@ -895,17 +890,18 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
     public void OnPlaybackSuppressionReasonChanged(int playbackSuppressionReason)
     {
-
     }
 
     public void OnRepeatModeChanged(int repeatMode)
     {
-
     }
 
     public void OnAudioSessionIdChanged(int audioSessionId)
     {
+    }
 
+    public void OnMediaMetadataChanged(MediaMetadata? mediaMetadata)
+    {
     }
 
     public void OnTracksChanged(Tracks? tracks)
@@ -926,15 +922,11 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         if (exoQuality.HasOnClickListeners)
             return;
 
-        exoQuality.Click += (s, e) =>
-        {
-            ShowM3U8TrackSelector();
-        };
+        exoQuality.Click += (s, e) => ShowM3U8TrackSelector();
     }
 
     public void OnTimelineChanged(Timeline? timeline, int reason)
     {
-
     }
 
     public override void OnWindowFocusChanged(bool hasFocus)
@@ -979,57 +971,46 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
     public void OnLoadingChanged(bool isLoading)
     {
-
     }
 
     public void OnPlaybackParametersChanged(PlaybackParameters? playbackParameters)
     {
-
     }
 
     public void OnPositionDiscontinuity(int reason)
     {
-
     }
 
     public void OnSeekProcessed()
     {
-
     }
 
     public void OnShuffleModeEnabledChanged(bool shuffleModeEnabled)
     {
-
     }
 
     public void OnPlayerStateChanged(bool playWhenReady, int playbackState)
     {
-
     }
 
     public void OnPlayWhenReadyChanged(bool playWhenReady, int reason)
     {
-
     }
 
     public void OnEvents(IPlayer? player, Events? events)
     {
-
     }
 
     public void OnSurfaceSizeChanged(int width, int height)
     {
-
     }
 
     public void OnIsLoadingChanged(bool isLoading)
     {
-
     }
 
     public void OnVideoSizeChanged(VideoSize? videoSize)
     {
-
     }
 
     public void OnRenderedFirstFrame()
@@ -1064,17 +1045,14 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
     public void OnDeviceVolumeChanged(int volume, bool muted)
     {
-
     }
 
     public void NetworkAvailable()
     {
-        
     }
 
     public void NetworkUnavailable()
     {
-        
     }
 
     public string? GetTrackName(Format? format)
@@ -1092,7 +1070,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
     public void OnTrackSelectionParametersChanged(TrackSelectionParameters? parameters)
     {
-
     }
 
 #pragma warning disable CS0618
@@ -1114,7 +1091,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         }
         catch (Exception e)
         {
-
         }
     }
 
