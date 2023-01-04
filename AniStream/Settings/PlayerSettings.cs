@@ -25,6 +25,10 @@ public class PlayerSettings : SettingsManager
 
     public bool ShowTimeStampButton { get; set; } = true;
 
+    public bool DoubleTap { get; set; } = true;
+
+    public long ControllerDuration { get; set; } = 200;
+
     public float[] GetSpeeds()
     {
         return CursedSpeeds ?

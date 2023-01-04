@@ -49,6 +49,10 @@ using AnimeDl.Scrapers.Events;
 using AniStream.Adapters;
 using Firebase.Crashlytics;
 using Firebase;
+using AniStream.Utils.Listeners;
+using Android.Animation;
+using Android.Views.Animations;
+using AndroidX.Core.Animation;
 
 namespace AniStream;
 
@@ -303,23 +307,26 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
             exoPlayer.SeekTo(exoPlayer.CurrentPosition + 85000);
         };
 
-        var fastForwardCont = FindViewById<CardView>(Resource.Id.exo_fast_forward_button_cont)!;
-        var fastRewindCont = FindViewById<CardView>(Resource.Id.exo_fast_rewind_button_cont)!;
-        var fastForwardButton = FindViewById<ImageButton>(Resource.Id.exo_fast_forward_button)!;
-        var rewindButton = FindViewById<ImageButton>(Resource.Id.exo_fast_rewind_button)!;
-
-        fastForwardCont.Visibility = ViewStates.Visible;
-        fastRewindCont.Visibility = ViewStates.Visible;
-
-        fastForwardButton.Click += (s, e) =>
+        if (!_playerSettings.DoubleTap)
         {
-            exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime);
-        };
+            var fastForwardCont = FindViewById<CardView>(Resource.Id.exo_fast_forward_button_cont)!;
+            var fastRewindCont = FindViewById<CardView>(Resource.Id.exo_fast_rewind_button_cont)!;
+            var fastForwardButton = FindViewById<ImageButton>(Resource.Id.exo_fast_forward_button)!;
+            var rewindButton = FindViewById<ImageButton>(Resource.Id.exo_fast_rewind_button)!;
 
-        rewindButton.Click += (s, e) =>
-        {
-            exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime);
-        };
+            fastForwardCont.Visibility = ViewStates.Visible;
+            fastRewindCont.Visibility = ViewStates.Visible;
+
+            fastForwardButton.Click += (s, e) =>
+            {
+                exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime);
+            };
+
+            rewindButton.Click += (s, e) =>
+            {
+                exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime);
+            };
+        }
 
         animeTitle.Text = Anime.Title;
         episodeTitle.Text = Episode.Name;
@@ -330,6 +337,57 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         //trackSelector.SetParameters(ff);
 
         playerView.ControllerShowTimeoutMs = 5000;
+
+        playerView.FindViewById(Resource.Id.exo_full_area)!.Click += (s, e) =>
+        {
+            HandleController();
+        };
+
+        //Screen Gestures
+        if (_playerSettings.DoubleTap)
+        {
+            var fastRewindGestureListener = new GesturesListener();
+            fastRewindGestureListener.OnDoubleClick += (s, e) =>
+            {
+                Seek(false, e);
+            };
+
+            fastRewindGestureListener.OnSingleClick += (s, e) =>
+            {
+                HandleController();
+            };
+
+            var fastRewindDetector = new GestureDetector(this, fastRewindGestureListener);
+            var rewindArea = FindViewById<View>(Resource.Id.exo_rewind_area)!;
+            rewindArea.Clickable = true;
+            rewindArea.Touch += (s, e) =>
+            {
+                e.Handled = false;
+                fastRewindDetector.OnTouchEvent(e.Event!);
+                rewindArea.PerformClick();
+            };
+
+            var fastForwardGestureListener = new GesturesListener();
+            fastForwardGestureListener.OnDoubleClick += (s, e) =>
+            {
+                Seek(true, e);
+            };
+
+            fastForwardGestureListener.OnSingleClick += (s, e) =>
+            {
+                HandleController();
+            };
+
+            var fastForwardDetector = new GestureDetector(this, fastForwardGestureListener);
+            var forwardArea = FindViewById<View>(Resource.Id.exo_forward_area)!;
+            forwardArea.Clickable = true;
+            forwardArea.Touch += (s, e) =>
+            {
+                e.Handled = false;
+                fastForwardDetector.OnTouchEvent(e.Event!);
+                forwardArea.PerformClick();
+            };
+        }
 
         SetupExoPlayer();
 
@@ -350,6 +408,59 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
             _client.OnVideoServersLoaded += OnVideoServersLoaded;
 
             _client.GetVideoServers(Episode.Id);
+        }
+    }
+
+    private void HandleController()
+    {
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.N && IsInPictureInPictureMode)
+            return;
+
+        var overshoot = AnimationUtils.LoadInterpolator(this, Resource.Animation.over_shoot);
+
+        if (playerView.IsControllerFullyVisible)
+        {
+            ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_controller), "alpha", 1f, 0f)!
+                .SetDuration(_playerSettings.ControllerDuration).Start();
+
+            var animator1 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_bottom_cont), "translationY", 0f, 128f)!;
+            animator1.SetInterpolator(overshoot);
+            animator1.SetDuration(_playerSettings.ControllerDuration);
+            animator1.Start();
+
+            var animator2 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_timeline_cont), "translationY", 0f, 128f)!;
+            animator2.SetInterpolator(overshoot);
+            animator2.SetDuration(_playerSettings.ControllerDuration);
+            animator2.Start();
+
+            var animator3 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_top_cont), "translationY", 0f, - 128f)!;
+            animator3.SetInterpolator(overshoot);
+            animator3.SetDuration(_playerSettings.ControllerDuration);
+            animator3.Start();
+
+            playerView.PostDelayed(() => playerView.HideController(), _playerSettings.ControllerDuration);
+        }
+        else
+        {
+            playerView.ShowController();
+
+            ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_controller), "alpha", 0f, 1f)!
+                .SetDuration(_playerSettings.ControllerDuration).Start();
+
+            var animator1 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_bottom_cont), "translationY", 128f, 0f)!;
+            animator1.SetInterpolator(overshoot);
+            animator1.SetDuration(_playerSettings.ControllerDuration);
+            animator1.Start();
+
+            var animator2 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_timeline_cont), "translationY", 128f, 0f)!;
+            animator2.SetInterpolator(overshoot);
+            animator2.SetDuration(_playerSettings.ControllerDuration);
+            animator2.Start();
+
+            var animator3 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_top_cont), "translationY", -128f, 0f)!;
+            animator3.SetInterpolator(overshoot);
+            animator3.SetDuration(_playerSettings.ControllerDuration);
+            animator3.Start();
         }
     }
 
@@ -394,6 +505,65 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
                 exoPlayer.Play();
             }
         };
+    }
+
+    System.Timers.Timer seekTimerF = new();
+    System.Timers.Timer seekTimerR = new();
+    long seekTimesF;
+    long seekTimesR;
+    public void Seek(bool forward, MotionEvent? @event = null)
+    {
+        var rewindText = playerView.FindViewById<TextView>(Resource.Id.exo_fast_rewind_anim)!;
+        var forwardText = playerView.FindViewById<TextView>(Resource.Id.exo_fast_forward_anim)!;
+        var fastForwardCard = playerView.FindViewById<View>(Resource.Id.exo_fast_forward)!;
+        var fastRewindCard = playerView.FindViewById<View>(Resource.Id.exo_fast_rewind)!;
+
+        if (forward)
+        {
+            forwardText.Text = $"+{(_playerSettings.SeekTime / 1000) * ++seekTimesF}";
+            Handler.Post(() =>
+            {
+                exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime);
+            });
+
+            StartDoubleTapped(fastForwardCard, forwardText, forward, @event);
+
+            seekTimerF.Stop();
+            seekTimerF = new();
+            seekTimerF.Interval = 850;
+
+            seekTimerF.Elapsed += (s, e) =>
+            {
+                seekTimerF.Stop();
+                StopDoubleTapped(fastForwardCard, forwardText);
+                seekTimesF = 0;
+            };
+
+            seekTimerF.Start();
+        }
+        else
+        {
+            rewindText.Text = $"-{(_playerSettings.SeekTime / 1000) * ++seekTimesR}";
+            Handler.Post(() =>
+            {
+                exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime);
+            });
+
+            StartDoubleTapped(fastRewindCard, rewindText, forward, @event);
+
+            seekTimerR.Stop();
+            seekTimerR = new();
+            seekTimerR.Interval = 850;
+
+            seekTimerR.Elapsed += (s, e) =>
+            {
+                seekTimerR.Stop();
+                StopDoubleTapped(fastRewindCard, rewindText);
+                seekTimesR = 0;
+            };
+
+            seekTimerR.Start();
+        }
     }
 
     /// <summary>
@@ -1070,6 +1240,37 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
     public void OnTrackSelectionParametersChanged(TrackSelectionParameters? parameters)
     {
+    }
+
+    private void StartDoubleTapped(
+        View view,
+        TextView textView,
+        bool forward,
+        MotionEvent? @event = null)
+    {
+        ObjectAnimator.OfFloat(textView, "alpha", 1f, 1f)!.SetDuration(600).Start();
+        ObjectAnimator.OfFloat(textView, "alpha", 0f, 1f)!.SetDuration(150).Start();
+
+        var animatable = (textView.GetCompoundDrawables()[1] as IAnimatable)!;
+        if (!animatable.IsRunning)
+            animatable.Start();
+
+        if (@event is not null)
+        {
+            playerView.HideController();
+            view.CircularReveal((int)@event.GetX(), (int)@event.GetY(), !forward, 800);
+            ObjectAnimator.OfFloat(view, "alpha", 1f, 1f)!.SetDuration(800).Start();
+            ObjectAnimator.OfFloat(view, "alpha", 0f, 1f)!.SetDuration(300).Start();
+        }
+    }
+
+    private void StopDoubleTapped(View view, TextView textView)
+    {
+        Handler.Post(() =>
+        {
+            ObjectAnimator.OfFloat(view, "alpha", view.Alpha, 0f)!.SetDuration(150).Start();
+            ObjectAnimator.OfFloat(textView, "alpha", 1f, 0f)!.SetDuration(150).Start();
+        });
     }
 
 #pragma warning disable CS0618

@@ -1,7 +1,7 @@
 ﻿using System;
 using Android.Content;
 
-namespace AniStream.Utils;
+namespace AniStream.Utils.Listeners;
 
 public class DialogClickListener : Java.Lang.Object, IDialogInterfaceOnClickListener
 {
