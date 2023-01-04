@@ -932,7 +932,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         if (!CanSaveProgress)
             return;
 
-        _playerSettings.WatchedEpisodes.TryGetValue(Episode.Link,
+        _playerSettings.WatchedEpisodes.TryGetValue(Episode.Id,
             out var watchedEpisode);
 
         watchedEpisode ??= new();
@@ -942,8 +942,8 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         watchedEpisode.WatchedPercentage = (float)exoPlayer.CurrentPosition / exoPlayer.Duration * 100f;
         watchedEpisode.WatchedDuration = exoPlayer.CurrentPosition;
 
-        _playerSettings.WatchedEpisodes.Remove(Episode.Link);
-        _playerSettings.WatchedEpisodes.Add(Episode.Link, watchedEpisode);
+        _playerSettings.WatchedEpisodes.Remove(Episode.Id);
+        _playerSettings.WatchedEpisodes.Add(Episode.Id, watchedEpisode);
 
         await _playerSettings.SaveAsync();
     }
@@ -1027,7 +1027,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         exoPlayer.Prepare();
         exoPlayer.PlayWhenReady = true;
 
-        _playerSettings.WatchedEpisodes.TryGetValue(Episode.Link,
+        _playerSettings.WatchedEpisodes.TryGetValue(Episode.Id,
             out var watchedEpisode);
 
         if (watchedEpisode is not null)

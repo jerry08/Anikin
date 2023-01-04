@@ -60,9 +60,9 @@ public class EpisodeRecyclerAdapter : RecyclerView.Adapter
         var ep = $"EP {episode.Number}";
         episodeViewHolder.EpisodeNumber.Text = ep;
 
-        if (_playerSettings.WatchedEpisodes.ContainsKey(episode.Link))
+        if (_playerSettings.WatchedEpisodes.ContainsKey(episode.Id))
         {
-            var watchedEpisode = _playerSettings.WatchedEpisodes[episode.Link];
+            var watchedEpisode = _playerSettings.WatchedEpisodes[episode.Id];
             if (watchedEpisode is not null)
                 episodeViewHolder.WatchedProgress.Progress = (int)watchedEpisode.WatchedPercentage;
         }
