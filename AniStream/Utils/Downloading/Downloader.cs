@@ -12,6 +12,7 @@ using AniStream.Services;
 using AnimeDl.Utils.Extensions;
 using DotNetTools.JGrabber.Grabbed;
 using System.Collections.Generic;
+using AniStream.Utils.Listeners;
 
 namespace AniStream.Utils.Downloading;
 
