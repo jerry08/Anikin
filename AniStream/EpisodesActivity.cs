@@ -34,6 +34,7 @@ using AndroidX.Activity;
 using AniStream.Settings;
 using Firebase;
 using Firebase.Crashlytics;
+using System.Threading.Tasks;
 
 namespace AniStream;
 
@@ -167,7 +168,13 @@ public class EpisodesActivity : AppCompatActivity
 
         _client.OnAnimeInfoLoaded += (s, e) =>
         {
-            this.RunOnUiThread(() =>
+            if (string.IsNullOrEmpty(e.Anime.Category))
+            {
+                _client.GetAnimeInfo(Anime.Category);
+                return;
+            }
+
+            RunOnUiThread(() =>
             {
                 Anime = e.Anime;
 
@@ -188,7 +195,7 @@ public class EpisodesActivity : AppCompatActivity
 
         _client.OnEpisodesLoaded += (s, e) =>
         {
-            this.RunOnUiThread(() =>
+            RunOnUiThread(() =>
             {
                 loading.Visibility = ViewStates.Gone;
                 rootLayout.Visibility = ViewStates.Visible;
@@ -215,7 +222,7 @@ public class EpisodesActivity : AppCompatActivity
             });
         };
 
-        _client.GetAnimeInfo(Anime.Id);
+        await Task.Run(() => _client.GetAnimeInfo(Anime.Id));
     }
 
     private void PopupMenu_MenuItemClick(object? sender, PopupMenu.MenuItemClickEventArgs e)
