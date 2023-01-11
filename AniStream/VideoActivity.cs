@@ -1251,8 +1251,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         ObjectAnimator.OfFloat(textView, "alpha", 1f, 1f)!.SetDuration(600).Start();
         ObjectAnimator.OfFloat(textView, "alpha", 0f, 1f)!.SetDuration(150).Start();
 
-        var animatable = (textView.GetCompoundDrawables()[1] as IAnimatable)!;
-        if (!animatable.IsRunning)
+        if (textView.GetCompoundDrawables()?[1] is IAnimatable animatable && !animatable.IsRunning)
             animatable.Start();
 
         if (@event is not null)
