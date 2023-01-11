@@ -7,8 +7,8 @@
     <!--<WarningsAsErrors>nullable</WarningsAsErrors>
     <ImplicitUsings>enable</ImplicitUsings>-->
     <ApplicationId>com.oneb.anistream</ApplicationId>
-    <ApplicationVersion>22</ApplicationVersion>
-    <ApplicationDisplayVersion>1.9.0</ApplicationDisplayVersion>
+    <ApplicationVersion>23</ApplicationVersion>
+    <ApplicationDisplayVersion>1.9.1</ApplicationDisplayVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
