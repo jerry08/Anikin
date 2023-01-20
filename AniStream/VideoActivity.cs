@@ -811,45 +811,49 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
         var client = new AnilistClient();
 
-        var searchResults = await client.SearchAsync("ANIME", search: Anime.Title);
-        if (searchResults is null)
-            return;
-
-        var animes = searchResults?.Results.Where(x => x.IdMal is not null).ToList();
-        if (animes is null || animes.Count <= 0)
-            return;
-
-        var media = await client.GetMediaDetailsAsync(animes[0]);
-        if (media is null || media.IdMal is null)
-            return;
-
-        var timeStamps = await client.Aniskip.GetAsync(media.IdMal.Value, (int)Episode.Number, exoPlayer.Duration / 1000);
-        if (timeStamps is null)
-            return;
-
-        SkippedTimeStamps.AddRange(timeStamps);
-
-        var adGroups = new List<long>();
-        for (var i = 0; i < timeStamps.Count; i++)
+        try
         {
-            adGroups.Add((long)(timeStamps[i].Interval.StartTime * 1000));
-            adGroups.Add((long)(timeStamps[i].Interval.EndTime * 1000));
+            var searchResults = await client.SearchAsync("ANIME", search: Anime.Title);
+            if (searchResults is null)
+                return;
+
+            var animes = searchResults?.Results.Where(x => x.IdMal is not null).ToList();
+            if (animes is null || animes.Count <= 0)
+                return;
+
+            var media = await client.GetMediaDetailsAsync(animes[0]);
+            if (media is null || media.IdMal is null)
+                return;
+
+            var timeStamps = await client.Aniskip.GetAsync(media.IdMal.Value, (int)Episode.Number, exoPlayer.Duration / 1000);
+            if (timeStamps is null)
+                return;
+
+            SkippedTimeStamps.AddRange(timeStamps);
+
+            var adGroups = new List<long>();
+            for (var i = 0; i < timeStamps.Count; i++)
+            {
+                adGroups.Add((long)(timeStamps[i].Interval.StartTime * 1000));
+                adGroups.Add((long)(timeStamps[i].Interval.EndTime * 1000));
+            }
+
+            var playedAdGroups = new List<bool>();
+            for (var i = 0; i < timeStamps.Count; i++)
+            {
+                playedAdGroups.Add(false);
+                playedAdGroups.Add(false);
+            }
+
+            playerView.SetExtraAdGroupMarkers(adGroups.ToArray(), playedAdGroups.ToArray());
+
+            ExoSkipOpEd.Alpha = 1f;
+            ExoSkipOpEd.Visibility = ViewStates.Visible;
+
+            if (_playerSettings.TimeStampsEnabled && _playerSettings.ShowTimeStampButton)
+                UpdateTimeStamp();
         }
-
-        var playedAdGroups = new List<bool>();
-        for (var i = 0; i < timeStamps.Count; i++)
-        {
-            playedAdGroups.Add(false);
-            playedAdGroups.Add(false);
-        }
-
-        playerView.SetExtraAdGroupMarkers(adGroups.ToArray(), playedAdGroups.ToArray());
-
-        ExoSkipOpEd.Alpha = 1f;
-        ExoSkipOpEd.Visibility = ViewStates.Visible;
-
-        if (_playerSettings.TimeStampsEnabled && _playerSettings.ShowTimeStampButton)
-            UpdateTimeStamp();
+        catch { }
     }
 
     private void UpdateTimeStamp()
