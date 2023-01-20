@@ -578,8 +578,16 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
         if (videoServers.Count == 0)
             return;
 
-        var allVideos = (await Task.WhenAll(videoServers
-            .Select(x => _client.GetVideosAsync(x, false)))).SelectMany(x => x).ToList();
+        var allVideos = new List<Video>();
+
+        foreach (var server in videoServers)
+        {
+            try
+            {
+                allVideos.AddRange(await _client.GetVideosAsync(server, false));
+            }
+            catch { }
+        }
 
         if (!SelectorDialogFragment.Cache.ContainsKey(episode.Link))
         {
