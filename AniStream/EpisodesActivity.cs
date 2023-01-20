@@ -168,7 +168,7 @@ public class EpisodesActivity : AppCompatActivity
 
         _client.OnAnimeInfoLoaded += (s, e) =>
         {
-            if (string.IsNullOrEmpty(e.Anime.Category))
+            if (_client.Site == AnimeSites.GogoAnime && string.IsNullOrEmpty(e.Anime.Category))
             {
                 _client.GetAnimeInfo(Anime.Category);
                 return;
