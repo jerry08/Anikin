@@ -112,63 +112,6 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
 
         var updater = new AppUpdater();
         await updater.CheckAsync(this);
-
-        ApplyMigrationAsync();
-    }
-
-    private async void ApplyMigrationAsync()
-    {
-        var isMigrated = Preferences.Get("migration1", false);
-        if (isMigrated)
-            return;
-
-        try
-        {
-            var playerSettings = new PlayerSettings();
-            await playerSettings.LoadAsync();
-
-            var keys = playerSettings.WatchedEpisodes.Keys.ToList();
-
-            for (var i = 0; i < keys.Count; i++)
-            {
-                if (keys[i].Contains("https://www1.gogoanime.ar/"))
-                {
-                    var start = "https://www1.gogoanime.ar/".Length;
-                    var count = keys[i].Length - "https://www1.gogoanime.ar/".Length;
-                    var newKey = keys[i].Substring(start, count);
-
-                    playerSettings.WatchedEpisodes.TryAdd(
-                        newKey,
-                        playerSettings.WatchedEpisodes[keys[i]]);
-
-                    //playerSettings.WatchedEpisodes[keys[i]] = new();
-
-                    playerSettings.WatchedEpisodes.Remove(keys[i]);
-                }
-                else if (keys[i].Contains("https://www1.gogoanime.bid/"))
-                {
-                    var start = "https://www1.gogoanime.bid/".Length;
-                    var count = keys[i].Length - "https://www1.gogoanime.bid/".Length;
-                    var newKey = keys[i].Substring(start, count);
-
-                    playerSettings.WatchedEpisodes.TryAdd(
-                        newKey,
-                        playerSettings.WatchedEpisodes[keys[i]]);
-
-                    //playerSettings.WatchedEpisodes[keys[i]] = new();
-
-                    playerSettings.WatchedEpisodes.Remove(keys[i]);
-                }
-            }
-
-            await playerSettings.SaveAsync();
-        }
-        catch
-        {
-
-        }
-
-        Preferences.Set("migration1", true);
     }
 
     public void CreateNotificationChannel()
