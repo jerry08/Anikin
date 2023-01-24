@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Android;
@@ -13,12 +14,15 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using AndroidX.AppCompat.App;
+using AnimeDl.Models;
+using AniStream.Settings;
 using AniStream.Utils;
 using AniStream.Utils.Extensions;
 using Google.Android.Material.SwitchMaterial;
 using Java.Lang;
 using Java.Util;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Xamarin.Essentials;
 using Toolbar = AndroidX.AppCompat.Widget.Toolbar;
 
@@ -74,12 +78,12 @@ namespace AniStream
 
             dontAskForUpdate.Checked = dontShow;
 
-            dontAskForUpdate.CheckedChange += async (s, e) =>
-            {
-                await SecureStorage.SetAsync($"dont_ask_for_update_{packageInfo.VersionName}", dontAskForUpdate.Checked.ToString());
-            };
+            dontAskForUpdate.CheckedChange += async (s, e) => await SecureStorage.SetAsync($"dont_ask_for_update_{packageInfo.VersionName}", dontAskForUpdate.Checked.ToString());
 
             //AndroidStoragePermission = new AndroidStoragePermission(this);
+
+            var bookmarkManager = new BookmarkManager("bookmarks");
+            var rwBookmarkManager = new BookmarkManager("recently_watched");
 
             buttonbackup.Click += async (s, e) =>
             {
@@ -89,78 +93,194 @@ namespace AniStream
                 if (!hasStoragePermission)
                     hasStoragePermission = await AndroidStoragePermission.RequestStoragePermission();
 
-                if (hasStoragePermission)
+                if (!hasStoragePermission)
                 {
-                    //var intent = new Intent(Intent.ActionOpenDocument);
-                    //intent.SetType("*/*");
-                    //intent.AddCategory(Intent.CategoryOpenable);
-                    //intent.PutExtra(Intent.ExtraAllowMultiple, false);
+                    this.ShowToast("Storage permission not granted");
+                    return;
+                }
 
-                    //var intent = new Intent(Intent.ActionGetContent);
-                    //intent.SetType("file/*");
-                    //
-                    //StartActivityForResult(intent, REQUEST_DIRECTORY_PICKER);
+                //var intent = new Intent(Intent.ActionOpenDocument);
+                //intent.SetType("*/*");
+                //intent.AddCategory(Intent.CategoryOpenable);
+                //intent.PutExtra(Intent.ExtraAllowMultiple, false);
 
-                    var bookmarkManager = new BookmarkManager("bookmarks");
-                    var rwBookmarkManager = new BookmarkManager("recently_watched");
+                //var intent = new Intent(Intent.ActionGetContent);
+                //intent.SetType("file/*");
+                //
+                //StartActivityForResult(intent, REQUEST_DIRECTORY_PICKER);
 
-                    var animes = await bookmarkManager.GetBookmarks();
-                    var rwAnimes = await rwBookmarkManager.GetBookmarks();
+                var playerSettings = new PlayerSettings();
+                await playerSettings.LoadAsync();
 
-                    var data = new
+                var animes = await bookmarkManager.GetBookmarks();
+                var rwAnimes = await rwBookmarkManager.GetBookmarks();
+
+                var data = new
+                {
+                    animes,
+                    rwAnimes,
+                    playerSettings
+                };
+
+                var jsonData = JsonConvert.SerializeObject(data);
+
+                //var path = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + "/test.json";
+                //var tryCount = 1;
+                //while (File.Exists(path))
+                //{
+                //    tryCount++;
+                //    path = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + $"/test{tryCount}.json";
+                //}
+
+                //File.Create(path);
+                //File.WriteAllText(path, jsonData);
+
+                var tempFilePath = System.IO.Path.Combine(
+                    FileSystem.CacheDirectory,
+                    $"{DateTime.Now.Ticks}.json"
+                );
+
+                try
+                {
+                    using (var writer = File.CreateText(tempFilePath))
                     {
-                        animes,
-                        rwAnimes
-                    };
+                        await writer.WriteLineAsync(jsonData);
+                    }
 
-                    var jsonData = JsonConvert.SerializeObject(data);
-
-                    var path = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + "/test.json";
+                    var newFilePath = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + "/Anistream-Backup-1.json";
                     var tryCount = 1;
-                    while (File.Exists(path))
+                    while (File.Exists(newFilePath))
                     {
                         tryCount++;
-                        path = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + $"/test{tryCount}.json";
+                        newFilePath = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + $"/Anistream-Backup-{tryCount}.json";
                     }
 
-                    //File.Create(path);
-                    //File.WriteAllText(path, jsonData);
-
-                    using (var sw = File.CreateText(path))
-                    {
-                        sw.WriteLine(jsonData);
-                    }
+                    await this.CopyFileUsingMediaStore(tempFilePath, newFilePath);
 
                     this.ShowToast("Export completed");
+
+                    File.Delete(tempFilePath);
                 }
-                else
+                catch
                 {
-                    this.ShowToast("No permission granted");
+                    this.ShowToast("Export failed");
                 }
             };
 
             buttonrestore.Click += async (s, e) =>
             {
-                this.ShowToast("This feature will be implemented in the next update");
-
-                return;
-
                 AndroidStoragePermission = new AndroidStoragePermission(this);
 
                 var hasStoragePermission = AndroidStoragePermission.HasStoragePermission();
                 if (!hasStoragePermission)
                     hasStoragePermission = await AndroidStoragePermission.RequestStoragePermission();
 
-                if (hasStoragePermission)
+                if (!hasStoragePermission)
                 {
-                    var bookmarkManager = new BookmarkManager("bookmarks");
-                    var rwBookmarkManager = new BookmarkManager("recently_watched");
+                    this.ShowToast("Storage permission not granted");
+                    return;
+                }
+
+                var customFileType =
+                    new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                    {
+                        { DevicePlatform.Android, new[] { "application/json" } },
+                    });
+
+                var options = new PickOptions
+                {
+                    PickerTitle = "Please select a json file",
+                    FileTypes = customFileType,
+                };
+
+                var result = await FilePicker.PickAsync(options);
+                if (result is null)
+                    return;
+
+                try
+                {
+                    var stream = await result.OpenReadAsync();
+                    var json = await stream.ToStringAsync();
+
+                    var data = JObject.Parse(json);
+
+                    var bookmarkedAnimesJson = data["animes"]?.ToString();
+                    var rwAnimesJson = data["rwAnimes"]?.ToString();
+                    var playerSettingsJson = data["playerSettings"]?.ToString();
+
+                    if (!string.IsNullOrEmpty(bookmarkedAnimesJson))
+                    {
+                        var animes = JsonConvert.DeserializeObject<List<Anime>?>(bookmarkedAnimesJson);
+
+                        var existingAnimeIds = (await bookmarkManager.GetBookmarks())
+                            .Select(x => x.Id);
+
+                        if (animes is not null)
+                        {
+                            foreach (var anime in animes)
+                            {
+                                if (!existingAnimeIds.Contains(anime.Id))
+                                    bookmarkManager.SaveBookmark(anime);
+                            }
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(rwAnimesJson))
+                    {
+                        var animes = JsonConvert.DeserializeObject<List<Anime>?>(rwAnimesJson);
+
+                        var existingAnimeIds = (await rwBookmarkManager.GetBookmarks())
+                            .Select(x => x.Id);
+
+                        if (animes is not null)
+                        {
+                            foreach (var anime in animes)
+                            {
+                                if (!existingAnimeIds.Contains(anime.Id))
+                                    rwBookmarkManager.SaveBookmark(anime);
+                            }
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(playerSettingsJson))
+                    {
+                        var playerSettings = JsonConvert.DeserializeObject<PlayerSettings?>(playerSettingsJson);
+                        if (playerSettings is not null)
+                        {
+                            var existingPlayerSettings = new PlayerSettings();
+                            await existingPlayerSettings.LoadAsync();
+
+                            foreach (var watchedEpisode in existingPlayerSettings.WatchedEpisodes)
+                            {
+                                if (!playerSettings.WatchedEpisodes.ContainsKey(watchedEpisode.Key))
+                                {
+                                    playerSettings.WatchedEpisodes.Add(watchedEpisode.Key, watchedEpisode.Value);
+                                }
+                                else
+                                {
+                                    // Update the imported watched progress if it is less than the existing progress
+                                    if (playerSettings.WatchedEpisodes[watchedEpisode.Key].WatchedPercentage <
+                                        watchedEpisode.Value.WatchedPercentage)
+                                    {
+                                        playerSettings.WatchedEpisodes[watchedEpisode.Key] = watchedEpisode.Value;
+                                    }
+                                }
+                            }
+
+                            await playerSettings.SaveAsync();
+                        }
+                    }
+
+                    this.ShowToast("Restore completed");
+                }
+                catch
+                {
+                    this.ShowToast("Restore failed");
                 }
             };
 
-            buttongithub.Click += (s, e) => { OpenLink("https://github.com/jerry08/AniStream"); };
-
-            buttondiscord.Click += (s, e) => { OpenLink("https://discord.gg/mhxsSMy2Nf"); };
+            buttongithub.Click += (s, e) => OpenLink("https://github.com/jerry08/AniStream");
+            buttondiscord.Click += (s, e) => OpenLink("https://discord.gg/mhxsSMy2Nf");
 
             button_check_for_updates.Click += async (s, e) =>
             {
@@ -205,7 +325,7 @@ namespace AniStream
 
         private void OpenLink(string url)
         {
-            var uriUrl = Uri.Parse(url);
+            var uriUrl = Android.Net.Uri.Parse(url);
             var launchBrowser = new Intent(Intent.ActionView, uriUrl);
             StartActivity(launchBrowser);
         }
