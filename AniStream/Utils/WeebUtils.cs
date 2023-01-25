@@ -208,5 +208,12 @@ public static class WeebUtils
             if (output is not null)
                 await input.CopyToAsync(output, defaultBufferSize, cancellationToken);
         }
+
+        MediaScannerConnection.ScanFile(
+            context,
+            new[] { newFilePath },
+            new[] { mimeType },
+            null
+        );
     }
 }
