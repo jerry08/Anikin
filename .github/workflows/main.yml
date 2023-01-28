@@ -4,7 +4,6 @@ on: [push]
 
 jobs:
   notify:
-    needs: deploy
     runs-on: ubuntu-latest
 
     steps:
