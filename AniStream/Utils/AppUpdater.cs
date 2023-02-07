@@ -35,30 +35,37 @@ public class AppUpdater
         if (dontShow)
             return false;
 
-        var releases = await _releaseClient.GetAll(_repositoryOwner, _repostoryName);
-        var latestRelease = releases.FirstOrDefault()!;
-
-        var latestVersionName = new Version(latestRelease.Name);
-        var currentVersionName = new Version(packageInfo.VersionName!);
-
-        if (currentVersionName < latestVersionName)
+        try
         {
-            var builder = new Android.App.AlertDialog.Builder(activity,
-                Android.App.AlertDialog.ThemeDeviceDefaultLight);
-            builder.SetTitle("Update available");
-            builder.SetPositiveButton("Download", (s, e) =>
+            var releases = await _releaseClient.GetAll(_repositoryOwner, _repostoryName);
+            var latestRelease = releases.FirstOrDefault()!;
+
+            var latestVersionName = new Version(latestRelease.Name);
+            var currentVersionName = new Version(packageInfo.VersionName!);
+
+            if (currentVersionName < latestVersionName)
             {
-                var asset = latestRelease.Assets.FirstOrDefault()!;
+                var builder = new Android.App.AlertDialog.Builder(activity,
+                    Android.App.AlertDialog.ThemeDeviceDefaultLight);
+                builder.SetTitle("Update available");
+                builder.SetPositiveButton("Download", (s, e) =>
+                {
+                    var asset = latestRelease.Assets.FirstOrDefault()!;
 
-                var downloader = new Downloader(activity);
-                downloader.Download(asset.Name, asset.BrowserDownloadUrl);
-            });
+                    var downloader = new Downloader(activity);
+                    downloader.Download(asset.Name, asset.BrowserDownloadUrl);
+                });
 
-            builder.SetNegativeButton("OK", (s, e) => { });
+                builder.SetNegativeButton("OK", (s, e) => { });
 
-            builder.Show();
+                builder.Show();
 
-            return true;
+                return true;
+            }
+        }
+        catch
+        {
+            // Repository not found
         }
 
         return false;
