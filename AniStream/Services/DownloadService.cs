@@ -10,6 +10,7 @@ using AniStream.Utils.Extensions;
 using DotNetTools.JGrabber.Grabbed;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using Android.Util;
 
 namespace AniStream.Services;
 
@@ -46,6 +47,8 @@ public class DownloadService : Service
     private Looper mServiceLooper = default!;
     private ServiceHandler mServiceHandler = default!;
 
+    const string Tag = "AniStream DownloadService";
+
     public override void OnCreate()
     {
         base.OnCreate();
@@ -59,10 +62,9 @@ public class DownloadService : Service
 
     public override void OnTaskRemoved(Intent? rootIntent)
     {
-#if DEBUG
-        Toast.MakeText(this, "service task removed", ToastLength.Short)?.Show();
-#endif
         base.OnTaskRemoved(rootIntent);
+
+        Log.Debug(Tag, "Task removed");
     }
 
     [return: GeneratedEnum]
@@ -78,9 +80,9 @@ public class DownloadService : Service
                 StopSelf();
                 return StartCommandResult.Sticky;
             }
-#if DEBUG
-            Toast.MakeText(this, "service started", ToastLength.Short)?.Show();
-#endif
+
+            Log.Debug(Tag, "Service started");
+            
             var msg = mServiceHandler.ObtainMessage();
             msg.Arg1 = startId;//needed for stop.
 
@@ -99,17 +101,15 @@ public class DownloadService : Service
 
     public override void OnDestroy()
     {
-#if DEBUG
-        Toast.MakeText(this, "service destroyed", ToastLength.Short)?.Show();
-#endif
+        Log.Debug(Tag, "Service destroyed");
+
         base.OnDestroy();
     }
 
     public override bool StopService(Intent? name)
     {
-#if DEBUG
-        Toast.MakeText(this, "service stopped", ToastLength.Short)?.Show();
-#endif
+        Log.Debug(Tag, "Service stopped");
+
         return base.StopService(name);
     }
 
