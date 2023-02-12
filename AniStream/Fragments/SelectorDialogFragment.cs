@@ -96,7 +96,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
                     else
                         _client.GetVideos(_client.VideoServers[totalServersLoaded]);
 
-                    if (e.Videos.Count <= 0)
+                    if (e.Videos.Count == 0)
                     {
                         Cache[_episode.Link][totalServersLoaded - 1] = new(e.VideoServer, e.Videos)
                         {
@@ -153,7 +153,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
         {
             var notLoadedServers = cache.Where(x => !x.IsLoaded)
                 .Select(x => x.VideoServer).ToList();
-            if (notLoadedServers.Count <= 0)
+            if (notLoadedServers.Count == 0)
             {
                 cache = cache.Where(x => x.IsLoaded && x.Videos.Count > 0).ToList();
 
@@ -197,7 +197,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
                         var notLoadedServer = notLoadedServers[totalServersLoaded - 1];
                         var item = Cache[_episode.Link].Where(x => x.VideoServer == notLoadedServer).FirstOrDefault()!;
 
-                        if (e.Videos.Count <= 0)
+                        if (e.Videos.Count == 0)
                         {
                             item.IsLoaded = true;
 

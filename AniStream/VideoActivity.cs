@@ -647,7 +647,10 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
             else
             {
                 progressBar.Visibility = ViewStates.Gone;
-                this.ToastString("No videos found");
+                //this.ToastString("No videos found");
+                this.ShowToast("No videos found");
+
+                SourceButton.PerformClick();
             }
         });
     }
@@ -826,7 +829,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
                 return;
 
             var animes = searchResults?.Results.Where(x => x.IdMal is not null).ToList();
-            if (animes is null || animes.Count <= 0)
+            if (animes is null || animes.Count == 0)
                 return;
 
             var media = await client.GetMediaDetailsAsync(animes[0]);
@@ -976,7 +979,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
 
         var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36";
 
-        var headers = video.Headers.ToDictionary();
+        var headers = video.Headers;
         headers.TryAdd("User-Agent", userAgent);
 
         var bandwidthMeter = new DefaultBandwidthMeter.Builder(this).Build();

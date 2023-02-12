@@ -100,19 +100,30 @@ public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
         return base.OnOptionsItemSelected(item);
     }
 
-    private async void ClearBookmarks()
+    private void ClearBookmarks()
     {
-        BookmarkManager.RemoveAllBookmarks();
+        var alert = new AlertDialog.Builder(this, Resource.Style.DialogTheme);
+        alert.SetMessage("Are you sure you want to clear all?");
+        alert.SetPositiveButton("Yes", async (s, e) =>
+        {
+            BookmarkManager.RemoveAllBookmarks();
 
-        var animes = await BookmarkManager.GetBookmarks();
+            var animes = await BookmarkManager.GetBookmarks();
 
-        var mDataAdapter = new AnimeRecyclerAdapter(this, animes);
+            var mDataAdapter = new AnimeRecyclerAdapter(this, animes);
 
-        recyclerView.HasFixedSize = true;
-        recyclerView.DrawingCacheEnabled = true;
-        recyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
-        recyclerView.SetItemViewCacheSize(20);
-        recyclerView.SetAdapter(mDataAdapter);
+            recyclerView.HasFixedSize = true;
+            recyclerView.DrawingCacheEnabled = true;
+            recyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
+            recyclerView.SetItemViewCacheSize(20);
+            recyclerView.SetAdapter(mDataAdapter);
+        });
+
+        alert.SetNegativeButton("Cancel", (s, e) => { });
+        alert.SetCancelable(true);
+
+        var dialog = alert.Create()!;
+        dialog.Show();
     }
 
     protected override async void OnRestart()

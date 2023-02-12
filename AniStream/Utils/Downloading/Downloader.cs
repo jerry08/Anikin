@@ -1,18 +1,16 @@
 ﻿using System;
-using System.Linq;
-using System.Collections.Specialized;
-using Android.App;
-using Android.Webkit;
-using AniStream.Utils.Extensions;
-using AnimeDl;
-using Android.Content;
-using Newtonsoft.Json;
-using System.Threading.Tasks;
-using AniStream.Services;
-using AnimeDl.Utils.Extensions;
-using DotNetTools.JGrabber.Grabbed;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Android.App;
+using Android.Content;
+using Android.Webkit;
+using AnimeDl;
+using AniStream.Services;
+using AniStream.Utils.Extensions;
 using AniStream.Utils.Listeners;
+using DotNetTools.JGrabber.Grabbed;
+using Newtonsoft.Json;
 
 namespace AniStream.Utils.Downloading;
 
@@ -29,7 +27,7 @@ public class Downloader
     public async void Download(
         string fileName,
         string url,
-        NameValueCollection? headers = null)
+        Dictionary<string, string>? headers = null)
     {
         var androidStoragePermission = new AndroidStoragePermission(_activity);
 
@@ -58,7 +56,7 @@ public class Downloader
         var request = new DownloadManager.Request(Android.Net.Uri.Parse(url));
 
         for (var i = 0; i < headers?.Count; i++)
-            request.AddRequestHeader(headers.Keys[i], headers[i]);
+            request.AddRequestHeader(headers.ElementAt(i).Key, headers.ElementAt(i).Value);
 
         request.SetMimeType(mimeType);
         request.AllowScanningByMediaScanner();
@@ -77,7 +75,7 @@ public class Downloader
     public async Task DownloadHls(
         string fileName,
         string url,
-        NameValueCollection headers)
+        Dictionary<string, string> headers)
     {
         var loadingDialog = WeebUtils.SetProgressDialog(_activity, "Getting qualities. Please wait...", false);
         var metadataResources = new List<GrabbedHlsStreamMetadata>();
@@ -102,7 +100,7 @@ public class Downloader
 
             var intent = new Intent(_activity, typeof(DownloadService));
             intent.PutExtra("stream", JsonConvert.SerializeObject(stream));
-            intent.PutExtra("headers", JsonConvert.SerializeObject(headers.ToDictionary()));
+            intent.PutExtra("headers", JsonConvert.SerializeObject(headers));
             intent.PutExtra("fileName", fileName);
             //StartService(intent);
             _activity.StartForegroundService(intent);

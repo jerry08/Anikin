@@ -133,22 +133,8 @@ public class AnimeRecyclerAdapter : RecyclerView.Adapter
 
         if (!string.IsNullOrEmpty(Animes[position].Image))
         {
-            //Picasso.Get().Load(Animes[position].Image)
-            //    .Fit().CenterCrop().Into(animeViewholder.imageofanime);
-
-            if (WeebUtils.AnimeSite == AnimeSites.Tenshi)
-            {
-                var glideUrl = new GlideUrl(anime?.Image, new LazyHeaders.Builder()
-                    .AddHeader("Cookie", "__ddg1_=;__ddg2_=;loop-view=thumb").Build());
-
-                Glide.With(Activity).Load(glideUrl)
-                    .FitCenter().CenterCrop().Into(animeViewholder.imageofanime);
-            }
-            else
-            {
-                Picasso.Get().Load(anime?.Image)
-                    .Fit().CenterCrop().Into(animeViewholder.imageofanime);
-            }
+            Picasso.Get().Load(anime?.Image).Fit().CenterCrop()
+                .Into(animeViewholder.imageofanime);
         }
     }
 

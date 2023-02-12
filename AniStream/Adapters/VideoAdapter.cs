@@ -3,13 +3,12 @@ using Android.App;
 using Android.Content;
 using Android.Views;
 using Android.Widget;
-using Newtonsoft.Json;
-using AniStream.Utils;
-using AniStream.Utils.Downloading;
 using AndroidX.RecyclerView.Widget;
 using AnimeDl.Models;
+using AniStream.Utils;
+using AniStream.Utils.Downloading;
 using AniStream.Utils.Extensions;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace AniStream.Adapters;
 

@@ -1,19 +1,17 @@
 ﻿using System;
-using System.Linq;
-using System.Collections.Specialized;
-using Android.App;
-using Xamarin.Essentials;
-using System.Threading.Tasks;
-using AnimeDl;
-using Laerdal.FFmpeg.Android;
-using DotNetTools.JGrabber.Grabbed;
-using Android.Content;
-using AndroidX.Core.Content;
-using AndroidX.Core.App;
+using System.Collections.Generic;
 using System.Threading;
-using AniStream.Services;
+using System.Threading.Tasks;
+using Android.App;
+using Android.Content;
 using Android.Webkit;
-using FileProvider = AndroidX.Core.Content.FileProvider;
+using AndroidX.Core.App;
+using AndroidX.Core.Content;
+using AnimeDl;
+using AniStream.Services;
+using DotNetTools.JGrabber.Grabbed;
+using Laerdal.FFmpeg.Android;
+using Xamarin.Essentials;
 
 namespace AniStream.Utils.Downloading;
 
@@ -32,7 +30,7 @@ public class HlsDownloader
     public async Task DownloadAsync(
         string fileName,
         GrabbedHlsStream stream,
-        NameValueCollection headers,
+        Dictionary<string, string> headers,
         CancellationToken cancellationToken = default)
     {
         var cacheDir = FileSystem.CacheDirectory;

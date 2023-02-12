@@ -27,13 +27,6 @@ public class ViewPagerAdapter : FragmentStatePagerAdapter
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.Popular));
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.NewSeason));
                 break;
-            case AnimeSites.NineAnime:
-                break;
-            case AnimeSites.Tenshi:
-                Fragments.Add(AnimeFragment.NewInstance(SearchFilter.NewSeason));
-                break;
-            default:
-                break;
         }
     }
 

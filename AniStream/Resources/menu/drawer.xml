@@ -7,18 +7,11 @@
       <item android:id="@+id/source_gogoanime"
             android:titleCondensed="Gogoanime"
             android:title="Gogoanime"
-            app:actionViewClass="android.widget.RadioButton">
-      </item>
-      <item android:id="@+id/source_tenshi"
-            android:titleCondensed="Tenshi"
-            android:title="Tenshi"
-            app:actionViewClass="android.widget.RadioButton">
-      </item>
+            app:actionViewClass="android.widget.RadioButton" />
       <item android:id="@+id/source_zoro"
             android:titleCondensed="Zoro"
             android:title="Zoro"
-            app:actionViewClass="android.widget.RadioButton">
-      </item>
+            app:actionViewClass="android.widget.RadioButton" />
     </group>
 
     <item

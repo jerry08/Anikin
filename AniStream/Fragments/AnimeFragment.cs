@@ -72,7 +72,7 @@ public class AnimeFragment : Fragment
         {
             Activity?.RunOnUiThread(() =>
             {
-                if (WeebUtils.AnimeSite == AnimeSites.GogoAnime || WeebUtils.AnimeSite == AnimeSites.Tenshi)
+                if (WeebUtils.AnimeSite == AnimeSites.GogoAnime)
                     Page++;
 
                 var animes = e.Animes;

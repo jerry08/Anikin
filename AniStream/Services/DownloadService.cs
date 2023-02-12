@@ -1,16 +1,13 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
-using Android.Widget;
+using Android.Util;
 using AndroidX.Core.App;
 using AniStream.Utils.Downloading;
-using AniStream.Utils.Extensions;
 using DotNetTools.JGrabber.Grabbed;
 using Newtonsoft.Json;
-using System.Collections.Generic;
-using Android.Util;
 
 namespace AniStream.Services;
 
@@ -35,7 +32,7 @@ public class ServiceHandler : Handler
         var headers = JsonConvert.DeserializeObject<Dictionary<string, string>>(msg.Data.GetString("headers")!)!;
         var fileName = msg.Data.GetString("fileName")!;
 
-        await downloader.DownloadAsync(fileName, stream, headers.ToNameValueCollection(), CancellationTokenSource.Token);
+        await downloader.DownloadAsync(fileName, stream, headers, CancellationTokenSource.Token);
 
         base.HandleMessage(msg);
     }

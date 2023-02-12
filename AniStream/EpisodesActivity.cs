@@ -115,18 +115,7 @@ public class EpisodesActivity : AppCompatActivity
 
         if (!string.IsNullOrEmpty(Anime.Image))
         {
-            if (WeebUtils.AnimeSite == AnimeSites.Tenshi)
-            {
-                var glideUrl = new GlideUrl(Anime.Image, new LazyHeaders.Builder()
-                    .AddHeader("Cookie", "__ddg1_=;__ddg2_=;loop-view=thumb").Build());
-
-                Glide.With(this).Load(glideUrl)
-                    .FitCenter().CenterCrop().Into(imageofanime);
-            }
-            else
-            {
-                Picasso.Get().Load(Anime.Image).Into(imageofanime);
-            }
+            Picasso.Get().Load(Anime.Image).Into(imageofanime);
         }
 
         loading.Visibility = ViewStates.Visible;
@@ -249,18 +238,7 @@ public class EpisodesActivity : AppCompatActivity
 
             if (!string.IsNullOrEmpty(Anime.Image))
             {
-                if (WeebUtils.AnimeSite == AnimeSites.Tenshi)
-                {
-                    var glideUrl = new GlideUrl(Anime.Image, new LazyHeaders.Builder()
-                        .AddHeader("Cookie", "__ddg1_=;__ddg2_=;loop-view=thumb").Build());
-
-                    Glide.With(this).Load(glideUrl)
-                        .FitCenter().CenterCrop().Into(imageofanime);
-                }
-                else
-                {
-                    Picasso.Get().Load(Anime.Image).Into(imageofanime);
-                }
+                Picasso.Get().Load(Anime.Image).Into(imageofanime);
             }
 
             animeInfoTitle.Text = "Title: " + Anime.Title;

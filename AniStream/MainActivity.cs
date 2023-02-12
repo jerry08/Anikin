@@ -193,13 +193,8 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
             case AnimeSites.GogoAnime:
                 bottomNavigationView.InflateMenu(Resource.Menu.bottommenu2);
                 break;
-            case AnimeSites.Tenshi:
-                bottomNavigationView.InflateMenu(Resource.Menu.bottommenu3);
-                break;
             case AnimeSites.Zoro:
                 bottomNavigationView.InflateMenu(Resource.Menu.bottommenu4);
-                break;
-            default:
                 break;
         }
 
@@ -296,7 +291,6 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
     private void SetupSources(IMenu menu)
     {
         var gogoanime = menu.FindItem(Resource.Id.source_gogoanime);
-        var tenshi = menu.FindItem(Resource.Id.source_tenshi);
         var zoro = menu.FindItem(Resource.Id.source_zoro);
 
         switch (WeebUtils.AnimeSite)
@@ -306,13 +300,6 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
                 break;
             case AnimeSites.Zoro:
                 zoro?.SetChecked(true);
-                break;
-            case AnimeSites.NineAnime:
-                break;
-            case AnimeSites.Tenshi:
-                tenshi?.SetChecked(true);
-                break;
-            default:
                 break;
         }
     }
@@ -348,25 +335,23 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
             return false;
         }
         else
+        {
             SaveSelectedSource(id);
+        }
 
         return base.OnOptionsItemSelected(item);
     }
 
     private async void SaveSelectedSource(int id)
     {
-        var shouldUpdateMainView = false;
-
         var lastAnimeSite = WeebUtils.AnimeSite;
 
         if (id == Resource.Id.source_gogoanime)
             WeebUtils.AnimeSite = AnimeSites.GogoAnime;
-        else if (id == Resource.Id.source_tenshi)
-            WeebUtils.AnimeSite = AnimeSites.Tenshi;
         else if (id == Resource.Id.source_zoro)
             WeebUtils.AnimeSite = AnimeSites.Zoro;
 
-        if (lastAnimeSite != WeebUtils.AnimeSite || shouldUpdateMainView)
+        if (lastAnimeSite != WeebUtils.AnimeSite)
         {
             await SecureStorage.SetAsync("AnimeSite", ((int)WeebUtils.AnimeSite).ToString());
 
