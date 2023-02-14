@@ -11,7 +11,7 @@ using AnimeDl;
 using AniStream.Services;
 using DotNetTools.JGrabber.Grabbed;
 using Laerdal.FFmpeg.Android;
-using Xamarin.Essentials;
+using Microsoft.Maui.Storage;
 
 namespace AniStream.Utils.Downloading;
 

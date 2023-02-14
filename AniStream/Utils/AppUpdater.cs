@@ -3,8 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using AndroidX.Fragment.App;
 using AniStream.Utils.Downloading;
+using Microsoft.Maui.Storage;
 using Octokit;
-using Xamarin.Essentials;
 
 namespace AniStream.Utils;
 

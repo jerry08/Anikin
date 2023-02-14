@@ -1,5 +1,5 @@
-﻿using System.Linq;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
@@ -7,9 +7,10 @@ using Android.Runtime;
 using Android.Views;
 using AndroidX.AppCompat.Widget;
 using AndroidX.RecyclerView.Widget;
-using AniStream.Utils;
-using AniStream.Adapters;
 using AnimeDl.Models;
+using AniStream.Adapters;
+using AniStream.Utils;
+using Microsoft.Maui.ApplicationModel;
 
 namespace AniStream;
 
@@ -28,7 +29,7 @@ public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
     protected override async void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
-        Xamarin.Essentials.Platform.Init(this, savedInstanceState);
+        Platform.Init(this, savedInstanceState);
         SetContentView(Resource.Layout.activity_bookmark_anime);
 
         var toolbar = FindViewById<Toolbar>(Resource.Id.tool);
@@ -150,7 +151,7 @@ public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
 
     public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
     {
-        Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 
         base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
     }

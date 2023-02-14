@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Xamarin.Essentials;
 using AniStream.Settings.Encryption;
 using AniStream.Settings.Serialization;
+using Microsoft.Maui.Storage;
 
 namespace AniStream.Settings;
 

@@ -1,9 +1,9 @@
-﻿using System.Linq;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Xamarin.Essentials;
 using AnimeDl.Models;
+using Microsoft.Maui.Storage;
+using Newtonsoft.Json;
 
 namespace AniStream.Utils;
 
