@@ -1,66 +1,64 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Android.Animation;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
+using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Runtime;
+using Android.Util;
 using Android.Views;
+using Android.Views.Animations;
 using Android.Widget;
+using AndroidX.AppCompat.App;
+using AndroidX.CardView.Widget;
+using AndroidX.Core.View;
+using AnimeDl;
+using AnimeDl.Anilist;
+using AnimeDl.Aniskip;
+using AnimeDl.Models;
+using AnimeDl.Scrapers;
+using AnimeDl.Scrapers.Events;
+using AniStream.Adapters;
+using AniStream.Fragments;
+using AniStream.Settings;
+using AniStream.Utils;
+using AniStream.Utils.Extensions;
+using AniStream.Utils.Listeners;
+using Bumptech.Glide;
 using Com.Google.Android.Exoplayer2;
+using Com.Google.Android.Exoplayer2.Audio;
+using Com.Google.Android.Exoplayer2.Ext.Okhttp;
 using Com.Google.Android.Exoplayer2.Extractor;
+using Com.Google.Android.Exoplayer2.Metadata;
 using Com.Google.Android.Exoplayer2.Source;
 using Com.Google.Android.Exoplayer2.Source.Hls;
+using Com.Google.Android.Exoplayer2.Text;
 using Com.Google.Android.Exoplayer2.Trackselection;
 using Com.Google.Android.Exoplayer2.UI;
 using Com.Google.Android.Exoplayer2.Upstream;
-using Com.Google.Android.Exoplayer2.Util;
-using Newtonsoft.Json;
-using AniStream.Utils;
-using AnimeDl;
-using AniStream.BroadcastReceivers;
-using AndroidX.AppCompat.App;
-using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
-using AnimeDl.Models;
-using AniStream.Fragments;
-using AnimeDl.Utils.Extensions;
 using Com.Google.Android.Exoplayer2.Upstream.Cache;
-using static Com.Google.Android.Exoplayer2.IPlayer;
-using Square.OkHttp3;
-using System.Threading.Tasks;
+using Com.Google.Android.Exoplayer2.Util;
 using Com.Google.Android.Exoplayer2.Video;
-using Com.Google.Android.Exoplayer2.Ext.Okhttp;
-using Android.Graphics.Drawables;
-using Bumptech.Glide;
-using AndroidX.CardView.Widget;
-using AniStream.Settings;
-using Google.Android.Material.Card;
-using AndroidX.Core.View;
-using Android.Util;
-using AnimeDl.Anilist;
-using AnimeDl.Scrapers;
-using Handler = Android.OS.Handler;
-using AnimeDl.Aniskip;
-using AniStream.Utils.Extensions;
-using Configuration = Android.Content.Res.Configuration;
-using AniStream.Models;
-using AnimeDl.Scrapers.Events;
-using AniStream.Adapters;
-using Firebase.Crashlytics;
 using Firebase;
-using AniStream.Utils.Listeners;
-using Android.Animation;
-using Android.Views.Animations;
-using AndroidX.Core.Animation;
+using Firebase.Crashlytics;
+using Google.Android.Material.Card;
+using Newtonsoft.Json;
+using Square.OkHttp3;
+using static Com.Google.Android.Exoplayer2.IPlayer;
+using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
+using Configuration = Android.Content.Res.Configuration;
+using Handler = Android.OS.Handler;
 
 namespace AniStream;
 
 [Activity(Label = "VideoActivity", Theme = "@style/VideoPlayerTheme",
     ResizeableActivity = true, LaunchMode = LaunchMode.SingleTask, SupportsPictureInPicture = true,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.SmallestScreenSize | ConfigChanges.ScreenLayout | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden)]
-public class VideoActivity : AppCompatActivity, IPlayer.IListener,
-    INetworkStateReceiverListener, ITrackNameProvider
+public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNameProvider
 {
     private readonly AnimeClient _client = new(WeebUtils.AnimeSite);
 
@@ -1232,12 +1230,45 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
     {
     }
 
-    public void NetworkAvailable()
+    public void OnAudioAttributesChanged(AudioAttributes? audioAttributes)
     {
     }
 
-    public void NetworkUnavailable()
+    public void OnCues(CueGroup? cueGroup)
     {
+    }
+
+    public void OnDeviceInfoChanged(DeviceInfo? deviceInfo)
+    {
+    }
+
+    public void OnMaxSeekToPreviousPositionChanged(long maxSeekToPreviousPositionMs)
+    {
+    }
+
+    public void OnMetadata(Metadata? metadata)
+    {
+    }
+
+    public void OnPlaylistMetadataChanged(MediaMetadata? mediaMetadata)
+    {
+    }
+
+    public void OnSeekBackIncrementChanged(long seekBackIncrementMs)
+    {
+    }
+
+    public void OnSeekForwardIncrementChanged(long seekForwardIncrementMs)
+    {
+    }
+
+    public void OnSkipSilenceEnabledChanged(bool skipSilenceEnabled)
+    {
+    }
+
+    public void OnVolumeChanged(float volume)
+    {
+        throw new NotImplementedException();
     }
 
     public string? GetTrackName(Format? format)
@@ -1304,8 +1335,9 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener,
                 EnterPictureInPictureMode();
             }
         }
-        catch (Exception e)
+        catch
         {
+            // Ignore
         }
     }
 
