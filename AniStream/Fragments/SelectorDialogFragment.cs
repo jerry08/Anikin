@@ -195,7 +195,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
                         }
 
                         var notLoadedServer = notLoadedServers[totalServersLoaded - 1];
-                        var item = Cache[_episode.Link].Where(x => x.VideoServer == notLoadedServer).FirstOrDefault()!;
+                        var item = Cache[_episode.Link].Find(x => x.VideoServer == notLoadedServer)!;
 
                         if (e.Videos.Count == 0)
                         {

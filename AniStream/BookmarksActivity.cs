@@ -133,8 +133,7 @@ public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
 
         var animes = await BookmarkManager.GetBookmarks();
 
-        if (recyclerView is not null
-            && recyclerView.GetAdapter() is AnimeRecyclerAdapter adapter)
+        if (recyclerView?.GetAdapter() is AnimeRecyclerAdapter adapter)
         {
             if (animes.Count != adapter.Animes.Count)
             {

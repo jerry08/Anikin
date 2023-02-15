@@ -143,9 +143,9 @@ public class EpisodesActivity : AppCompatActivity
         bookmarkbtn.Click += async (s, e) =>
         {
             if (IsBooked)
-                _bookmarkManager.RemoveBookmark(Anime);
+                await _bookmarkManager.RemoveBookmarkAsync(Anime);
             else
-                _bookmarkManager.SaveBookmark(Anime);
+                await _bookmarkManager.SaveBookmarkAsync(Anime);
 
             IsBooked = await _bookmarkManager.IsBookmarked(Anime);
 

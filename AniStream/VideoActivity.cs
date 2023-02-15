@@ -68,8 +68,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
     private Episode Episode = default!;
     private Video Video = default!;
 
-    //private NetworkStateReceiver NetworkStateReceiver = default!;
-
     private IExoPlayer exoPlayer = default!;
     private StyledPlayerView playerView = default!;
     //private PlayerView playerView = default!;
@@ -125,7 +123,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
         FirebaseApp.InitializeApp(this);
         FirebaseCrashlytics.Instance.SetCrashlyticsCollectionEnabled(true);
 
-        //Enable unhandled exceptions for testing
+        // Enable unhandled exceptions for testing
         AndroidEnvironment.UnhandledExceptionRaiser += (s, e) =>
         {
         };
@@ -155,13 +153,9 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
 
         var isBooked = await bookmarkManager.IsBookmarked(Anime);
         if (isBooked)
-            bookmarkManager.RemoveBookmark(Anime);
+            await bookmarkManager.RemoveBookmarkAsync(Anime);
 
-        bookmarkManager.SaveBookmark(Anime, true);
-
-        //NetworkStateReceiver = new NetworkStateReceiver();
-        //NetworkStateReceiver.AddListener(this);
-        //RegisterReceiver(NetworkStateReceiver, new IntentFilter(Android.Net.ConnectivityManager.ConnectivityAction));
+        await bookmarkManager.SaveBookmarkAsync(Anime, true);
 
         animeTitle = FindViewById<TextView>(Resource.Id.exo_anime_title)!;
         episodeTitle = FindViewById<TextView>(Resource.Id.exo_ep_sel)!;
@@ -658,8 +652,8 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
         RunOnUiThread(() =>
         {
             var selectedVideoServer = e.VideoServers
-                .Where(x => x.Name?.ToLower().Contains("streamsb") == true
-                || x.Name?.ToLower().Contains("vidstream") == true).FirstOrDefault();
+                .Find(x => x.Name?.ToLower().Contains("streamsb") == true
+                || x.Name?.ToLower().Contains("vidstream") == true);
 
             if (e.VideoServers.Count > 0)
             {
@@ -675,8 +669,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
 
     public Episode? GetPreviousEpisode()
     {
-        var currentEpisode = EpisodesActivity.Episodes.Where(x => x.Id == Episode.Id)
-            .FirstOrDefault();
+        var currentEpisode = EpisodesActivity.Episodes.Find(x => x.Id == Episode.Id);
         if (currentEpisode is null)
             return null;
 
@@ -728,8 +721,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
 
     public Episode? GetNextEpisode()
     {
-        var currentEpisode = EpisodesActivity.Episodes.Where(x => x.Id == Episode.Id)
-            .FirstOrDefault();
+        var currentEpisode = EpisodesActivity.Episodes.Find(x => x.Id == Episode.Id);
         if (currentEpisode is null)
             return null;
 
@@ -775,14 +767,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
 
         _client.GetVideoServers(Episode.Id);
         SetNextAndPrev();
-    }
-
-    protected override void OnDestroy()
-    {
-        base.OnDestroy();
-
-        //NetworkStateReceiver.RemoveListener(this);
-        //UnregisterReceiver(NetworkStateReceiver);
     }
 
     public override void OnBackPressed()
@@ -868,8 +852,8 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
     private void UpdateTimeStamp()
     {
         var playerCurrentTime = exoPlayer.CurrentPosition / 1000;
-        CurrentTimeStamp = SkippedTimeStamps.Where(x => x.Interval.StartTime <= playerCurrentTime
-            && playerCurrentTime < x.Interval.EndTime - 1).FirstOrDefault();
+        CurrentTimeStamp = SkippedTimeStamps.Find(x => x.Interval.StartTime <= playerCurrentTime
+            && playerCurrentTime < x.Interval.EndTime - 1);
 
         if (CurrentTimeStamp is not null)
         {
@@ -1218,7 +1202,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
         //errorText.Text = "Video not found.";
         //errorText.Visibility = ViewStates.Visible;
 
-        if (error is not null && error.Message is not null)
+        if (error?.Message is not null)
         {
             this.ShowToast("Failed to play video");
 
@@ -1275,10 +1259,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
     {
         if (format?.FrameRate > 0f)
         {
-            if (format.FrameRate > 0f)
-                return $"{format.Height}p";
-            else
-                return $"{format.Height}p (fps : N/A)";
+            return format.FrameRate > 0f ? $"{format.Height}p" : $"{format.Height}p (fps : N/A)";
         }
 
         return null;

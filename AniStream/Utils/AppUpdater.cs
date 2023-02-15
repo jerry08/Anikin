@@ -73,9 +73,6 @@ public class AppUpdater
 
     public async Task<string> RenderReleaseNotes()
     {
-        if (LatestRelease is null)
-            throw new InvalidOperationException();
-
-        return await _github.Markdown.RenderRawMarkdown(LatestRelease.Body);
+        return LatestRelease is null ? throw new InvalidOperationException() : await _github.Markdown.RenderRawMarkdown(LatestRelease.Body);
     }
 }

@@ -20,13 +20,9 @@ public class BookmarkManager
     {
         var list = await GetBookmarks();
 
-        var animeBookmarked = list.Where(x => x.Id == anime.Id)
-            .FirstOrDefault();
+        var animeBookmarked = list.Find(x => x.Id == anime.Id);
 
-        if (animeBookmarked is not null)
-            return true;
-
-        return false;
+        return animeBookmarked is not null;
     }
 
     public async Task<List<Anime>> GetBookmarks()
@@ -44,7 +40,7 @@ public class BookmarkManager
         return animes;
     }
 
-    public async void SaveBookmark(Anime anime, bool addToTop = false)
+    public async Task SaveBookmarkAsync(Anime anime, bool addToTop = false)
     {
         var animes = await GetBookmarks();
         if (addToTop)
@@ -54,22 +50,21 @@ public class BookmarkManager
 
         var json = JsonConvert.SerializeObject(animes);
 
-        SecureStorage.SetAsync(_name, json).Wait();
+        await SecureStorage.SetAsync(_name, json);
     }
 
-    public async void RemoveBookmark(Anime anime)
+    public async Task RemoveBookmarkAsync(Anime anime)
     {
         var animes = await GetBookmarks();
 
-        var animeToRemove = animes.Where(x => x.Id == anime.Id)
-            .FirstOrDefault();
+        var animeToRemove = animes.Find(x => x.Id == anime.Id);
 
         if (animeToRemove is not null)
             animes.Remove(animeToRemove);
 
         var json = JsonConvert.SerializeObject(animes);
 
-        SecureStorage.SetAsync(_name, json).Wait();
+        await SecureStorage.SetAsync(_name, json);
     }
 
     public void RemoveAllBookmarks()

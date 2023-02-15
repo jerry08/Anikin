@@ -73,7 +73,7 @@ public class AnimeRecyclerAdapter : RecyclerView.Adapter
 
         var anime = Animes[animeViewholder.BindingAdapterPosition];
 
-        if (anime != null && anime.Id == "-1" && AnimeFragment != null)
+        if (anime?.Id == "-1" && AnimeFragment != null)
         {
             animeViewholder.loadMoreProgressBar.Visibility = ViewStates.Visible;
             //animeViewholder.episodeno.Visibility = ViewStates.Visible;

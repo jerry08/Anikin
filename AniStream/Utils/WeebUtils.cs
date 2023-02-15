@@ -138,7 +138,7 @@ public static class WeebUtils
         else
         {
             var nwInfo = manager.ActiveNetworkInfo;
-            return nwInfo is not null && nwInfo.IsConnected;
+            return nwInfo?.IsConnected == true;
         }
 
         //bool hasConnectedWifi = false;
