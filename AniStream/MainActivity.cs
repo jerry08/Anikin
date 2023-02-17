@@ -71,7 +71,7 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
         viewPager = FindViewById<ViewPager>(Resource.Id.viewPager)!;
         appBarLayout = FindViewById<AppBarLayout>(Resource.Id.appbar)!;
 
-        if (!WeebUtils.HasNetworkConnection(this))
+        if (!WeebUtils.IsOnline())
         {
             var linearLayout1 = FindViewById<Android.Widget.LinearLayout>(Resource.Id.notvisiblelinearlayout)!;
             linearLayout1.Visibility = ViewStates.Visible;
