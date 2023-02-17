@@ -1,10 +1,18 @@
-﻿using Android.App;
-using Android.Views;
-using Android.Widget;
+﻿using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using Android.App;
 using Android.Content;
+using Android.Graphics;
+using Android.Media;
+using Android.OS;
+using Android.Provider;
+using Android.Views;
+using Android.Webkit;
+using Android.Widget;
 using AndroidX.Core.View;
 using Google.Android.Material.Snackbar;
-using Android.Graphics;
+using Path = System.IO.Path;
 
 namespace AniStream.Utils.Extensions;
 
@@ -93,5 +101,97 @@ public static class ActivityExtensions
             return;
 
         activity.Window!.AddFlags(WindowManagerFlags.Fullscreen);
+    }
+
+    public static async Task CopyFileAsync(
+        this Context context,
+        string filePath,
+        string newFilePath,
+        CancellationToken cancellationToken = default)
+    {
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
+        {
+            await CopyFileUsingMediaStoreAsync(context, filePath, newFilePath, cancellationToken);
+        }
+        else
+        {
+            File.Copy(filePath, newFilePath, true);
+
+            var ext = Path.GetExtension(newFilePath).Replace(".", "");
+            var mime = MimeTypeMap.Singleton!;
+            var mimeType = mime.GetMimeTypeFromExtension(ext);
+
+            if (!string.IsNullOrEmpty(mimeType))
+            {
+                MediaScannerConnection.ScanFile(
+                    context,
+                    new[] { newFilePath },
+                    new[] { mimeType },
+                    null
+                );
+            }
+        }
+    }
+
+    private static async Task CopyFileUsingMediaStoreAsync(
+        this Context context,
+        string filePath,
+        string newFilePath,
+        CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(filePath))
+            return;
+
+        var ext = Path.GetExtension(newFilePath).Replace(".", "");
+        //var dir = Directory.GetParent(newFilePath)?.FullName;
+        var fileName = Path.GetFileNameWithoutExtension(newFilePath);
+
+        var mime = MimeTypeMap.Singleton!;
+        var mimeType = mime.GetMimeTypeFromExtension(ext);
+
+        if (string.IsNullOrEmpty(mimeType))
+            return;
+
+        var fileInfo = new FileInfo(filePath);
+
+        var contentValues = new ContentValues();
+        //contentValues.Put(MediaStore.IMediaColumns.DisplayName, newFilePath);
+        contentValues.Put(MediaStore.IMediaColumns.DisplayName, fileName);
+        contentValues.Put(MediaStore.IMediaColumns.MimeType, mimeType);
+        contentValues.Put(MediaStore.IMediaColumns.RelativePath, Android.OS.Environment.DirectoryDownloads);
+        //contentValues.Put(MediaStore.IMediaColumns.RelativePath, dir);
+        contentValues.Put(MediaStore.IMediaColumns.Size, fileInfo.Length);
+
+        if (mimeType.StartsWith("image") || mimeType.StartsWith("video"))
+        {
+            //Set media duration
+            var retriever = new MediaMetadataRetriever();
+            retriever.SetDataSource(context, Android.Net.Uri.FromFile(new Java.IO.File(filePath)));
+            var time = retriever.ExtractMetadata(MetadataKey.Duration) ?? string.Empty;
+            var timeInMillisec = long.Parse(time);
+            contentValues.Put(MediaStore.IMediaColumns.Duration, timeInMillisec);
+        }
+
+        var resolver = context.ContentResolver;
+        var externalContentUri = MediaStore.Files.GetContentUri("external")!;
+
+        //var uri = resolver?.Insert(MediaStore.Downloads.ExternalContentUri, contentValues);
+        var uri = resolver?.Insert(externalContentUri, contentValues);
+        if (uri is not null)
+        {
+            var defaultBufferSize = 4096;
+
+            using var input = File.OpenRead(filePath);
+            var output = resolver?.OpenOutputStream(uri);
+            if (output is not null)
+                await input.CopyToAsync(output, defaultBufferSize, cancellationToken);
+        }
+
+        MediaScannerConnection.ScanFile(
+            context,
+            new[] { newFilePath },
+            new[] { mimeType },
+            null
+        );
     }
 }

@@ -9,6 +9,7 @@ using AndroidX.Core.App;
 using AndroidX.Core.Content;
 using AnimeDl;
 using AniStream.Services;
+using AniStream.Utils.Extensions;
 using DotNetTools.JGrabber.Grabbed;
 using Laerdal.FFmpeg.Android;
 using Microsoft.Maui.Storage;
@@ -79,7 +80,7 @@ public class HlsDownloader
         var returnCode = FFmpeg.Execute(cmd);
         if (returnCode == Config.ReturnCodeSuccess)
         {
-            await _service.CopyFileUsingMediaStore(newFilePath, saveFilePath, cancellationToken);
+            await _service.CopyFileAsync(newFilePath, saveFilePath, cancellationToken);
 
             var ext = System.IO.Path.GetExtension(saveFilePath).Replace(".", "");
             var type = MimeTypeMap.Singleton!.GetMimeTypeFromExtension(ext)!;
