@@ -8,7 +8,7 @@
     <!--<WarningsAsErrors>nullable</WarningsAsErrors>
     <ImplicitUsings>enable</ImplicitUsings>-->
     <ApplicationId>com.oneb.anistream</ApplicationId>
-    <ApplicationVersion>25</ApplicationVersion>
+    <ApplicationVersion>26</ApplicationVersion>
     <ApplicationDisplayVersion>1.9.5</ApplicationDisplayVersion>
     <AndroidSigningKeyStore>DrMedia.keystore</AndroidSigningKeyStore>
   </PropertyGroup>
