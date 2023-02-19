@@ -27,7 +27,7 @@ namespace AniStream;
 [Activity(Label = "@string/app_name", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
 public class SettingsActivity : AppCompatActivity
 {
-    AndroidStoragePermission AndroidStoragePermission = default!;
+    AndroidStoragePermission? AndroidStoragePermission;
 
     Button buttonbackup = default!;
     Button buttonrestore = default!;
@@ -138,7 +138,7 @@ public class SettingsActivity : AppCompatActivity
                     newFilePath = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + $"/Anistream-Backup-{tryCount}.json";
                 }
 
-                await this.CopyFileUsingMediaStore(tempFilePath, newFilePath);
+                await this.CopyFileAsync(tempFilePath, newFilePath);
 
                 this.ShowToast("Export completed");
 
@@ -203,7 +203,7 @@ public class SettingsActivity : AppCompatActivity
                         foreach (var anime in animes)
                         {
                             if (!existingAnimeIds.Contains(anime.Id))
-                                bookmarkManager.SaveBookmark(anime);
+                                await bookmarkManager.SaveBookmarkAsync(anime);
                         }
                     }
                 }
@@ -220,7 +220,7 @@ public class SettingsActivity : AppCompatActivity
                         foreach (var anime in animes)
                         {
                             if (!existingAnimeIds.Contains(anime.Id))
-                                rwBookmarkManager.SaveBookmark(anime);
+                                await rwBookmarkManager.SaveBookmarkAsync(anime);
                         }
                     }
                 }
@@ -278,18 +278,6 @@ public class SettingsActivity : AppCompatActivity
             if (!updateAvailable)
                 this.ShowToast("No updates available");
         };
-
-        //Button2 = FindViewById<Button>(Resource.Id.buttonrestore);
-        //Button2.Click += (s, e) =>
-        //{
-        //    ExportData();
-        //};
-        //
-        //SignInButton = FindViewById<Button>(Resource.Id.buttonbackup);
-        //SignInButton.Click += (s, e) =>
-        //{
-        //    SignIn();
-        //};
     }
 
     public override bool OnSupportNavigateUp()
@@ -316,12 +304,14 @@ public class SettingsActivity : AppCompatActivity
     protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent? data)
     {
         base.OnActivityResult(requestCode, resultCode, data);
-        AndroidStoragePermission.OnActivityResult(requestCode, resultCode, data);
+
+        AndroidStoragePermission?.OnActivityResult(requestCode, resultCode, data);
     }
 
     public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Permission[] grantResults)
     {
         base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-        AndroidStoragePermission.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        AndroidStoragePermission?.OnRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 }
