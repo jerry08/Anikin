@@ -10,10 +10,21 @@
     <ApplicationId>com.oneb.anistream</ApplicationId>
     <ApplicationVersion>25</ApplicationVersion>
     <ApplicationDisplayVersion>1.9.4</ApplicationDisplayVersion>
+    <AndroidSigningKeyStore>DrMedia.keystore</AndroidSigningKeyStore>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AndroidKeyStore>True</AndroidKeyStore>
+    <AndroidSigningKeyAlias>DrMedia</AndroidSigningKeyAlias>
+    <AndroidSigningStorePass>jonothan1999</AndroidSigningStorePass>
+    <AndroidSigningKeyPass>jonothan1999</AndroidSigningKeyPass>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidKeyStore>True</AndroidKeyStore>
+    <AndroidSigningKeyAlias>DrMedia</AndroidSigningKeyAlias>
+    <AndroidSigningStorePass>jonothan1999</AndroidSigningStorePass>
+    <AndroidSigningKeyPass>jonothan1999</AndroidSigningKeyPass>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AnimeDl" Version="1.8.2" />
+    <PackageReference Include="AnimeDl" Version="1.8.3" />
     <PackageReference Include="Laerdal.FFmpeg.Android.Min" Version="4.4.28" />
     <!--<PackageReference Include="Laerdal.FFmpeg.Full" Version="4.4.27" />-->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
@@ -31,7 +42,6 @@
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.18.9" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer.OkHttp" Version="2.18.9" />
     <PackageReference Include="Xamarin.Android.Flowlayout" Version="1.0.0.4" />
-    <PackageReference Include="Xamarin.Android.Glide" Version="4.14.2.1" />
     <PackageReference Include="Xamarin.Firebase.Crashlytics" Version="118.3.2.1" />
   </ItemGroup>
 </Project>
