@@ -15,15 +15,15 @@
       <item name="white">#FFF</item>
     </style>
 
-  <style name="VideoPlayerTheme" parent="Theme.Material3.Light.NoActionBar">
-    <item name="android:navigationBarColor">@color/colorPrimary</item>
-    <item name="colorControlHighlight">@color/colorAccent</item>
+    <style name="VideoPlayerTheme" parent="Theme.Material3.Light.NoActionBar">
+      <item name="android:navigationBarColor">@color/colorPrimary</item>
+      <item name="colorControlHighlight">@color/colorAccent</item>
 
-    <item name="colorPrimary">@color/white</item>
-    <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-    <item name="colorAccent">@color/colorAccent</item>
-    <item name="white">#FFF</item>
-  </style>
+      <item name="colorPrimary">@color/white</item>
+      <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+      <item name="colorAccent">@color/colorAccent</item>
+      <item name="white">#FFF</item>
+    </style>
 
     <style name="AppTheme.NoActionBar">
       <item name="windowActionBar">false</item>
@@ -217,4 +217,12 @@
     </style>
 
     <style name="BottomNavBar" parent="Widget.Material3.BottomNavigationView.ActiveIndicator"/>
+
+    <style name="scrollbar_style">
+      <item name="android:scrollbarAlwaysDrawVerticalTrack">true</item>
+      <item name="android:scrollbars">vertical</item>
+      <item name="android:fadeScrollbars">true</item>
+      <item name="android:scrollbarThumbVertical">@drawable/thumb_shape</item>
+      <item name="android:scrollbarTrackVertical">@drawable/scrollbar_track</item>
+    </style>
 </resources>
