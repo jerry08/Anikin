@@ -15,8 +15,7 @@
             android:id="@+id/act_recyclerview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-
-            app:layout_behavior="@string/appbar_scrolling_view_behavior"></androidx.recyclerview.widget.RecyclerView>
+            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <ProgressBar
