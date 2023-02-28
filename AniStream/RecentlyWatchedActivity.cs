@@ -24,7 +24,7 @@ public class RecentlyWatchedActivity : AndroidX.AppCompat.App.AppCompatActivity
     RecyclerView recyclerView = default!;
     GridLayoutManager gridLayoutManager = default!;
 
-    BookmarkManager BookmarkManager = default!;
+    private readonly BookmarkManager _bookmarkManager = new("recently_watched");
 
     protected override async void OnCreate(Bundle savedInstanceState)
     {
@@ -42,9 +42,7 @@ public class RecentlyWatchedActivity : AndroidX.AppCompat.App.AppCompatActivity
         recyclerView.SetLayoutManager(gridLayoutManager);
         recyclerView.Visibility = ViewStates.Visible;
 
-        BookmarkManager = new BookmarkManager("recently_watched");
-
-        animes = await BookmarkManager.GetBookmarks();
+        animes = await _bookmarkManager.GetBookmarks();
 
         var adapter = new AnimeRecyclerAdapter(this, animes);
 
@@ -107,9 +105,9 @@ public class RecentlyWatchedActivity : AndroidX.AppCompat.App.AppCompatActivity
         alert.SetMessage("Are you sure you want to clear all?");
         alert.SetPositiveButton("Yes", async (s, e) =>
         {
-            BookmarkManager.RemoveAllBookmarks();
+            await _bookmarkManager.RemoveAllBookmarksAsync();
 
-            var animes = await BookmarkManager.GetBookmarks();
+            var animes = await _bookmarkManager.GetBookmarks();
 
             var mDataAdapter = new AnimeRecyclerAdapter(this, animes);
 
@@ -131,7 +129,7 @@ public class RecentlyWatchedActivity : AndroidX.AppCompat.App.AppCompatActivity
     {
         base.OnRestart();
 
-        var animes = await BookmarkManager.GetBookmarks();
+        var animes = await _bookmarkManager.GetBookmarks();
 
         if (recyclerView?.GetAdapter() is AnimeRecyclerAdapter adapter)
         {

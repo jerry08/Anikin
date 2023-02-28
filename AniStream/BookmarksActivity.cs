@@ -17,14 +17,14 @@ namespace AniStream;
 [Activity(Label = "@string/app_name", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
 public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
 {
-    List<Anime> animes = new();
-    Android.Widget.ProgressBar ProgressBar = default!;
-    SearchView SearchView = default!;
+    private readonly BookmarkManager _bookmarkManager = new("bookmarks");
 
-    RecyclerView recyclerView = default!;
-    GridLayoutManager gridLayoutManager = default!;
+    private List<Anime> animes = new();
+    private Android.Widget.ProgressBar ProgressBar = default!;
+    private SearchView SearchView = default!;
 
-    BookmarkManager BookmarkManager = default!;
+    private RecyclerView recyclerView = default!;
+    private GridLayoutManager gridLayoutManager = default!;
 
     protected override async void OnCreate(Bundle? savedInstanceState)
     {
@@ -42,9 +42,7 @@ public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
         recyclerView.SetLayoutManager(gridLayoutManager);
         recyclerView.Visibility = ViewStates.Visible;
 
-        BookmarkManager = new BookmarkManager("bookmarks");
-
-        animes = await BookmarkManager.GetBookmarks();
+        animes = await _bookmarkManager.GetBookmarks();
 
         var mDataAdapter = new AnimeRecyclerAdapter(this, animes);
 
@@ -107,9 +105,9 @@ public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
         alert.SetMessage("Are you sure you want to clear all?");
         alert.SetPositiveButton("Yes", async (s, e) =>
         {
-            BookmarkManager.RemoveAllBookmarks();
+            await _bookmarkManager.RemoveAllBookmarksAsync();
 
-            var animes = await BookmarkManager.GetBookmarks();
+            var animes = await _bookmarkManager.GetBookmarks();
 
             var mDataAdapter = new AnimeRecyclerAdapter(this, animes);
 
@@ -131,7 +129,7 @@ public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
     {
         base.OnRestart();
 
-        var animes = await BookmarkManager.GetBookmarks();
+        var animes = await _bookmarkManager.GetBookmarks();
 
         if (recyclerView?.GetAdapter() is AnimeRecyclerAdapter adapter)
         {

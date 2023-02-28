@@ -10,16 +10,22 @@ using Android.Runtime;
 using Android.Widget;
 using AndroidX.AppCompat.App;
 using AnimeDl.Models;
+using AniStream.Services;
+using AniStream.Services.Firebase;
 using AniStream.Settings;
 using AniStream.Utils;
 using AniStream.Utils.Extensions;
+using Firebase.Auth;
+using Firebase.Database;
 using Google.Android.Material.SwitchMaterial;
 using Java.Util;
+using Jerro.Maui.GoogleClient;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Storage;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using Toolbar = AndroidX.AppCompat.Widget.Toolbar;
 
 namespace AniStream;
@@ -35,6 +41,7 @@ public class SettingsActivity : AppCompatActivity
     Button buttongithub = default!;
     Button button_check_for_updates = default!;
     SwitchMaterial dontAskForUpdate = default!;
+    Button button_login = default!;
 
     protected override async void OnCreate(Bundle savedInstanceState)
     {
@@ -67,7 +74,7 @@ public class SettingsActivity : AppCompatActivity
         var dontShow = false;
         var dontShowStr = await SecureStorage.GetAsync($"dont_ask_for_update_{packageInfo.VersionName}");
         if (!string.IsNullOrEmpty(dontShowStr))
-            dontShow = System.Convert.ToBoolean(dontShowStr);
+            dontShow = Convert.ToBoolean(dontShowStr);
 
         dontAskForUpdate.Checked = dontShow;
 
@@ -92,62 +99,8 @@ public class SettingsActivity : AppCompatActivity
                 return;
             }
 
-            var playerSettings = new PlayerSettings();
-            await playerSettings.LoadAsync();
-
-            var animes = await bookmarkManager.GetBookmarks();
-            var rwAnimes = await rwBookmarkManager.GetBookmarks();
-
-            var data = new
-            {
-                animes,
-                rwAnimes,
-                playerSettings
-            };
-
-            var jsonData = JsonConvert.SerializeObject(data);
-
-            //var path = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + "/test.json";
-            //var tryCount = 1;
-            //while (File.Exists(path))
-            //{
-            //    tryCount++;
-            //    path = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + $"/test{tryCount}.json";
-            //}
-
-            //File.Create(path);
-            //File.WriteAllText(path, jsonData);
-
-            var tempFilePath = System.IO.Path.Combine(
-                FileSystem.CacheDirectory,
-                $"{DateTime.Now.Ticks}.json"
-            );
-
-            try
-            {
-                using (var writer = File.CreateText(tempFilePath))
-                {
-                    await writer.WriteLineAsync(jsonData);
-                }
-
-                var newFilePath = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + "/Anistream-Backup-1.json";
-                var tryCount = 1;
-                while (File.Exists(newFilePath))
-                {
-                    tryCount++;
-                    newFilePath = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + $"/Anistream-Backup-{tryCount}.json";
-                }
-
-                await this.CopyFileAsync(tempFilePath, newFilePath);
-
-                this.ShowToast("Export completed");
-
-                File.Delete(tempFilePath);
-            }
-            catch
-            {
-                this.ShowToast("Export failed");
-            }
+            var dataService = new DataService(this);
+            await dataService.BackupAsync();
         };
 
         buttonrestore.Click += async (s, e) =>
@@ -185,76 +138,8 @@ public class SettingsActivity : AppCompatActivity
                 var stream = await result.OpenReadAsync();
                 var json = await stream.ToStringAsync();
 
-                var data = JObject.Parse(json);
-
-                var bookmarkedAnimesJson = data["animes"]?.ToString();
-                var rwAnimesJson = data["rwAnimes"]?.ToString();
-                var playerSettingsJson = data["playerSettings"]?.ToString();
-
-                if (!string.IsNullOrEmpty(bookmarkedAnimesJson))
-                {
-                    var animes = JsonConvert.DeserializeObject<List<Anime>?>(bookmarkedAnimesJson);
-
-                    var existingAnimeIds = (await bookmarkManager.GetBookmarks())
-                        .Select(x => x.Id);
-
-                    if (animes is not null)
-                    {
-                        foreach (var anime in animes)
-                        {
-                            if (!existingAnimeIds.Contains(anime.Id))
-                                await bookmarkManager.SaveBookmarkAsync(anime);
-                        }
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(rwAnimesJson))
-                {
-                    var animes = JsonConvert.DeserializeObject<List<Anime>?>(rwAnimesJson);
-
-                    var existingAnimeIds = (await rwBookmarkManager.GetBookmarks())
-                        .Select(x => x.Id);
-
-                    if (animes is not null)
-                    {
-                        foreach (var anime in animes)
-                        {
-                            if (!existingAnimeIds.Contains(anime.Id))
-                                await rwBookmarkManager.SaveBookmarkAsync(anime);
-                        }
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(playerSettingsJson))
-                {
-                    var playerSettings = JsonConvert.DeserializeObject<PlayerSettings?>(playerSettingsJson);
-                    if (playerSettings is not null)
-                    {
-                        var existingPlayerSettings = new PlayerSettings();
-                        await existingPlayerSettings.LoadAsync();
-
-                        foreach (var watchedEpisode in existingPlayerSettings.WatchedEpisodes)
-                        {
-                            if (!playerSettings.WatchedEpisodes.ContainsKey(watchedEpisode.Key))
-                            {
-                                playerSettings.WatchedEpisodes.Add(watchedEpisode.Key, watchedEpisode.Value);
-                            }
-                            else
-                            {
-                                // Update the imported watched progress if it is less than the existing progress
-                                if (playerSettings.WatchedEpisodes[watchedEpisode.Key].WatchedPercentage <
-                                    watchedEpisode.Value.WatchedPercentage)
-                                {
-                                    playerSettings.WatchedEpisodes[watchedEpisode.Key] = watchedEpisode.Value;
-                                }
-                            }
-                        }
-
-                        await playerSettings.SaveAsync();
-                    }
-                }
-
-                this.ShowToast("Restore completed");
+                var dataService = new DataService(this);
+                await dataService.ImportAsync(json);
             }
             catch
             {
@@ -278,6 +163,97 @@ public class SettingsActivity : AppCompatActivity
             if (!updateAvailable)
                 this.ShowToast("No updates available");
         };
+
+        GoogleClientManager.Initialize(
+            this,
+            null,
+            "1018117642382-c6avui7h23fdfd4rgc20mo70bn4rljob.apps.googleusercontent.com"
+        );
+
+        button_login = FindViewById<Button>(Resource.Id.button_login)!;
+        button_login.Click += (s, e) =>
+        {
+            if (FirebaseAuth.Instance.CurrentUser is null)
+                SignInWithGoogle();
+            else
+                Logout();
+        };
+
+        if (FirebaseAuth.Instance.CurrentUser is null)
+            button_login.Text = "Sign in with Google";
+        else
+            button_login.Text = "Log out";
+    }
+
+    private void Logout()
+    {
+        var alert = new AlertDialog.Builder(this, Resource.Style.DialogTheme);
+        alert.SetMessage($"Are you sure you want to log out of {FirebaseAuth.Instance.CurrentUser.Email}?");
+        alert.SetPositiveButton("Yes", (s, e) =>
+        {
+            FirebaseAuth.Instance.SignOut();
+            CrossGoogleClient.Current.Logout();
+
+            this.ShowToast("Signed out");
+
+            button_login.Text = "Sign in with Google";
+        });
+
+        alert.SetNegativeButton("Cancel", (s, e) => { });
+
+        alert.SetCancelable(false);
+        var dialog = alert.Create();
+        dialog.Show();
+    }
+
+    private async void SignInWithGoogle()
+    {
+        var googleClientManager = CrossGoogleClient.Current;
+
+        googleClientManager.OnLogin -= GoogleClientManager_OnLogin;
+        googleClientManager.OnLogin += GoogleClientManager_OnLogin;
+
+        try
+        {
+            await googleClientManager.LoginAsync();
+
+            // Signed in
+
+            // Check if user is signed in (non-null) and update UI accordingly.
+            var currentUser = FirebaseAuth.Instance.CurrentUser;
+            if (currentUser is null)
+            {
+                // Sign in
+                var firebaseCredential = GoogleAuthProvider.GetCredential(
+                    googleClientManager.CurrentUser.IdToken,
+                    null
+                );
+                var result = await FirebaseAuth.Instance.SignInWithCredentialAsync(firebaseCredential);
+
+                if (FirebaseAuth.Instance.CurrentUser is null)
+                {
+                    this.ShowToast("Failed to sign in");
+                }
+                else
+                {
+                    this.ShowToast("Signed in");
+
+                    // Resore backup from firebase database
+                    var dataService = new DataService(this);
+                    await dataService.RestoreCloudBackupAsync();
+                }
+            }
+        }
+        catch
+        {
+            // Sign in failed
+            this.ShowToast("Failed to sign in");
+        }
+    }
+
+    private async void GoogleClientManager_OnLogin(object? sender, GoogleClientResultEventArgs<GoogleUser> e)
+    {
+        
     }
 
     public override bool OnSupportNavigateUp()
@@ -306,6 +282,7 @@ public class SettingsActivity : AppCompatActivity
         base.OnActivityResult(requestCode, resultCode, data);
 
         AndroidStoragePermission?.OnActivityResult(requestCode, resultCode, data);
+        GoogleClientManager.OnAuthCompleted(requestCode, resultCode, data);
     }
 
     public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Permission[] grantResults)

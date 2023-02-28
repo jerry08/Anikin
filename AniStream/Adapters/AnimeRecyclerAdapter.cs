@@ -35,7 +35,9 @@ public class AnimeRecyclerAdapter : RecyclerView.Adapter
 
     private AnimeFragment? AnimeFragment;
 
-    public AnimeRecyclerAdapter(Activity activity, List<Anime> animes,
+    public AnimeRecyclerAdapter(
+        Activity activity,
+        List<Anime> animes,
         AnimeFragment? animeFragment = null)
     {
         Animes = animes;
