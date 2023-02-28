@@ -59,7 +59,8 @@
     <!--Favourite-->
     <color name="favourite_header">@color/home_header</color>
     <color name="favourite_back">@color/recycler_anime_title</color>
-    <color name="favourite_icon">#c9485b</color>
+    <!--<color name="favourite_icon">#c9485b</color>-->
+    <color name="favourite_icon">#fff</color>
 
     <!--Anime Info Fragment-->
     <color name="info_back">@color/favourite_back</color>
