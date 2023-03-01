@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using AniStream.Models;
-using AniStream.Services.Firebase;
 using AniStream.Settings.Serialization;
 using Firebase.Auth;
 using Firebase.Database;
@@ -44,10 +43,10 @@ public class PlayerSettings : SettingsManager
     public override async Task SaveAsync()
     {
         await base.SaveAsync();
-        await SaveToCloudAsync();
+        SaveToCloudAsync();
     }
 
-    private async Task SaveToCloudAsync()
+    private async void SaveToCloudAsync()
     {
         // Check if user is signed in (non-null)
         var currentUser = FirebaseAuth.Instance.CurrentUser;

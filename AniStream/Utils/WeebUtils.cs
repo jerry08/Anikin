@@ -1,8 +1,6 @@
 ﻿using System.IO;
 using Android.Content;
 using Android.Graphics;
-using Android.Net;
-using Android.OS;
 using Android.Views;
 using Android.Widget;
 using AnimeDl.Scrapers;
@@ -95,7 +93,7 @@ public static class WeebUtils
 
         if (dialog.Window is not null)
         {
-            //IWindowManager windowManager = this.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
+            //var windowManager = this.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
 
             var layoutParams = new WindowManagerLayoutParams();
             layoutParams.CopyFrom(dialog.Window.Attributes);

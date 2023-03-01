@@ -7,9 +7,9 @@ namespace AniStream.Settings.Serialization;
 /// </summary>
 public static class Serializer
 {
-    private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings
+    private static readonly JsonSerializerSettings JsonSerializerSettings = new()
     {
-        Formatting = Formatting.Indented,
+        //Formatting = Formatting.Indented,
         DefaultValueHandling = DefaultValueHandling.Include,
         ObjectCreationHandling = ObjectCreationHandling.Replace,
         ContractResolver = ContractResolver.Instance

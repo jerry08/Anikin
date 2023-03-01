@@ -12,7 +12,7 @@ namespace AniStream.Adapters;
 //public class ViewPagerAdapter : FragmentPagerAdapter
 public class ViewPagerAdapter : FragmentStatePagerAdapter
 {
-    private readonly List<Fragment> Fragments = new List<Fragment>();
+    private readonly List<Fragment> Fragments = new();
 
     public ViewPagerAdapter(FragmentManager fm) : base(fm)
     {
