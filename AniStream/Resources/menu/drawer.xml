@@ -12,6 +12,10 @@
             android:titleCondensed="Zoro"
             android:title="Zoro"
             app:actionViewClass="android.widget.RadioButton" />
+      <item android:id="@+id/source_animepahe"
+            android:titleCondensed="Anime Pahe"
+            android:title="Anime Pahe"
+            app:actionViewClass="android.widget.RadioButton" />
     </group>
 
     <item

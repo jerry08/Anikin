@@ -72,8 +72,11 @@ public class AnimeFragment : Fragment
         {
             Activity?.RunOnUiThread(() =>
             {
-                if (WeebUtils.AnimeSite == AnimeSites.GogoAnime)
+                if (WeebUtils.AnimeSite == AnimeSites.GogoAnime
+                    || WeebUtils.AnimeSite == AnimeSites.AnimePahe)
+                {
                     Page++;
+                }
 
                 var animes = e.Animes;
 
@@ -84,9 +87,12 @@ public class AnimeFragment : Fragment
 
                     animeRecyclerAdapter.Animes.RemoveAll(x => x.Id == "-1");
 
-                    if (WeebUtils.AnimeSite == AnimeSites.GogoAnime)
-                        if (animes.Count > 0)
-                            animes.Add(new Anime() { Id = "-1" });
+                    if ((WeebUtils.AnimeSite == AnimeSites.GogoAnime
+                        || WeebUtils.AnimeSite == AnimeSites.AnimePahe)
+                        && animes.Count > 0)
+                    {
+                        animes.Add(new Anime() { Id = "-1" });
+                    }
 
                     animeRecyclerAdapter.Animes.AddRange(animes);
                     mRecyclerView.SetItemViewCacheSize(animeRecyclerAdapter.Animes.Count + 5);
@@ -100,8 +106,11 @@ public class AnimeFragment : Fragment
                 }
                 else
                 {
-                    if (WeebUtils.AnimeSite == AnimeSites.GogoAnime)
+                    if (WeebUtils.AnimeSite == AnimeSites.GogoAnime
+                        || WeebUtils.AnimeSite == AnimeSites.AnimePahe)
+                    {
                         animes.Add(new Anime() { Id = "-1" });
+                    }
 
                     //var mDataAdapter = new AnimeRecyclerAdapter(view.Context, animes, this);
                     var mDataAdapter = new AnimeRecyclerAdapter(Activity, animes, this);
