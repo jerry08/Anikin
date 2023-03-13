@@ -192,6 +192,9 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
             case AnimeSites.Zoro:
                 bottomNavigationView.InflateMenu(Resource.Menu.bottommenu4);
                 break;
+            case AnimeSites.AnimePahe:
+                bottomNavigationView.InflateMenu(Resource.Menu.bottommenu5);
+                break;
         }
 
         viewPager.CurrentItem = 0;
@@ -284,10 +287,15 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
         return true;
     }
 
-    private void SetupSources(IMenu menu)
+    private async void SetupSources(IMenu menu)
     {
+        var animeSiteStr = await SecureStorage.GetAsync("AnimeSite");
+        if (!string.IsNullOrEmpty(animeSiteStr))
+            WeebUtils.AnimeSite = (AnimeSites)Convert.ToInt32(animeSiteStr);
+
         var gogoanime = menu.FindItem(Resource.Id.source_gogoanime);
         var zoro = menu.FindItem(Resource.Id.source_zoro);
+        var animepahe = menu.FindItem(Resource.Id.source_animepahe);
 
         switch (WeebUtils.AnimeSite)
         {
@@ -296,6 +304,9 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
                 break;
             case AnimeSites.Zoro:
                 zoro?.SetChecked(true);
+                break;
+            case AnimeSites.AnimePahe:
+                animepahe?.SetChecked(true);
                 break;
         }
     }
@@ -346,6 +357,8 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
             WeebUtils.AnimeSite = AnimeSites.GogoAnime;
         else if (id == Resource.Id.source_zoro)
             WeebUtils.AnimeSite = AnimeSites.Zoro;
+        else if (id == Resource.Id.source_animepahe)
+            WeebUtils.AnimeSite = AnimeSites.AnimePahe;
 
         if (lastAnimeSite != WeebUtils.AnimeSite)
         {
