@@ -170,7 +170,8 @@ public class EpisodesActivity : AppCompatActivity
                 type.Text = e.Anime.Type?.Replace("Type:", "");
                 //animeInfoSummary.Text = e.Anime.Summary?.Replace("Plot Summary:", "");
                 released.Text = e.Anime.Released?.Replace("Released:", "");
-                status.Text = e.Anime.Status?.Replace("Status:", "");
+                //status.Text = e.Anime.Status?.Replace("Status:", "");
+                status.Text = e.Anime.Status?.Replace("Status:", "").Split(new[] { "\n" }, StringSplitOptions.None).FirstOrDefault();
                 //othernames.Text = e.Anime.OtherNames?.Replace("Other name:", "");
 
                 //TextViewExtensions.MakeTextViewResizable(animeInfoSummary, 2, "See More", true);

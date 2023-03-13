@@ -8,8 +8,8 @@
     <!--<WarningsAsErrors>nullable</WarningsAsErrors>
     <ImplicitUsings>enable</ImplicitUsings>-->
     <ApplicationId>com.oneb.anistream</ApplicationId>
-    <ApplicationVersion>27</ApplicationVersion>
-    <ApplicationDisplayVersion>1.9.6</ApplicationDisplayVersion>
+    <ApplicationVersion>28</ApplicationVersion>
+    <ApplicationDisplayVersion>1.9.7</ApplicationDisplayVersion>
     <AndroidSigningKeyStore>DrMedia.keystore</AndroidSigningKeyStore>
   </PropertyGroup>
 
@@ -28,16 +28,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\menu\bottommenu5.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <GoogleServicesJson Include="google-services.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AnimeDl" Version="1.8.4" />
+    <PackageReference Include="AnimeDl" Version="1.8.8" />
     <PackageReference Include="Laerdal.FFmpeg.Android.Min" Version="4.4.28" />
     <!--<PackageReference Include="Laerdal.FFmpeg.Full" Version="4.4.27" />-->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-    <PackageReference Include="Octokit" Version="5.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Octokit" Version="5.0.2" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.18.11" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer.OkHttp" Version="2.18.11" />
