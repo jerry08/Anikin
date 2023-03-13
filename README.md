@@ -43,17 +43,13 @@ AniStream parses website data and filter required info, thus It removes the ads 
 * Add To Favourites
 * Auto Quality for Video Playback
 * Ads Free Video Playback
+* Online syncing of Favourite list & watched progress (requires login)
 
 ## 💻 Install 
 
 | Platform | Download | Status |
 |----------|----------|--------|
 | Android    |[![Download Button](https://img.shields.io/github/v/release/jerry08/AniStream?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](https://github.com/jerry08/AniStream/releases/download/v1.9.6/AniStream-v1.9.6.apk)| ✅ Stable |
-
-### Coming Features
-
-* Online syncing of Favourite list & watched progress (Will require Login)
-* … and many more
 
 ## WANT TO CONTRIBUTE?
 
