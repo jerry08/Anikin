@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
+using Android.Content;
 using Android.Views;
 using Android.Widget;
-using Android.Content;
 using AndroidX.CardView.Widget;
 using AndroidX.RecyclerView.Widget;
-using Newtonsoft.Json;
 using AnimeDl.Models;
-using AniStream.Settings;
 using AniStream.Fragments;
+using AniStream.Settings;
+using Newtonsoft.Json;
 
 namespace AniStream.Adapters;
 

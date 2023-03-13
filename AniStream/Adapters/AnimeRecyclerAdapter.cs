@@ -1,28 +1,17 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 using Android.App;
 using Android.Content;
-using Android.Graphics;
 using Android.Net;
-using Android.OS;
-using Android.Runtime;
 using Android.Views;
 using Android.Views.Animations;
 using Android.Widget;
 using AndroidX.CardView.Widget;
 using AndroidX.RecyclerView.Widget;
+using AnimeDl.Models;
+using AniStream.Fragments;
 using Java.Lang;
 using Newtonsoft.Json;
 using Square.Picasso;
-using AniStream.Fragments;
-using AnimeDl;
-using AnimeDl.Models;
-using Bumptech.Glide.Load.Model;
-using Bumptech.Glide;
-using AniStream.Utils;
-using AnimeDl.Scrapers;
 
 namespace AniStream.Adapters;
 
