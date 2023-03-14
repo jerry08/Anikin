@@ -35,8 +35,8 @@ public class DataService
         var playerSettings = new PlayerSettings();
         await playerSettings.LoadAsync();
 
-        var animes = await _bookmarkManager.GetBookmarks();
-        var rwAnimes = await _rwBookmarkManager.GetBookmarks();
+        var animes = await _bookmarkManager.GetAllBookmarksAsync();
+        var rwAnimes = await _rwBookmarkManager.GetAllBookmarksAsync();
 
         var data = new
         {
@@ -166,7 +166,7 @@ public class DataService
 
         var animes = JsonConvert.DeserializeObject<List<Anime>?>(json);
 
-        var existingAnimeIds = (await _bookmarkManager.GetBookmarks())
+        var existingAnimeIds = (await _bookmarkManager.GetAllBookmarksAsync())
             .Select(x => x.Id);
 
         if (animes is not null)
@@ -186,7 +186,7 @@ public class DataService
 
         var animes = JsonConvert.DeserializeObject<List<Anime>?>(json);
 
-        var existingAnimeIds = (await _rwBookmarkManager.GetBookmarks())
+        var existingAnimeIds = (await _rwBookmarkManager.GetAllBookmarksAsync())
             .Select(x => x.Id);
 
         if (animes is not null)

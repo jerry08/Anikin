@@ -20,28 +20,32 @@ public class BookmarkManager
 
     public async Task<bool> IsBookmarked(Anime anime)
     {
-        var list = await GetBookmarks();
+        var list = await GetAllBookmarksAsync();
         return list.Find(x => x.Id == anime.Id) is not null;
     }
 
     public async Task<List<Anime>> GetBookmarks()
     {
+        var list = await GetAllBookmarksAsync();
+
+        return list.Where(x => x.Site == WeebUtils.AnimeSite).ToList();
+    }
+
+    public async Task<List<Anime>> GetAllBookmarksAsync()
+    {
         var json = await SecureStorage.GetAsync(_name);
 
-        var animes = new List<Anime>();
+        var list = new List<Anime>();
 
         if (!string.IsNullOrEmpty(json))
-        {
-            animes = JsonConvert.DeserializeObject<List<Anime>>(json)!;
-            animes = animes.Where(x => x.Site == WeebUtils.AnimeSite).ToList();
-        }
+            list = JsonConvert.DeserializeObject<List<Anime>>(json)!;
 
-        return animes;
+        return list;
     }
 
     public async Task SaveBookmarkAsync(Anime anime, bool addToTop = false)
     {
-        var animes = await GetBookmarks();
+        var animes = await GetAllBookmarksAsync();
         if (addToTop)
             animes.Insert(0, anime);
         else
@@ -61,7 +65,7 @@ public class BookmarkManager
 
     public async Task RemoveBookmarkAsync(Anime anime)
     {
-        var animes = await GetBookmarks();
+        var animes = await GetAllBookmarksAsync();
 
         var animeToRemove = animes.Find(x => x.Id == anime.Id);
 
@@ -96,7 +100,7 @@ public class BookmarkManager
         //await userRef.Child("bookmarks").SetValueAsync("test1");
         //await userRef.Child("bookmarks").Push().SetValueAsync("test1");
 
-        var list = await GetBookmarks();
+        var list = await GetAllBookmarksAsync();
 
         var settings = new JsonSerializerSettings()
         {
