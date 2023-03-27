@@ -4,24 +4,28 @@ using Android.Content;
 using Android.Views;
 using Android.Widget;
 using AndroidX.RecyclerView.Widget;
-using AnimeDl.Models;
 using AniStream.Utils;
 using AniStream.Utils.Downloading;
 using AniStream.Utils.Extensions;
+using Juro.Models.Anime;
+using Juro.Models.Videos;
 using Newtonsoft.Json;
 
 namespace AniStream.Adapters;
 
 public class VideoAdapter : RecyclerView.Adapter
 {
-    private readonly Anime _anime;
+    private readonly AnimeInfo _anime;
     private readonly Episode _episode;
     private readonly Activity _activity;
 
-    public List<Video> Videos { get; set; }
+    public List<VideoSource> Videos { get; set; }
 
-    public VideoAdapter(Activity activity, Anime anime, Episode episode,
-        List<Video> videos)
+    public VideoAdapter(
+        Activity activity,
+        AnimeInfo anime,
+        Episode episode,
+        List<VideoSource> videos)
     {
         _activity = activity;
         _anime = anime;

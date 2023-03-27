@@ -7,9 +7,9 @@ using Android.Views.Animations;
 using Android.Widget;
 using AndroidX.CardView.Widget;
 using AndroidX.RecyclerView.Widget;
-using AnimeDl.Models;
 using AniStream.Fragments;
 using Java.Lang;
+using Juro.Models.Anime;
 using Newtonsoft.Json;
 using Square.Picasso;
 
@@ -18,7 +18,7 @@ namespace AniStream.Adapters;
 public class AnimeRecyclerAdapter : RecyclerView.Adapter
 {
     Activity Activity { get; set; }
-    public List<Anime> Animes { get; set; }
+    public List<AnimeInfo> Animes { get; set; }
 
     private int lastPosition = -1;
 
@@ -26,7 +26,7 @@ public class AnimeRecyclerAdapter : RecyclerView.Adapter
 
     public AnimeRecyclerAdapter(
         Activity activity,
-        List<Anime> animes,
+        List<AnimeInfo> animes,
         AnimeFragment? animeFragment = null)
     {
         Animes = animes;

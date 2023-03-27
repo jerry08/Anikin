@@ -1,47 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Android.OS;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
+using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
-using AndroidX.Core.Widget;
+using AndroidX.Activity;
 using AndroidX.AppCompat.App;
 using AndroidX.AppCompat.Widget;
-using AndroidX.Core.Content.Resources;
 using AndroidX.ConstraintLayout.Widget;
+using AndroidX.Core.Content.Resources;
+using AndroidX.Core.Widget;
 using AndroidX.RecyclerView.Widget;
-using PopupMenu = AndroidX.AppCompat.Widget.PopupMenu;
-using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
-using AniStream.Fragments;
-using AniStream.Utils;
-using AniStream.Adapters;
-using AniStream.Utils.Tags;
-using AniStream.Utils.Extensions;
-using Newtonsoft.Json;
-using Square.Picasso;
-using Org.Apmem.Tools.Layouts;
 //using Com.MS.Square.Android.Expandabletextview;
-using Bumptech.Glide;
-using Bumptech.Glide.Load.Model;
-using AnimeDl;
-using AnimeDl.Models;
-using AnimeDl.Scrapers;
-using AndroidX.Activity;
+using AniStream.Adapters;
+using AniStream.Fragments;
 using AniStream.Settings;
+using AniStream.Utils;
+using AniStream.Utils.Extensions;
+using AniStream.Utils.Tags;
 using Firebase;
 using Firebase.Crashlytics;
-using System.Threading.Tasks;
+using Juro.Models.Anime;
+using Juro.Providers.Anime;
+using Newtonsoft.Json;
+using Org.Apmem.Tools.Layouts;
+using Square.Picasso;
+using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
+using PopupMenu = AndroidX.AppCompat.Widget.PopupMenu;
 
 namespace AniStream;
 
 [Activity(Label = "EpisodesActivity", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
 public class EpisodesActivity : AppCompatActivity
 {
-    private readonly AnimeClient _client = new(WeebUtils.AnimeSite);
+    private readonly IAnimeProvider _client = WeebUtils.AnimeClient;
     private readonly BookmarkManager _bookmarkManager = new("bookmarks");
     private readonly PlayerSettings _playerSettings = new();
 
@@ -49,7 +45,7 @@ public class EpisodesActivity : AppCompatActivity
 
     private RecyclerView EpisodesRecyclerView = default!;
     public static List<Episode> Episodes = new();
-    private Anime Anime = default!;
+    private AnimeInfo Anime = default!;
 
     private bool IsBooked;
     private bool IsAscending;
@@ -70,7 +66,7 @@ public class EpisodesActivity : AppCompatActivity
 
         var animeString = Intent?.GetStringExtra("anime");
         if (!string.IsNullOrEmpty(animeString))
-            Anime = JsonConvert.DeserializeObject<Anime>(animeString)!;
+            Anime = JsonConvert.DeserializeObject<AnimeInfo>(animeString)!;
 
         var animeInfoTitle = FindViewById<TextView>(Resource.Id.animeInfoTitle)!;
         var type = FindViewById<TextView>(Resource.Id.animeInfoType)!;
@@ -155,64 +151,49 @@ public class EpisodesActivity : AppCompatActivity
                 bookmarkbtn.SetImageDrawable(ResourcesCompat.GetDrawable(Resources!, Resource.Drawable.ic_unfavorite, null));
         };
 
-        _client.OnAnimeInfoLoaded += (s, e) =>
-        {
-            if (_client.Site == AnimeSites.GogoAnime && string.IsNullOrEmpty(e.Anime.Category))
-            {
-                _client.GetAnimeInfo(Anime.Category);
-                return;
-            }
+        var animeInfo = await _client.GetAnimeInfoAsync(Anime.Id);
 
-            RunOnUiThread(() =>
-            {
-                Anime = e.Anime;
+        if (WeebUtils.AnimeSite == AnimeSites.GogoAnime && string.IsNullOrEmpty(animeInfo.Category))
+            animeInfo = await _client.GetAnimeInfoAsync(Anime.Category);
 
-                type.Text = e.Anime.Type?.Replace("Type:", "");
-                //animeInfoSummary.Text = e.Anime.Summary?.Replace("Plot Summary:", "");
-                released.Text = e.Anime.Released?.Replace("Released:", "");
-                //status.Text = e.Anime.Status?.Replace("Status:", "");
-                status.Text = e.Anime.Status?.Replace("Status:", "").Split(new[] { "\n" }, StringSplitOptions.None).FirstOrDefault();
-                //othernames.Text = e.Anime.OtherNames?.Replace("Other name:", "");
+        Anime = animeInfo;
 
-                //TextViewExtensions.MakeTextViewResizable(animeInfoSummary, 2, "See More", true);
+        type.Text = animeInfo.Type?.Replace("Type:", "");
+        //animeInfoSummary.Text = animeInfo.Summary?.Replace("Plot Summary:", "");
+        released.Text = animeInfo.Released?.Replace("Released:", "");
+        //status.Text = animeInfo.Status?.Replace("Status:", "");
+        status.Text = animeInfo.Status?.Replace("Status:", "").Split(new[] { "\n" }, StringSplitOptions.None).FirstOrDefault();
+        //othernames.Text = animeInfo.OtherNames?.Replace("Other name:", "");
 
-                foreach (var genre in e.Anime.Genres)
-                    genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genre.Name));
+        //TextViewExtensions.MakeTextViewResizable(animeInfoSummary, 2, "See More", true);
 
-                _client.GetEpisodes(Anime.Id);
-            });
-        };
+        foreach (var genre in animeInfo.Genres)
+            genresFlowLayout.AddView(new GenreTag().GetGenreTag(this, genre.Name));
 
-        _client.OnEpisodesLoaded += (s, e) =>
-        {
-            RunOnUiThread(() =>
-            {
-                loading.Visibility = ViewStates.Gone;
-                rootLayout.Visibility = ViewStates.Visible;
-                EpisodesRecyclerView.Visibility = ViewStates.Visible;
-                //animeInfoSummary.Visibility = ViewStates.Visible;
-                imageofanime.Visibility = ViewStates.Visible;
+        var episodes = await _client.GetEpisodesAsync(Anime.Id);
 
-                Episodes = e.Episodes;
+        loading.Visibility = ViewStates.Gone;
+        rootLayout.Visibility = ViewStates.Visible;
+        EpisodesRecyclerView.Visibility = ViewStates.Visible;
+        //animeInfoSummary.Visibility = ViewStates.Visible;
+        imageofanime.Visibility = ViewStates.Visible;
 
-                if (!IsAscending)
-                    Episodes = Episodes.OrderByDescending(x => x.Number).ToList();
-                else
-                    Episodes = Episodes.OrderBy(x => x.Number).ToList();
+        Episodes = episodes;
 
-                var adapter = new EpisodeRecyclerAdapter(Episodes, this, Anime, _playerSettings);
+        if (!IsAscending)
+            Episodes = Episodes.OrderByDescending(x => x.Number).ToList();
+        else
+            Episodes = Episodes.OrderBy(x => x.Number).ToList();
 
-                //EpisodesRecyclerView.SetLayoutManager(new LinearLayoutManager(this));
-                EpisodesRecyclerView.SetLayoutManager(new GridLayoutManager(this, 4));
-                EpisodesRecyclerView.HasFixedSize = true;
-                EpisodesRecyclerView.DrawingCacheEnabled = true;
-                EpisodesRecyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
-                EpisodesRecyclerView.SetItemViewCacheSize(20);
-                EpisodesRecyclerView.SetAdapter(adapter);
-            });
-        };
+        var adapter = new EpisodeRecyclerAdapter(Episodes, this, Anime, _playerSettings);
 
-        await Task.Run(() => _client.GetAnimeInfo(Anime.Id));
+        //EpisodesRecyclerView.SetLayoutManager(new LinearLayoutManager(this));
+        EpisodesRecyclerView.SetLayoutManager(new GridLayoutManager(this, 4));
+        EpisodesRecyclerView.HasFixedSize = true;
+        EpisodesRecyclerView.DrawingCacheEnabled = true;
+        EpisodesRecyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
+        EpisodesRecyclerView.SetItemViewCacheSize(20);
+        EpisodesRecyclerView.SetAdapter(adapter);
     }
 
     private void PopupMenu_MenuItemClick(object? sender, PopupMenu.MenuItemClickEventArgs e)

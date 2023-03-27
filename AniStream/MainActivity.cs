@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Android;
 using Android.App;
 using Android.Content;
@@ -11,15 +12,14 @@ using AndroidX.Core.App;
 using AndroidX.Core.Content;
 using AndroidX.RecyclerView.Widget;
 using AndroidX.ViewPager.Widget;
-using AnimeDl;
-using AnimeDl.Scrapers;
-using AnimeDl.Scrapers.Events;
 using AniStream.Adapters;
 using AniStream.Utils;
 using Firebase;
 using Firebase.Crashlytics;
 using Google.Android.Material.AppBar;
 using Google.Android.Material.BottomNavigation;
+using Juro.Models.Anime;
+using Juro.Providers.Anime;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
@@ -31,7 +31,9 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
 {
     private readonly static int PostNotificationsRequestCode = 1005;
 
-    private AnimeClient _client = default!;
+    private IAnimeProvider _client = default!;
+
+    public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
     private Android.Widget.ProgressBar ProgressBar = default!;
     private SearchView _searchView = default!;
@@ -87,8 +89,7 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
         if (!string.IsNullOrEmpty(animeSiteStr))
             WeebUtils.AnimeSite = (AnimeSites)Convert.ToInt32(animeSiteStr);
 
-        _client = new(WeebUtils.AnimeSite);
-        _client.OnAnimesLoaded += Client_OnAnimesLoaded;
+        _client = WeebUtils.AnimeClient;
 
         SetupViewPager();
 
@@ -102,6 +103,11 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
                     new string[] { Manifest.Permission.PostNotifications },
                     PostNotificationsRequestCode);
             }
+
+            var intent = new Intent();
+            intent.SetClassName("com.oneb.anistreamffmpeg", "com.oneb.anistreamffmpeg.MainActivity");
+            //intent.SetFlags(ActivityFlags.SingleTop);
+            StartActivity(intent);
         }
 
         CreateNotificationChannel();
@@ -132,21 +138,6 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
 
         var notificationManager = (NotificationManager?)GetSystemService(Android.Content.Context.NotificationService);
         notificationManager?.CreateNotificationChannel(channel);
-    }
-
-    private void Client_OnAnimesLoaded(object? sender, AnimeEventArgs e)
-    {
-        this.RunOnUiThread(() =>
-        {
-            var mDataAdapter = new AnimeRecyclerAdapter(this, e.Animes);
-
-            recyclerView.HasFixedSize = true;
-            recyclerView.DrawingCacheEnabled = true;
-            recyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
-            recyclerView.SetItemViewCacheSize(20);
-            recyclerView.SetAdapter(mDataAdapter);
-            ProgressBar.Visibility = ViewStates.Gone;
-        });
     }
 
     public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
@@ -252,7 +243,7 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
         _searchView = search.ActionView.JavaCast<SearchView>()!;
         _searchView.Clickable = true;
 
-        _searchView.QueryTextChange += (s, e) =>
+        _searchView.QueryTextChange += async (s, e) =>
         {
             noanime.Visibility = ViewStates.Gone;
 
@@ -270,12 +261,31 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
                 viewPager.Visibility = ViewStates.Gone;
                 bottomNavigationView.Visibility = ViewStates.Gone;
 
-                _client.CancelSearch();
-                _client.Search(e.NewText);
+                CancellationTokenSource.Cancel();
+                CancellationTokenSource = new();
+
+                try
+                {
+                    var animes = await _client.SearchAsync(e.NewText, CancellationTokenSource.Token);
+
+                    var mDataAdapter = new AnimeRecyclerAdapter(this, animes);
+
+                    recyclerView.HasFixedSize = true;
+                    recyclerView.DrawingCacheEnabled = true;
+                    recyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
+                    recyclerView.SetItemViewCacheSize(20);
+                    recyclerView.SetAdapter(mDataAdapter);
+                    ProgressBar.Visibility = ViewStates.Gone;
+                }
+                catch
+                {
+                    // Ignore operation cancelled
+                }
             }
             else
             {
-                _client.CancelSearch();
+                CancellationTokenSource.Cancel();
+                CancellationTokenSource = new();
 
                 recyclerView.Visibility = ViewStates.Gone;
                 viewPager.Visibility = ViewStates.Visible;
@@ -364,8 +374,7 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
         {
             await SecureStorage.SetAsync("AnimeSite", ((int)WeebUtils.AnimeSite).ToString());
 
-            _client = new(WeebUtils.AnimeSite);
-            _client.OnAnimesLoaded += Client_OnAnimesLoaded;
+            _client = WeebUtils.AnimeClient;
 
             InvalidateOptionsMenu();
             SetupViewPager();

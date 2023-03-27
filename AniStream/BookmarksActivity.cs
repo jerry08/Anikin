@@ -7,9 +7,9 @@ using Android.Runtime;
 using Android.Views;
 using AndroidX.AppCompat.Widget;
 using AndroidX.RecyclerView.Widget;
-using AnimeDl.Models;
 using AniStream.Adapters;
 using AniStream.Utils;
+using Juro.Models.Anime;
 using Microsoft.Maui.ApplicationModel;
 
 namespace AniStream;
@@ -19,7 +19,7 @@ public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
 {
     private readonly BookmarkManager _bookmarkManager = new("bookmarks");
 
-    private List<Anime> animes = new();
+    private List<AnimeInfo> animes = new();
     private Android.Widget.ProgressBar ProgressBar = default!;
     private SearchView SearchView = default!;
 

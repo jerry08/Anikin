@@ -3,7 +3,9 @@ using Android.App;
 using Android.Views;
 using Android.Widget;
 using AndroidX.RecyclerView.Widget;
-using AnimeDl.Models;
+using Juro.Models;
+using Juro.Models.Anime;
+using Juro.Models.Videos;
 
 namespace AniStream.Adapters;
 
@@ -13,10 +15,11 @@ public class ServerWithVideos
 
     public VideoServer VideoServer { get; set; }
 
-    public List<Video> Videos { get; set; }
+    public List<VideoSource> Videos { get; set; }
 
-    public ServerWithVideos(VideoServer videoServer,
-        List<Video> videos)
+    public ServerWithVideos(
+        VideoServer videoServer,
+        List<VideoSource> videos)
     {
         VideoServer = videoServer;
         Videos = videos;
@@ -25,14 +28,17 @@ public class ServerWithVideos
 
 public class ExtractorAdapter : RecyclerView.Adapter
 {
-    private readonly Anime _anime;
+    private readonly AnimeInfo _anime;
     private readonly Episode _episode;
 
     public Activity Activity { get; set; }
 
     public List<ServerWithVideos> Containers { get; set; }
 
-    public ExtractorAdapter(Activity activity, Anime anime, Episode episode,
+    public ExtractorAdapter(
+        Activity activity,
+        AnimeInfo anime,
+        Episode episode,
         List<ServerWithVideos> containers)
     {
         Activity = activity;

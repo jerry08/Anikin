@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using AnimeDl.Models;
+using Juro.Models.Anime;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -25,11 +25,11 @@ internal sealed class AnimeContractResolver : DefaultContractResolver
 
         //Choose the properties you want to serialize/deserialize
         var props = type.GetProperties(~BindingFlags.FlattenHierarchy)
-            .Where(x => x.Name == nameof(Anime.Id)
-                || x.Name == nameof(Anime.Title)
-                || x.Name == nameof(Anime.Category)
-                || x.Name == nameof(Anime.Site)
-                || x.Name == nameof(Anime.Image));
+            .Where(x => x.Name == nameof(AnimeInfo.Id)
+                || x.Name == nameof(AnimeInfo.Title)
+                || x.Name == nameof(AnimeInfo.Category)
+                || x.Name == nameof(AnimeInfo.Site)
+                || x.Name == nameof(AnimeInfo.Image));
 
         return allProps.Where(p => props.Any(a => a.Name == p.PropertyName)).ToList();
     }

@@ -7,10 +7,9 @@ using Android.Content;
 using Android.Webkit;
 using AndroidX.Core.App;
 using AndroidX.Core.Content;
-using AnimeDl;
 using AniStream.Services;
 using AniStream.Utils.Extensions;
-using DotNetTools.JGrabber.Grabbed;
+using JGrabber.Grabbed;
 using Laerdal.FFmpeg.Android;
 using Microsoft.Maui.Storage;
 
@@ -19,7 +18,6 @@ namespace AniStream.Utils.Downloading;
 public class HlsDownloader
 {
     private readonly Service _service;
-    private readonly AnimeClient _client = new(WeebUtils.AnimeSite);
     private readonly int _notificationId;
 
     public HlsDownloader(Service service)
@@ -46,8 +44,10 @@ public class HlsDownloader
         {
             try
             {
-                //await _client.DownloadTsAsync(stream, headers, filePath, progress, cancellationToken);
-                await _client.DownloadAllTsThenMergeAsync(stream, headers, filePath, progress, 15, cancellationToken);
+                var downloader = new Httpz.HlsDownloader(Http.ClientProvider);
+
+                //await downloader.DownloadAsync(stream, headers, filePath, progress, cancellationToken);
+                await downloader.DownloadAllThenMergeAsync(stream, headers, filePath, progress, 15, cancellationToken);
             }
             catch
             {

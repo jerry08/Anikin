@@ -7,9 +7,9 @@ using Android.Runtime;
 using Android.Views;
 using AndroidX.AppCompat.Widget;
 using AndroidX.RecyclerView.Widget;
-using AnimeDl.Models;
 using AniStream.Adapters;
 using AniStream.Utils;
+using Juro.Models.Anime;
 using Microsoft.Maui.ApplicationModel;
 
 namespace AniStream;
@@ -17,7 +17,7 @@ namespace AniStream;
 [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
 public class RecentlyWatchedActivity : AndroidX.AppCompat.App.AppCompatActivity
 {
-    List<Anime> animes = default!;
+    List<AnimeInfo> animes = default!;
     Android.Widget.ProgressBar ProgressBar = default!;
     SearchView SearchView = default!;
 

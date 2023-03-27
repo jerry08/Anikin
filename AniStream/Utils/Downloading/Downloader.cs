@@ -5,11 +5,10 @@ using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Webkit;
-using AnimeDl;
 using AniStream.Services;
 using AniStream.Utils.Extensions;
 using AniStream.Utils.Listeners;
-using DotNetTools.JGrabber.Grabbed;
+using JGrabber.Grabbed;
 using Newtonsoft.Json;
 
 namespace AniStream.Utils.Downloading;
@@ -17,7 +16,6 @@ namespace AniStream.Utils.Downloading;
 public class Downloader
 {
     private readonly Activity _activity;
-    private readonly AnimeClient _client = new(WeebUtils.AnimeSite);
 
     public Downloader(Activity activity)
     {
@@ -81,7 +79,9 @@ public class Downloader
         var metadataResources = new List<GrabbedHlsStreamMetadata>();
         try
         {
-            metadataResources = await _client.GetHlsStreamMetadatasAsync(url, headers);
+            var downloader = new Httpz.HlsDownloader(Http.ClientProvider);
+
+            metadataResources = await downloader.GetHlsStreamMetadatasAsync(url, headers);
             loadingDialog.Dismiss();
         }
         catch
@@ -98,10 +98,14 @@ public class Downloader
             var stream = await metadataResources[which].Stream;
             loadingDialog.Dismiss();
 
-            var intent = new Intent(_activity, typeof(DownloadService));
+            //var intent = new Intent(_activity, typeof(DownloadService));
+            var intent = new Intent();
             intent.PutExtra("stream", JsonConvert.SerializeObject(stream));
             intent.PutExtra("headers", JsonConvert.SerializeObject(headers));
             intent.PutExtra("fileName", fileName);
+
+            intent.SetComponent(new ComponentName("com.oneb.anistreamffmpeg", "com.oneb.anistreamffmpeg.DownloadService"));
+
             //StartService(intent);
             _activity.StartForegroundService(intent);
 

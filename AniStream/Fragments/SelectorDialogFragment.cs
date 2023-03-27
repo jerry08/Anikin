@@ -1,17 +1,23 @@
-﻿using System.Linq;
-using System.Collections.Generic;
-using Android.OS;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using Android.Content;
+using Android.OS;
 using Android.Views;
 using Android.Widget;
-using Orientation = Android.Content.Res.Orientation;
+using AndroidX.Fragment.App;
 using AndroidX.RecyclerView.Widget;
 using AniStream.Adapters;
 using AniStream.Utils;
-using AnimeDl;
-using AnimeDl.Models;
 using Google.Android.Material.BottomSheet;
-using AndroidX.Fragment.App;
+using Juro.Models.Anime;
+using Juro.Models.Videos;
+using Juro.Providers.Anime;
+using Juro.Utils.Extensions;
+using Xamarin.Android.Net;
+using Orientation = Android.Content.Res.Orientation;
 
 namespace AniStream.Fragments;
 
@@ -20,15 +26,19 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
     //public static readonly Dictionary<Episode, List<ServerWithVideos>> Cache = new();
     public static readonly Dictionary<string, List<ServerWithVideos>> Cache = new();
 
-    private readonly AnimeClient _client = new(WeebUtils.AnimeSite);
-    private readonly Anime _anime;
+    private readonly IAnimeProvider _client = WeebUtils.AnimeClient;
+    private readonly AnimeInfo _anime;
     private readonly Episode _episode;
 
     private readonly VideoActivity? _videoActivity;
 
     private View _view = default!;
 
-    SelectorDialogFragment(Anime anime, Episode episode,
+    public CancellationTokenSource CancellationTokenSource { get; set; } = new();
+
+    SelectorDialogFragment(
+        AnimeInfo anime,
+        Episode episode,
         VideoActivity? videoActivity = null)
     {
         _videoActivity = videoActivity;
@@ -36,7 +46,10 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
         _anime = anime;
     }
 
-    public static SelectorDialogFragment NewInstance(Anime anime, Episode episode, VideoActivity? videoActivity = null)
+    public static SelectorDialogFragment NewInstance(
+        AnimeInfo anime,
+        Episode episode,
+        VideoActivity? videoActivity = null)
         => new(anime, episode, videoActivity);
 
     public override void OnStart()
@@ -62,53 +75,75 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
 
         selectorMakeDefault.Visibility = ViewStates.Gone;
 
-        var activity = (_videoActivity ?? Activity)!;
+        Load(serversRecyclerView, selectorProgressBar);
 
-        var cache = Cache.GetValueOrDefault(_episode.Link);
-        if (cache is null)
+        return _view;
+    }
+
+    private async void Load(RecyclerView serversRecyclerView, ProgressBar selectorProgressBar)
+    {
+        try
         {
-            cache = new();
+            var activity = (_videoActivity ?? Activity)!;
 
-            var totalServersLoaded = 0;
-
-            _client.OnVideoServersLoaded += (s, e) =>
+            var cache = Cache.GetValueOrDefault(_episode.Link);
+            if (cache is null)
             {
-                Activity?.RunOnUiThread(() =>
+                cache = new();
+
+                var videoServers = await _client.GetVideoServersAsync(
+                    _episode.Id,
+                    CancellationTokenSource.Token
+                );
+
+                var serverWithVideos = videoServers.ConvertAll(x => new ServerWithVideos(x, new()));
+
+                Cache.Add(_episode.Link, serverWithVideos);
+
+                for (var i = 0; i < videoServers.Count; i++)
                 {
-                    var serverWithVideos = e.VideoServers
-                        .Select(x => new ServerWithVideos(x, new())).ToList();
+                    var videos = await _client.GetVideosAsync(
+                        videoServers[i],
+                        CancellationTokenSource.Token
+                    );
 
-                    Cache.Add(_episode.Link, serverWithVideos);
-
-                    if (e.VideoServers.Count > 0)
-                        _client.GetVideos(e.VideoServers[0]);
-                });
-            };
-
-            _client.OnVideosLoaded += (s, e) =>
-            {
-                Activity?.RunOnUiThread(() =>
-                {
-                    totalServersLoaded++;
-
-                    if (totalServersLoaded >= _client.VideoServers.Count)
-                        selectorProgressBar.Visibility = ViewStates.Gone;
-                    else
-                        _client.GetVideos(_client.VideoServers[totalServersLoaded]);
-
-                    if (e.Videos.Count == 0)
+                    if (videos.Count == 0)
                     {
-                        Cache[_episode.Link][totalServersLoaded - 1] = new(e.VideoServer, e.Videos)
+                        Cache[_episode.Link][i] = new(videoServers[i], videos)
                         {
                             IsLoaded = true
                         };
 
-                        return;
+                        continue;
+                    }
+
+                    try
+                    {
+                        // Try get sizes
+                        var http = new HttpClient(new AndroidMessageHandler());
+
+                        foreach (var video in videos)
+                        {
+                            if (video.Format == VideoType.Container)
+                            {
+                                video.Size = await Task.Run(async
+                                    () => await http.GetFileSizeAsync(
+                                        video.VideoUrl,
+                                        video.Headers,
+                                        CancellationTokenSource.Token
+                                    )
+                                );
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore
                     }
 
                     if (serversRecyclerView.GetAdapter() is ExtractorAdapter adapter)
                     {
-                        adapter.Containers.Add(new(e.VideoServer, e.Videos)
+                        adapter.Containers.Add(new(videoServers[i], videos)
                         {
                             IsLoaded = true
                         });
@@ -119,7 +154,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
                     {
                         var containers = new List<ServerWithVideos>
                         {
-                            new(e.VideoServer, e.Videos)
+                            new(videoServers[i], videos)
                             {
                                 IsLoaded = true
                             }
@@ -138,80 +173,61 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
                     //Cache.Remove(_episode.Link);
                     //Cache.Add(_episode.Link, cache);
 
-                    Cache[_episode.Link][totalServersLoaded - 1] = new(e.VideoServer, e.Videos)
+                    Cache[_episode.Link][i] = new(videoServers[i], videos)
                     {
                         IsLoaded = true
                     };
 
                     adapter.NotifyDataSetChanged();
-                });
-            };
-
-            _client.GetVideoServers(_episode.Id);
-        }
-        else
-        {
-            var notLoadedServers = cache.Where(x => !x.IsLoaded)
-                .Select(x => x.VideoServer).ToList();
-            if (notLoadedServers.Count == 0)
-            {
-                cache = cache.Where(x => x.IsLoaded && x.Videos.Count > 0).ToList();
-
-                var adapter = new ExtractorAdapter(activity, _anime, _episode, cache);
-
-                serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
-                serversRecyclerView.HasFixedSize = true;
-                serversRecyclerView.SetItemViewCacheSize(20);
-                serversRecyclerView.SetAdapter(adapter);
-
-                selectorProgressBar.Visibility = ViewStates.Gone;
+                }
             }
             else
             {
-                var totalServersLoaded = 0;
-
-                var adapter = new ExtractorAdapter(activity, _anime, _episode,
-                    cache.Where(x => x.IsLoaded && x.Videos.Count > 0).ToList());
-
-                serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
-                serversRecyclerView.HasFixedSize = true;
-                serversRecyclerView.SetItemViewCacheSize(20);
-                serversRecyclerView.SetAdapter(adapter);
-
-                _client.OnVideosLoaded += (s, e) =>
+                var notLoadedServers = cache.Where(x => !x.IsLoaded)
+                    .Select(x => x.VideoServer).ToList();
+                if (notLoadedServers.Count == 0)
                 {
-                    Activity?.RunOnUiThread(() =>
+                    cache = cache.Where(x => x.IsLoaded && x.Videos.Count > 0).ToList();
+
+                    var adapter = new ExtractorAdapter(activity, _anime, _episode, cache);
+
+                    serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
+                    serversRecyclerView.HasFixedSize = true;
+                    serversRecyclerView.SetItemViewCacheSize(20);
+                    serversRecyclerView.SetAdapter(adapter);
+                }
+                else
+                {
+                    var adapter = new ExtractorAdapter(activity, _anime, _episode,
+                        cache.Where(x => x.IsLoaded && x.Videos.Count > 0).ToList());
+
+                    serversRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
+                    serversRecyclerView.HasFixedSize = true;
+                    serversRecyclerView.SetItemViewCacheSize(20);
+                    serversRecyclerView.SetAdapter(adapter);
+
+                    for (var i = 0; i < notLoadedServers.Count; i++)
                     {
-                        totalServersLoaded++;
+                        var videos = await _client.GetVideosAsync(
+                            notLoadedServers[i],
+                            CancellationTokenSource.Token
+                        );
 
-                        if (totalServersLoaded >= notLoadedServers.Count)
-                        {
-                            selectorProgressBar.Visibility = ViewStates.Gone;
-                            return;
-                        }
-                        else
-                        {
-                            _client.GetVideos(notLoadedServers[totalServersLoaded]);
-                        }
+                        if (videos.Count == 0)
+                            continue;
 
-                        var notLoadedServer = notLoadedServers[totalServersLoaded - 1];
+                        var notLoadedServer = notLoadedServers[i];
                         var item = Cache[_episode.Link].Find(x => x.VideoServer == notLoadedServer)!;
 
-                        if (e.Videos.Count == 0)
+                        if (videos.Count == 0)
                         {
                             item.IsLoaded = true;
-
-                            //Cache[_episode.Link][totalServersLoaded - 1] = new(e.VideoServer, e.Videos)
-                            //{
-                            //    IsLoaded = true
-                            //};
-
-                            return;
+                            continue;
                         }
 
-                        var adapter = (ExtractorAdapter)serversRecyclerView.GetAdapter()!;
+                        adapter = (ExtractorAdapter)serversRecyclerView.GetAdapter()!;
 
-                        adapter.Containers.Add(new(e.VideoServer, e.Videos)
+                        adapter.Containers.Add(new(notLoadedServers[i], videos)
                         {
                             IsLoaded = true
                         });
@@ -224,8 +240,8 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
                         //Cache[_episode.Link] = cache;
 
                         item.IsLoaded = true;
-                        item.VideoServer = e.VideoServer;
-                        item.Videos = e.Videos;
+                        item.VideoServer = notLoadedServers[i];
+                        item.Videos = videos;
 
                         //Cache[_episode.Link][notLoadedServer] = new(e.VideoServer, e.Videos)
                         //{
@@ -233,14 +249,18 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
                         //};
 
                         adapter.NotifyDataSetChanged();
-                    });
-                };
-
-                _client.GetVideos(notLoadedServers[0]);
+                    }
+                }
             }
         }
-
-        return _view;
+        catch
+        {
+            // Operation cancelled
+        }
+        finally
+        {
+            selectorProgressBar.Visibility = ViewStates.Gone;
+        }
     }
 
     public override void Show(FragmentManager manager, string? tag)
@@ -253,8 +273,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
 
     public override void OnDismiss(IDialogInterface dialog)
     {
-        _client.CancelGetVideoServers();
-        _client.CancelGetVideos();
+        CancellationTokenSource.Cancel();
         base.OnDismiss(dialog);
     }
 }

@@ -4,9 +4,9 @@ using Android.Views;
 using Android.Widget;
 using AndroidX.CardView.Widget;
 using AndroidX.RecyclerView.Widget;
-using AnimeDl.Models;
 using AniStream.Fragments;
 using AniStream.Settings;
+using Juro.Models.Anime;
 using Newtonsoft.Json;
 
 namespace AniStream.Adapters;
@@ -15,7 +15,7 @@ public class EpisodeRecyclerAdapter : RecyclerView.Adapter
 {
     private readonly PlayerSettings _playerSettings;
 
-    private readonly Anime _anime;
+    private readonly AnimeInfo _anime;
 
     private readonly EpisodesActivity _episodesActivity;
 
@@ -23,7 +23,7 @@ public class EpisodeRecyclerAdapter : RecyclerView.Adapter
 
     public EpisodeRecyclerAdapter(List<Episode> episodes,
         EpisodesActivity activity,
-        Anime anime,
+        AnimeInfo anime,
         PlayerSettings playerSettings)
     {
         _anime = anime;

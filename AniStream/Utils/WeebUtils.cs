@@ -1,10 +1,13 @@
 ﻿using System.IO;
+using System.Net.Http;
 using Android.Content;
 using Android.Graphics;
 using Android.Views;
 using Android.Widget;
-using AnimeDl.Scrapers;
+using Juro.Models.Anime;
+using Juro.Providers.Anime;
 using Microsoft.Maui.Networking;
+using Xamarin.Android.Net;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using Orientation = Android.Widget.Orientation;
 
@@ -12,6 +15,22 @@ namespace AniStream.Utils;
 
 public static class WeebUtils
 {
+    public static IAnimeProvider AnimeClient
+    {
+        get
+        {
+            var handler = new AndroidMessageHandler();
+            var httpClient = new HttpClient(handler);
+
+            return AnimeSite switch
+            {
+                AnimeSites.Zoro => new Zoro(() => httpClient),
+                AnimeSites.AnimePahe => new AnimePahe(() => httpClient),
+                _ => new Gogoanime(() => httpClient)
+            };
+        }
+    }
+
     public static AnimeSites AnimeSite { get; set; } = AnimeSites.GogoAnime;
 
     public static bool IsDubSelected { get; set; } = false;

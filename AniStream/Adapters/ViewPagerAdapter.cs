@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using AndroidX.Fragment.App;
-using AnimeDl.Scrapers;
 using AniStream.Fragments;
 using AniStream.Utils;
+using Juro.Models.Anime;
 using Fragment = AndroidX.Fragment.App.Fragment;
 using FragmentManager = AndroidX.Fragment.App.FragmentManager;
 
@@ -26,9 +26,10 @@ public class ViewPagerAdapter : FragmentStatePagerAdapter
             case AnimeSites.Zoro:
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.Popular));
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.NewSeason));
+                Fragments.Add(AnimeFragment.NewInstance(SearchFilter.TopAiring));
                 break;
             case AnimeSites.AnimePahe:
-                Fragments.Add(AnimeFragment.NewInstance(SearchFilter.Ongoing));
+                Fragments.Add(AnimeFragment.NewInstance(SearchFilter.TopAiring));
                 break;
         }
     }

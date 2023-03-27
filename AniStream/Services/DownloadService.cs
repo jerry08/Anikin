@@ -6,7 +6,7 @@ using Android.Runtime;
 using Android.Util;
 using AndroidX.Core.App;
 using AniStream.Utils.Downloading;
-using DotNetTools.JGrabber.Grabbed;
+using JGrabber.Grabbed;
 using Newtonsoft.Json;
 
 namespace AniStream.Services;

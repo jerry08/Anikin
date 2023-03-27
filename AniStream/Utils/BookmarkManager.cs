@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AnimeDl.Models;
 using Firebase.Auth;
 using Firebase.Database;
+using Juro.Models.Anime;
 using Microsoft.Maui.Storage;
 using Newtonsoft.Json;
 
@@ -18,32 +18,32 @@ public class BookmarkManager
         _name = name;
     }
 
-    public async Task<bool> IsBookmarked(Anime anime)
+    public async Task<bool> IsBookmarked(AnimeInfo anime)
     {
         var list = await GetAllBookmarksAsync();
         return list.Find(x => x.Id == anime.Id) is not null;
     }
 
-    public async Task<List<Anime>> GetBookmarks()
+    public async Task<List<AnimeInfo>> GetBookmarks()
     {
         var list = await GetAllBookmarksAsync();
 
         return list.Where(x => x.Site == WeebUtils.AnimeSite).ToList();
     }
 
-    public async Task<List<Anime>> GetAllBookmarksAsync()
+    public async Task<List<AnimeInfo>> GetAllBookmarksAsync()
     {
         var json = await SecureStorage.GetAsync(_name);
 
-        var list = new List<Anime>();
+        var list = new List<AnimeInfo>();
 
         if (!string.IsNullOrEmpty(json))
-            list = JsonConvert.DeserializeObject<List<Anime>>(json)!;
+            list = JsonConvert.DeserializeObject<List<AnimeInfo>>(json)!;
 
         return list;
     }
 
-    public async Task SaveBookmarkAsync(Anime anime, bool addToTop = false)
+    public async Task SaveBookmarkAsync(AnimeInfo anime, bool addToTop = false)
     {
         var animes = await GetAllBookmarksAsync();
         if (addToTop)
@@ -63,7 +63,7 @@ public class BookmarkManager
         await SaveToCloudAsync();
     }
 
-    public async Task RemoveBookmarkAsync(Anime anime)
+    public async Task RemoveBookmarkAsync(AnimeInfo anime)
     {
         var animes = await GetAllBookmarksAsync();
 

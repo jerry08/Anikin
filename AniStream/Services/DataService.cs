@@ -4,13 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Android.App;
-using AnimeDl.Models;
 using AniStream.Settings;
 using AniStream.Utils;
 using AniStream.Utils.Extensions;
 using Firebase.Auth;
 using Firebase.Database;
-using GoogleGson;
+using Juro.Models.Anime;
 using Microsoft.Maui.Storage;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -164,7 +163,7 @@ public class DataService
         if (string.IsNullOrWhiteSpace(json))
             return;
 
-        var animes = JsonConvert.DeserializeObject<List<Anime>?>(json);
+        var animes = JsonConvert.DeserializeObject<List<AnimeInfo>?>(json);
 
         var existingAnimeIds = (await _bookmarkManager.GetAllBookmarksAsync())
             .Select(x => x.Id);
@@ -184,7 +183,7 @@ public class DataService
         if (string.IsNullOrWhiteSpace(json))
             return;
 
-        var animes = JsonConvert.DeserializeObject<List<Anime>?>(json);
+        var animes = JsonConvert.DeserializeObject<List<AnimeInfo>?>(json);
 
         var existingAnimeIds = (await _rwBookmarkManager.GetAllBookmarksAsync())
             .Select(x => x.Id);

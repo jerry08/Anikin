@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Android.Animation;
 using Android.App;
@@ -16,12 +17,6 @@ using Android.Widget;
 using AndroidX.AppCompat.App;
 using AndroidX.CardView.Widget;
 using AndroidX.Core.View;
-using AnimeDl;
-using AnimeDl.Anilist;
-using AnimeDl.Aniskip;
-using AnimeDl.Models;
-using AnimeDl.Scrapers;
-using AnimeDl.Scrapers.Events;
 using AniStream.Adapters;
 using AniStream.Fragments;
 using AniStream.Settings;
@@ -46,6 +41,11 @@ using Com.Google.Android.Exoplayer2.Video;
 using Firebase;
 using Firebase.Crashlytics;
 using Google.Android.Material.Card;
+using Juro.Models.Anime;
+using Juro.Models.Videos;
+using Juro.Providers.Anilist;
+using Juro.Providers.Anime;
+using Juro.Providers.Aniskip;
 using Newtonsoft.Json;
 using Square.OkHttp3;
 using static Com.Google.Android.Exoplayer2.IPlayer;
@@ -60,13 +60,15 @@ namespace AniStream;
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.SmallestScreenSize | ConfigChanges.ScreenLayout | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden)]
 public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNameProvider
 {
-    private readonly AnimeClient _client = new(WeebUtils.AnimeSite);
+    private readonly IAnimeProvider _client = WeebUtils.AnimeClient;
 
     private readonly PlayerSettings _playerSettings = new();
 
-    private Anime Anime = default!;
+    public CancellationTokenSource CancellationTokenSource { get; set; } = new();
+
+    private AnimeInfo Anime = default!;
     private Episode Episode = default!;
-    private Video Video = default!;
+    private VideoSource Video = default!;
 
     private IExoPlayer exoPlayer = default!;
     private StyledPlayerView playerView = default!;
@@ -143,7 +145,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
 
         var animeString = Intent!.GetStringExtra("anime");
         if (!string.IsNullOrEmpty(animeString))
-            Anime = JsonConvert.DeserializeObject<Anime>(animeString)!;
+            Anime = JsonConvert.DeserializeObject<AnimeInfo>(animeString)!;
 
         var episodeString = Intent.GetStringExtra("episode");
         if (!string.IsNullOrEmpty(episodeString))
@@ -387,7 +389,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
         {
             var videoString = Intent.GetStringExtra("video");
             if (!string.IsNullOrEmpty(videoString))
-                Video = JsonConvert.DeserializeObject<Video>(videoString)!;
+                Video = JsonConvert.DeserializeObject<VideoSource>(videoString)!;
 
             PlayVideo(Video);
         }
@@ -396,11 +398,48 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
             var progressBar = FindViewById<ProgressBar>(Resource.Id.exo_init_buffer)!;
             progressBar.Visibility = ViewStates.Visible;
 
-            _client.OnVideosLoaded += OnVideosLoaded;
-            _client.OnVideoServersLoaded += OnVideoServersLoaded;
-
-            _client.GetVideoServers(Episode.Id);
+            await SetEpisodeAsync(Episode.Id);
         }
+    }
+
+    private async Task SetEpisodeAsync(string episodeId)
+    {
+        try
+        {
+            var videoServers = await _client.GetVideoServersAsync(
+                episodeId,
+                CancellationTokenSource.Token
+            );
+
+            var selectedVideoServer = videoServers
+                .Find(x => x.Name?.ToLower().Contains("streamsb") == true
+                    || x.Name?.ToLower().Contains("vidstream") == true);
+
+            if (videoServers.Count == 0)
+            {
+                progressBar.Visibility = ViewStates.Gone;
+                this.ToastString("No servers found");
+
+                return;
+            }
+
+            var videos = await _client.GetVideosAsync(selectedVideoServer ?? videoServers[0]);
+
+            if (videos.Count == 0)
+            {
+                progressBar.Visibility = ViewStates.Gone;
+                //this.ToastString("No videos found");
+                this.ShowToast("No videos found");
+
+                SourceButton.PerformClick();
+
+                return;
+            }
+
+            PlayVideo(videos[0]);
+            progressBar.Visibility = ViewStates.Gone;
+        }
+        catch { }
     }
 
     private void HandleController()
@@ -570,13 +609,13 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
         if (videoServers.Count == 0)
             return;
 
-        var allVideos = new List<Video>();
+        var allVideos = new List<VideoSource>();
 
         foreach (var server in videoServers)
         {
             try
             {
-                allVideos.AddRange(await _client.GetVideosAsync(server, false));
+                allVideos.AddRange(await _client.GetVideosAsync(server));
             }
             catch { }
         }
@@ -584,15 +623,12 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
         if (!SelectorDialogFragment.Cache.ContainsKey(episode.Link))
         {
             var serverWithVideos = videoServers
-                .Select(x => new ServerWithVideos(x, allVideos)).ToList();
+                .ConvertAll(x => new ServerWithVideos(x, allVideos));
 
             SelectorDialogFragment.Cache.Add(episode.Link, serverWithVideos);
         }
 
-        RunOnUiThread(() =>
-        {
-            SetNextAndPrev();
-        });
+        RunOnUiThread(SetNextAndPrev);
     }
 
     private void SetNextAndPrev()
@@ -627,46 +663,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
         }
     }
 
-    private void OnVideosLoaded(object? sender, VideoEventArgs e)
-    {
-        RunOnUiThread(() =>
-        {
-            if (e.Videos.Count > 0)
-            {
-                PlayVideo(e.Videos[0]);
-                progressBar.Visibility = ViewStates.Gone;
-            }
-            else
-            {
-                progressBar.Visibility = ViewStates.Gone;
-                //this.ToastString("No videos found");
-                this.ShowToast("No videos found");
-
-                SourceButton.PerformClick();
-            }
-        });
-    }
-
-    private void OnVideoServersLoaded(object? sender, VideoServerEventArgs e)
-    {
-        RunOnUiThread(() =>
-        {
-            var selectedVideoServer = e.VideoServers
-                .Find(x => x.Name?.ToLower().Contains("streamsb") == true
-                || x.Name?.ToLower().Contains("vidstream") == true);
-
-            if (e.VideoServers.Count > 0)
-            {
-                _client.GetVideos(selectedVideoServer ?? e.VideoServers[0]);
-            }
-            else
-            {
-                progressBar.Visibility = ViewStates.Gone;
-                this.ToastString("No servers found");
-            }
-        });
-    }
-
     public Episode? GetPreviousEpisode()
     {
         var currentEpisode = EpisodesActivity.Episodes.Find(x => x.Id == Episode.Id);
@@ -699,8 +695,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
         exoPlayer.SeekTo(0);
         //exoPlayer.Release();
 
-        _client.CancelGetVideoServers();
-        _client.CancelGetVideos();
+        CancellationTokenSource.Cancel();
         VideoCache.Release();
         //SetupExoPlayer();
 
@@ -709,13 +704,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
 
         //progressBar.Visibility = ViewStates.Visible;
 
-        _client.OnVideosLoaded -= OnVideosLoaded;
-        _client.OnVideoServersLoaded -= OnVideoServersLoaded;
-
-        _client.OnVideosLoaded += OnVideosLoaded;
-        _client.OnVideoServersLoaded += OnVideoServersLoaded;
-
-        _client.GetVideoServers(prevEpisode.Id);
+        await SetEpisodeAsync(prevEpisode.Id);
         SetNextAndPrev();
     }
 
@@ -749,8 +738,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
         exoPlayer.SeekTo(0);
         //exoPlayer.Release();
 
-        _client.CancelGetVideoServers();
-        _client.CancelGetVideos();
+        CancellationTokenSource.Cancel();
         VideoCache.Release();
         //SetupExoPlayer();
 
@@ -759,13 +747,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
 
         //progressBar.Visibility = ViewStates.Visible;
 
-        _client.OnVideosLoaded -= OnVideosLoaded;
-        _client.OnVideoServersLoaded -= OnVideoServersLoaded;
-
-        _client.OnVideosLoaded += OnVideosLoaded;
-        _client.OnVideoServersLoaded += OnVideoServersLoaded;
-
-        _client.GetVideoServers(Episode.Id);
+        await SetEpisodeAsync(Episode.Id);
         SetNextAndPrev();
     }
 
@@ -773,8 +755,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
     {
         exoPlayer.Stop();
         exoPlayer.Release();
-        _client.CancelGetVideoServers();
-        _client.CancelGetVideos();
+        CancellationTokenSource.Cancel();
         VideoCache.Release();
 
         base.OnBackPressed();
@@ -945,7 +926,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
         await _playerSettings.SaveAsync();
     }
 
-    public async void PlayVideo(Video video)
+    public async void PlayVideo(VideoSource video)
     {
         if (selector is not null)
         {
