@@ -37,17 +37,13 @@
 
   <ItemGroup>
     <PackageReference Include="Httpz" Version="1.0.6" />
-    <PackageReference Include="Juro" Version="1.0.7" />
-    <PackageReference Include="Laerdal.FFmpeg.Android.Min" Version="4.4.28" />
-    <!--<PackageReference Include="Laerdal.FFmpeg.Full" Version="4.4.27" />-->
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+    <PackageReference Include="Juro" Version="1.0.10" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Octokit" Version="5.0.2" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.18.11" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer.OkHttp" Version="2.18.11" />
     <PackageReference Include="Xamarin.Android.Flowlayout" Version="1.0.0.4" />
-    <PackageReference Include="Xamarin.AndroidX.SlidingPaneLayout" Version="1.2.0.4" />
     <PackageReference Include="Xamarin.Firebase.Auth" Version="121.1.0" />
     <PackageReference Include="Xamarin.Firebase.Crashlytics" Version="118.3.2.1" />
     <PackageReference Include="Jerro.Maui.GoogleClient" Version="1.0.3" />

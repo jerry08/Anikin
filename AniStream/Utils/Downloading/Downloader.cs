@@ -27,9 +27,6 @@ public class Downloader
         string url,
         Dictionary<string, string>? headers = null)
     {
-        url = "https://assetsnffrgf-a.akamaihd.net/assets/m/502016186/univ/art/502016186_univ_lss_lg.jpg";
-        fileName = "tt.jpg";
-
         var androidStoragePermission = new AndroidStoragePermission(_activity);
 
         if (_activity is MainActivity mainActivity)

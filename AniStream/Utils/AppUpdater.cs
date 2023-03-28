@@ -42,8 +42,7 @@ public class AppUpdater
             var latestVersionName = new Version(latestRelease.Name);
             var currentVersionName = AppInfo.Current.Version;
 
-            //if (currentVersionName < latestVersionName)
-            if (currentVersionName == latestVersionName)
+            if (currentVersionName < latestVersionName)
             {
                 var builder = new Android.App.AlertDialog.Builder(
                     activity,
