@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Webkit;
-using AniStream.Services;
 using AniStream.Utils.Extensions;
 using AniStream.Utils.Listeners;
 using JGrabber.Grabbed;
+using Microsoft.Maui.ApplicationModel;
 using Newtonsoft.Json;
 
 namespace AniStream.Utils.Downloading;
@@ -27,7 +27,19 @@ public class Downloader
         string url,
         Dictionary<string, string>? headers = null)
     {
+        url = "https://assetsnffrgf-a.akamaihd.net/assets/m/502016186/univ/art/502016186_univ_lss_lg.jpg";
+        fileName = "tt.jpg";
+
         var androidStoragePermission = new AndroidStoragePermission(_activity);
+
+        if (_activity is MainActivity mainActivity)
+        {
+            mainActivity.AndroidStoragePermission = androidStoragePermission;
+        }
+        else if (_activity is VideoActivity videoActivity)
+        {
+            videoActivity.AndroidStoragePermission = androidStoragePermission;
+        }
 
         var hasStoragePermission = androidStoragePermission.HasStoragePermission();
         if (!hasStoragePermission)
@@ -41,10 +53,16 @@ public class Downloader
 
         var extension = System.IO.Path.GetExtension(fileName).Split('.').LastOrDefault();
 
+        if (extension != "apk")
+        {
+            var intentFilter = new IntentFilter();
+            intentFilter.AddAction(DownloadManager.ActionDownloadComplete);
+
+            _activity.RegisterReceiver(new ApkDownloadReceiver(), intentFilter);
+        }
+
         var mime = MimeTypeMap.Singleton!;
         var mimeType = mime.GetMimeTypeFromExtension(extension);
-
-        //string invalidCharRemoved = Episode.EpisodeName.Replace("[\\\\/:*?\"<>|]", "");
 
         var invalidChars = System.IO.Path.GetInvalidFileNameChars();
 
@@ -64,8 +82,12 @@ public class Downloader
 
         //request.SetDestinationInExternalPublicDir(WeebUtils.AppFolderName, invalidCharsRemoved + ".mp4");
         request.SetDestinationInExternalPublicDir(Android.OS.Environment.DirectoryDownloads, invalidCharsRemoved);
-        var dm = (DownloadManager)Application.Context.GetSystemService(Android.Content.Context.DownloadService)!;
-        var id = dm.Enqueue(request);
+
+        var downloadManager = (DownloadManager)Application.Context.GetSystemService(
+            Android.Content.Context.DownloadService
+        )!;
+
+        var id = downloadManager.Enqueue(request);
 
         _activity.ShowToast("Download started");
     }
@@ -75,6 +97,19 @@ public class Downloader
         string url,
         Dictionary<string, string> headers)
     {
+        var builder = new AlertDialog.Builder(_activity, Resource.Style.DialogTheme);
+        builder.SetMessage("AniStream.FFmpeg extension is required to convert this video" +
+            "to mp4. Do you want to download the AniStream extension?");
+        builder.SetPositiveButton("Download", (s, e) =>
+        {
+        });
+
+        builder.SetNegativeButton("Cancel", (s, e) => { });
+
+        builder.SetCancelable(true);
+        var dialog = builder.Create()!;
+        dialog.Show();
+
         var loadingDialog = WeebUtils.SetProgressDialog(_activity, "Getting qualities. Please wait...", false);
         var metadataResources = new List<GrabbedHlsStreamMetadata>();
         try
@@ -112,9 +147,8 @@ public class Downloader
             //await Download(fileName, stream, headers);
         };
 
-        var builder = new AlertDialog.Builder(_activity, Resource.Style.DialogTheme);
+        builder = new AlertDialog.Builder(_activity, Resource.Style.DialogTheme);
         builder.SetTitle(fileName);
-
         builder.SetNegativeButton("Cancel", (s, e) => { });
 
         var items = metadataResources.Select(x => x.Resolution?.ToString()
@@ -122,7 +156,7 @@ public class Downloader
 
         builder.SetItems(items, listener);
         builder.SetCancelable(true);
-        var dialog = builder.Create()!;
+        dialog = builder.Create()!;
         dialog.SetCanceledOnTouchOutside(false);
         dialog.Show();
     }

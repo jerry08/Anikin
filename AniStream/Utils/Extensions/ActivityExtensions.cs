@@ -10,8 +10,10 @@ using Android.Provider;
 using Android.Views;
 using Android.Webkit;
 using Android.Widget;
+using AndroidX.Core.Content;
 using AndroidX.Core.View;
 using Google.Android.Material.Snackbar;
+using Microsoft.Maui.ApplicationModel;
 using Path = System.IO.Path;
 
 namespace AniStream.Utils.Extensions;
@@ -193,5 +195,29 @@ public static class ActivityExtensions
             new[] { mimeType },
             null
         );
+    }
+
+    public static void OpenApk(this Context context, Android.Net.Uri uri)
+    {
+        try
+        {
+            var contentUri = FileProvider.GetUriForFile(
+                context,
+                AppInfo.Current.PackageName + ".provider",
+                new Java.IO.File(uri.Path!)
+            );
+
+            var installIntent = new Intent(Intent.ActionView);
+            installIntent.AddFlags(ActivityFlags.GrantReadUriPermission);
+            installIntent.AddFlags(ActivityFlags.ClearTop);
+            installIntent.PutExtra(Intent.ExtraNotUnknownSource, true);
+            installIntent.SetData(contentUri);
+
+            context.StartActivity(installIntent);
+        }
+        catch
+        {
+            // Ignore
+        }
     }
 }

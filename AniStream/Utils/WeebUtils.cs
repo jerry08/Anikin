@@ -1,7 +1,11 @@
-﻿using System.IO;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
 using Android.Content;
+using Android.Content.PM;
 using Android.Graphics;
+using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Juro.Models.Anime;
@@ -126,4 +130,27 @@ public static class WeebUtils
 
     public static bool IsOnline()
         => Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+
+    [SuppressMessage("Interoperability", "CA1422:Validate platform compatibility", Justification = "<Pending>")]
+    public static bool IsPackageInstalled(
+        this Context context,
+        string packageName)
+    {
+        var packageManager = context.PackageManager;
+        if (packageManager is null)
+            return false;
+
+        var installedPkgs =
+            Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu ?
+            packageManager.GetInstalledPackages(
+                PackageManager.PackageInfoFlags.Of(0)
+            )
+            : packageManager.GetInstalledPackages(0);
+
+        //var installedApps = packageManager.GetInstalledApplications(
+        //    PackageManager.ApplicationInfoFlags.Of(0)
+        //);
+
+        return installedPkgs.Any(x => x.PackageName == "com.oneb.anistreamffmpeg");
+    }
 }

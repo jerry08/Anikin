@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AndroidX.Fragment.App;
 using AniStream.Utils.Downloading;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
 using Octokit;
 
@@ -19,16 +20,14 @@ public class AppUpdater
 
     public AppUpdater()
     {
-        _github = new GitHubClient(new ProductHeaderValue(_repostoryName + @"-UpdateCheck"));
+        _github = new GitHubClient(new ProductHeaderValue(_repostoryName + "-UpdateCheck"));
         _releaseClient = _github.Repository.Release;
     }
 
     public async Task<bool> CheckAsync(FragmentActivity activity)
     {
-        var packageInfo = activity.PackageManager!.GetPackageInfo(activity.PackageName!, 0)!;
-
         var dontShow = false;
-        var dontShowStr = await SecureStorage.GetAsync($"dont_ask_for_update_{packageInfo.VersionName}");
+        var dontShowStr = await SecureStorage.GetAsync($"dont_ask_for_update_{AppInfo.Current.VersionString}");
         if (!string.IsNullOrEmpty(dontShowStr))
             dontShow = Convert.ToBoolean(dontShowStr);
 
@@ -41,12 +40,16 @@ public class AppUpdater
             var latestRelease = releases.FirstOrDefault()!;
 
             var latestVersionName = new Version(latestRelease.Name);
-            var currentVersionName = new Version(packageInfo.VersionName!);
+            var currentVersionName = AppInfo.Current.Version;
 
-            if (currentVersionName < latestVersionName)
+            //if (currentVersionName < latestVersionName)
+            if (currentVersionName == latestVersionName)
             {
-                var builder = new Android.App.AlertDialog.Builder(activity,
-                    Android.App.AlertDialog.ThemeDeviceDefaultLight);
+                var builder = new Android.App.AlertDialog.Builder(
+                    activity,
+                    Android.App.AlertDialog.ThemeDeviceDefaultLight
+                );
+
                 builder.SetTitle("Update available");
                 builder.SetPositiveButton("Download", (s, e) =>
                 {
