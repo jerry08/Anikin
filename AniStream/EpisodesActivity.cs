@@ -41,6 +41,8 @@ public class EpisodesActivity : AppCompatActivity
     private readonly BookmarkManager _bookmarkManager = new("bookmarks");
     private readonly PlayerSettings _playerSettings = new();
 
+    public AndroidStoragePermission? AndroidStoragePermission { get; set; }
+
     public event EventHandler<EventArgs>? OnPermissionsResult;
 
     private RecyclerView EpisodesRecyclerView = default!;
@@ -303,6 +305,13 @@ public class EpisodesActivity : AppCompatActivity
         EpisodesRecyclerView.SetAdapter(adapter);
     }
 
+    protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent? data)
+    {
+        base.OnActivityResult(requestCode, resultCode, data);
+
+        AndroidStoragePermission?.OnActivityResult(requestCode, resultCode, data);
+    }
+
     public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Permission[] grantResults)
     {
         switch (requestCode)
@@ -332,6 +341,8 @@ public class EpisodesActivity : AppCompatActivity
         var eventArgs = new EventArgs();
 
         OnPermissionsResult?.Invoke(this, eventArgs);
+
+        AndroidStoragePermission?.OnRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     public override void OnBackPressed()

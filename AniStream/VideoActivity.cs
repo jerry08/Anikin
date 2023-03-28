@@ -66,6 +66,8 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
 
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
+    public AndroidStoragePermission? AndroidStoragePermission { get; set; }
+
     private AnimeInfo Anime = default!;
     private Episode Episode = default!;
     private VideoSource Video = default!;
@@ -402,6 +404,20 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
         }
     }
 
+    protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent? data)
+    {
+        base.OnActivityResult(requestCode, resultCode, data);
+
+        AndroidStoragePermission?.OnActivityResult(requestCode, resultCode, data);
+    }
+
+    public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Permission[] grantResults)
+    {
+        base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        AndroidStoragePermission?.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
     private async Task SetEpisodeAsync(string episodeId)
     {
         try
@@ -464,7 +480,7 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
             animator2.SetDuration(_playerSettings.ControllerDuration);
             animator2.Start();
 
-            var animator3 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_top_cont), "translationY", 0f, - 128f)!;
+            var animator3 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_top_cont), "translationY", 0f, -128f)!;
             animator3.SetInterpolator(overshoot);
             animator3.SetDuration(_playerSettings.ControllerDuration);
             animator3.Start();

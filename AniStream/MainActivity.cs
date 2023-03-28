@@ -35,6 +35,8 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
 
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
+    public AndroidStoragePermission? AndroidStoragePermission { get; set; }
+
     private Android.Widget.ProgressBar ProgressBar = default!;
     private SearchView _searchView = default!;
     private IMenuItem? prevMenuItem;
@@ -104,10 +106,13 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
                     PostNotificationsRequestCode);
             }
 
-            var intent = new Intent();
-            intent.SetClassName("com.oneb.anistreamffmpeg", "com.oneb.anistreamffmpeg.MainActivity");
-            //intent.SetFlags(ActivityFlags.SingleTop);
-            StartActivity(intent);
+            if (this.IsPackageInstalled("com.oneb.anistreamffmpeg"))
+            {
+                var intent = new Intent();
+                intent.SetClassName("com.oneb.anistreamffmpeg", "com.oneb.anistreamffmpeg.MainActivity");
+                //intent.SetFlags(ActivityFlags.SingleTop);
+                StartActivity(intent);
+            }
         }
 
         CreateNotificationChannel();
@@ -140,11 +145,20 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
         notificationManager?.CreateNotificationChannel(channel);
     }
 
+    protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent? data)
+    {
+        base.OnActivityResult(requestCode, resultCode, data);
+
+        AndroidStoragePermission?.OnActivityResult(requestCode, resultCode, data);
+    }
+
     public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
     {
         Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 
         base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        AndroidStoragePermission?.OnRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     public override void OnBackPressed()
