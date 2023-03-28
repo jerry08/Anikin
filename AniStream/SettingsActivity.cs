@@ -245,7 +245,7 @@ public class SettingsActivity : AppCompatActivity
 
     private async void GoogleClientManager_OnLogin(object? sender, GoogleClientResultEventArgs<GoogleUser> e)
     {
-        
+
     }
 
     public override bool OnSupportNavigateUp()

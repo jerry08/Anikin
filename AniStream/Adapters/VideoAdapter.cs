@@ -79,6 +79,15 @@ public class VideoAdapter : RecyclerView.Adapter
         {
             var androidStoragePermission = new AndroidStoragePermission(_activity);
 
+            if (_activity is EpisodesActivity episodesActivity)
+            {
+                episodesActivity.AndroidStoragePermission = androidStoragePermission;
+            }
+            else if (_activity is VideoActivity videoActivity)
+            {
+                videoActivity.AndroidStoragePermission = androidStoragePermission;
+            }
+
             var hasStoragePermission = androidStoragePermission.HasStoragePermission();
             if (!hasStoragePermission)
                 hasStoragePermission = await androidStoragePermission.RequestStoragePermission();

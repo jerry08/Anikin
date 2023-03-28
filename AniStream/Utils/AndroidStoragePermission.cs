@@ -11,7 +11,7 @@ using Android.Content.PM;
 namespace AniStream.Utils;
 
 //internal class AndroidStoragePermission : IStoragePermission
-internal class AndroidStoragePermission
+public class AndroidStoragePermission
 {
     private const int RequestReadWriteExternalStorage = 2230;
     private const int RequestForManageAllFiles = 2231;
