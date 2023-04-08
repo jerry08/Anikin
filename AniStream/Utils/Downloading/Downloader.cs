@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Webkit;
+using AniStream.Services;
 using AniStream.Utils.Extensions;
 using AniStream.Utils.Listeners;
 using JGrabber.Grabbed;
-using Microsoft.Maui.ApplicationModel;
 using Newtonsoft.Json;
 
 namespace AniStream.Utils.Downloading;
@@ -29,14 +29,8 @@ public class Downloader
     {
         var androidStoragePermission = new AndroidStoragePermission(_activity);
 
-        if (_activity is MainActivity mainActivity)
-        {
-            mainActivity.AndroidStoragePermission = androidStoragePermission;
-        }
-        else if (_activity is VideoActivity videoActivity)
-        {
-            videoActivity.AndroidStoragePermission = androidStoragePermission;
-        }
+        if (_activity is ActivityBase activity)
+            activity.AndroidStoragePermission = androidStoragePermission;
 
         var hasStoragePermission = androidStoragePermission.HasStoragePermission();
         if (!hasStoragePermission)
@@ -50,7 +44,7 @@ public class Downloader
 
         var extension = System.IO.Path.GetExtension(fileName).Split('.').LastOrDefault();
 
-        if (extension != "apk")
+        if (extension == "apk")
         {
             var intentFilter = new IntentFilter();
             intentFilter.AddAction(DownloadManager.ActionDownloadComplete);
@@ -89,24 +83,94 @@ public class Downloader
         _activity.ShowToast("Download started");
     }
 
+    /*public async Task DownloadHls(
+        string fileName,
+        string url,
+        Dictionary<string, string> headers)
+    {
+        if (!_activity.IsPackageInstalled("com.oneb.anistreamffmpeg"))
+        {
+            var builder = new AlertDialog.Builder(_activity, Resource.Style.DialogTheme);
+            builder.SetMessage("AniStream.FFmpeg extension is required to convert this video to mp4.");
+            builder.SetPositiveButton("Download", async (s, e) =>
+            {
+                var loadingDialog = WeebUtils.SetProgressDialog(_activity, "Loading...", false);
+
+                var github = new Octokit.GitHubClient(
+                    new Octokit.ProductHeaderValue("AniStream.FFmpeg-Download")
+                );
+
+                var releaseClient = github.Repository.Release;
+                var releases = await releaseClient.GetAll("jerry08", "AniStream.FFmpeg");
+                var latestRelease = releases.FirstOrDefault()!;
+                var asset = latestRelease.Assets.FirstOrDefault()!;
+
+                loadingDialog.Dismiss();
+
+                Download(asset.Name, asset.BrowserDownloadUrl);
+            });
+
+            builder.SetNegativeButton("Cancel", (s, e) => { });
+
+            builder.SetCancelable(true);
+            var dialog = builder.Create()!;
+            dialog.Show();
+        }
+        else
+        {
+            var loadingDialog = WeebUtils.SetProgressDialog(_activity, "Getting qualities. Please wait...", false);
+            var metadataResources = new List<GrabbedHlsStreamMetadata>();
+            try
+            {
+                var downloader = new Httpz.HlsDownloader(Http.ClientProvider);
+
+                metadataResources = await downloader.GetHlsStreamMetadatasAsync(url, headers);
+                loadingDialog.Dismiss();
+            }
+            catch
+            {
+                loadingDialog.Dismiss();
+                _activity.ShowToast("Failed to get qualities. Try another source");
+                return;
+            }
+
+            var listener = new DialogClickListener();
+            listener.OnItemClick += async (s, which) =>
+            {
+                loadingDialog = WeebUtils.SetProgressDialog(_activity, "Loading...", false);
+                var stream = await metadataResources[which].Stream;
+                loadingDialog.Dismiss();
+
+                //var intent = new Intent();
+                //intent.SetComponent(new ComponentName("com.oneb.anistreamffmpeg", "com.oneb.anistreamffmpeg.DownloadService"));
+                var intent = new Intent(_activity, typeof(DownloadService));
+                intent.PutExtra("stream", JsonConvert.SerializeObject(stream));
+                intent.PutExtra("headers", JsonConvert.SerializeObject(headers));
+                intent.PutExtra("fileName", fileName);
+
+                _activity.StartForegroundService(intent);
+            };
+
+            var builder = new AlertDialog.Builder(_activity, Resource.Style.DialogTheme);
+            builder.SetTitle(fileName);
+            builder.SetNegativeButton("Cancel", (s, e) => { });
+
+            var items = metadataResources.Select(x => x.Resolution?.ToString()
+                ?? "Default quality").ToArray();
+
+            builder.SetItems(items, listener);
+            builder.SetCancelable(true);
+            var dialog = builder.Create()!;
+            dialog.SetCanceledOnTouchOutside(false);
+            dialog.Show();
+        }
+    }*/
+
     public async Task DownloadHls(
         string fileName,
         string url,
         Dictionary<string, string> headers)
     {
-        var builder = new AlertDialog.Builder(_activity, Resource.Style.DialogTheme);
-        builder.SetMessage("AniStream.FFmpeg extension is required to convert this video" +
-            "to mp4. Do you want to download the AniStream extension?");
-        builder.SetPositiveButton("Download", (s, e) =>
-        {
-        });
-
-        builder.SetNegativeButton("Cancel", (s, e) => { });
-
-        builder.SetCancelable(true);
-        var dialog = builder.Create()!;
-        dialog.Show();
-
         var loadingDialog = WeebUtils.SetProgressDialog(_activity, "Getting qualities. Please wait...", false);
         var metadataResources = new List<GrabbedHlsStreamMetadata>();
         try
@@ -130,21 +194,17 @@ public class Downloader
             var stream = await metadataResources[which].Stream;
             loadingDialog.Dismiss();
 
-            //var intent = new Intent(_activity, typeof(DownloadService));
-            var intent = new Intent();
+            //var intent = new Intent();
+            //intent.SetComponent(new ComponentName("com.oneb.anistreamffmpeg", "com.oneb.anistreamffmpeg.DownloadService"));
+            var intent = new Intent(_activity, typeof(DownloadService));
             intent.PutExtra("stream", JsonConvert.SerializeObject(stream));
             intent.PutExtra("headers", JsonConvert.SerializeObject(headers));
             intent.PutExtra("fileName", fileName);
 
-            intent.SetComponent(new ComponentName("com.oneb.anistreamffmpeg", "com.oneb.anistreamffmpeg.DownloadService"));
-
-            //StartService(intent);
             _activity.StartForegroundService(intent);
-
-            //await Download(fileName, stream, headers);
         };
 
-        builder = new AlertDialog.Builder(_activity, Resource.Style.DialogTheme);
+        var builder = new AlertDialog.Builder(_activity, Resource.Style.DialogTheme);
         builder.SetTitle(fileName);
         builder.SetNegativeButton("Cancel", (s, e) => { });
 
@@ -153,7 +213,7 @@ public class Downloader
 
         builder.SetItems(items, listener);
         builder.SetCancelable(true);
-        dialog = builder.Create()!;
+        var dialog = builder.Create()!;
         dialog.SetCanceledOnTouchOutside(false);
         dialog.Show();
     }

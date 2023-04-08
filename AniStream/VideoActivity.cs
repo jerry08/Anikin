@@ -58,15 +58,13 @@ namespace AniStream;
 [Activity(Label = "VideoActivity", Theme = "@style/VideoPlayerTheme",
     ResizeableActivity = true, LaunchMode = LaunchMode.SingleTask, SupportsPictureInPicture = true,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.SmallestScreenSize | ConfigChanges.ScreenLayout | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden)]
-public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNameProvider
+public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 {
     private readonly IAnimeProvider _client = WeebUtils.AnimeClient;
 
     private readonly PlayerSettings _playerSettings = new();
 
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
-
-    public AndroidStoragePermission? AndroidStoragePermission { get; set; }
 
     private AnimeInfo Anime = default!;
     private Episode Episode = default!;
@@ -402,20 +400,6 @@ public class VideoActivity : AppCompatActivity, IPlayer.IListener, ITrackNamePro
 
             await SetEpisodeAsync(Episode.Id);
         }
-    }
-
-    protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent? data)
-    {
-        base.OnActivityResult(requestCode, resultCode, data);
-
-        AndroidStoragePermission?.OnActivityResult(requestCode, resultCode, data);
-    }
-
-    public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Permission[] grantResults)
-    {
-        base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        AndroidStoragePermission?.OnRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     private async Task SetEpisodeAsync(string episodeId)

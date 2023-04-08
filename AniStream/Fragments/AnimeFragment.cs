@@ -1,4 +1,5 @@
-﻿using Android.OS;
+﻿using System;
+using Android.OS;
 using Android.Views;
 using Android.Widget;
 using AndroidX.Fragment.App;
@@ -113,21 +114,21 @@ public class AnimeFragment : Fragment
                 SearchFilter.Popular => await provider.GetPopularAsync(Page),
                 SearchFilter.NewSeason => await provider.GetNewSeasonAsync(Page),
                 SearchFilter.LastUpdated => await provider.GetLastUpdatedAsync(Page),
-                _ => throw new System.NotImplementedException(),
+                _ => throw new NotImplementedException(),
             },
             Zoro provider => _searchFilter switch
             {
                 SearchFilter.Popular => await provider.GetPopularAsync(Page),
                 SearchFilter.NewSeason => await provider.GetRecentlyAddedAsync(Page),
                 SearchFilter.TopAiring => await provider.GetRecentlyAddedAsync(Page),
-                _ => throw new System.NotImplementedException(),
+                _ => throw new NotImplementedException(),
             },
             AnimePahe provider => _searchFilter switch
             {
                 SearchFilter.TopAiring => await provider.GetAiringAsync(Page),
-                _ => throw new System.NotImplementedException(),
+                _ => throw new NotImplementedException(),
             },
-            _ => throw new System.NotImplementedException(),
+            _ => throw new NotImplementedException(),
         };
 
         if (mRecyclerView.GetAdapter() is AnimeRecyclerAdapter animeRecyclerAdapter)

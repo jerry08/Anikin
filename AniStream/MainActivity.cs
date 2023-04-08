@@ -27,15 +27,13 @@ using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 namespace AniStream;
 
 [Activity(Label = "@string/app_name", MainLauncher = true, ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
-public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.IOnPageChangeListener
+public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
 {
     private readonly static int PostNotificationsRequestCode = 1005;
 
     private IAnimeProvider _client = default!;
 
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
-
-    public AndroidStoragePermission? AndroidStoragePermission { get; set; }
 
     private Android.Widget.ProgressBar ProgressBar = default!;
     private SearchView _searchView = default!;
@@ -105,15 +103,10 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
                     new string[] { Manifest.Permission.PostNotifications },
                     PostNotificationsRequestCode);
             }
-
-            if (this.IsPackageInstalled("com.oneb.anistreamffmpeg"))
-            {
-                var intent = new Intent();
-                intent.SetClassName("com.oneb.anistreamffmpeg", "com.oneb.anistreamffmpeg.MainActivity");
-                //intent.SetFlags(ActivityFlags.SingleTop);
-                StartActivity(intent);
-            }
         }
+
+        //StartActivity(new Intent(Android.Provider.Settings.ActionManageUnknownAppSources));
+        //StartActivity(new Intent(Android.Provider.Settings.ActionManageUnknownAppSources), Uri.parse("AppInfo.PackageName"));
 
         CreateNotificationChannel();
 
@@ -143,22 +136,6 @@ public class MainActivity : AndroidX.AppCompat.App.AppCompatActivity, ViewPager.
 
         var notificationManager = (NotificationManager?)GetSystemService(Android.Content.Context.NotificationService);
         notificationManager?.CreateNotificationChannel(channel);
-    }
-
-    protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent? data)
-    {
-        base.OnActivityResult(requestCode, resultCode, data);
-
-        AndroidStoragePermission?.OnActivityResult(requestCode, resultCode, data);
-    }
-
-    public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
-    {
-        Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        AndroidStoragePermission?.OnRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     public override void OnBackPressed()

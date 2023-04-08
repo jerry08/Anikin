@@ -83,7 +83,7 @@ public class AndroidStoragePermission
             catch (Exception)
             {
                 // this bad! (probably outdated 'permission model' as android likes to change them every once in a while)
-                return Task.FromResult<bool>(false);
+                return Task.FromResult(false);
             }
             return requestPermissionResult.Task;
         }
@@ -105,7 +105,7 @@ public class AndroidStoragePermission
     }
 
     // <summary> Call this in activity OnRequestPermissionsResult override </summary>
-    public void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
+    public void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Permission[] grantResults)
     {
         // make sure we are handling our request
         if (requestCode == RequestReadWriteExternalStorage)

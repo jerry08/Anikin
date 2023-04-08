@@ -12,10 +12,10 @@ using AndroidX.RecyclerView.Widget;
 using AniStream.Adapters;
 using AniStream.Utils;
 using Google.Android.Material.BottomSheet;
+using Httpz.Extensions;
 using Juro.Models.Anime;
 using Juro.Models.Videos;
 using Juro.Providers.Anime;
-using Juro.Utils.Extensions;
 using Xamarin.Android.Net;
 using Orientation = Android.Content.Res.Orientation;
 
@@ -117,29 +117,29 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
                         continue;
                     }
 
-                    try
-                    {
-                        // Try get sizes
-                        var http = new HttpClient(new AndroidMessageHandler());
-
-                        foreach (var video in videos)
-                        {
-                            if (video.Format == VideoType.Container)
-                            {
-                                video.Size = await Task.Run(async
-                                    () => await http.GetFileSizeAsync(
-                                        video.VideoUrl,
-                                        video.Headers,
-                                        CancellationTokenSource.Token
-                                    )
-                                );
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        // Ignore
-                    }
+                    //try
+                    //{
+                    //    // Try get sizes
+                    //    var http = new HttpClient(new AndroidMessageHandler());
+                    //
+                    //    foreach (var video in videos)
+                    //    {
+                    //        if (video.Format == VideoType.Container)
+                    //        {
+                    //            video.Size = await Task.Run(async
+                    //                () => await http.GetFileSizeAsync(
+                    //                    video.VideoUrl,
+                    //                    video.Headers,
+                    //                    CancellationTokenSource.Token
+                    //                )
+                    //            );
+                    //        }
+                    //    }
+                    //}
+                    //catch
+                    //{
+                    //    // Ignore
+                    //}
 
                     if (serversRecyclerView.GetAdapter() is ExtractorAdapter adapter)
                     {

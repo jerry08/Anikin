@@ -8,6 +8,8 @@ namespace AniStream.Utils.Downloading;
 [IntentFilter(new[] { DownloadManager.ActionDownloadComplete })]
 public class ApkDownloadReceiver : BroadcastReceiver
 {
+    public const int InstalledApk = 1007;
+
     public override void OnReceive(Context? context, Intent? intent)
     {
         try
@@ -39,7 +41,7 @@ public class ApkDownloadReceiver : BroadcastReceiver
                     );
 
                     if (uri is not null)
-                        Platform.CurrentActivity?.OpenApk(uri);
+                        Platform.CurrentActivity?.InstallApk(uri);
                 }
             }
         }

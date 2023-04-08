@@ -143,14 +143,16 @@ public static class WeebUtils
         var installedPkgs =
             Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu ?
             packageManager.GetInstalledPackages(
-                PackageManager.PackageInfoFlags.Of(0)
+                PackageManager.PackageInfoFlags.Of((int)PackageInfoFlags.MetaData)
             )
-            : packageManager.GetInstalledPackages(0);
+            : packageManager.GetInstalledPackages(PackageInfoFlags.MetaData);
 
         //var installedApps = packageManager.GetInstalledApplications(
         //    PackageManager.ApplicationInfoFlags.Of(0)
         //);
 
-        return installedPkgs.Any(x => x.PackageName == "com.oneb.anistreamffmpeg");
+        var aa = installedPkgs.Select(x => x.PackageName).Order().ToList();
+
+        return installedPkgs.Any(x => x.PackageName == packageName);
     }
 }

@@ -197,7 +197,7 @@ public static class ActivityExtensions
         );
     }
 
-    public static void OpenApk(this Context context, Android.Net.Uri uri)
+    public static void InstallApk(this Context context, Android.Net.Uri uri)
     {
         try
         {
@@ -211,7 +211,8 @@ public static class ActivityExtensions
             installIntent.AddFlags(ActivityFlags.GrantReadUriPermission);
             installIntent.AddFlags(ActivityFlags.ClearTop);
             installIntent.PutExtra(Intent.ExtraNotUnknownSource, true);
-            installIntent.SetData(contentUri);
+            //installIntent.SetDataAndType(contentUri);
+            installIntent.SetDataAndType(contentUri, "application/vnd.android.package-archive");
 
             context.StartActivity(installIntent);
         }

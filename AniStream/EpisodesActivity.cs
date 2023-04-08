@@ -35,15 +35,11 @@ using PopupMenu = AndroidX.AppCompat.Widget.PopupMenu;
 namespace AniStream;
 
 [Activity(Label = "EpisodesActivity", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
-public class EpisodesActivity : AppCompatActivity
+public class EpisodesActivity : ActivityBase
 {
     private readonly IAnimeProvider _client = WeebUtils.AnimeClient;
     private readonly BookmarkManager _bookmarkManager = new("bookmarks");
     private readonly PlayerSettings _playerSettings = new();
-
-    public AndroidStoragePermission? AndroidStoragePermission { get; set; }
-
-    public event EventHandler<EventArgs>? OnPermissionsResult;
 
     private RecyclerView EpisodesRecyclerView = default!;
     public static List<Episode> Episodes = new();
@@ -303,46 +299,6 @@ public class EpisodesActivity : AppCompatActivity
         EpisodesRecyclerView.DrawingCacheQuality = DrawingCacheQuality.High;
         EpisodesRecyclerView.SetItemViewCacheSize(20);
         EpisodesRecyclerView.SetAdapter(adapter);
-    }
-
-    protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent? data)
-    {
-        base.OnActivityResult(requestCode, resultCode, data);
-
-        AndroidStoragePermission?.OnActivityResult(requestCode, resultCode, data);
-    }
-
-    public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Permission[] grantResults)
-    {
-        switch (requestCode)
-        {
-            case 1:
-                {
-                    // If request is cancelled, the result arrays are empty.
-                    if (grantResults.Length > 0
-                        && grantResults[0] == Permission.Granted)
-                    {
-                        //ContinueInitialize();
-                        //StartActivity(Intent);
-                    }
-                    else
-                    {
-                        //Toast.makeText(MainActivity.this, "Permission denied to read your External storage", Toast.LENGTH_SHORT).show();
-
-                        //Finish();
-                    }
-                }
-                break;
-
-                // other 'case' lines to check for other
-                // permissions this app might request
-        }
-
-        var eventArgs = new EventArgs();
-
-        OnPermissionsResult?.Invoke(this, eventArgs);
-
-        AndroidStoragePermission?.OnRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     public override void OnBackPressed()
