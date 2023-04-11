@@ -120,7 +120,7 @@ public class AnimeFragment : Fragment
             {
                 SearchFilter.Popular => await provider.GetPopularAsync(Page),
                 SearchFilter.NewSeason => await provider.GetRecentlyAddedAsync(Page),
-                SearchFilter.TopAiring => await provider.GetRecentlyAddedAsync(Page),
+                SearchFilter.TopAiring => await provider.GetAiringAsync(Page),
                 _ => throw new NotImplementedException(),
             },
             AnimePahe provider => _searchFilter switch

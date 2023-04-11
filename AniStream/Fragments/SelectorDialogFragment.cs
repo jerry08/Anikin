@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -253,7 +254,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
                 }
             }
         }
-        catch
+        catch (Exception e)
         {
             // Operation cancelled
         }
