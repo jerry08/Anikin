@@ -5,7 +5,6 @@
 <p align="center">
    <a href="https://discord.gg/mhxsSMy2Nf"><img src="https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white"></a>
    <a href="https://github.com/jerry08/AniStream/releases"><img src="https://img.shields.io/github/downloads/jerry08/AniStream/total?color=%233DDC84&logo=android&logoColor=%23fff&style=for-the-badge"></a>
-   <a href="https://github.com/jerry08/AnimeDl"><img src="https://img.shields.io/nuget/dt/AnimeDl.svg?label=AnimeDl%20Downloads&color=%233DDC84&logo=nuget&logoColor=%23fff&style=for-the-badge"></a>
 </p>
 
 <p align="center"><a href="https://github.com/jerry08/AniStream/releases"><img src="/.assets/download.png"></a></p>
@@ -49,7 +48,7 @@ AniStream parses website data and filter required info, thus It removes the ads 
 
 | Platform | Download | Status |
 |----------|----------|--------|
-| Android    |[![Download Button](https://img.shields.io/github/v/release/jerry08/AniStream?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](https://github.com/jerry08/AniStream/releases/download/v1.9.7/AniStream-v1.9.7.apk)| ✅ Stable |
+| Android    |[![Download Button](https://img.shields.io/github/v/release/jerry08/AniStream?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](https://github.com/jerry08/AniStream/releases/download/v1.9.81/AniStream-v1.9.81.apk)| ✅ Stable |
 
 ## WANT TO CONTRIBUTE?
 
