@@ -9,16 +9,16 @@ internal static class Http
     public static Func<HttpClient> ClientProvider => () =>
     {
         var handler = new AndroidMessageHandler();
+        //var httpClient = new HttpClient(handler, true);
+        var httpClient = new HttpClient(handler);
 
-        var httpClient = new HttpClient(handler, true);
-
-        if (!httpClient.DefaultRequestHeaders.Contains("User-Agent"))
-        {
-            httpClient.DefaultRequestHeaders.Add(
-                "User-Agent",
-                Httpz.Utils.Http.ChromeUserAgent()
-            );
-        }
+        //if (!httpClient.DefaultRequestHeaders.Contains("User-Agent"))
+        //{
+        //    httpClient.DefaultRequestHeaders.Add(
+        //        "User-Agent",
+        //        Httpz.Utils.Http.ChromeUserAgent()
+        //    );
+        //}
 
         return httpClient;
     };

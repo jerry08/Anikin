@@ -10,6 +10,7 @@ using AndroidX.Core.Content;
 using AniStream.Services;
 using AniStream.Utils.Extensions;
 using JGrabber.Grabbed;
+using Laerdal.FFmpeg.Android;
 using Microsoft.Maui.Storage;
 
 namespace AniStream.Utils.Downloading;
@@ -39,6 +40,9 @@ public class HlsDownloader
         var newFilePath = System.IO.Path.Combine(cacheDir, fileName);
         var saveFilePath = System.IO.Path.Combine(Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads)!.AbsolutePath, $"{fileNameWithoutExtension}.mp4");
 
+        if (System.IO.File.Exists(filePath))
+            System.IO.File.Delete(filePath);
+
         using (var progress = new DownloaderProgress(_service, _notificationId, fileName))
         {
             try
@@ -61,13 +65,13 @@ public class HlsDownloader
 
         ShowProcessingNotification(fileName);
 
+        if (System.IO.File.Exists(newFilePath))
+            System.IO.File.Delete(newFilePath);
+
         if (cancellationToken.IsCancellationRequested)
         {
             if (System.IO.File.Exists(filePath))
                 System.IO.File.Delete(filePath);
-
-            if (System.IO.File.Exists(newFilePath))
-                System.IO.File.Delete(newFilePath);
 
             return;
         }
@@ -75,12 +79,11 @@ public class HlsDownloader
         var flags = PendingIntentFlags.UpdateCurrent | PendingIntentFlags.Immutable;
 
         //This allows ffmpeg to return result and continue operations in app
-        //Config.IgnoreSignal(Signal.Sigxcpu);
+        Config.IgnoreSignal(Signal.Sigxcpu);
 
-        
         var cmd = $@"-i ""{filePath}"" -acodec copy -vcodec copy ""{newFilePath}""";
-        var returnCode = Laerdal.FFmpeg.Android.FFmpeg.Execute(cmd);
-        if (returnCode == Laerdal.FFmpeg.Android.Config.ReturnCodeSuccess)
+        var returnCode = FFmpeg.Execute(cmd);
+        if (returnCode == Config.ReturnCodeSuccess)
         //if (true)
         {
             await _service.CopyFileAsync(newFilePath, saveFilePath, cancellationToken);

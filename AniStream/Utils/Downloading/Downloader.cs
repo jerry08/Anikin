@@ -180,7 +180,7 @@ public class Downloader
             metadataResources = await downloader.GetHlsStreamMetadatasAsync(url, headers);
             loadingDialog.Dismiss();
         }
-        catch
+        catch (Exception e)
         {
             loadingDialog.Dismiss();
             _activity.ShowToast("Failed to get qualities. Try another source");
