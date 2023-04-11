@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Android;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
+using Android.Graphics;
+using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Runtime;
 using Android.Views;
@@ -14,14 +17,17 @@ using AndroidX.RecyclerView.Widget;
 using AndroidX.ViewPager.Widget;
 using AniStream.Adapters;
 using AniStream.Utils;
+using AniStream.Utils.Extensions;
 using Firebase;
 using Firebase.Crashlytics;
 using Google.Android.Material.AppBar;
 using Google.Android.Material.BottomNavigation;
+using Jerro.Maui.GoogleClient;
 using Juro.Models.Anime;
 using Juro.Providers.Anime;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
+using static Android.Renderscripts.ScriptGroup;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 
 namespace AniStream;
@@ -41,6 +47,7 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
     private AppBarLayout appBarLayout = default!;
     private Android.Widget.LinearLayout noanime = default!;
 
+    private Toolbar _toolbar = default!;
     private RecyclerView recyclerView = default!;
     private BottomNavigationView bottomNavigationView = default!;
     private ViewPager viewPager = default!;
@@ -55,11 +62,43 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
         FirebaseApp.InitializeApp(this);
         FirebaseCrashlytics.Instance.SetCrashlyticsCollectionEnabled(true);
 
+        GoogleClientManager.Initialize(
+            this,
+            null,
+            "1018117642382-c6avui7h23fdfd4rgc20mo70bn4rljob.apps.googleusercontent.com"
+        );
+
         WeebUtils.AppFolderName = Resources!.GetString(Resource.String.app_name)!;
         //WeebUtils.AppFolder = GetExternalFilesDir(null).AbsolutePath;
 
-        var toolbar = FindViewById<Toolbar>(Resource.Id.tool)!;
-        SetSupportActionBar(toolbar);
+        _toolbar = FindViewById<Toolbar>(Resource.Id.toolbar)!;
+        SetSupportActionBar(_toolbar);
+
+        _toolbar.NavigationClick += delegate
+        {
+            var intent = new Intent(this, typeof(SettingsActivity));
+            StartActivity(intent);
+        };
+
+        SetHomeProfilePhotoAsync();
+
+        CrossGoogleClient.Current.OnLogin += async (s, e) =>
+        {
+            await DownloadProfilePhotoAsync();
+        };
+
+        CrossGoogleClient.Current.OnLogout += (s, e) =>
+        {
+            var filePath = System.IO.Path.Combine(
+                FileSystem.Current.AppDataDirectory,
+                "profilephoto.jpeg"
+            );
+
+            if (System.IO.File.Exists(filePath))
+                System.IO.File.Delete(filePath);
+
+            SetHomeProfilePhotoAsync();
+        };
 
         ProgressBar = FindViewById<Android.Widget.ProgressBar>(Resource.Id.progress2)!;
         recyclerView = FindViewById<RecyclerView>(Resource.Id.recyclerview2)!;
@@ -112,6 +151,16 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
 
         var updater = new AppUpdater();
         await updater.CheckAsync(this);
+
+        //if (this.IsPackageInstalled("com.ira.ffmpeg"))
+        //{
+        //    var intent = new Intent();
+        //    intent.PutExtra("command", "-version");
+        //
+        //    intent.SetComponent(new ComponentName("com.ira.ffmpeg", "com.ira.ffmpeg.FFmpegService"));
+        //    //StartService(intent);
+        //    this.StartForegroundService(intent);
+        //}
     }
 
     public void CreateNotificationChannel()
@@ -136,6 +185,70 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
 
         var notificationManager = (NotificationManager?)GetSystemService(Android.Content.Context.NotificationService);
         notificationManager?.CreateNotificationChannel(channel);
+    }
+
+    public async void SetHomeProfilePhotoAsync()
+    {
+        SupportActionBar?.SetDisplayHomeAsUpEnabled(false);
+
+        var filePath = System.IO.Path.Combine(
+            FileSystem.Current.AppDataDirectory,
+            "profilephoto.jpeg"
+        );
+
+        if (!System.IO.File.Exists(filePath))
+            await DownloadProfilePhotoAsync();
+
+        if (!System.IO.File.Exists(filePath))
+            return;
+
+        var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
+
+        var image = new BitmapDrawable(
+            Resources,
+            BitmapFactory.DecodeByteArray(bytes, 0, bytes.Length)
+        );
+
+        image.Bitmap = image.Bitmap!.GetRoundedCornerBitmap(100);
+
+        SupportActionBar?.SetDisplayHomeAsUpEnabled(true);
+
+        _toolbar.NavigationIcon = image;
+    }
+
+    public async Task DownloadProfilePhotoAsync()
+    {
+        var filePath = System.IO.Path.Combine(
+            FileSystem.Current.AppDataDirectory,
+            "profilephoto.jpeg"
+        );
+
+        if (System.IO.File.Exists(filePath))
+            System.IO.File.Delete(filePath);
+
+        if (!CrossGoogleClient.Current.IsLoggedIn)
+        {
+            using var fileStream = System.IO.File.Create(filePath);
+            var stream = Assets!.Open("blank_profile_picture.png");
+            await stream.CopyToAsync(fileStream);
+            return;
+        }
+
+        var url = CrossGoogleClient.Current.CurrentUser.Picture;
+
+        var http = Http.ClientProvider();
+        var bytes = await http.GetByteArrayAsync(url);
+
+        await System.IO.File.WriteAllBytesAsync(filePath, bytes);
+
+        var image = new BitmapDrawable(
+            Resources,
+            BitmapFactory.DecodeByteArray(bytes, 0, bytes.Length)
+        );
+
+        image.Bitmap = image.Bitmap!.GetRoundedCornerBitmap(100);
+
+        _toolbar.NavigationIcon = image;
     }
 
     public override void OnBackPressed()

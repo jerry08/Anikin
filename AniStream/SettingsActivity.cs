@@ -228,6 +228,8 @@ public class SettingsActivity : AppCompatActivity
                 }
                 else
                 {
+                    button_login.Text = "Log out";
+
                     this.ShowToast("Signed in");
 
                     // Resore backup from firebase database
