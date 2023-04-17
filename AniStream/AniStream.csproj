@@ -37,9 +37,9 @@
 
   <ItemGroup>
     <PackageReference Include="Httpz" Version="1.0.7" />
-    <PackageReference Include="Juro" Version="1.0.13" />
+    <PackageReference Include="Juro" Version="1.0.15" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Octokit" Version="5.0.3" />
+    <PackageReference Include="Octokit" Version="5.0.4" />
     <PackageReference Include="Laerdal.FFmpeg.Android.Min" Version="4.4.28" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.18.11" />
