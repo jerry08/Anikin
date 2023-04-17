@@ -7,15 +7,15 @@ using Android.Animation;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
+using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
-using Android.Runtime;
 using Android.Util;
 using Android.Views;
 using Android.Views.Animations;
 using Android.Widget;
-using AndroidX.AppCompat.App;
 using AndroidX.CardView.Widget;
+using AndroidX.Core.Content.Resources;
 using AndroidX.Core.View;
 using AniStream.Adapters;
 using AniStream.Fragments;
@@ -30,7 +30,6 @@ using Com.Google.Android.Exoplayer2.Ext.Okhttp;
 using Com.Google.Android.Exoplayer2.Extractor;
 using Com.Google.Android.Exoplayer2.Metadata;
 using Com.Google.Android.Exoplayer2.Source;
-using Com.Google.Android.Exoplayer2.Source.Hls;
 using Com.Google.Android.Exoplayer2.Text;
 using Com.Google.Android.Exoplayer2.Trackselection;
 using Com.Google.Android.Exoplayer2.UI;
@@ -41,6 +40,7 @@ using Com.Google.Android.Exoplayer2.Video;
 using Firebase;
 using Firebase.Crashlytics;
 using Google.Android.Material.Card;
+using Juro.Models;
 using Juro.Models.Anime;
 using Juro.Models.Videos;
 using Juro.Providers.Anilist;
@@ -51,6 +51,7 @@ using Square.OkHttp3;
 using static Com.Google.Android.Exoplayer2.IPlayer;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 using Configuration = Android.Content.Res.Configuration;
+using Format = Com.Google.Android.Exoplayer2.Format;
 using Handler = Android.OS.Handler;
 
 namespace AniStream;
@@ -125,19 +126,6 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         FirebaseApp.InitializeApp(this);
         FirebaseCrashlytics.Instance.SetCrashlyticsCollectionEnabled(true);
 
-        // Enable unhandled exceptions for testing
-        AndroidEnvironment.UnhandledExceptionRaiser += (s, e) =>
-        {
-        };
-
-        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
-        {
-        };
-
-        TaskScheduler.UnobservedTaskException += (s, e) =>
-        {
-        };
-
         await _playerSettings.LoadAsync();
 
         if (_playerSettings.AlwaysInLandscapeMode && Build.VERSION.SdkInt >= BuildVersionCodes.Gingerbread)
@@ -165,10 +153,8 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         playerView = FindViewById<StyledPlayerView>(Resource.Id.player_view)!;
         exoplay = FindViewById<ImageButton>(Resource.Id.exo_play)!;
         exoQuality = FindViewById<ImageButton>(Resource.Id.exo_quality)!;
-        //progressBar = FindViewById<ProgressBar>(Resource.Id.buffer)!;
         progressBar = FindViewById<ProgressBar>(Resource.Id.exo_init_buffer)!;
 
-        //errorText = FindViewById<TextView>(Resource.Id.errorText)!;
         VideoInfo = FindViewById<TextView>(Resource.Id.exo_video_info)!;
         VideoName = FindViewById<TextView>(Resource.Id.exo_video_name)!;
         ServerInfo = FindViewById<TextView>(Resource.Id.exo_server_info)!;
@@ -201,11 +187,16 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         TimeStampText = FindViewById<TextView>(Resource.Id.exo_time_stamp_text)!;
         var exoSpeed = FindViewById<ImageButton>(Resource.Id.exo_playback_speed)!;
         var exoScreen = FindViewById<ImageButton>(Resource.Id.exo_screen)!;
+        var exoSubtitle = FindViewById(Resource.Id.exo_subtitles)!;
+        var exoSubtitle2 = FindViewById(Resource.Id.exo_sub)!;
+
+        exoSubtitle.Visibility = ViewStates.Visible;
+        exoSubtitle2.Visibility = ViewStates.Visible;
 
         var backButton = FindViewById<ImageButton>(Resource.Id.exo_back)!;
         var lockButton = FindViewById<ImageButton>(Resource.Id.exo_lock)!;
 
-        //TODO: Implement these
+        // TODO: Implement these
         settingsButton.Visibility = ViewStates.Gone;
         subButton.Visibility = ViewStates.Gone;
         lockButton.Visibility = ViewStates.Gone;
@@ -325,11 +316,6 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         animeTitle.Text = Anime.Title;
         episodeTitle.Text = Episode.Name;
 
-        //var ff = trackSelector.BuildUponParameters();
-        //ff.SetMinVideoSize(720, 480).SetMaxVideoSize(1, 1);
-        //
-        //trackSelector.SetParameters(ff);
-
         playerView.ControllerShowTimeoutMs = 5000;
 
         playerView.FindViewById(Resource.Id.exo_full_area)!.Click += (s, e) =>
@@ -337,7 +323,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             HandleController();
         };
 
-        //Screen Gestures
+        // Screen Gestures
         if (_playerSettings.DoubleTap)
         {
             var fastRewindGestureListener = new GesturesListener();
@@ -383,7 +369,35 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             };
         }
 
-        SetupExoPlayer();
+        //BuildExoplayer();
+
+        // Play Pause
+        exoplay.Click += (s, e) =>
+        {
+            (exoplay.Drawable as IAnimatable)?.Start();
+
+            if (exoPlayer.IsPlaying)
+            {
+                Glide.With(this).Load(Resource.Drawable.anim_play_to_pause)
+                    .Into(exoplay);
+
+                //Picasso.Get().Load(Resource.Drawable.anim_play_to_pause)
+                //    //.Transform(new RoundedTransformation())
+                //    .Fit().CenterCrop().Into(exoplay);
+
+                exoPlayer.Pause();
+            }
+            else
+            {
+                Glide.With(this).Load(Resource.Drawable.anim_pause_to_play)
+                    .Into(exoplay);
+
+                //Picasso.Get().Load(Resource.Drawable.anim_pause_to_play)
+                //     .Fit().CenterCrop().Into(exoplay);
+
+                exoPlayer.Play();
+            }
+        };
 
         if (_playerSettings.SelectServerBeforePlaying)
         {
@@ -404,6 +418,8 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
     private async Task SetEpisodeAsync(string episodeId)
     {
+        CancellationTokenSource = new();
+
         try
         {
             var videoServers = await _client.GetVideoServersAsync(
@@ -439,7 +455,10 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             PlayVideo(videos[0]);
             progressBar.Visibility = ViewStates.Gone;
         }
-        catch { }
+        catch
+        {
+            // Ignore
+        }
     }
 
     private void HandleController()
@@ -495,53 +514,59 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         }
     }
 
-    private void SetupExoPlayer()
+    private void BuildExoplayer(CacheDataSource.Factory cacheFactory)
     {
-        var trackSelectionFactory = new AdaptiveTrackSelection.Factory();
-        trackSelector = new DefaultTrackSelector(this, trackSelectionFactory);
+        trackSelector = new DefaultTrackSelector(this);
+        trackSelector.SetParameters(
+            (DefaultTrackSelector.Parameters.Builder?)trackSelector.BuildUponParameters()!
+            .SetMinVideoSize(720, 480)!
+            .SetMaxVideoSize(1, 1)!
+        );
 
         exoPlayer = new IExoPlayer.Builder(this)
             .SetTrackSelector(trackSelector)!
+            .SetMediaSourceFactory(new DefaultMediaSourceFactory(cacheFactory))!
             .Build()!;
 
         playerView.Player = exoPlayer;
         exoPlayer.AddListener(this);
 
-        //progressBar.Visibility = ViewStates.Visible;
-
-        //Play Pause
-        exoplay.Click += (s, e) =>
+        if (playerView.SubtitleView is not null)
         {
-            (exoplay.Drawable as IAnimatable)?.Start();
+            playerView.SubtitleView.Alpha = 1f;
+            playerView.SubtitleView.SetApplyEmbeddedFontSizes(false);
 
-            if (exoPlayer.IsPlaying)
-            {
-                Glide.With(this).Load(Resource.Drawable.anim_play_to_pause)
-                    .Into(exoplay);
+            var primaryColor = Color.White;
+            var secondaryColor = Color.Black;
+            var outline = CaptionStyleCompat.EdgeTypeOutline;
+            var subBackground = Color.Transparent;
+            var subWindow = Color.Transparent;
+            var font = ResourcesCompat.GetFont(this, Resource.Font.poppins);
 
-                //Picasso.Get().Load(Resource.Drawable.anim_play_to_pause)
-                //    //.Transform(new RoundedTransformation())
-                //    .Fit().CenterCrop().Into(exoplay);
+            var captionStyle = new CaptionStyleCompat(
+                primaryColor,
+                subBackground,
+                subWindow,
+                outline,
+                secondaryColor,
+                null
+            );
 
-                exoPlayer.Pause();
-            }
-            else
-            {
-                Glide.With(this).Load(Resource.Drawable.anim_pause_to_play)
-                    .Into(exoplay);
+            playerView.SubtitleView.SetStyle(captionStyle);
 
-                //Picasso.Get().Load(Resource.Drawable.anim_pause_to_play)
-                //     .Fit().CenterCrop().Into(exoplay);
+            playerView.SubtitleView.SetFixedTextSize(
+                (int)ComplexUnitType.Sp,
+                20f
+            );
+        }
 
-                exoPlayer.Play();
-            }
-        };
+        //progressBar.Visibility = ViewStates.Visible;
     }
 
-    System.Timers.Timer seekTimerF = new();
-    System.Timers.Timer seekTimerR = new();
-    long seekTimesF;
-    long seekTimesR;
+    private System.Timers.Timer seekTimerF = new();
+    private System.Timers.Timer seekTimerR = new();
+    private long seekTimesF;
+    private long seekTimesR;
     public void Seek(bool forward, MotionEvent? @event = null)
     {
         var rewindText = playerView.FindViewById<TextView>(Resource.Id.exo_fast_rewind_anim)!;
@@ -761,21 +786,6 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         base.OnBackPressed();
     }
 
-    //TODO: Implement when automatically going to next episode
-    //private bool IsPreloading { get; set; }
-    //public void UpdateProgress()
-    //{
-    //    if (exoPlayer.CurrentPosition / exoPlayer.Duration > 99)
-    //    {
-    //
-    //    }
-    //
-    //    Handler.PostDelayed(() =>
-    //    {
-    //        UpdateProgress();
-    //    }, 2500);
-    //}
-
     private List<Stamp> SkippedTimeStamps { get; set; } = new();
     private Stamp? CurrentTimeStamp { get; set; }
     private async void LoadTimeStamps()
@@ -936,8 +946,6 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
         await UpdateProgress();
 
-        //var test = await Http.Client.SendHttpRequestAsync(video.VideoUrl, video.Headers);
-
         var videoUri = Android.Net.Uri.Parse(video.VideoUrl.Replace(" ", "%20"))!;
 
         var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36";
@@ -952,14 +960,11 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             .FollowRedirects(true)
             .Build();
 
-        //var dataSourceFactory = new DefaultHttpDataSource.Factory();
         var dataSourceFactory = new OkHttpDataSource.Factory(httpClient);
 
         dataSourceFactory.SetUserAgent(userAgent);
         dataSourceFactory.SetTransferListener(bandwidthMeter);
         dataSourceFactory.SetDefaultRequestProperties(headers);
-
-        //dataSourceFactory.CreateDataSource();
 
         var extractorsFactory = new DefaultExtractorsFactory()
             .SetConstantBitrateSeekingEnabled(true);
@@ -973,35 +978,42 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         var mimeType = video?.Format switch
         {
             VideoType.M3u8 => MimeTypes.ApplicationM3u8,
-            //VideoType.Dash => MimeTypes.ApplicationMpd,
+            VideoType.Dash => MimeTypes.ApplicationMpd,
             _ => MimeTypes.ApplicationMp4,
         };
 
-        var mediaItem = new MediaItem.Builder()
+        var builder = new MediaItem.Builder()
             .SetUri(videoUri)!
-            .SetMimeType(mimeType)!
-            .Build();
+            .SetMimeType(mimeType)!;
 
-        var type = Util.InferContentType(videoUri);
-        var mediaSource = type switch
+        if (video!.Subtitles.Count > 0)
         {
-            //case C.TypeDash:
-            //    break;
-            //case C.TypeSs:
-            //    break;
-            C.TypeHls => new HlsMediaSource.Factory(cacheFactory)
-                .CreateMediaSource(mediaItem),
-            //case C.TypeOther:
-            //    break;
-            _ => new ProgressiveMediaSource.Factory(cacheFactory, extractorsFactory)
-                .CreateMediaSource(mediaItem),
-        };
+            var subTitleMimeType = video!.Subtitles[0].Type switch
+            {
+                SubtitleType.VTT => MimeTypes.TextVtt,
+                SubtitleType.ASS => MimeTypes.TextSsa,
+                SubtitleType.SRT => MimeTypes.ApplicationSubrip,
+                _ => MimeTypes.TextUnknown,
+            };
 
-        exoPlayer.SetMediaSource(mediaSource);
+            var sub = new MediaItem.SubtitleConfiguration.Builder(
+                Android.Net.Uri.Parse(video.Subtitles[0].Url)
+            ).SetSelectionFlags(C.SelectionFlagForced)!
+            .SetMimeType(subTitleMimeType)!
+            .Build()!;
 
-        //exoPlayer.SetMediaItem(mediaItem);
+            builder.SetSubtitleConfigurations(new List<MediaItem.SubtitleConfiguration>()
+            {
+                sub
+            });
+        }
 
-        //exoPlayer.Prepare(mediaSource);
+        var mediaItem = builder.Build();
+
+        BuildExoplayer(cacheFactory);
+
+        exoPlayer.SetMediaItem(mediaItem);
+
         exoPlayer.Prepare();
         exoPlayer.PlayWhenReady = true;
 

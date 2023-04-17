@@ -21,6 +21,8 @@ public class PlayerSettings : SettingsManager
 
     public int DefaultSpeedIndex { get; set; } = 5;
 
+    public int FontSize { get; set; } = 20;
+
     public PlayerResizeMode ResizeMode { get; set; }
 
     public bool AutoSkipOPED { get; set; }
