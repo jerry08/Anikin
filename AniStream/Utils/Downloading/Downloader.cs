@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
@@ -171,19 +172,40 @@ public class Downloader
         string url,
         Dictionary<string, string> headers)
     {
-        var loadingDialog = WeebUtils.SetProgressDialog(_activity, "Getting qualities. Please wait...", false);
+        var loadingDialog = WeebUtils.SetProgressDialog(
+            _activity,
+            "Getting qualities. Please wait...",
+            true
+        );
+
+        var cancellationTokenSource = new CancellationTokenSource();
+
+        loadingDialog.CancelEvent += delegate
+        {
+            cancellationTokenSource.Cancel();
+        };
+
         var metadataResources = new List<GrabbedHlsStreamMetadata>();
+
         try
         {
             var downloader = new Httpz.HlsDownloader(Http.ClientProvider);
 
-            metadataResources = await downloader.GetHlsStreamMetadatasAsync(url, headers);
+            metadataResources = await downloader.GetHlsStreamMetadatasAsync(
+                url,
+                headers,
+                cancellationTokenSource.Token
+            );
+
             loadingDialog.Dismiss();
         }
-        catch (Exception e)
+        catch
         {
             loadingDialog.Dismiss();
-            _activity.ShowToast("Failed to get qualities. Try another source");
+
+            if (!cancellationTokenSource.IsCancellationRequested)
+                _activity.ShowToast("Failed to get qualities. Try another source");
+
             return;
         }
 
@@ -214,7 +236,7 @@ public class Downloader
         builder.SetItems(items, listener);
         builder.SetCancelable(true);
         var dialog = builder.Create()!;
-        dialog.SetCanceledOnTouchOutside(false);
+        dialog.SetCanceledOnTouchOutside(true);
         dialog.Show();
     }
 }
