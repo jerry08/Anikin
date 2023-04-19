@@ -12,6 +12,8 @@
       <item name="colorPrimary">@color/colorPrimary</item>
       <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
       <item name="colorAccent">@color/colorAccent</item>
+      <item name="colorOnPrimary">@color/bg_white</item>
+      <item name="colorSecondary">@color/violet_400</item>
       <item name="white">#FFF</item>
     </style>
 

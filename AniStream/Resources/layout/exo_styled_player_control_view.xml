@@ -371,6 +371,9 @@
                             android:id="@+id/exo_ep_sel"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
+                            android:text="Episode title"
+                            android:backgroundTint="#fff"
+                            android:textColor="@color/bg_white"
                             android:layout_marginEnd="0dp"
                             android:layout_marginBottom="-10dp" />
 
