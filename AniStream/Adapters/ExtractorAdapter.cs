@@ -74,7 +74,7 @@ public class ExtractorAdapter : RecyclerView.Adapter
 
         if (streamViewHolder.streamRecyclerView.GetAdapter() is not VideoAdapter)
         {
-            var adapter = new VideoAdapter(Activity, _anime, _episode, videos);
+            var adapter = new VideoAdapter(Activity, _anime, _episode, server, videos);
 
             streamViewHolder.streamRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
             streamViewHolder.streamRecyclerView.HasFixedSize = true;

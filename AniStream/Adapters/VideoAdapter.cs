@@ -7,6 +7,7 @@ using AndroidX.RecyclerView.Widget;
 using AniStream.Utils;
 using AniStream.Utils.Downloading;
 using AniStream.Utils.Extensions;
+using Juro.Models;
 using Juro.Models.Anime;
 using Juro.Models.Videos;
 using Newtonsoft.Json;
@@ -15,9 +16,10 @@ namespace AniStream.Adapters;
 
 public class VideoAdapter : RecyclerView.Adapter
 {
+    private readonly Activity _activity;
     private readonly AnimeInfo _anime;
     private readonly Episode _episode;
-    private readonly Activity _activity;
+    private readonly VideoServer _videoServer;
 
     public List<VideoSource> Videos { get; set; }
 
@@ -25,11 +27,13 @@ public class VideoAdapter : RecyclerView.Adapter
         Activity activity,
         AnimeInfo anime,
         Episode episode,
+        VideoServer videoServer,
         List<VideoSource> videos)
     {
         _activity = activity;
         _anime = anime;
         _episode = episode;
+        _videoServer = videoServer;
         Videos = videos;
     }
 
@@ -77,24 +81,7 @@ public class VideoAdapter : RecyclerView.Adapter
         urlViewHolder.urlDownload.Visibility = ViewStates.Visible;
         urlViewHolder.urlDownload.Click += async (s, e) =>
         {
-            var androidStoragePermission = new AndroidStoragePermission(_activity);
-
-            if (_activity is ActivityBase activity)
-                activity.AndroidStoragePermission = androidStoragePermission;
-
-            var hasStoragePermission = androidStoragePermission.HasStoragePermission();
-            if (!hasStoragePermission)
-                hasStoragePermission = await androidStoragePermission.RequestStoragePermission();
-
-            if (!hasStoragePermission)
-                return;
-
-            var downloader = new Downloader(_activity);
-
-            if (video.Format == VideoType.Container)
-                downloader.Download($"{_anime.Title} - Ep-{_episode.Number}.mp4", video.VideoUrl, video.Headers);
-            else
-                await downloader.DownloadHls($"{_anime.Title} - Ep-{_episode.Number}.mp4", video.VideoUrl, video.Headers);
+            await new EpisodeDownloader().EnqueueAsync(_anime, _episode, video);
         };
 
         if (video.Size != null && video.Size > 0)
@@ -116,6 +103,7 @@ public class VideoAdapter : RecyclerView.Adapter
             intent.PutExtra("anime", JsonConvert.SerializeObject(_anime));
             intent.PutExtra("episode", JsonConvert.SerializeObject(_episode));
             intent.PutExtra("video", JsonConvert.SerializeObject(video));
+            intent.PutExtra("videoServer", JsonConvert.SerializeObject(_videoServer));
             intent.SetFlags(ActivityFlags.NewTask);
 
             _activity.ApplicationContext!.StartActivity(intent);
