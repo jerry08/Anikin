@@ -21,6 +21,7 @@ using AniStream.Adapters;
 using AniStream.Fragments;
 using AniStream.Settings;
 using AniStream.Utils;
+using AniStream.Utils.Downloading;
 using AniStream.Utils.Extensions;
 using AniStream.Utils.Listeners;
 using Bumptech.Glide;
@@ -62,14 +63,15 @@ namespace AniStream;
 public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 {
     private readonly IAnimeProvider _client = WeebUtils.AnimeClient;
-
     private readonly PlayerSettings _playerSettings = new();
+    private readonly Handler _handler = new(Looper.MainLooper!);
 
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
     private AnimeInfo Anime = default!;
     private Episode Episode = default!;
-    private VideoSource Video = default!;
+    private VideoSource? Video;
+    private VideoServer? VideoServer;
 
     private IExoPlayer exoPlayer = default!;
     private StyledPlayerView playerView = default!;
@@ -79,9 +81,11 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
     private ProgressBar progressBar = default!;
     private ImageButton exoplay = default!;
     private ImageButton exoQuality = default!;
+    private ImageButton DownloadButton = default!;
     //private int currentVideoIndex;
     //private LinearLayout controls = default!;
     private TextView animeTitle = default!;
+    //private SpinnerNoSwipe episodeTitle = default!;
     private TextView episodeTitle = default!;
     //private TextView errorText = default!;
     private TextView VideoInfo = default!;
@@ -97,8 +101,6 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
     private MaterialCardView SkipTimeButton = default!;
     private TextView SkipTimeText = default!;
     private TextView TimeStampText = default!;
-
-    private Handler Handler { get; set; } = new Handler(Looper.MainLooper!);
 
     private bool IsPipEnabled { get; set; }
     private Rational AspectRatio { get; set; } = new(16, 9);
@@ -139,6 +141,10 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         if (!string.IsNullOrEmpty(episodeString))
             Episode = JsonConvert.DeserializeObject<Episode>(episodeString)!;
 
+        var videoServerString = Intent.GetStringExtra("videoServer");
+        if (!string.IsNullOrEmpty(videoServerString))
+            VideoServer = JsonConvert.DeserializeObject<VideoServer>(videoServerString)!;
+
         var bookmarkManager = new BookmarkManager("recently_watched");
 
         var isBooked = await bookmarkManager.IsBookmarked(Anime);
@@ -150,6 +156,9 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         animeTitle = FindViewById<TextView>(Resource.Id.exo_anime_title)!;
         episodeTitle = FindViewById<TextView>(Resource.Id.exo_ep_sel)!;
 
+        animeTitle.Text = Anime.Title;
+        episodeTitle.Text = Episode.Name;
+
         playerView = FindViewById<StyledPlayerView>(Resource.Id.player_view)!;
         exoplay = FindViewById<ImageButton>(Resource.Id.exo_play)!;
         exoQuality = FindViewById<ImageButton>(Resource.Id.exo_quality)!;
@@ -159,6 +168,9 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         VideoName = FindViewById<TextView>(Resource.Id.exo_video_name)!;
         ServerInfo = FindViewById<TextView>(Resource.Id.exo_server_info)!;
 
+        ServerInfo.Text = Anime.Site.ToString();
+
+        VideoName.Text = VideoServer?.Name;
         VideoName.Selected = true;
 
         ExoSkip = FindViewById<MaterialCardView>(Resource.Id.exo_skip)!;
@@ -179,7 +191,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         var settingsButton = FindViewById<ImageButton>(Resource.Id.exo_settings)!;
         SourceButton = FindViewById<ImageButton>(Resource.Id.exo_source)!;
         var subButton = FindViewById<ImageButton>(Resource.Id.exo_sub)!;
-        var downloadButton = FindViewById<ImageButton>(Resource.Id.exo_download)!;
+        DownloadButton = FindViewById<ImageButton>(Resource.Id.exo_download)!;
         var exoPip = FindViewById<ImageButton>(Resource.Id.exo_pip)!;
         ExoSkipOpEd = FindViewById<ImageButton>(Resource.Id.exo_skip_op_ed)!;
         SkipTimeButton = FindViewById<MaterialCardView>(Resource.Id.exo_skip_timestamp)!;
@@ -188,10 +200,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         var exoSpeed = FindViewById<ImageButton>(Resource.Id.exo_playback_speed)!;
         var exoScreen = FindViewById<ImageButton>(Resource.Id.exo_screen)!;
         var exoSubtitle = FindViewById(Resource.Id.exo_subtitles)!;
-        var exoSubtitle2 = FindViewById(Resource.Id.exo_sub)!;
-
-        exoSubtitle.Visibility = ViewStates.Visible;
-        exoSubtitle2.Visibility = ViewStates.Visible;
+        var exoSubtitleBtn = FindViewById(Resource.Id.exo_sub)!;
 
         var backButton = FindViewById<ImageButton>(Resource.Id.exo_back)!;
         var lockButton = FindViewById<ImageButton>(Resource.Id.exo_lock)!;
@@ -284,7 +293,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
         backButton.Click += (s, e) =>
         {
-            this.OnBackPressed();
+            OnBackPressed();
         };
 
         ExoSkip.Click += (s, e) =>
@@ -312,9 +321,6 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
                 exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime);
             };
         }
-
-        animeTitle.Text = Anime.Title;
-        episodeTitle.Text = Episode.Name;
 
         playerView.ControllerShowTimeoutMs = 5000;
 
@@ -369,8 +375,6 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             };
         }
 
-        //BuildExoplayer();
-
         // Play Pause
         exoplay.Click += (s, e) =>
         {
@@ -399,13 +403,21 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             }
         };
 
+        DownloadButton.Click += async delegate
+        {
+            if (Video is not null)
+                await new EpisodeDownloader().EnqueueAsync(Anime, Episode, Video);
+        };
+
         if (_playerSettings.SelectServerBeforePlaying)
         {
             var videoString = Intent.GetStringExtra("video");
             if (!string.IsNullOrEmpty(videoString))
+            {
                 Video = JsonConvert.DeserializeObject<VideoSource>(videoString)!;
 
-            PlayVideo(Video);
+                PlayVideo(Video);
+            }
         }
         else
         {
@@ -420,16 +432,14 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
     {
         CancellationTokenSource = new();
 
+        DownloadButton.Visibility = ViewStates.Gone;
+
         try
         {
             var videoServers = await _client.GetVideoServersAsync(
                 episodeId,
                 CancellationTokenSource.Token
             );
-
-            var selectedVideoServer = videoServers
-                .Find(x => x.Name?.ToLower().Contains("streamsb") == true
-                    || x.Name?.ToLower().Contains("vidstream") == true);
 
             if (videoServers.Count == 0)
             {
@@ -439,7 +449,12 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
                 return;
             }
 
-            var videos = await _client.GetVideosAsync(selectedVideoServer ?? videoServers[0]);
+            var selectedVideoServer = videoServers
+                .Find(x => x.Name?.ToLower().Contains("streamsb") == true
+                    || x.Name?.ToLower().Contains("vidstream") == true)
+                ?? videoServers[0];
+
+            var videos = await _client.GetVideosAsync(selectedVideoServer);
 
             if (videos.Count == 0)
             {
@@ -452,8 +467,12 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
                 return;
             }
 
+            VideoName.Text = selectedVideoServer.Name;
+
             PlayVideo(videos[0]);
+
             progressBar.Visibility = ViewStates.Gone;
+            DownloadButton.Visibility = ViewStates.Visible;
         }
         catch
         {
@@ -516,12 +535,15 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
     private void BuildExoplayer(CacheDataSource.Factory cacheFactory)
     {
+        // Quality Track
         trackSelector = new DefaultTrackSelector(this);
-        trackSelector.SetParameters(
-            (DefaultTrackSelector.Parameters.Builder?)trackSelector.BuildUponParameters()!
-            .SetMinVideoSize(720, 480)!
-            .SetMaxVideoSize(1, 1)!
-        );
+
+        // Todo: Allow changing default video size in settings
+        //trackSelector.SetParameters(
+        //    (DefaultTrackSelector.Parameters.Builder?)trackSelector.BuildUponParameters()!
+        //    .SetMinVideoSize(_playerSettings.MaxWidth ?? 720, _playerSettings.MaxHeight ?? 480)!
+        //    .SetMaxVideoSize(1, 1)!
+        //);
 
         exoPlayer = new IExoPlayer.Builder(this)
             .SetTrackSelector(trackSelector)!
@@ -549,7 +571,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
                 subWindow,
                 outline,
                 secondaryColor,
-                null
+                font
             );
 
             playerView.SubtitleView.SetStyle(captionStyle);
@@ -577,7 +599,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         if (forward)
         {
             forwardText.Text = $"+{(_playerSettings.SeekTime / 1000) * ++seekTimesF}";
-            Handler.Post(() =>
+            _handler.Post(() =>
             {
                 exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime);
             });
@@ -600,7 +622,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         else
         {
             rewindText.Text = $"-{(_playerSettings.SeekTime / 1000) * ++seekTimesR}";
-            Handler.Post(() =>
+            _handler.Post(() =>
             {
                 exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime);
             });
@@ -832,7 +854,9 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             playerView.SetExtraAdGroupMarkers(adGroups.ToArray(), playedAdGroups.ToArray());
 
             ExoSkipOpEd.Alpha = 1f;
-            ExoSkipOpEd.Visibility = ViewStates.Visible;
+
+            // Todo
+            //ExoSkipOpEd.Visibility = ViewStates.Visible;
 
             if (_playerSettings.TimeStampsEnabled && _playerSettings.ShowTimeStampButton)
                 UpdateTimeStamp();
@@ -876,7 +900,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             ExoSkip.Visibility = ViewStates.Visible;
         }
 
-        Handler.PostDelayed(() =>
+        _handler.PostDelayed(() =>
         {
             UpdateTimeStamp();
         }, 500);
@@ -938,6 +962,8 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
     public async void PlayVideo(VideoSource video)
     {
+        Video = video;
+
         if (selector is not null)
         {
             selector.Dismiss();
@@ -1285,7 +1311,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
     private void StopDoubleTapped(View view, TextView textView)
     {
-        Handler.Post(() =>
+        _handler.Post(() =>
         {
             ObjectAnimator.OfFloat(view, "alpha", view.Alpha, 0f)!.SetDuration(150).Start();
             ObjectAnimator.OfFloat(textView, "alpha", 1f, 0f)!.SetDuration(150).Start();
