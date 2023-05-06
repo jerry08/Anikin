@@ -30,6 +30,7 @@ public static class WeebUtils
             {
                 AnimeSites.Zoro => new Zoro(() => httpClient),
                 AnimeSites.AnimePahe => new AnimePahe(() => httpClient),
+                AnimeSites.NineAnime => new NineAnime(() => httpClient),
                 _ => new Gogoanime(() => httpClient)
             };
         }

@@ -667,12 +667,14 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             catch { }
         }
 
-        if (!SelectorDialogFragment.Cache.ContainsKey(episode.Link))
+        var epKey = episode.Link ?? episode.Id;
+
+        if (!SelectorDialogFragment.Cache.ContainsKey(epKey))
         {
             var serverWithVideos = videoServers
                 .ConvertAll(x => new ServerWithVideos(x, allVideos));
 
-            SelectorDialogFragment.Cache.Add(episode.Link, serverWithVideos);
+            SelectorDialogFragment.Cache.Add(epKey, serverWithVideos);
         }
 
         RunOnUiThread(SetNextAndPrev);
@@ -684,8 +686,9 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         NextButton.Visibility = ViewStates.Visible;
 
         var prevEpisode = GetPreviousEpisode();
+        var prevEpisodeKey = prevEpisode?.Link ?? prevEpisode?.Id;
         if (prevEpisode is not null
-            && SelectorDialogFragment.Cache.ContainsKey(prevEpisode.Link))
+            && SelectorDialogFragment.Cache.ContainsKey(prevEpisodeKey!))
         {
             PrevButton.Enabled = true;
             PrevButton.Alpha = 1f;
@@ -697,8 +700,9 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         }
 
         var nextEpisode = GetNextEpisode();
+        var nextEpisodeKey = nextEpisode?.Link ?? nextEpisode?.Id;
         if (nextEpisode is not null
-            && SelectorDialogFragment.Cache.ContainsKey(nextEpisode.Link))
+            && SelectorDialogFragment.Cache.ContainsKey(nextEpisodeKey!))
         {
             NextButton.Enabled = true;
             NextButton.Alpha = 1f;
@@ -1014,7 +1018,10 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
         if (video!.Subtitles.Count > 0)
         {
-            var subTitleMimeType = video!.Subtitles[0].Type switch
+            var defaultSubTitle = video.Subtitles
+                .FirstOrDefault(x => x.Language?.ToLower() == "en") ?? video.Subtitles[0];
+
+            var subTitleMimeType = defaultSubTitle.Type switch
             {
                 SubtitleType.VTT => MimeTypes.TextVtt,
                 SubtitleType.ASS => MimeTypes.TextSsa,

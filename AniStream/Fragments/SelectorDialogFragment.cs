@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading;
-using System.Threading.Tasks;
 using Android.Content;
 using Android.OS;
 using Android.Views;
@@ -13,11 +11,8 @@ using AndroidX.RecyclerView.Widget;
 using AniStream.Adapters;
 using AniStream.Utils;
 using Google.Android.Material.BottomSheet;
-using Httpz.Extensions;
 using Juro.Models.Anime;
-using Juro.Models.Videos;
 using Juro.Providers.Anime;
-using Xamarin.Android.Net;
 using Orientation = Android.Content.Res.Orientation;
 
 namespace AniStream.Fragments;
@@ -87,7 +82,9 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
         {
             var activity = (_videoActivity ?? Activity)!;
 
-            var cache = Cache.GetValueOrDefault(_episode.Link);
+            var epKey = _episode.Link ?? _episode.Id;
+
+            var cache = Cache.GetValueOrDefault(epKey);
             if (cache is null)
             {
                 cache = new();
@@ -99,7 +96,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
 
                 var serverWithVideos = videoServers.ConvertAll(x => new ServerWithVideos(x, new()));
 
-                Cache.Add(_episode.Link, serverWithVideos);
+                Cache.Add(epKey, serverWithVideos);
 
                 for (var i = 0; i < videoServers.Count; i++)
                 {
@@ -110,7 +107,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
 
                     if (videos.Count == 0)
                     {
-                        Cache[_episode.Link][i] = new(videoServers[i], videos)
+                        Cache[epKey][i] = new(videoServers[i], videos)
                         {
                             IsLoaded = true
                         };
@@ -171,10 +168,10 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
                         serversRecyclerView.SetAdapter(adapter);
                     }
 
-                    //Cache.Remove(_episode.Link);
-                    //Cache.Add(_episode.Link, cache);
+                    //Cache.Remove(epKey);
+                    //Cache.Add(epKey, cache);
 
-                    Cache[_episode.Link][i] = new(videoServers[i], videos)
+                    Cache[epKey][i] = new(videoServers[i], videos)
                     {
                         IsLoaded = true
                     };
@@ -218,7 +215,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
                             continue;
 
                         var notLoadedServer = notLoadedServers[i];
-                        var item = Cache[_episode.Link].Find(x => x.VideoServer == notLoadedServer)!;
+                        var item = Cache[epKey].Find(x => x.VideoServer == notLoadedServer)!;
 
                         if (videos.Count == 0)
                         {
@@ -235,16 +232,16 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
 
                         cache = adapter.Containers;
 
-                        //Cache.Remove(_episode.Link);
-                        //Cache.Add(_episode.Link, cache);
+                        //Cache.Remove(epKey);
+                        //Cache.Add(epKey, cache);
 
-                        //Cache[_episode.Link] = cache;
+                        //Cache[epKey] = cache;
 
                         item.IsLoaded = true;
                         item.VideoServer = notLoadedServers[i];
                         item.Videos = videos;
 
-                        //Cache[_episode.Link][notLoadedServer] = new(e.VideoServer, e.Videos)
+                        //Cache[epKey][notLoadedServer] = new(e.VideoServer, e.Videos)
                         //{
                         //    IsLoaded = true
                         //};

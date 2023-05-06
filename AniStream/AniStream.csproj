@@ -8,8 +8,8 @@
     <!--<WarningsAsErrors>nullable</WarningsAsErrors>
     <ImplicitUsings>enable</ImplicitUsings>-->
     <ApplicationId>com.oneb.anistream</ApplicationId>
-    <ApplicationVersion>28</ApplicationVersion>
-    <ApplicationDisplayVersion>1.9.81</ApplicationDisplayVersion>
+    <ApplicationVersion>29</ApplicationVersion>
+    <ApplicationDisplayVersion>1.9.82</ApplicationDisplayVersion>
     <AndroidSigningKeyStore>DrMedia.keystore</AndroidSigningKeyStore>
   </PropertyGroup>
 
@@ -28,18 +28,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\menu\bottommenu5.xml" />
-  </ItemGroup>
-
-  <ItemGroup>
     <GoogleServicesJson Include="google-services.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Httpz" Version="1.0.7" />
-    <PackageReference Include="Juro" Version="1.0.15" />
+    <PackageReference Include="Httpz" Version="1.1.0" />
+    <PackageReference Include="Juro" Version="1.0.17" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Octokit" Version="5.0.4" />
+    <PackageReference Include="Octokit" Version="5.1.0" />
     <PackageReference Include="Laerdal.FFmpeg.Android.Min" Version="4.4.28" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.18.11" />
