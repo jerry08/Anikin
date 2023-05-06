@@ -9,7 +9,7 @@ using AndroidX.Core.App;
 using AndroidX.Core.Content;
 using AniStream.Services;
 using AniStream.Utils.Extensions;
-using JGrabber.Grabbed;
+using Httpz.Hls;
 using Laerdal.FFmpeg.Android;
 using Microsoft.Maui.Storage;
 
@@ -28,7 +28,7 @@ public class HlsDownloader
 
     public async Task DownloadAsync(
         string fileName,
-        GrabbedHlsStream stream,
+        HlsStream stream,
         Dictionary<string, string> headers,
         CancellationToken cancellationToken = default)
     {

@@ -27,7 +27,6 @@ using Juro.Models.Anime;
 using Juro.Providers.Anime;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
-using static Android.Renderscripts.ScriptGroup;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 
 namespace AniStream;
@@ -290,6 +289,9 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             case AnimeSites.AnimePahe:
                 bottomNavigationView.InflateMenu(Resource.Menu.bottommenu5);
                 break;
+            case AnimeSites.NineAnime:
+                bottomNavigationView.InflateMenu(Resource.Menu.bottommenu_nineanime);
+                break;
         }
 
         viewPager.CurrentItem = 0;
@@ -301,21 +303,6 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
         {
             switch (e.Item.ItemId)
             {
-                //Server1
-                case Resource.Id.lastUpdated1:
-                    viewPager.CurrentItem = 0;
-                    break;
-                case Resource.Id.popular1:
-                    viewPager.CurrentItem = 1;
-                    break;
-                case Resource.Id.ongoing1:
-                    viewPager.CurrentItem = 2;
-                    break;
-                case Resource.Id.movies1:
-                    viewPager.CurrentItem = 3;
-                    break;
-
-                //Server2
                 case Resource.Id.Popular:
                     viewPager.CurrentItem = 0;
                     break;
@@ -410,6 +397,7 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
         var gogoanime = menu.FindItem(Resource.Id.source_gogoanime);
         var zoro = menu.FindItem(Resource.Id.source_zoro);
         var animepahe = menu.FindItem(Resource.Id.source_animepahe);
+        var nineanime = menu.FindItem(Resource.Id.source_nineanime);
 
         switch (WeebUtils.AnimeSite)
         {
@@ -421,6 +409,9 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
                 break;
             case AnimeSites.AnimePahe:
                 animepahe?.SetChecked(true);
+                break;
+            case AnimeSites.NineAnime:
+                nineanime?.SetChecked(true);
                 break;
         }
     }
@@ -473,6 +464,8 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             WeebUtils.AnimeSite = AnimeSites.Zoro;
         else if (id == Resource.Id.source_animepahe)
             WeebUtils.AnimeSite = AnimeSites.AnimePahe;
+        else if (id == Resource.Id.source_nineanime)
+            WeebUtils.AnimeSite = AnimeSites.NineAnime;
 
         if (lastAnimeSite != WeebUtils.AnimeSite)
         {

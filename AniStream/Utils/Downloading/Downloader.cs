@@ -9,7 +9,6 @@ using Android.Webkit;
 using AniStream.Services;
 using AniStream.Utils.Extensions;
 using AniStream.Utils.Listeners;
-using JGrabber.Grabbed;
 using Newtonsoft.Json;
 
 namespace AniStream.Utils.Downloading;
@@ -172,6 +171,10 @@ public class Downloader
         string url,
         Dictionary<string, string> headers)
     {
+        // User-agent
+        if (!headers.ContainsKey("User-Agent"))
+            headers.Add("User-Agent", Httpz.Utils.Http.ChromeUserAgent());
+
         var loadingDialog = WeebUtils.SetProgressDialog(
             _activity,
             "Getting qualities. Please wait...",
@@ -185,17 +188,20 @@ public class Downloader
             cancellationTokenSource.Cancel();
         };
 
-        var metadataResources = new List<GrabbedHlsStreamMetadata>();
+        var qualities = new List<Httpz.Hls.HlsStreamMetadata>();
 
         try
         {
             var downloader = new Httpz.HlsDownloader(Http.ClientProvider);
 
-            metadataResources = await downloader.GetHlsStreamMetadatasAsync(
-                url,
-                headers,
-                cancellationTokenSource.Token
-            );
+            await Task.Run(async () =>
+            {
+                qualities = await downloader.GetQualitiesAsync(
+                    url,
+                    headers,
+                    cancellationTokenSource.Token
+                );
+            });
 
             loadingDialog.Dismiss();
         }
@@ -213,7 +219,7 @@ public class Downloader
         listener.OnItemClick += async (s, which) =>
         {
             loadingDialog = WeebUtils.SetProgressDialog(_activity, "Loading...", false);
-            var stream = await metadataResources[which].Stream;
+            var stream = qualities[which].Stream!;
             loadingDialog.Dismiss();
 
             //var intent = new Intent();
@@ -230,7 +236,7 @@ public class Downloader
         builder.SetTitle(fileName);
         builder.SetNegativeButton("Cancel", (s, e) => { });
 
-        var items = metadataResources.Select(x => x.Resolution?.ToString()
+        var items = qualities.Select(x => x.Resolution?.ToString()
             ?? "Default quality").ToArray();
 
         builder.SetItems(items, listener);
