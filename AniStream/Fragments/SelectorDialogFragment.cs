@@ -23,7 +23,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
     public static readonly Dictionary<string, List<ServerWithVideos>> Cache = new();
 
     private readonly IAnimeProvider _client = WeebUtils.AnimeClient;
-    private readonly AnimeInfo _anime;
+    private readonly IAnimeInfo _anime;
     private readonly Episode _episode;
 
     private readonly VideoActivity? _videoActivity;
@@ -33,7 +33,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
     SelectorDialogFragment(
-        AnimeInfo anime,
+        IAnimeInfo anime,
         Episode episode,
         VideoActivity? videoActivity = null)
     {
@@ -43,7 +43,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
     }
 
     public static SelectorDialogFragment NewInstance(
-        AnimeInfo anime,
+        IAnimeInfo anime,
         Episode episode,
         VideoActivity? videoActivity = null)
         => new(anime, episode, videoActivity);

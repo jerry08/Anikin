@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Android.App;
@@ -9,7 +10,6 @@ using Android.Webkit;
 using AniStream.Services;
 using AniStream.Utils.Extensions;
 using AniStream.Utils.Listeners;
-using Newtonsoft.Json;
 
 namespace AniStream.Utils.Downloading;
 
@@ -144,8 +144,8 @@ public class Downloader
                 //var intent = new Intent();
                 //intent.SetComponent(new ComponentName("com.oneb.anistreamffmpeg", "com.oneb.anistreamffmpeg.DownloadService"));
                 var intent = new Intent(_activity, typeof(DownloadService));
-                intent.PutExtra("stream", JsonConvert.SerializeObject(stream));
-                intent.PutExtra("headers", JsonConvert.SerializeObject(headers));
+                intent.PutExtra("stream", JsonSerializer.Serialize(stream));
+                intent.PutExtra("headers", JsonSerializer.Serialize(headers));
                 intent.PutExtra("fileName", fileName);
 
                 _activity.StartForegroundService(intent);
@@ -225,8 +225,8 @@ public class Downloader
             //var intent = new Intent();
             //intent.SetComponent(new ComponentName("com.oneb.anistreamffmpeg", "com.oneb.anistreamffmpeg.DownloadService"));
             var intent = new Intent(_activity, typeof(DownloadService));
-            intent.PutExtra("stream", JsonConvert.SerializeObject(stream));
-            intent.PutExtra("headers", JsonConvert.SerializeObject(headers));
+            intent.PutExtra("stream", JsonSerializer.Serialize(stream));
+            intent.PutExtra("headers", JsonSerializer.Serialize(headers));
             intent.PutExtra("fileName", fileName);
 
             _activity.StartForegroundService(intent);

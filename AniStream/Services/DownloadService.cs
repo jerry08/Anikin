@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -8,7 +9,6 @@ using Android.Util;
 using AndroidX.Core.App;
 using AniStream.Utils.Downloading;
 using Httpz.Hls;
-using Newtonsoft.Json;
 
 namespace AniStream.Services;
 
@@ -29,8 +29,8 @@ public class ServiceHandler : Handler
 
         var downloader = new HlsDownloader(_downloadService);
 
-        var stream = JsonConvert.DeserializeObject<HlsStream>(msg.Data.GetString("stream")!)!;
-        var headers = JsonConvert.DeserializeObject<Dictionary<string, string>>(msg.Data.GetString("headers")!)!;
+        var stream = JsonSerializer.Deserialize<HlsStream>(msg.Data.GetString("stream")!)!;
+        var headers = JsonSerializer.Deserialize<Dictionary<string, string>>(msg.Data.GetString("headers")!)!;
         var fileName = msg.Data.GetString("fileName")!;
 
         try

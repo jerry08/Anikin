@@ -111,6 +111,14 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
         viewPager = FindViewById<ViewPager>(Resource.Id.viewPager)!;
         appBarLayout = FindViewById<AppBarLayout>(Resource.Id.appbar)!;
 
+        // Migration
+        var data = await SecureStorage.GetAsync("PlayerSettings");
+        if (!string.IsNullOrEmpty(data))
+        {
+            System.IO.File.WriteAllText(System.IO.Path.Combine(FileSystem.AppDataDirectory, "PlayerSettings.dat"), data);
+            SecureStorage.Remove("PlayerSettings");
+        }
+
         if (!WeebUtils.IsOnline())
         {
             var linearLayout1 = FindViewById<Android.Widget.LinearLayout>(Resource.Id.notvisiblelinearlayout)!;

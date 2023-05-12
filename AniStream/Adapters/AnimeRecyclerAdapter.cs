@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json;
 using Android.App;
 using Android.Content;
 using Android.Net;
@@ -10,7 +11,6 @@ using AndroidX.RecyclerView.Widget;
 using AniStream.Fragments;
 using Java.Lang;
 using Juro.Models.Anime;
-using Newtonsoft.Json;
 using Square.Picasso;
 
 namespace AniStream.Adapters;
@@ -18,7 +18,7 @@ namespace AniStream.Adapters;
 public class AnimeRecyclerAdapter : RecyclerView.Adapter
 {
     Activity Activity { get; set; }
-    public List<AnimeInfo> Animes { get; set; }
+    public List<IAnimeInfo> Animes { get; set; }
 
     private int lastPosition = -1;
 
@@ -26,7 +26,7 @@ public class AnimeRecyclerAdapter : RecyclerView.Adapter
 
     public AnimeRecyclerAdapter(
         Activity activity,
-        List<AnimeInfo> animes,
+        List<IAnimeInfo> animes,
         AnimeFragment? animeFragment = null)
     {
         Animes = animes;
@@ -103,7 +103,7 @@ public class AnimeRecyclerAdapter : RecyclerView.Adapter
                 var anime2 = Animes[animeViewholder.BindingAdapterPosition];
 
                 var intent = new Intent(Activity, typeof(EpisodesActivity));
-                intent.PutExtra("anime", JsonConvert.SerializeObject(anime2));
+                intent.PutExtra("anime", JsonSerializer.Serialize(anime2));
                 intent.SetFlags(ActivityFlags.NewTask);
 
                 Activity.StartActivity(intent);

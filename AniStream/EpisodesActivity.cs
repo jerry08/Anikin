@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
@@ -18,7 +19,7 @@ using AndroidX.RecyclerView.Widget;
 //using Com.MS.Square.Android.Expandabletextview;
 using AniStream.Adapters;
 using AniStream.Fragments;
-using AniStream.Settings;
+using AniStream.Services;
 using AniStream.Utils;
 using AniStream.Utils.Extensions;
 using AniStream.Utils.Tags;
@@ -26,7 +27,6 @@ using Firebase;
 using Firebase.Crashlytics;
 using Juro.Models.Anime;
 using Juro.Providers.Anime;
-using Newtonsoft.Json;
 using Org.Apmem.Tools.Layouts;
 using Square.Picasso;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
@@ -43,7 +43,7 @@ public class EpisodesActivity : ActivityBase
 
     private RecyclerView EpisodesRecyclerView = default!;
     public static List<Episode> Episodes = new();
-    private AnimeInfo Anime = default!;
+    private IAnimeInfo Anime = default!;
 
     private bool IsBooked;
     private bool IsAscending;
@@ -60,11 +60,11 @@ public class EpisodesActivity : ActivityBase
         Episodes = new();
         SelectorDialogFragment.Cache.Clear();
 
-        await _playerSettings.LoadAsync();
+        _playerSettings.Load();
 
         var animeString = Intent?.GetStringExtra("anime");
         if (!string.IsNullOrEmpty(animeString))
-            Anime = JsonConvert.DeserializeObject<AnimeInfo>(animeString)!;
+            Anime = JsonSerializer.Deserialize<AnimeInfo>(animeString)!;
 
         var animeInfoTitle = FindViewById<TextView>(Resource.Id.animeInfoTitle)!;
         var type = FindViewById<TextView>(Resource.Id.animeInfoType)!;
@@ -284,11 +284,11 @@ public class EpisodesActivity : ActivityBase
         }
     }
 
-    protected override async void OnRestart()
+    protected override void OnRestart()
     {
         base.OnRestart();
 
-        await _playerSettings.LoadAsync();
+        _playerSettings.Load();
 
         var adapter = new EpisodeRecyclerAdapter(Episodes, this, Anime, _playerSettings);
 

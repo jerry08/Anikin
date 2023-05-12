@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Android.Animation;
@@ -19,7 +20,7 @@ using AndroidX.Core.Content.Resources;
 using AndroidX.Core.View;
 using AniStream.Adapters;
 using AniStream.Fragments;
-using AniStream.Settings;
+using AniStream.Services;
 using AniStream.Utils;
 using AniStream.Utils.Downloading;
 using AniStream.Utils.Extensions;
@@ -47,7 +48,6 @@ using Juro.Models.Videos;
 using Juro.Providers.Anilist;
 using Juro.Providers.Anime;
 using Juro.Providers.Aniskip;
-using Newtonsoft.Json;
 using Square.OkHttp3;
 using static Com.Google.Android.Exoplayer2.IPlayer;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
@@ -68,7 +68,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
-    private AnimeInfo Anime = default!;
+    private IAnimeInfo Anime = default!;
     private Episode Episode = default!;
     private VideoSource? Video;
     private VideoServer? VideoServer;
@@ -128,22 +128,22 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         FirebaseApp.InitializeApp(this);
         FirebaseCrashlytics.Instance.SetCrashlyticsCollectionEnabled(true);
 
-        await _playerSettings.LoadAsync();
+        _playerSettings.Load();
 
         if (_playerSettings.AlwaysInLandscapeMode && Build.VERSION.SdkInt >= BuildVersionCodes.Gingerbread)
             RequestedOrientation = ScreenOrientation.SensorLandscape;
 
         var animeString = Intent!.GetStringExtra("anime");
         if (!string.IsNullOrEmpty(animeString))
-            Anime = JsonConvert.DeserializeObject<AnimeInfo>(animeString)!;
+            Anime = JsonSerializer.Deserialize<AnimeInfo>(animeString)!;
 
         var episodeString = Intent.GetStringExtra("episode");
         if (!string.IsNullOrEmpty(episodeString))
-            Episode = JsonConvert.DeserializeObject<Episode>(episodeString)!;
+            Episode = JsonSerializer.Deserialize<Episode>(episodeString)!;
 
         var videoServerString = Intent.GetStringExtra("videoServer");
         if (!string.IsNullOrEmpty(videoServerString))
-            VideoServer = JsonConvert.DeserializeObject<VideoServer>(videoServerString)!;
+            VideoServer = JsonSerializer.Deserialize<VideoServer>(videoServerString)!;
 
         var bookmarkManager = new BookmarkManager("recently_watched");
 
@@ -414,7 +414,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             var videoString = Intent.GetStringExtra("video");
             if (!string.IsNullOrEmpty(videoString))
             {
-                Video = JsonConvert.DeserializeObject<VideoSource>(videoString)!;
+                Video = JsonSerializer.Deserialize<VideoSource>(videoString)!;
 
                 PlayVideo(Video);
             }
@@ -961,7 +961,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         _playerSettings.WatchedEpisodes.Remove(Episode.Id);
         _playerSettings.WatchedEpisodes.Add(Episode.Id, watchedEpisode);
 
-        await _playerSettings.SaveAsync();
+        _playerSettings.Save();
     }
 
     public async void PlayVideo(VideoSource video)

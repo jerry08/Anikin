@@ -1,13 +1,15 @@
 ﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.IO;
+using System.Text.Json;
 using AniStream.Models;
-using AniStream.Settings.Serialization;
 using Firebase.Auth;
 using Firebase.Database;
+using JCogwheel;
+using Microsoft.Maui.Storage;
 
-namespace AniStream.Settings;
+namespace AniStream.Services;
 
-public class PlayerSettings : SettingsManager
+public class PlayerSettings : SettingsBase
 {
     public Dictionary<string, WatchedEpisode> WatchedEpisodes { get; set; } = new();
 
@@ -42,9 +44,14 @@ public class PlayerSettings : SettingsManager
             : new float[] { 0.25f, 0.33f, 0.5f, 0.66f, 0.75f, 1f, 1.25f, 1.33f, 1.5f, 1.66f, 1.75f, 2f };
     }
 
-    public override async Task SaveAsync()
+    public PlayerSettings()
+        : base(Path.Combine(FileSystem.AppDataDirectory, "PlayerSettings.dat"))
     {
-        await base.SaveAsync();
+    }
+
+    public override void Save()
+    {
+        base.Save();
         SaveToCloudAsync();
     }
 
@@ -63,7 +70,7 @@ public class PlayerSettings : SettingsManager
         //await userRef.Child("bookmarks").SetValueAsync("test1");
         //await userRef.Child("bookmarks").Push().SetValueAsync("test1");
 
-        var data = Serializer.Serialize(this);
+        var data = JsonSerializer.Serialize(this);
 
         await userRef.Child("playerSettings").SetValueAsync(data);
     }

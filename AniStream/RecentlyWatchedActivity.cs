@@ -17,7 +17,7 @@ namespace AniStream;
 [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
 public class RecentlyWatchedActivity : AndroidX.AppCompat.App.AppCompatActivity
 {
-    List<AnimeInfo> animes = default!;
+    List<IAnimeInfo> animes = default!;
     Android.Widget.ProgressBar ProgressBar = default!;
     SearchView SearchView = default!;
 

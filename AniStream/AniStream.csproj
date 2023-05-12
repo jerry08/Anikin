@@ -9,7 +9,7 @@
     <ImplicitUsings>enable</ImplicitUsings>-->
     <ApplicationId>com.oneb.anistream</ApplicationId>
     <ApplicationVersion>29</ApplicationVersion>
-    <ApplicationDisplayVersion>1.9.82</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>1.9.83</ApplicationDisplayVersion>
     <AndroidSigningKeyStore>DrMedia.keystore</AndroidSigningKeyStore>
   </PropertyGroup>
 
@@ -33,8 +33,8 @@
 
   <ItemGroup>
     <PackageReference Include="Httpz" Version="1.1.0" />
-    <PackageReference Include="Juro" Version="1.0.17" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="JCogwheel" Version="1.0.1" />
+    <PackageReference Include="Juro" Version="1.0.21" />
     <PackageReference Include="Octokit" Version="5.1.0" />
     <PackageReference Include="Laerdal.FFmpeg.Android.Min" Version="4.4.28" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />

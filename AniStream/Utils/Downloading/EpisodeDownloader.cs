@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Juro.Models.Anime;
 using Juro.Models.Videos;
 using Microsoft.Maui.ApplicationModel;
@@ -9,7 +8,7 @@ namespace AniStream.Utils.Downloading;
 public class EpisodeDownloader
 {
     public async Task EnqueueAsync(
-        AnimeInfo anime,
+        IAnimeInfo anime,
         Episode episode,
         VideoSource video)
     {

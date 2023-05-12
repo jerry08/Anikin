@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json;
 using Android.Content;
 using Android.Views;
 using Android.Widget;
 using AndroidX.CardView.Widget;
 using AndroidX.RecyclerView.Widget;
 using AniStream.Fragments;
-using AniStream.Settings;
+using AniStream.Services;
 using Juro.Models.Anime;
-using Newtonsoft.Json;
 
 namespace AniStream.Adapters;
 
@@ -15,15 +15,16 @@ public class EpisodeRecyclerAdapter : RecyclerView.Adapter
 {
     private readonly PlayerSettings _playerSettings;
 
-    private readonly AnimeInfo _anime;
+    private readonly IAnimeInfo _anime;
 
     private readonly EpisodesActivity _episodesActivity;
 
     public List<Episode> Episodes { get; set; }
 
-    public EpisodeRecyclerAdapter(List<Episode> episodes,
+    public EpisodeRecyclerAdapter(
+        List<Episode> episodes,
         EpisodesActivity activity,
-        AnimeInfo anime,
+        IAnimeInfo anime,
         PlayerSettings playerSettings)
     {
         _anime = anime;
@@ -93,8 +94,8 @@ public class EpisodeRecyclerAdapter : RecyclerView.Adapter
             {
                 var intent = new Intent(_episodesActivity, typeof(VideoActivity));
 
-                intent.PutExtra("anime", JsonConvert.SerializeObject(_anime));
-                intent.PutExtra("episode", JsonConvert.SerializeObject(episode));
+                intent.PutExtra("anime", JsonSerializer.Serialize(_anime));
+                intent.PutExtra("episode", JsonSerializer.Serialize(episode));
                 intent.SetFlags(ActivityFlags.NewTask);
 
                 _episodesActivity.ApplicationContext!.StartActivity(intent);

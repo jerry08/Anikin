@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Firebase.Auth;
 using Firebase.Database;
 using Juro.Models.Anime;
 using Microsoft.Maui.Storage;
-using Newtonsoft.Json;
 
 namespace AniStream.Utils;
 
@@ -18,32 +18,32 @@ public class BookmarkManager
         _name = name;
     }
 
-    public async Task<bool> IsBookmarked(AnimeInfo anime)
+    public async Task<bool> IsBookmarked(IAnimeInfo anime)
     {
         var list = await GetAllBookmarksAsync();
         return list.Find(x => x.Id == anime.Id) is not null;
     }
 
-    public async Task<List<AnimeInfo>> GetBookmarks()
+    public async Task<List<IAnimeInfo>> GetBookmarks()
     {
         var list = await GetAllBookmarksAsync();
 
         return list.Where(x => x.Site == WeebUtils.AnimeSite).ToList();
     }
 
-    public async Task<List<AnimeInfo>> GetAllBookmarksAsync()
+    public async Task<List<IAnimeInfo>> GetAllBookmarksAsync()
     {
         var json = await SecureStorage.GetAsync(_name);
 
-        var list = new List<AnimeInfo>();
+        var list = new List<IAnimeInfo>();
 
         if (!string.IsNullOrEmpty(json))
-            list = JsonConvert.DeserializeObject<List<AnimeInfo>>(json)!;
+            list.AddRange(JsonSerializer.Deserialize<List<AnimeInfo>>(json)!);
 
         return list;
     }
 
-    public async Task SaveBookmarkAsync(AnimeInfo anime, bool addToTop = false)
+    public async Task SaveBookmarkAsync(IAnimeInfo anime, bool addToTop = false)
     {
         var animes = await GetAllBookmarksAsync();
         if (addToTop)
@@ -51,19 +51,23 @@ public class BookmarkManager
         else
             animes.Add(anime);
 
-        var settings = new JsonSerializerSettings()
+        var query = animes.Select(x => new
         {
-            ContractResolver = new AnimeContractResolver(true)
-        };
+            x.Id,
+            x.Title,
+            x.Category,
+            x.Site,
+            x.Image
+        });
 
-        var json = JsonConvert.SerializeObject(animes, settings);
+        var json = JsonSerializer.Serialize(query);
 
         await SecureStorage.SetAsync(_name, json);
 
         await SaveToCloudAsync();
     }
 
-    public async Task RemoveBookmarkAsync(AnimeInfo anime)
+    public async Task RemoveBookmarkAsync(IAnimeInfo anime)
     {
         var animes = await GetAllBookmarksAsync();
 
@@ -72,7 +76,7 @@ public class BookmarkManager
         if (animeToRemove is not null)
             animes.Remove(animeToRemove);
 
-        var json = JsonConvert.SerializeObject(animes);
+        var json = JsonSerializer.Serialize(animes);
 
         await SecureStorage.SetAsync(_name, json);
 
@@ -102,12 +106,16 @@ public class BookmarkManager
 
         var list = await GetAllBookmarksAsync();
 
-        var settings = new JsonSerializerSettings()
+        var query = list.Select(x => new
         {
-            ContractResolver = new AnimeContractResolver(true)
-        };
+            x.Id,
+            x.Title,
+            x.Category,
+            x.Site,
+            x.Image
+        });
 
-        var data = JsonConvert.SerializeObject(list, settings);
+        var data = JsonSerializer.Serialize(query);
 
         await userRef.Child(_name).SetValueAsync(data);
     }

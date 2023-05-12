@@ -28,7 +28,7 @@ public class ServerWithVideos
 
 public class ExtractorAdapter : RecyclerView.Adapter
 {
-    private readonly AnimeInfo _anime;
+    private readonly IAnimeInfo _anime;
     private readonly Episode _episode;
 
     public Activity Activity { get; set; }
@@ -37,7 +37,7 @@ public class ExtractorAdapter : RecyclerView.Adapter
 
     public ExtractorAdapter(
         Activity activity,
-        AnimeInfo anime,
+        IAnimeInfo anime,
         Episode episode,
         List<ServerWithVideos> containers)
     {

@@ -19,7 +19,7 @@ public class BookmarksActivity : AndroidX.AppCompat.App.AppCompatActivity
 {
     private readonly BookmarkManager _bookmarkManager = new("bookmarks");
 
-    private List<AnimeInfo> animes = new();
+    private List<IAnimeInfo> animes = new();
     private Android.Widget.ProgressBar ProgressBar = default!;
     private SearchView SearchView = default!;
 

@@ -2,17 +2,18 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Android.App;
-using AniStream.Settings;
+using Android.Runtime;
 using AniStream.Utils;
 using AniStream.Utils.Extensions;
 using Firebase.Auth;
 using Firebase.Database;
 using Juro.Models.Anime;
 using Microsoft.Maui.Storage;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace AniStream.Services;
 
@@ -32,10 +33,27 @@ public class DataService
     public async Task BackupAsync()
     {
         var playerSettings = new PlayerSettings();
-        await playerSettings.LoadAsync();
+        playerSettings.Load();
 
-        var animes = await _bookmarkManager.GetAllBookmarksAsync();
-        var rwAnimes = await _rwBookmarkManager.GetAllBookmarksAsync();
+        var animes = (await _bookmarkManager.GetAllBookmarksAsync())
+            .Select(x => new
+            {
+                x.Id,
+                x.Title,
+                x.Category,
+                x.Site,
+                x.Image
+            });
+
+        var rwAnimes = (await _rwBookmarkManager.GetAllBookmarksAsync())
+            .Select(x => new
+            {
+                x.Id,
+                x.Title,
+                x.Category,
+                x.Site,
+                x.Image
+            });
 
         var data = new
         {
@@ -44,7 +62,7 @@ public class DataService
             playerSettings
         };
 
-        var jsonData = JsonConvert.SerializeObject(data);
+        var jsonData = JsonSerializer.Serialize(data);
 
         //var path = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads) + "/test.json";
         //var tryCount = 1;
@@ -93,7 +111,7 @@ public class DataService
     {
         try
         {
-            var data = JObject.Parse(json);
+            var data = JsonNode.Parse(json)!;
 
             await RestoreBookmarksAsync(data["animes"]?.ToString());
             await RestoreRecentlyWatchedAsync(data["rwAnimes"]?.ToString());
@@ -123,7 +141,15 @@ public class DataService
 
         public void OnDataChange(DataSnapshot snapshot)
         {
-            var json = JsonConvert.SerializeObject(snapshot.Value);
+            var dict = ((JavaDictionary)snapshot.Value).ToDictionary();
+
+            var serializeOptions = new JsonSerializerOptions
+            {
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                //Encoder = JavaScriptEncoder.Create(new TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All))
+            };
+
+            var json = JsonSerializer.Serialize(dict, serializeOptions);
 
             _getDataTcs.TrySetResult(json);
         }
@@ -144,7 +170,7 @@ public class DataService
             if (string.IsNullOrWhiteSpace(json))
                 return;
 
-            var data = JObject.Parse(json);
+            var data = JsonNode.Parse(json)!;
 
             await RestoreBookmarksAsync(data["bookmarks"]?.ToString());
             await RestoreRecentlyWatchedAsync(data["recently_watched"]?.ToString());
@@ -163,7 +189,7 @@ public class DataService
         if (string.IsNullOrWhiteSpace(json))
             return;
 
-        var animes = JsonConvert.DeserializeObject<List<AnimeInfo>?>(json);
+        var animes = JsonSerializer.Deserialize<List<AnimeInfo>?>(json);
 
         var existingAnimeIds = (await _bookmarkManager.GetAllBookmarksAsync())
             .Select(x => x.Id);
@@ -183,7 +209,7 @@ public class DataService
         if (string.IsNullOrWhiteSpace(json))
             return;
 
-        var animes = JsonConvert.DeserializeObject<List<AnimeInfo>?>(json);
+        var animes = JsonSerializer.Deserialize<List<AnimeInfo>?>(json);
 
         var existingAnimeIds = (await _rwBookmarkManager.GetAllBookmarksAsync())
             .Select(x => x.Id);
@@ -203,11 +229,11 @@ public class DataService
         if (string.IsNullOrWhiteSpace(json))
             return;
 
-        var playerSettings = JsonConvert.DeserializeObject<PlayerSettings?>(json);
+        var playerSettings = JsonSerializer.Deserialize<PlayerSettings?>(json);
         if (playerSettings is not null)
         {
             var existingPlayerSettings = new PlayerSettings();
-            await existingPlayerSettings.LoadAsync();
+            existingPlayerSettings.Load();
 
             foreach (var watchedEpisode in existingPlayerSettings.WatchedEpisodes)
             {
@@ -226,7 +252,7 @@ public class DataService
                 }
             }
 
-            await playerSettings.SaveAsync();
+            playerSettings.Save();
         }
     }
 }

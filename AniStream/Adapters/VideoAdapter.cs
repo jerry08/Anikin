@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json;
 using Android.App;
 using Android.Content;
 using Android.Views;
@@ -10,14 +11,13 @@ using AniStream.Utils.Extensions;
 using Juro.Models;
 using Juro.Models.Anime;
 using Juro.Models.Videos;
-using Newtonsoft.Json;
 
 namespace AniStream.Adapters;
 
 public class VideoAdapter : RecyclerView.Adapter
 {
     private readonly Activity _activity;
-    private readonly AnimeInfo _anime;
+    private readonly IAnimeInfo _anime;
     private readonly Episode _episode;
     private readonly VideoServer _videoServer;
 
@@ -25,7 +25,7 @@ public class VideoAdapter : RecyclerView.Adapter
 
     public VideoAdapter(
         Activity activity,
-        AnimeInfo anime,
+        IAnimeInfo anime,
         Episode episode,
         VideoServer videoServer,
         List<VideoSource> videos)
@@ -100,10 +100,10 @@ public class VideoAdapter : RecyclerView.Adapter
 
             var intent = new Intent(_activity, typeof(VideoActivity));
 
-            intent.PutExtra("anime", JsonConvert.SerializeObject(_anime));
-            intent.PutExtra("episode", JsonConvert.SerializeObject(_episode));
-            intent.PutExtra("video", JsonConvert.SerializeObject(video));
-            intent.PutExtra("videoServer", JsonConvert.SerializeObject(_videoServer));
+            intent.PutExtra("anime", JsonSerializer.Serialize(_anime));
+            intent.PutExtra("episode", JsonSerializer.Serialize(_episode));
+            intent.PutExtra("video", JsonSerializer.Serialize(video));
+            intent.PutExtra("videoServer", JsonSerializer.Serialize(_videoServer));
             intent.SetFlags(ActivityFlags.NewTask);
 
             _activity.ApplicationContext!.StartActivity(intent);
