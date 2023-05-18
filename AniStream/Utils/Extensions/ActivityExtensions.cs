@@ -31,8 +31,10 @@ public static class ActivityExtensions
         });
     }
 
-    public static void CopyToClipboard(this Activity? activity,
-        string text, bool toast = true)
+    public static void CopyToClipboard(
+        this Activity? activity,
+        string text,
+        bool toast = true)
     {
         if (activity is null)
             return;
