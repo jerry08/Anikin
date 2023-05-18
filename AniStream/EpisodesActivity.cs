@@ -6,11 +6,9 @@ using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
-using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using AndroidX.Activity;
-using AndroidX.AppCompat.App;
 using AndroidX.AppCompat.Widget;
 using AndroidX.ConstraintLayout.Widget;
 using AndroidX.Core.Content.Resources;
@@ -25,6 +23,7 @@ using AniStream.Utils.Extensions;
 using AniStream.Utils.Tags;
 using Firebase;
 using Firebase.Crashlytics;
+using Java.Net;
 using Juro.Models.Anime;
 using Juro.Providers.Anime;
 using Org.Apmem.Tools.Layouts;
@@ -106,6 +105,12 @@ public class EpisodesActivity : ActivityBase
         EpisodesRecyclerView = FindViewById<RecyclerView>(Resource.Id.animeInfoRecyclerView)!;
 
         animeInfoTitle.Text = Anime.Title;
+
+        animeInfoTitle.LongClick += (s, e) =>
+        {
+            this.CopyToClipboard(animeInfoTitle.Text, false);
+            this.ShowToast($"Copied \"{animeInfoTitle.Text}\"");
+        };
 
         if (!string.IsNullOrEmpty(Anime.Image))
         {
