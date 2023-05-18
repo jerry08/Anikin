@@ -51,7 +51,8 @@ public class GesturesListener : GestureDetector.SimpleOnGestureListener
 
         Timer = new()
         {
-            Interval = Delay
+            Interval = Delay,
+            AutoReset = false
         };
 
         Timer.Elapsed += (s, ev) =>

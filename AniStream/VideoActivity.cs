@@ -966,6 +966,12 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
     public async void PlayVideo(VideoSource video)
     {
+        if (exoPlayer is not null)
+        {
+            exoPlayer.Pause();
+            exoPlayer.Stop();
+        }
+
         Video = video;
 
         if (selector is not null)
@@ -1045,7 +1051,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
         BuildExoplayer(cacheFactory);
 
-        exoPlayer.SetMediaItem(mediaItem);
+        exoPlayer!.SetMediaItem(mediaItem);
 
         exoPlayer.Prepare();
         exoPlayer.PlayWhenReady = true;
