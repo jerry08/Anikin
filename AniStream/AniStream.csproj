@@ -5,11 +5,9 @@
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
     <UseMauiEssentials>true</UseMauiEssentials>
-    <!--<WarningsAsErrors>nullable</WarningsAsErrors>
-    <ImplicitUsings>enable</ImplicitUsings>-->
     <ApplicationId>com.oneb.anistream</ApplicationId>
-    <ApplicationVersion>29</ApplicationVersion>
-    <ApplicationDisplayVersion>1.9.83</ApplicationDisplayVersion>
+    <ApplicationVersion>30</ApplicationVersion>
+    <ApplicationDisplayVersion>1.9.84</ApplicationDisplayVersion>
     <AndroidSigningKeyStore>DrMedia.keystore</AndroidSigningKeyStore>
   </PropertyGroup>
 
@@ -34,8 +32,8 @@
   <ItemGroup>
     <PackageReference Include="Httpz" Version="1.1.0" />
     <PackageReference Include="JCogwheel" Version="1.0.1" />
-    <PackageReference Include="Juro" Version="1.0.21" />
-    <PackageReference Include="Octokit" Version="5.1.0" />
+    <PackageReference Include="Juro" Version="1.0.22" />
+    <PackageReference Include="Octokit" Version="6.0.0" />
     <PackageReference Include="Laerdal.FFmpeg.Android.Min" Version="4.4.28" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.18.11" />
