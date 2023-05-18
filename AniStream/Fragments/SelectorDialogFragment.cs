@@ -62,8 +62,8 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
     public override View OnCreateView(LayoutInflater inflater, ViewGroup? container, Bundle? savedInstanceState)
     {
         _view = inflater.Inflate(Resource.Layout.bottom_sheet_selector, container, false)!;
-        var autoLayout = _view.FindViewById<LinearLayout>(Resource.Id.selectorAutoListContainer);
-        var layout = _view.FindViewById<LinearLayout>(Resource.Id.selectorListContainer);
+        //var autoLayout = _view.FindViewById<LinearLayout>(Resource.Id.selectorAutoListContainer);
+        //var layout = _view.FindViewById<LinearLayout>(Resource.Id.selectorListContainer);
 
         var selectorMakeDefault = _view.FindViewById<CheckBox>(Resource.Id.selectorMakeDefault)!;
         var serversRecyclerView = _view.FindViewById<RecyclerView>(Resource.Id.selectorRecyclerView)!;
@@ -251,7 +251,7 @@ internal class SelectorDialogFragment : BottomSheetDialogFragment
                 }
             }
         }
-        catch (Exception e)
+        catch
         {
             // Operation cancelled
         }

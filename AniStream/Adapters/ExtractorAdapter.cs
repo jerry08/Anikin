@@ -28,10 +28,9 @@ public class ServerWithVideos
 
 public class ExtractorAdapter : RecyclerView.Adapter
 {
+    private readonly Activity _activity;
     private readonly IAnimeInfo _anime;
     private readonly Episode _episode;
-
-    public Activity Activity { get; set; }
 
     public List<ServerWithVideos> Containers { get; set; }
 
@@ -41,13 +40,13 @@ public class ExtractorAdapter : RecyclerView.Adapter
         Episode episode,
         List<ServerWithVideos> containers)
     {
-        Activity = activity;
+        _activity = activity;
         _anime = anime;
         _episode = episode;
         Containers = containers;
     }
 
-    class StreamViewHolder : RecyclerView.ViewHolder
+    private class StreamViewHolder : RecyclerView.ViewHolder
     {
         public TextView streamName = default!;
         public RecyclerView streamRecyclerView = default!;
@@ -74,9 +73,9 @@ public class ExtractorAdapter : RecyclerView.Adapter
 
         if (streamViewHolder.streamRecyclerView.GetAdapter() is not VideoAdapter)
         {
-            var adapter = new VideoAdapter(Activity, _anime, _episode, server, videos);
+            var adapter = new VideoAdapter(_activity, _anime, _episode, server, videos);
 
-            streamViewHolder.streamRecyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
+            streamViewHolder.streamRecyclerView.SetLayoutManager(new LinearLayoutManager(_activity));
             streamViewHolder.streamRecyclerView.HasFixedSize = true;
             streamViewHolder.streamRecyclerView.SetItemViewCacheSize(20);
             streamViewHolder.streamRecyclerView.SetAdapter(adapter);
