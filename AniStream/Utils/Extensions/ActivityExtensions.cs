@@ -197,12 +197,24 @@ public static class ActivityExtensions
         );
     }
 
-    public static void InstallApk(this Context context, Android.Net.Uri uri)
+    public static async void InstallApk(this Activity activity, Android.Net.Uri uri)
     {
         try
         {
+            if (activity is not ActivityBase activityBase)
+                return;
+
+            activityBase.PackageInstallPermission = new(activity);
+
+            var canRequestPackageInstalls = activityBase.PackageInstallPermission.CheckStatus();
+            if (!canRequestPackageInstalls)
+                canRequestPackageInstalls = await activityBase.PackageInstallPermission.RequestAsync();
+
+            if (!canRequestPackageInstalls)
+                return;
+
             var contentUri = FileProvider.GetUriForFile(
-                context,
+                activity,
                 AppInfo.Current.PackageName + ".provider",
                 new Java.IO.File(uri.Path!)
             );
@@ -214,7 +226,7 @@ public static class ActivityExtensions
             //installIntent.SetDataAndType(contentUri);
             installIntent.SetDataAndType(contentUri, "application/vnd.android.package-archive");
 
-            context.StartActivity(installIntent);
+            activity.StartActivity(installIntent);
         }
         catch
         {

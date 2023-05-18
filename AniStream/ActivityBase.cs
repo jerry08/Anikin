@@ -17,13 +17,19 @@ public class ActivityBase : AppCompatActivity
 
     public AndroidStoragePermission? AndroidStoragePermission { get; set; }
 
-    protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent? data)
+    public PackageInstallPermission? PackageInstallPermission { get; set; }
+
+    protected override void OnActivityResult(
+        int requestCode,
+        [GeneratedEnum] Result resultCode,
+        Intent? data)
     {
         base.OnActivityResult(requestCode, resultCode, data);
 
         AndroidStoragePermission?.OnActivityResult(requestCode, resultCode, data);
+        PackageInstallPermission?.OnActivityResult(requestCode, resultCode, data);
 
-        try
+        /*try
         {
             if (requestCode == ApkDownloadReceiver.InstalledApk
                 && this.IsPackageInstalled("com.oneb.anistreamffmpeg"))
@@ -38,10 +44,13 @@ public class ActivityBase : AppCompatActivity
         catch (Exception e)
         {
             Log.Debug(Tag, $"{e}");
-        }
+        }*/
     }
 
-    public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Permission[] grantResults)
+    public override void OnRequestPermissionsResult(
+        int requestCode,
+        string[] permissions,
+        [GeneratedEnum] Permission[] grantResults)
     {
         Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 
