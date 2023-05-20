@@ -1,0 +1,50 @@
+name: CI Build
+
+on:
+  push:
+    branches: [ master ]
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.gitignore'
+      - '**/*.gitattributes'
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true                     # Disable the .NET logo
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true # Disable the .NET first time experience
+  DOTNET_CLI_TELEMETRY_OPTOUT: true       # Disable sending .NET CLI telemetry
+
+jobs:
+# MAUI Android Build
+  build-android:
+    runs-on: windows-2022
+    name: Android Build
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+
+      - name: Setup .NET 7
+        uses: actions/setup-dotnet@4d4a70f4a5b2a5a5329f13be4ac933f2c9206ac0
+        with:
+          dotnet-version: 7.0.x
+          
+      - name: Install MAUI Workload
+        run: dotnet workload install maui --ignore-failed-sources
+
+      - name: Restore Dependencies
+        run: dotnet restore MauiApp1/MauiApp1.csproj
+
+      - name: Build MAUI Android
+        run: dotnet publish MauiApp1/MauiApp1.csproj -c Release -f net7.0-android --no-restore
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8
+        with:
+          name: mauiapp1-android-ci-build
+          path: MauiApp1/bin/Release/net7.0-android/*Signed.a*
