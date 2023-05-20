@@ -38,13 +38,13 @@ jobs:
         run: dotnet workload install maui --ignore-failed-sources
 
       - name: Restore Dependencies
-        run: dotnet restore MauiApp1/MauiApp1.csproj
+        run: dotnet restore AniStream/AniStream.csproj
 
       - name: Build MAUI Android
-        run: dotnet publish MauiApp1/MauiApp1.csproj -c Release -f net7.0-android --no-restore
+        run: dotnet publish AniStream/AniStream.csproj -c Release -f net7.0-android
 
       - name: Upload Android Artifact
         uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8
         with:
-          name: mauiapp1-android-ci-build
-          path: MauiApp1/bin/Release/net7.0-android/*Signed.a*
+          name: anistream-android-ci-build
+          path: AniStream/bin/Release/net7.0-android/*Signed.a*
