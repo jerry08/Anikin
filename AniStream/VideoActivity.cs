@@ -1011,7 +1011,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         cacheFactory.SetCache(simpleCache);
         cacheFactory.SetUpstreamDataSourceFactory(dataSourceFactory);
 
-        var mimeType = video?.Format switch
+        var mimeType = video.Format switch
         {
             VideoType.M3u8 => MimeTypes.ApplicationM3u8,
             VideoType.Dash => MimeTypes.ApplicationMpd,
@@ -1022,21 +1022,22 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             .SetUri(videoUri)!
             .SetMimeType(mimeType)!;
 
-        if (video!.Subtitles.Count > 0)
+        if (video.Subtitles.Count > 0)
         {
             var defaultSubTitle = video.Subtitles
-                .FirstOrDefault(x => x.Language?.ToLower() == "en") ?? video.Subtitles[0];
+                .FirstOrDefault(x => x.Language?.ToLower() == "en"
+                    || x.Language?.ToLower() == "english") ?? video.Subtitles[0];
 
             var subTitleMimeType = defaultSubTitle.Type switch
             {
                 SubtitleType.VTT => MimeTypes.TextVtt,
                 SubtitleType.ASS => MimeTypes.TextSsa,
                 SubtitleType.SRT => MimeTypes.ApplicationSubrip,
-                _ => MimeTypes.TextUnknown,
+                _ => MimeTypes.TextUnknown
             };
 
             var sub = new MediaItem.SubtitleConfiguration.Builder(
-                Android.Net.Uri.Parse(video.Subtitles[0].Url)
+                Android.Net.Uri.Parse(defaultSubTitle.Url)
             ).SetSelectionFlags(C.SelectionFlagForced)!
             .SetMimeType(subTitleMimeType)!
             .Build()!;
