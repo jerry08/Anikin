@@ -804,8 +804,12 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
     public override void OnBackPressed()
     {
-        exoPlayer.Stop();
-        exoPlayer.Release();
+        if (exoPlayer is not null)
+        {
+            exoPlayer.Stop();
+            exoPlayer.Release();
+        }
+
         CancellationTokenSource.Cancel();
         VideoCache.Release();
 
@@ -937,8 +941,11 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
     {
         base.OnPause();
 
-        exoPlayer.PlayWhenReady = false;
-        exoPlayer.Pause();
+        if (exoPlayer is not null)
+        {
+            exoPlayer.PlayWhenReady = false;
+            exoPlayer.Pause();
+        }
 
         await UpdateProgress();
     }
