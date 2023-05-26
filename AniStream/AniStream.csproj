@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
     <UseMauiEssentials>true</UseMauiEssentials>
     <ApplicationId>com.oneb.anistream</ApplicationId>
-    <ApplicationVersion>30</ApplicationVersion>
-    <ApplicationDisplayVersion>1.9.84</ApplicationDisplayVersion>
+    <ApplicationVersion>31</ApplicationVersion>
+    <ApplicationDisplayVersion>1.9.85</ApplicationDisplayVersion>
     <AndroidSigningKeyStore>key.keystore</AndroidSigningKeyStore>
   </PropertyGroup>
 
