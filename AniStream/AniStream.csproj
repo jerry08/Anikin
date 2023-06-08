@@ -32,9 +32,9 @@
   <ItemGroup>
     <PackageReference Include="Httpz" Version="1.1.0" />
     <PackageReference Include="JCogwheel" Version="1.0.1" />
+    <PackageReference Include="Jerro.FFmpegKit.Android.Min" Version="1.0.4" />
     <PackageReference Include="Juro" Version="1.0.24" />
     <PackageReference Include="Octokit" Version="6.0.0" />
-    <PackageReference Include="Laerdal.FFmpeg.Android.Min" Version="4.4.28" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.18.11" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer.OkHttp" Version="2.18.11" />

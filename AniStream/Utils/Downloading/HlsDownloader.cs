@@ -10,7 +10,7 @@ using AndroidX.Core.Content;
 using AniStream.Services;
 using AniStream.Utils.Extensions;
 using Httpz.Hls;
-using Laerdal.FFmpeg.Android;
+using Jerro.FFmpegKit.Android;
 using Microsoft.Maui.Storage;
 
 namespace AniStream.Utils.Downloading;
@@ -79,12 +79,11 @@ public class HlsDownloader
         var flags = PendingIntentFlags.UpdateCurrent | PendingIntentFlags.Immutable;
 
         //This allows ffmpeg to return result and continue operations in app
-        Config.IgnoreSignal(Signal.Sigxcpu);
+        FFmpegKitConfig.IgnoreSignal(Signal.Sigxcpu);
 
         var cmd = $@"-i ""{filePath}"" -acodec copy -vcodec copy ""{newFilePath}""";
-        var returnCode = FFmpeg.Execute(cmd);
-        if (returnCode == Config.ReturnCodeSuccess)
-        //if (true)
+        var session = FFmpegKit.Execute(cmd);
+        if (ReturnCode.IsSuccess(session?.ReturnCode))
         {
             await _service.CopyFileAsync(newFilePath, saveFilePath, cancellationToken);
 
@@ -105,7 +104,7 @@ public class HlsDownloader
             if (!cancellationToken.IsCancellationRequested)
                 ShowCompletedNotification(fileName, "Completed", pendingIntent);
         }
-        else
+        else if (!ReturnCode.IsCancel(session?.ReturnCode))
         {
             var intent = new Intent();
             var pendingIntent = PendingIntent.GetActivity(_service, 0, intent, flags)!;
