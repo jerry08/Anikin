@@ -20,6 +20,10 @@
             android:titleCondensed="9anime"
             android:title="9anime"
             app:actionViewClass="android.widget.RadioButton" />
+      <item android:id="@+id/source_otakudesu"
+            android:titleCondensed="OtakuDesu"
+            android:title="OtakuDesu (Indonesian)"
+            app:actionViewClass="android.widget.RadioButton" />
     </group>
 
     <item

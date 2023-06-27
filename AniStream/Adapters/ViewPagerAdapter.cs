@@ -35,6 +35,9 @@ public class ViewPagerAdapter : FragmentStatePagerAdapter
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.Popular));
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.LastUpdated));
                 break;
+            case AnimeSites.OtakuDesu:
+                Fragments.Add(AnimeFragment.NewInstance(SearchFilter.Find));
+                break;
         }
     }
 

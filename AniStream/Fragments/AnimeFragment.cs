@@ -9,6 +9,7 @@ using AniStream.Adapters;
 using AniStream.Utils;
 using Juro.Models.Anime;
 using Juro.Providers.Anime;
+using Juro.Providers.Anime.Indonesian;
 
 namespace AniStream.Fragments;
 
@@ -104,8 +105,12 @@ public class AnimeFragment : Fragment
 
     public async void Search()
     {
-        if (WeebUtils.AnimeSite is AnimeSites.GogoAnime or AnimeSites.AnimePahe)
+        if (WeebUtils.AnimeSite is AnimeSites.GogoAnime
+            or AnimeSites.AnimePahe
+            or AnimeSites.OtakuDesu)
+        {
             Page++;
+        }
 
         var animes = _client switch
         {
@@ -134,6 +139,11 @@ public class AnimeFragment : Fragment
                 SearchFilter.LastUpdated => await provider.GetLastUpdatedAsync(Page),
                 _ => throw new NotImplementedException(),
             },
+            OtakuDesu provider => _searchFilter switch
+            {
+                SearchFilter.Find => await provider.SearchByGenreAsync("action", Page),
+                _ => throw new NotImplementedException(),
+            },
             _ => throw new NotImplementedException(),
         };
 
@@ -145,7 +155,8 @@ public class AnimeFragment : Fragment
             animeRecyclerAdapter.Animes.RemoveAll(x => x.Id == "-1");
 
             if ((WeebUtils.AnimeSite == AnimeSites.GogoAnime
-                || WeebUtils.AnimeSite == AnimeSites.AnimePahe)
+                || WeebUtils.AnimeSite == AnimeSites.AnimePahe
+                || WeebUtils.AnimeSite == AnimeSites.OtakuDesu)
                 && animes.Count > 0)
             {
                 animes.Add(new AnimeInfo() { Id = "-1" });
@@ -164,7 +175,8 @@ public class AnimeFragment : Fragment
         else
         {
             if (WeebUtils.AnimeSite == AnimeSites.GogoAnime
-                || WeebUtils.AnimeSite == AnimeSites.AnimePahe)
+                || WeebUtils.AnimeSite == AnimeSites.AnimePahe
+                || WeebUtils.AnimeSite == AnimeSites.OtakuDesu)
             {
                 animes.Add(new AnimeInfo() { Id = "-1" });
             }

@@ -10,6 +10,7 @@ using Android.Views;
 using Android.Widget;
 using Juro.Models.Anime;
 using Juro.Providers.Anime;
+using Juro.Providers.Anime.Indonesian;
 using Microsoft.Maui.Networking;
 using Xamarin.Android.Net;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
@@ -31,6 +32,7 @@ public static class WeebUtils
                 AnimeSites.Zoro => new Zoro(() => httpClient),
                 AnimeSites.AnimePahe => new AnimePahe(() => httpClient),
                 AnimeSites.NineAnime => new NineAnime(() => httpClient),
+                AnimeSites.OtakuDesu => new OtakuDesu(() => httpClient),
                 _ => new Gogoanime(() => httpClient)
             };
         }

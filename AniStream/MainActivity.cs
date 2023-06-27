@@ -300,6 +300,9 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             case AnimeSites.NineAnime:
                 bottomNavigationView.InflateMenu(Resource.Menu.bottommenu_nineanime);
                 break;
+            case AnimeSites.OtakuDesu:
+                bottomNavigationView.InflateMenu(Resource.Menu.bottommenu_otakudesu);
+                break;
         }
 
         viewPager.CurrentItem = 0;
@@ -406,6 +409,7 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
         var zoro = menu.FindItem(Resource.Id.source_zoro);
         var animepahe = menu.FindItem(Resource.Id.source_animepahe);
         var nineanime = menu.FindItem(Resource.Id.source_nineanime);
+        var otakudesu = menu.FindItem(Resource.Id.source_otakudesu);
 
         switch (WeebUtils.AnimeSite)
         {
@@ -420,6 +424,9 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
                 break;
             case AnimeSites.NineAnime:
                 nineanime?.SetChecked(true);
+                break;
+            case AnimeSites.OtakuDesu:
+                otakudesu?.SetChecked(true);
                 break;
         }
     }
@@ -474,6 +481,8 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             WeebUtils.AnimeSite = AnimeSites.AnimePahe;
         else if (id == Resource.Id.source_nineanime)
             WeebUtils.AnimeSite = AnimeSites.NineAnime;
+        else if (id == Resource.Id.source_otakudesu)
+            WeebUtils.AnimeSite = AnimeSites.OtakuDesu;
 
         if (lastAnimeSite != WeebUtils.AnimeSite)
         {
