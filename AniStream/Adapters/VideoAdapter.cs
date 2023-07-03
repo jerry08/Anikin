@@ -37,7 +37,7 @@ public class VideoAdapter : RecyclerView.Adapter
         Videos = videos;
     }
 
-    class UrlViewHolder : RecyclerView.ViewHolder
+    private class UrlViewHolder : RecyclerView.ViewHolder
     {
         public TextView urlQuality = default!;
         public TextView urlNote = default!;
@@ -63,31 +63,20 @@ public class VideoAdapter : RecyclerView.Adapter
 
         var video = Videos[urlViewHolder!.BindingAdapterPosition];
 
-        if (!string.IsNullOrEmpty(video.Resolution))
-            urlViewHolder.urlQuality.Text = video.Resolution;
-        else
-            urlViewHolder.urlQuality.Text = "Default Quality";
+        urlViewHolder.urlQuality.Text =
+            !string.IsNullOrEmpty(video.Title)
+            ? video.Title
+            : !string.IsNullOrEmpty(video.Resolution) ? video.Resolution : "Default Quality";
 
-        //if (video.Format == VideoType.Container)
-        //{
-        //    urlViewHolder.urlDownload.Visibility = ViewStates.Visible;
-        //    urlViewHolder.urlDownload.Click += (s, e) =>
-        //    {
-        //        var downloader = new Downloader(Activity);
-        //        downloader.Download($"{_anime.Title} - Ep-{_episode.Number}.mp4", video.VideoUrl, video.Headers);
-        //    };
-        //}
-        //Test below
         urlViewHolder.urlDownload.Visibility = ViewStates.Visible;
         urlViewHolder.urlDownload.Click += async (s, e) =>
-        {
             await new EpisodeDownloader().EnqueueAsync(_anime, _episode, video);
-        };
 
         if (video.Size != null && video.Size > 0)
         {
             urlViewHolder.urlSize.Visibility = ViewStates.Visible;
-            urlViewHolder.urlSize.Text = FileSizeToStringConverter.Instance.Convert(video.Size.Value);
+            urlViewHolder.urlSize.Text = FileSizeToStringConverter.Instance.Convert(
+                video.Size.Value);
         }
 
         urlViewHolder.ItemView.Click += (s, e) =>
