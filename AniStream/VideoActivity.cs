@@ -451,8 +451,9 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
             var selectedVideoServer = videoServers
                 .Find(x => x.Name?.ToLower().Contains("streamsb") == true
-                    || x.Name?.ToLower().Contains("vidstream") == true)
-                ?? videoServers[0];
+                    || x.Name?.ToLower().Contains("vidstream") == true
+                    || x.Name?.Equals("mirror", StringComparison.OrdinalIgnoreCase) == true // Indonesian
+                ) ?? videoServers[0];
 
             var videos = await _client.GetVideosAsync(selectedVideoServer);
 
