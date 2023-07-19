@@ -8,7 +8,5 @@ public class DialogClickListener : Java.Lang.Object, IDialogInterfaceOnClickList
     public EventHandler<int>? OnItemClick;
 
     public void OnClick(IDialogInterface? dialog, int which)
-    {
-        OnItemClick?.Invoke(this, which);
-    }
+        => OnItemClick?.Invoke(this, which);
 }
