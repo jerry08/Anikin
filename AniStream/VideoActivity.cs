@@ -10,6 +10,7 @@ using Android.Content;
 using Android.Content.PM;
 using Android.Graphics;
 using Android.Graphics.Drawables;
+using Android.Media.Audiofx;
 using Android.OS;
 using Android.Util;
 using Android.Views;
@@ -178,15 +179,28 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         PrevButton = FindViewById<ImageButton>(Resource.Id.exo_prev_ep)!;
         NextButton = FindViewById<ImageButton>(Resource.Id.exo_next_ep)!;
 
-        PrevButton.Click += (s, e) =>
+        PrevButton.Click += (s, e) => PlayPreviousEpisode();
+
+        NextButton.Click += (s, e) => PlayNextEpisode();
+
+        var audioFocusChangeListener = new AudioFocusChangeListener();
+
+        var audioManager = (Android.Media.AudioManager?)ApplicationContext?.GetSystemService(AudioService);
+        audioFocusChangeListener.OnAudioFocusChanged += delegate
         {
-            PlayPreviousEpisode();
+            if (exoPlayer is not null)
+            {
+                exoplay.PerformClick();
+            }
         };
 
-        NextButton.Click += (s, e) =>
-        {
-            PlayNextEpisode();
-        };
+#pragma warning disable CA1422
+        audioManager?.RequestAudioFocus(
+            audioFocusChangeListener,
+            (Android.Media.Stream)ContentType.Movie,
+            Android.Media.AudioFocus.Gain
+        );
+#pragma warning restore CA1422
 
         var settingsButton = FindViewById<ImageButton>(Resource.Id.exo_settings)!;
         SourceButton = FindViewById<ImageButton>(Resource.Id.exo_source)!;
@@ -275,8 +289,11 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             var speedsName = speeds.Select(x => $"{x}x").ToArray();
 
             var speedDialog = new AlertDialog.Builder(this, Resource.Style.DialogTheme);
-            speedDialog.SetSingleChoiceItems(speedsName,
-                _playerSettings.DefaultSpeedIndex, (dialog, e) =>
+
+            speedDialog.SetSingleChoiceItems(
+                speedsName,
+                _playerSettings.DefaultSpeedIndex,
+                (dialog, e) =>
             {
                 exoPlayer.PlaybackParameters = new PlaybackParameters(speeds[e.Which]);
                 (dialog as AlertDialog)?.Dismiss();
@@ -291,15 +308,9 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             selector.Show(SupportFragmentManager, "dialog");
         };
 
-        backButton.Click += (s, e) =>
-        {
-            OnBackPressed();
-        };
+        backButton.Click += (s, e) => OnBackPressed();
 
-        ExoSkip.Click += (s, e) =>
-        {
-            exoPlayer.SeekTo(exoPlayer.CurrentPosition + 85000);
-        };
+        ExoSkip.Click += (s, e) => exoPlayer.SeekTo(exoPlayer.CurrentPosition + 85000);
 
         if (!_playerSettings.DoubleTap)
         {
@@ -311,37 +322,25 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             fastForwardCont.Visibility = ViewStates.Visible;
             fastRewindCont.Visibility = ViewStates.Visible;
 
-            fastForwardButton.Click += (s, e) =>
-            {
-                exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime);
-            };
+            fastForwardButton.Click += (s, e)
+                => exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime);
 
-            rewindButton.Click += (s, e) =>
-            {
-                exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime);
-            };
+            rewindButton.Click += (s, e)
+                => exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime);
         }
 
         playerView.ControllerShowTimeoutMs = 5000;
 
-        playerView.FindViewById(Resource.Id.exo_full_area)!.Click += (s, e) =>
-        {
-            HandleController();
-        };
+        playerView.FindViewById(Resource.Id.exo_full_area)!.Click += (s, e)
+            => HandleController();
 
         // Screen Gestures
         if (_playerSettings.DoubleTap)
         {
             var fastRewindGestureListener = new GesturesListener();
-            fastRewindGestureListener.OnDoubleClick += (s, e) =>
-            {
-                Seek(false, e);
-            };
+            fastRewindGestureListener.OnDoubleClick += (s, e) => Seek(false, e);
 
-            fastRewindGestureListener.OnSingleClick += (s, e) =>
-            {
-                HandleController();
-            };
+            fastRewindGestureListener.OnSingleClick += (s, e) => HandleController();
 
             var fastRewindDetector = new GestureDetector(this, fastRewindGestureListener);
             var rewindArea = FindViewById<View>(Resource.Id.exo_rewind_area)!;
@@ -354,15 +353,9 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             };
 
             var fastForwardGestureListener = new GesturesListener();
-            fastForwardGestureListener.OnDoubleClick += (s, e) =>
-            {
-                Seek(true, e);
-            };
+            fastForwardGestureListener.OnDoubleClick += (s, e) => Seek(true, e);
 
-            fastForwardGestureListener.OnSingleClick += (s, e) =>
-            {
-                HandleController();
-            };
+            fastForwardGestureListener.OnSingleClick += (s, e) => HandleController();
 
             var fastForwardDetector = new GestureDetector(this, fastForwardGestureListener);
             var forwardArea = FindViewById<View>(Resource.Id.exo_forward_area)!;
