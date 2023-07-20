@@ -31,9 +31,6 @@
                       android:titleCondensed="OtakuDesu"
                       android:title="OtakuDesu"
                       app:actionViewClass="android.widget.RadioButton" />
-                  <item
-                      android:title="Actor"
-                      app:actionViewClass="android.widget.RadioButton" />
               </group>
           </menu>
       </item>
