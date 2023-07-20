@@ -8,9 +8,9 @@
             android:titleCondensed="Gogoanime"
             android:title="Gogoanime"
             app:actionViewClass="android.widget.RadioButton" />
-      <item android:id="@+id/source_zoro"
-            android:titleCondensed="Zoro"
-            android:title="Zoro"
+      <item android:id="@+id/source_aniwatch"
+            android:titleCondensed="Aniwatch"
+            android:title="Aniwatch"
             app:actionViewClass="android.widget.RadioButton" />
       <item android:id="@+id/source_animepahe"
             android:titleCondensed="Anime Pahe"
@@ -20,10 +20,23 @@
             android:titleCondensed="9anime"
             android:title="9anime"
             app:actionViewClass="android.widget.RadioButton" />
-      <item android:id="@+id/source_otakudesu"
-            android:titleCondensed="OtakuDesu"
-            android:title="OtakuDesu (Indonesian)"
-            app:actionViewClass="android.widget.RadioButton" />
+      <item
+          android:checkable="false"
+          android:titleCondensed="Indonesian"
+          android:title="Indonesian">
+          <menu>
+              <group android:checkableBehavior="single">
+                  <item
+                      android:id="@+id/source_otakudesu"
+                      android:titleCondensed="OtakuDesu"
+                      android:title="OtakuDesu"
+                      app:actionViewClass="android.widget.RadioButton" />
+                  <item
+                      android:title="Actor"
+                      app:actionViewClass="android.widget.RadioButton" />
+              </group>
+          </menu>
+      </item>
     </group>
 
     <item

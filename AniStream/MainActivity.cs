@@ -111,14 +111,6 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
         viewPager = FindViewById<ViewPager>(Resource.Id.viewPager)!;
         appBarLayout = FindViewById<AppBarLayout>(Resource.Id.appbar)!;
 
-        // Migration
-        var data = await SecureStorage.GetAsync("PlayerSettings");
-        if (!string.IsNullOrEmpty(data))
-        {
-            System.IO.File.WriteAllText(System.IO.Path.Combine(FileSystem.AppDataDirectory, "PlayerSettings.dat"), data);
-            SecureStorage.Remove("PlayerSettings");
-        }
-
         if (!WeebUtils.IsOnline())
         {
             var linearLayout1 = FindViewById<Android.Widget.LinearLayout>(Resource.Id.notvisiblelinearlayout)!;
@@ -291,7 +283,7 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             case AnimeSites.GogoAnime:
                 bottomNavigationView.InflateMenu(Resource.Menu.bottommenu2);
                 break;
-            case AnimeSites.Zoro:
+            case AnimeSites.Aniwatch:
                 bottomNavigationView.InflateMenu(Resource.Menu.bottommenu4);
                 break;
             case AnimeSites.AnimePahe:
@@ -406,7 +398,7 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             WeebUtils.AnimeSite = (AnimeSites)Convert.ToInt32(animeSiteStr);
 
         var gogoanime = menu.FindItem(Resource.Id.source_gogoanime);
-        var zoro = menu.FindItem(Resource.Id.source_zoro);
+        var aniwatch = menu.FindItem(Resource.Id.source_aniwatch);
         var animepahe = menu.FindItem(Resource.Id.source_animepahe);
         var nineanime = menu.FindItem(Resource.Id.source_nineanime);
         var otakudesu = menu.FindItem(Resource.Id.source_otakudesu);
@@ -416,8 +408,8 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             case AnimeSites.GogoAnime:
                 gogoanime?.SetChecked(true);
                 break;
-            case AnimeSites.Zoro:
-                zoro?.SetChecked(true);
+            case AnimeSites.Aniwatch:
+                aniwatch?.SetChecked(true);
                 break;
             case AnimeSites.AnimePahe:
                 animepahe?.SetChecked(true);
@@ -475,8 +467,8 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
 
         if (id == Resource.Id.source_gogoanime)
             WeebUtils.AnimeSite = AnimeSites.GogoAnime;
-        else if (id == Resource.Id.source_zoro)
-            WeebUtils.AnimeSite = AnimeSites.Zoro;
+        else if (id == Resource.Id.source_aniwatch)
+            WeebUtils.AnimeSite = AnimeSites.Aniwatch;
         else if (id == Resource.Id.source_animepahe)
             WeebUtils.AnimeSite = AnimeSites.AnimePahe;
         else if (id == Resource.Id.source_nineanime)
