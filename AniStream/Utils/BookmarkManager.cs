@@ -40,6 +40,9 @@ public class BookmarkManager
         if (!string.IsNullOrEmpty(json))
             list.AddRange(JsonSerializer.Deserialize<List<AnimeInfo>>(json)!);
 
+        list.RemoveAll(x => string.IsNullOrEmpty(x.Category)
+            && string.IsNullOrEmpty(x.Image) && string.IsNullOrEmpty(x.Link));
+
         return list;
     }
 
