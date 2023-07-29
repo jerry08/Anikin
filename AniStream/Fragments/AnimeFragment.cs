@@ -121,7 +121,7 @@ public class AnimeFragment : Fragment
                 SearchFilter.LastUpdated => await provider.GetLastUpdatedAsync(Page),
                 _ => throw new NotImplementedException(),
             },
-            Aniwatch provider => _searchFilter switch
+            Kaido provider => _searchFilter switch
             {
                 SearchFilter.Popular => await provider.GetPopularAsync(Page),
                 SearchFilter.NewSeason => await provider.GetRecentlyAddedAsync(Page),

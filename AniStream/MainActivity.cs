@@ -283,7 +283,7 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             case AnimeSites.GogoAnime:
                 bottomNavigationView.InflateMenu(Resource.Menu.bottommenu2);
                 break;
-            case AnimeSites.Aniwatch:
+            case AnimeSites.Kaido:
                 bottomNavigationView.InflateMenu(Resource.Menu.bottommenu4);
                 break;
             case AnimeSites.AnimePahe:
@@ -398,7 +398,7 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             WeebUtils.AnimeSite = (AnimeSites)Convert.ToInt32(animeSiteStr);
 
         var gogoanime = menu.FindItem(Resource.Id.source_gogoanime);
-        var aniwatch = menu.FindItem(Resource.Id.source_aniwatch);
+        var kaido = menu.FindItem(Resource.Id.source_kaido);
         var animepahe = menu.FindItem(Resource.Id.source_animepahe);
         var nineanime = menu.FindItem(Resource.Id.source_nineanime);
         var otakudesu = menu.FindItem(Resource.Id.source_otakudesu);
@@ -408,8 +408,8 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             case AnimeSites.GogoAnime:
                 gogoanime?.SetChecked(true);
                 break;
-            case AnimeSites.Aniwatch:
-                aniwatch?.SetChecked(true);
+            case AnimeSites.Kaido:
+                kaido?.SetChecked(true);
                 break;
             case AnimeSites.AnimePahe:
                 animepahe?.SetChecked(true);
@@ -467,8 +467,8 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
 
         if (id == Resource.Id.source_gogoanime)
             WeebUtils.AnimeSite = AnimeSites.GogoAnime;
-        else if (id == Resource.Id.source_aniwatch)
-            WeebUtils.AnimeSite = AnimeSites.Aniwatch;
+        else if (id == Resource.Id.source_kaido)
+            WeebUtils.AnimeSite = AnimeSites.Kaido;
         else if (id == Resource.Id.source_animepahe)
             WeebUtils.AnimeSite = AnimeSites.AnimePahe;
         else if (id == Resource.Id.source_nineanime)

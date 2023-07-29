@@ -23,7 +23,7 @@ public class ViewPagerAdapter : FragmentStatePagerAdapter
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.NewSeason));
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.LastUpdated));
                 break;
-            case AnimeSites.Aniwatch:
+            case AnimeSites.Kaido:
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.Popular));
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.NewSeason));
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.TopAiring));

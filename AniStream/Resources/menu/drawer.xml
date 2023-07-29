@@ -8,9 +8,9 @@
             android:titleCondensed="Gogoanime"
             android:title="Gogoanime"
             app:actionViewClass="android.widget.RadioButton" />
-      <item android:id="@+id/source_aniwatch"
-            android:titleCondensed="Aniwatch"
-            android:title="Aniwatch"
+      <item android:id="@+id/source_kaido"
+            android:titleCondensed="Kaido"
+            android:title="Kaido"
             app:actionViewClass="android.widget.RadioButton" />
       <item android:id="@+id/source_animepahe"
             android:titleCondensed="Anime Pahe"

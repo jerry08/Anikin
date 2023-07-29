@@ -29,7 +29,7 @@ public static class WeebUtils
 
             return AnimeSite switch
             {
-                AnimeSites.Aniwatch => new Aniwatch(() => httpClient),
+                AnimeSites.Kaido => new Kaido(() => httpClient),
                 AnimeSites.AnimePahe => new AnimePahe(() => httpClient),
                 AnimeSites.NineAnime => new NineAnime(() => httpClient),
                 AnimeSites.OtakuDesu => new OtakuDesu(() => httpClient),
