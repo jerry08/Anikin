@@ -31,7 +31,7 @@ public class ViewPagerAdapter : FragmentStatePagerAdapter
             case AnimeSites.AnimePahe:
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.TopAiring));
                 break;
-            case AnimeSites.NineAnime:
+            case AnimeSites.Aniwave:
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.Popular));
                 Fragments.Add(AnimeFragment.NewInstance(SearchFilter.LastUpdated));
                 break;

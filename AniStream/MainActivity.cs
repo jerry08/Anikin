@@ -67,9 +67,6 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             "1018117642382-c6avui7h23fdfd4rgc20mo70bn4rljob.apps.googleusercontent.com"
         );
 
-        WeebUtils.AppFolderName = Resources!.GetString(Resource.String.app_name)!;
-        //WeebUtils.AppFolder = GetExternalFilesDir(null).AbsolutePath;
-
         _toolbar = FindViewById<Toolbar>(Resource.Id.toolbar)!;
         SetSupportActionBar(_toolbar);
 
@@ -81,10 +78,7 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
 
         SetHomeProfilePhotoAsync();
 
-        CrossGoogleClient.Current.OnLogin += async (s, e) =>
-        {
-            await DownloadProfilePhotoAsync();
-        };
+        CrossGoogleClient.Current.OnLogin += async (s, e) => await DownloadProfilePhotoAsync();
 
         CrossGoogleClient.Current.OnLogout += (s, e) =>
         {
@@ -289,8 +283,8 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             case AnimeSites.AnimePahe:
                 bottomNavigationView.InflateMenu(Resource.Menu.bottommenu5);
                 break;
-            case AnimeSites.NineAnime:
-                bottomNavigationView.InflateMenu(Resource.Menu.bottommenu_nineanime);
+            case AnimeSites.Aniwave:
+                bottomNavigationView.InflateMenu(Resource.Menu.bottommenu_aniwave);
                 break;
             case AnimeSites.OtakuDesu:
                 bottomNavigationView.InflateMenu(Resource.Menu.bottommenu_otakudesu);
@@ -400,7 +394,7 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
         var gogoanime = menu.FindItem(Resource.Id.source_gogoanime);
         var kaido = menu.FindItem(Resource.Id.source_kaido);
         var animepahe = menu.FindItem(Resource.Id.source_animepahe);
-        var nineanime = menu.FindItem(Resource.Id.source_nineanime);
+        var aniwave = menu.FindItem(Resource.Id.source_aniwave);
         var otakudesu = menu.FindItem(Resource.Id.source_otakudesu);
 
         switch (WeebUtils.AnimeSite)
@@ -414,8 +408,8 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             case AnimeSites.AnimePahe:
                 animepahe?.SetChecked(true);
                 break;
-            case AnimeSites.NineAnime:
-                nineanime?.SetChecked(true);
+            case AnimeSites.Aniwave:
+                aniwave?.SetChecked(true);
                 break;
             case AnimeSites.OtakuDesu:
                 otakudesu?.SetChecked(true);
@@ -471,8 +465,8 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
             WeebUtils.AnimeSite = AnimeSites.Kaido;
         else if (id == Resource.Id.source_animepahe)
             WeebUtils.AnimeSite = AnimeSites.AnimePahe;
-        else if (id == Resource.Id.source_nineanime)
-            WeebUtils.AnimeSite = AnimeSites.NineAnime;
+        else if (id == Resource.Id.source_aniwave)
+            WeebUtils.AnimeSite = AnimeSites.Aniwave;
         else if (id == Resource.Id.source_otakudesu)
             WeebUtils.AnimeSite = AnimeSites.OtakuDesu;
 

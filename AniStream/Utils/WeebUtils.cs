@@ -31,7 +31,7 @@ public static class WeebUtils
             {
                 AnimeSites.Kaido => new Kaido(() => httpClient),
                 AnimeSites.AnimePahe => new AnimePahe(() => httpClient),
-                AnimeSites.NineAnime => new NineAnime(() => httpClient),
+                AnimeSites.Aniwave => new Aniwave(() => httpClient),
                 AnimeSites.OtakuDesu => new OtakuDesu(() => httpClient),
                 _ => new Gogoanime(() => httpClient)
             };
@@ -55,16 +55,6 @@ public static class WeebUtils
             return pathToMyFolder;
         }
     }
-
-    public static string AppFolder
-    {
-        get
-        {
-            return System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal), AppFolderName);
-        }
-    }
-
-    public static string AppFolderName { get; set; } = default!;
 
     public static AlertDialog SetProgressDialog(
         Context context,

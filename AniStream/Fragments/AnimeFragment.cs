@@ -133,7 +133,7 @@ public class AnimeFragment : Fragment
                 SearchFilter.TopAiring => await provider.GetAiringAsync(Page),
                 _ => throw new NotImplementedException(),
             },
-            NineAnime provider => _searchFilter switch
+            Aniwave provider => _searchFilter switch
             {
                 SearchFilter.Popular => await provider.GetPopularAsync(Page),
                 SearchFilter.LastUpdated => await provider.GetLastUpdatedAsync(Page),

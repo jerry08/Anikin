@@ -52,6 +52,7 @@ using Juro.Providers.Aniskip;
 using Square.OkHttp3;
 using static Com.Google.Android.Exoplayer2.IPlayer;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
+using AudioFocus = Android.Media.AudioFocus;
 using Configuration = Android.Content.Res.Configuration;
 using Format = Com.Google.Android.Exoplayer2.Format;
 using Handler = Android.OS.Handler;
@@ -183,24 +184,43 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
         NextButton.Click += (s, e) => PlayNextEpisode();
 
-        var audioFocusChangeListener = new AudioFocusChangeListener();
+        /*var audioFocusChangeListener = new AudioFocusChangeListener();
 
         var audioManager = (Android.Media.AudioManager?)ApplicationContext?.GetSystemService(AudioService);
-        audioFocusChangeListener.OnAudioFocusChanged += delegate
+        audioFocusChangeListener.OnAudioFocusChanged += (_, focus) =>
         {
-            if (exoPlayer is not null)
+            switch (focus)
             {
-                exoplay.PerformClick();
+                case AudioFocus.Loss:
+                case AudioFocus.LossTransient:
+                    if (exoPlayer?.IsPlaying == true)
+                    {
+                        exoPlayer.Pause();
+                    }
+                    break;
             }
         };
 
+        var audioAttributes = new Android.Media.AudioAttributes.Builder()
+            .SetUsage(Android.Media.AudioUsageKind.Media)!
+            .SetContentType(Android.Media.AudioContentType.Movie)!
+            .Build()!;
+
+        var focusRequest = new Android.Media.AudioFocusRequestClass.Builder(AudioFocus.Gain)
+            .SetAudioAttributes(audioAttributes)
+            .SetAcceptsDelayedFocusGain(true)
+            .SetOnAudioFocusChangeListener(audioFocusChangeListener)
+            .Build()!;
+
 #pragma warning disable CA1422
-        audioManager?.RequestAudioFocus(
-            audioFocusChangeListener,
-            (Android.Media.Stream)ContentType.Movie,
-            Android.Media.AudioFocus.Gain
-        );
-#pragma warning restore CA1422
+        //audioManager?.RequestAudioFocus(
+        //    audioFocusChangeListener,
+        //    (Android.Media.Stream)ContentType.Movie,
+        //    AudioFocus.Gain
+        //);
+
+        audioManager?.RequestAudioFocus(focusRequest);
+#pragma warning restore CA1422*/
 
         var settingsButton = FindViewById<ImageButton>(Resource.Id.exo_settings)!;
         SourceButton = FindViewById<ImageButton>(Resource.Id.exo_source)!;
