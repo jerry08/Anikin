@@ -17,8 +17,8 @@
             android:title="Anime Pahe"
             app:actionViewClass="android.widget.RadioButton" />
       <item android:id="@+id/source_aniwave"
-            android:titleCondensed="9anime"
-            android:title="9anime"
+            android:titleCondensed="Aniwave"
+            android:title="Aniwave"
             app:actionViewClass="android.widget.RadioButton" />
       <item
           android:checkable="false"

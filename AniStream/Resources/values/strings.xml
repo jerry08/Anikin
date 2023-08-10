@@ -56,25 +56,6 @@
     <string name="animations">Animations</string>
     <string name="skip">Skip</string>
 
-    <string-array name="tips">
-      <item>You can Long Click an episode/chapter to Mark it as Read.</item>
-      <item>Long Clicking Shows can directly open List Editor.</item>
-      <item>There are few easter eggs hidden in the App.</item>
-      <item>Internet sucks? search taking too much time? try spam-Clicking the Progress Bar</item>
-      <item>Challenge: Go to the very bottom of the Popular Anime &amp; Manga</item>
-      <item>Try Long Clicking the Show\'s Title.</item>
-      <item>Damn, why are you wasting your Time?</item>
-      <item>Looks like someone likes this Animation.</item>
-      <item>You can Long Click to copy this Message.</item>
-      <item>Saikou!</item>
-      <item>OMG LOOK YOU! FOUND AN EASTER EGG!?!?</item>
-      <item>You know who else likes this Animation?</item>
-      <item>My Mom!</item>
-      <item>9anime be crying</item>
-      <item>MAL support? bruh.</item>
-      <item>Novels? more like NO vels.</item>
-    </string-array>
-
     <string name="home">Home</string>
     <string name="anime">Anime</string>
     <string name="browse_anime">Browse Anime</string>
