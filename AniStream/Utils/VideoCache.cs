@@ -2,12 +2,13 @@
 using Com.Google.Android.Exoplayer2.Database;
 using Com.Google.Android.Exoplayer2.Upstream.Cache;
 using Java.IO;
+using Microsoft.Maui.Storage;
 
 namespace AniStream.Utils;
 
-internal class VideoCache
+internal static class VideoCache
 {
-    private static SimpleCache? _simpleCache = null;
+    private static SimpleCache? _simpleCache;
 
     public static SimpleCache GetInstance(Context context)
     {
@@ -21,7 +22,8 @@ internal class VideoCache
             _simpleCache = new SimpleCache(
                 file,
                 new LeastRecentlyUsedCacheEvictor(300L * 1024L * 1024L),
-                databaseProvider);
+                databaseProvider
+            );
         }
 
         return _simpleCache;
@@ -29,6 +31,16 @@ internal class VideoCache
 
     public static void Release()
     {
+        try
+        {
+            var dir = System.IO.Path.Combine(FileSystem.CacheDirectory, "exoplayer");
+            System.IO.Directory.Delete(dir, true);
+        }
+        catch
+        {
+            // Ignore
+        }
+
         _simpleCache?.Release();
         _simpleCache = null;
     }
