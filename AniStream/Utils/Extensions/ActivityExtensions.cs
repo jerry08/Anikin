@@ -25,10 +25,7 @@ public static class ActivityExtensions
         if (activity is null)
             return;
 
-        activity.RunOnUiThread(() =>
-        {
-            Toast.MakeText(activity, text, ToastLength.Short)!.Show();
-        });
+        activity.RunOnUiThread(() => Toast.MakeText(activity, text, ToastLength.Short)!.Show());
     }
 
     public static void CopyToClipboard(
@@ -65,10 +62,7 @@ public static class ActivityExtensions
             snackBar.View.TranslationZ = 32f;
             //snackBar.View.SetPadding(16, 16, 16, 16);
 
-            snackBar.View.Click += (s, e) =>
-            {
-                snackBar.Dismiss();
-            };
+            snackBar.View.Click += (s, e) => snackBar.Dismiss();
 
             snackBar.View.LongClick += (s, e) =>
             {
