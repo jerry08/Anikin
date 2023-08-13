@@ -38,6 +38,7 @@
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.18.11" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer.OkHttp" Version="2.18.11" />
+    <PackageReference Include="Xam.Plugins.Android.ExoPlayer.MediaSession" Version="2.18.11" />
     <PackageReference Include="Xamarin.Android.Flowlayout" Version="1.0.0.4" />
     <PackageReference Include="Xamarin.Firebase.Auth" Version="121.1.0" />
     <PackageReference Include="Xamarin.Firebase.Crashlytics" Version="118.3.2.1" />

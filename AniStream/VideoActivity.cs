@@ -12,6 +12,7 @@ using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Media.Audiofx;
 using Android.OS;
+using Android.Support.V4.Media.Session;
 using Android.Util;
 using Android.Views;
 using Android.Views.Animations;
@@ -29,6 +30,7 @@ using AniStream.Utils.Listeners;
 using Bumptech.Glide;
 using Com.Google.Android.Exoplayer2;
 using Com.Google.Android.Exoplayer2.Audio;
+using Com.Google.Android.Exoplayer2.Ext.Mediasession;
 using Com.Google.Android.Exoplayer2.Ext.Okhttp;
 using Com.Google.Android.Exoplayer2.Extractor;
 using Com.Google.Android.Exoplayer2.Metadata;
@@ -79,6 +81,10 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
     private StyledPlayerView playerView = default!;
     //private PlayerView playerView = default!;
     DefaultTrackSelector trackSelector = default!;
+
+    //private MediaSession? MediaSession { get; set; }
+    private MediaSessionCompat? MediaSession { get; set; }
+    private MediaSessionConnector? MediaSessionConnector { get; set; }
 
     private ProgressBar progressBar = default!;
     private ImageButton exoplay = default!;
@@ -184,9 +190,11 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
         NextButton.Click += (s, e) => PlayNextEpisode();
 
-        /*var audioFocusChangeListener = new AudioFocusChangeListener();
-
         var audioManager = (Android.Media.AudioManager?)ApplicationContext?.GetSystemService(AudioService);
+        //var audioManager = Android.Media.AudioManager.FromContext(this);
+
+        var audioFocusChangeListener = new AudioFocusChangeListener();
+
         audioFocusChangeListener.OnAudioFocusChanged += (_, focus) =>
         {
             switch (focus)
@@ -201,6 +209,15 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             }
         };
 
+#pragma warning disable CA1422
+        audioManager!.RequestAudioFocus(
+            audioFocusChangeListener,
+            (Android.Media.Stream)ContentType.Movie,
+            //Android.Media.Stream.Music,
+            AudioFocus.Gain
+        );
+#pragma warning restore CA1422
+
         var audioAttributes = new Android.Media.AudioAttributes.Builder()
             .SetUsage(Android.Media.AudioUsageKind.Media)!
             .SetContentType(Android.Media.AudioContentType.Movie)!
@@ -212,15 +229,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             .SetOnAudioFocusChangeListener(audioFocusChangeListener)
             .Build()!;
 
-#pragma warning disable CA1422
-        //audioManager?.RequestAudioFocus(
-        //    audioFocusChangeListener,
-        //    (Android.Media.Stream)ContentType.Movie,
-        //    AudioFocus.Gain
-        //);
-
         audioManager?.RequestAudioFocus(focusRequest);
-#pragma warning restore CA1422*/
 
         var settingsButton = FindViewById<ImageButton>(Resource.Id.exo_settings)!;
         SourceButton = FindViewById<ImageButton>(Resource.Id.exo_source)!;
@@ -565,6 +574,19 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             .Build()!;
 
         playerView.Player = exoPlayer;
+
+        try
+        {
+            MediaSession = new(this, "AniStreamMediaSession");
+
+            MediaSessionConnector = new MediaSessionConnector(MediaSession);
+            MediaSessionConnector.SetPlayer(exoPlayer);
+        }
+        catch (Exception e)
+        {
+            this.ShowToast(e.Message);
+        }
+
         exoPlayer.AddListener(this);
 
         if (playerView.SubtitleView is not null)
@@ -1107,6 +1129,9 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         {
             var isPlaying = exoPlayer.IsPlaying;
         }
+
+        if (playbackState == IPlayer.StateEnded)
+            PlayNextEpisode();
     }
 
     public void OnPlaybackSuppressionReasonChanged(int playbackSuppressionReason)
