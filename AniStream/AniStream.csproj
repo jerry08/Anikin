@@ -33,7 +33,7 @@
     <PackageReference Include="Httpz" Version="1.1.3" />
     <PackageReference Include="JCogwheel" Version="1.0.1" />
     <PackageReference Include="Jerro.FFmpegKit.Min.Android" Version="1.0.0" />
-    <PackageReference Include="Juro" Version="1.1.8" />
+    <PackageReference Include="Juro" Version="1.1.11" />
     <PackageReference Include="Octokit" Version="7.1.0" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.18.11" />
