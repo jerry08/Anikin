@@ -124,6 +124,8 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
 
     private bool CanSaveProgress { get; set; }
 
+    private bool IsSeeking { get; set; }
+
     protected async override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
@@ -632,24 +634,77 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         var fastForwardCard = playerView.FindViewById<View>(Resource.Id.exo_fast_forward)!;
         var fastRewindCard = playerView.FindViewById<View>(Resource.Id.exo_fast_rewind)!;
 
+        View card;
+        TextView text;
+
         if (forward)
         {
             forwardText.Text = $"+{(_playerSettings.SeekTime / 1000) * ++seekTimesF}";
+
+            _handler.Post(() => exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime));
+
+            card = fastForwardCard;
+            text = forwardText;
+        }
+        else
+        {
+            rewindText.Text = $"-{(_playerSettings.SeekTime / 1000) * ++seekTimesR}";
+
+            _handler.Post(() => exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime));
+
+            card = fastRewindCard;
+            text = rewindText;
+        }
+
+        var showCardAnim = ObjectAnimator.OfFloat(card, "alpha", 0f, 1f)!.SetDuration(300);
+        var showTextAnim = ObjectAnimator.OfFloat(text, "alpha", 0f, 1f)!.SetDuration(150);
+
+        void StartAnim()
+        {
+            showTextAnim!.Start();
+
+            if (text.GetCompoundDrawables()?[1] is IAnimatable animatable
+                && !animatable.IsRunning)
+            {
+                animatable.Start();
+            }
+
+            if (!IsSeeking && @event is not null)
+            {
+                playerView.HideController();
+                card.CircularReveal((int)@event.GetX(), (int)@event.GetY(), !forward, 800);
+                showCardAnim!.Start();
+            }
+        }
+
+        void StopAnim()
+        {
             _handler.Post(() =>
             {
-                exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime);
+                showCardAnim?.Cancel();
+                showTextAnim?.Cancel();
+                ObjectAnimator.OfFloat(card, "alpha", card.Alpha, 0f)?.SetDuration(150).Start();
+                ObjectAnimator.OfFloat(text, "alpha", 1f, 0f)?.SetDuration(150).Start();
             });
+        }
 
-            StartDoubleTapped(fastForwardCard, forwardText, forward, @event);
+        StartAnim();
 
+        IsSeeking = true;
+
+        if (forward)
+        {
             seekTimerF.Stop();
-            seekTimerF = new();
-            seekTimerF.Interval = 850;
+            seekTimerF = new()
+            {
+                Interval = 850
+            };
 
             seekTimerF.Elapsed += (s, e) =>
             {
+                IsSeeking = false;
                 seekTimerF.Stop();
-                StopDoubleTapped(fastForwardCard, forwardText);
+                StopAnim();
                 seekTimesF = 0;
             };
 
@@ -657,22 +712,17 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         }
         else
         {
-            rewindText.Text = $"-{(_playerSettings.SeekTime / 1000) * ++seekTimesR}";
-            _handler.Post(() =>
-            {
-                exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime);
-            });
-
-            StartDoubleTapped(fastRewindCard, rewindText, forward, @event);
-
             seekTimerR.Stop();
-            seekTimerR = new();
-            seekTimerR.Interval = 850;
+            seekTimerR = new()
+            {
+                Interval = 850
+            };
 
             seekTimerR.Elapsed += (s, e) =>
             {
+                IsSeeking = false;
                 seekTimerR.Stop();
-                StopDoubleTapped(fastRewindCard, rewindText);
+                StopAnim();
                 seekTimesR = 0;
             };
 
@@ -1369,17 +1419,7 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         }
     }
 
-    private void StopDoubleTapped(View view, TextView textView)
-    {
-        _handler.Post(() =>
-        {
-            ObjectAnimator.OfFloat(view, "alpha", view.Alpha, 0f)!.SetDuration(150).Start();
-            ObjectAnimator.OfFloat(textView, "alpha", 1f, 0f)!.SetDuration(150).Start();
-        });
-    }
-
-#pragma warning disable CS0618
-#pragma warning disable CS0672
+#pragma warning disable CS0618, CS0672, CA1422
     private void EnterPipMode()
     {
         try
@@ -1438,6 +1478,5 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         OnPiPChanged(isInPictureInPictureMode);
         base.OnPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
     }
-#pragma warning restore CS0672
-#pragma warning restore CS0618
+#pragma warning restore CS0618, CS0672, CA1422
 }
