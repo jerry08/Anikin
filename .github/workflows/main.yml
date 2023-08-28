@@ -11,40 +11,151 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 env:
   DOTNET_NOLOGO: true                     # Disable the .NET logo
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true # Disable the .NET first time experience
   DOTNET_CLI_TELEMETRY_OPTOUT: true       # Disable sending .NET CLI telemetry
 
 jobs:
-# MAUI Android Build
+  # MAUI Android Build
   build-android:
-    runs-on: windows-2022
+    runs-on: windows-latest
+
+    env:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+
     name: Android Build
     steps:
-
       - name: Checkout
-        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+        uses: actions/checkout@v3
 
-      - name: Setup .NET 7
-        uses: actions/setup-dotnet@4d4a70f4a5b2a5a5329f13be4ac933f2c9206ac0
+      - name: Cook KeyStore
+        run:  echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.keystore
+        shell: bash
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v2
         with:
           dotnet-version: 7.0.x
-          
+
       - name: Install MAUI Workload
         run: dotnet workload install maui --ignore-failed-sources
 
       - name: Restore Dependencies
-        run: dotnet restore AniStream/AniStream.csproj
+        run: dotnet restore AniStream/
 
-      - name: Build MAUI Android
-        run: dotnet publish AniStream/AniStream.csproj -c Release -f net7.0-android -p:AndroidKeyStore=false
+      - name: Publish MAUI Android
+        run: >
+            dotnet publish AniStream/
+            -c Release
+            -f net7.0-android
+            -p:AndroidKeyStore=true
+            -p:AndroidSigningKeyStore=${{ github.workspace }}/signing-key.keystore
+            -p:AndroidSigningStorePass="${{ secrets.PASSWORD }}"
+            -p:AndroidSigningKeyAlias="DrMedia"
+            -p:AndroidSigningKeyPass="${{ secrets.PASSWORD }}"
 
+      - name: Rename file
+        run: |
+          set -e
+
+          mv AniStream/bin/Release/net7.0-android/com.oneb.anistream-Signed.apk AniStream.apk
+        shell: bash
+        
       - name: Upload Android Artifact
-        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8
+        uses: actions/upload-artifact@v3
         with:
-          name: anistream-android-ci-build
-          path: AniStream/bin/Release/net7.0-android/*Signed.apk
+          name: AniStream
+          path: AniStream.apk
+
+  deploy:
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
+    needs: build-android
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+
+    steps:
+      # Checkout required for running git commands, etc.
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set package name env var
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+          TAG_NAME="$(echo $TAG_NAME | tr -d v)"
+          echo $TAG_NAME
+          echo "PACKAGE_NAME=${{ github.event.repository.name }}-$TAG_NAME.apk" >> $GITHUB_ENV
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: AniStream
+          path: AniStream
+
+      - name: Set body
+        run: |
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+          TAG_MESSAGE=$(git tag -l --format='%(contents)' ${GITHUB_REF#refs/*/})
+          echo "TAG_MESSAGE2<<EOF" >> $GITHUB_ENV
+          echo "$TAG_MESSAGE" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          gh release create "${{ github.ref_name }}"
+          "AniStream.apk"
+          --repo "${{ github.event.repository.full_name }}"
+          --title "${{ github.ref_name }}"
+          --notes "${{ env.TAG_MESSAGE2 }}"
+          --verify-tag
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set variables
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+          TAG_NAME="$(echo $TAG_NAME | tr -d v)"
+          echo "$TAG_NAME"
+          echo "PACKAGE_NAME=${{ github.event.repository.name }}-$TAG_NAME.zip" >> $GITHUB_ENV
+
+      - name: Set variables 2
+        run: |
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+          TAG_MESSAGE=$(git tag -l --format='%(contents)' ${GITHUB_REF#refs/*/})
+          # Sanitize content
+          TAG_MESSAGE="${TAG_MESSAGE//'%'/'%25'}"
+          TAG_MESSAGE="${TAG_MESSAGE//$'\n'/'\n'}"
+          TAG_MESSAGE="${TAG_MESSAGE//$'\r'/'\r'}"
+          TAG_MESSAGE="$(echo $TAG_MESSAGE | sed "s/\"/'/g")"
+          # End sanitization
+          echo "RELEASE_BODY<<EOF" >> $GITHUB_ENV
+          echo "$TAG_MESSAGE" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Notify Discord
+        uses: tyrrrz/action-http-request@v1
+        with:
+          url: ${{ secrets.DISCORD_WEBHOOK }}
+          method: POST
+          headers: |
+            Content-Type: application/json; charset=UTF-8
+          body: |
+            {
+              "username": "My Test1 Bot",
+              "avatar_url": "https://i.imgur.com/4M34hi2.png",
+              "content": "**${{ github.event.repository.name }}** new version released!\nVersion: `${{ github.ref_name }}`\n\n${{ env.RELEASE_BODY }}\n\nDownload: <${{ github.event.repository.html_url }}/download/${{ github.ref_name }}/${{ env.PACKAGE_NAME }}>"
+            }
