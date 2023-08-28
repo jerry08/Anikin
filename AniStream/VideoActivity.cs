@@ -384,9 +384,15 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             };
 
             var fastForwardGestureListener = new GesturesListener();
-            fastForwardGestureListener.OnDoubleClick += (s, e) => Seek(true, e);
+            fastForwardGestureListener.OnDoubleClick += (_, e) => Seek(true, e);
 
-            fastForwardGestureListener.OnSingleClick += (s, e) => HandleController();
+            fastForwardGestureListener.OnSingleClick += (_, e) =>
+            {
+                if (IsSeeking)
+                    DoubleTap(false, e);
+                else
+                    HandleController();
+            };
 
             var fastForwardDetector = new GestureDetector(this, fastForwardGestureListener);
             var forwardArea = FindViewById<View>(Resource.Id.exo_forward_area)!;
@@ -451,6 +457,8 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             await SetEpisodeAsync(Episode.Id);
         }
     }
+
+    private void DoubleTap(bool forward, MotionEvent @event) => Seek(forward, @event);
 
     private async Task SetEpisodeAsync(string episodeId)
     {
@@ -697,7 +705,8 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             seekTimerF.Stop();
             seekTimerF = new()
             {
-                Interval = 850
+                Interval = 850,
+                AutoReset = false
             };
 
             seekTimerF.Elapsed += (s, e) =>
@@ -715,7 +724,8 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             seekTimerR.Stop();
             seekTimerR = new()
             {
-                Interval = 850
+                Interval = 850,
+                AutoReset = false
             };
 
             seekTimerR.Elapsed += (s, e) =>
