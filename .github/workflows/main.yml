@@ -155,7 +155,7 @@ jobs:
             Content-Type: application/json; charset=UTF-8
           body: |
             {
-              "username": "My Test1 Bot",
+              "username": "Notifications",
               "avatar_url": "https://i.imgur.com/4M34hi2.png",
               "content": "**${{ github.event.repository.name }}** new version released!\nVersion: `${{ github.ref_name }}`\n\n${{ env.RELEASE_BODY }}\n\nDownload: <${{ github.event.repository.html_url }}/download/${{ github.ref_name }}/${{ env.PACKAGE_NAME }}>"
             }
