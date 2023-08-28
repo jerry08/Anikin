@@ -8,7 +8,7 @@ namespace AniStream.Utils.Listeners;
 public class GesturesListener : GestureDetector.SimpleOnGestureListener
 {
     private Timer Timer = new();
-    private long Delay = 200;
+    private readonly long _delay = 200;
 
     public EventHandler<MotionEvent>? OnSingleClick;
 
@@ -51,7 +51,7 @@ public class GesturesListener : GestureDetector.SimpleOnGestureListener
 
         Timer = new()
         {
-            Interval = Delay,
+            Interval = _delay,
             AutoReset = false
         };
 

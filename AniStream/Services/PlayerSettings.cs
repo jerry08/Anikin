@@ -17,6 +17,9 @@ public class PlayerSettings : SettingsBase
 
     public bool SelectServerBeforePlaying { get; set; }
 
+    /// <summary>
+    /// Seek time in milliseconds.
+    /// </summary>
     public long SeekTime { get; set; } = 10000;
 
     public bool CursedSpeeds { get; set; }
