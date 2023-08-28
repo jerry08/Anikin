@@ -369,14 +369,20 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
         if (_playerSettings.DoubleTap)
         {
             var fastRewindGestureListener = new GesturesListener();
-            fastRewindGestureListener.OnDoubleClick += (s, e) => Seek(false, e);
+            fastRewindGestureListener.OnDoubleClick += (_, e) => DoubleTap(false, e);
 
-            fastRewindGestureListener.OnSingleClick += (s, e) => HandleController();
+            fastRewindGestureListener.OnSingleClick += (_, e) =>
+            {
+                if (IsSeeking)
+                    DoubleTap(false, e);
+                else
+                    HandleController();
+            };
 
             var fastRewindDetector = new GestureDetector(this, fastRewindGestureListener);
             var rewindArea = FindViewById<View>(Resource.Id.exo_rewind_area)!;
             rewindArea.Clickable = true;
-            rewindArea.Touch += (s, e) =>
+            rewindArea.Touch += (_, e) =>
             {
                 e.Handled = false;
                 fastRewindDetector.OnTouchEvent(e.Event!);
@@ -384,12 +390,12 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             };
 
             var fastForwardGestureListener = new GesturesListener();
-            fastForwardGestureListener.OnDoubleClick += (_, e) => Seek(true, e);
+            fastForwardGestureListener.OnDoubleClick += (_, e) => DoubleTap(true, e);
 
             fastForwardGestureListener.OnSingleClick += (_, e) =>
             {
                 if (IsSeeking)
-                    DoubleTap(false, e);
+                    DoubleTap(true, e);
                 else
                     HandleController();
             };
