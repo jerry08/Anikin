@@ -211,27 +211,32 @@ public class VideoActivity : ActivityBase, IPlayer.IListener, ITrackNameProvider
             }
         };
 
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
+        {
+            var audioAttributes = new Android.Media.AudioAttributes.Builder()
+                .SetUsage(Android.Media.AudioUsageKind.Media)!
+                .SetContentType(Android.Media.AudioContentType.Movie)!
+                .Build()!;
+
+            var focusRequest = new Android.Media.AudioFocusRequestClass.Builder(AudioFocus.Gain)
+                .SetAudioAttributes(audioAttributes)
+                .SetAcceptsDelayedFocusGain(true)
+                .SetOnAudioFocusChangeListener(audioFocusChangeListener)
+                .Build()!;
+
+            audioManager?.RequestAudioFocus(focusRequest);
+        }
+        else
+        {
 #pragma warning disable CA1422
-        audioManager!.RequestAudioFocus(
-            audioFocusChangeListener,
-            (Android.Media.Stream)ContentType.Movie,
-            //Android.Media.Stream.Music,
-            AudioFocus.Gain
-        );
+            audioManager!.RequestAudioFocus(
+                audioFocusChangeListener,
+                (Android.Media.Stream)ContentType.Movie,
+                //Android.Media.Stream.Music,
+                AudioFocus.Gain
+            );
 #pragma warning restore CA1422
-
-        var audioAttributes = new Android.Media.AudioAttributes.Builder()
-            .SetUsage(Android.Media.AudioUsageKind.Media)!
-            .SetContentType(Android.Media.AudioContentType.Movie)!
-            .Build()!;
-
-        var focusRequest = new Android.Media.AudioFocusRequestClass.Builder(AudioFocus.Gain)
-            .SetAudioAttributes(audioAttributes)
-            .SetAcceptsDelayedFocusGain(true)
-            .SetOnAudioFocusChangeListener(audioFocusChangeListener)
-            .Build()!;
-
-        audioManager?.RequestAudioFocus(focusRequest);
+        }
 
         var settingsButton = FindViewById<ImageButton>(Resource.Id.exo_settings)!;
         SourceButton = FindViewById<ImageButton>(Resource.Id.exo_source)!;
