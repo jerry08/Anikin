@@ -139,7 +139,7 @@ jobs:
           TAG_MESSAGE="${TAG_MESSAGE//'%'/'%25'}"
           TAG_MESSAGE="${TAG_MESSAGE//$'\n'/'\n'}"
           TAG_MESSAGE="${TAG_MESSAGE//$'\r'/'\r'}"
-          TAG_MESSAGE="$(echo $TAG_MESSAGE | sed "s/\"/'/g")"
+          TAG_MESSAGE="$TAG_MESSAGE" | sed "s/\"/'/g"
           # End sanitization
           echo "RELEASE_BODY<<EOF" >> $GITHUB_ENV
           echo "$TAG_MESSAGE" >> $GITHUB_ENV
