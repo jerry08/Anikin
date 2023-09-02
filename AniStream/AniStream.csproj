@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
     <UseMauiEssentials>true</UseMauiEssentials>
     <ApplicationId>com.oneb.anistream</ApplicationId>
-    <ApplicationVersion>35</ApplicationVersion>
-    <ApplicationDisplayVersion>1.9.90</ApplicationDisplayVersion>
+    <ApplicationVersion>36</ApplicationVersion>
+    <ApplicationDisplayVersion>1.9.91</ApplicationDisplayVersion>
   </PropertyGroup>
 
   <ItemGroup>
