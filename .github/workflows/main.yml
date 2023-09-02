@@ -76,12 +76,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set package name env var
+      - name: Set variables
         run: |
           TAG_NAME="${{ github.ref_name }}"
-          TAG_NAME="$(echo $TAG_NAME | tr -d v)"
           echo $TAG_NAME
-          echo "PACKAGE_NAME=${{ github.event.repository.name }}-v$TAG_NAME.apk" >> $GITHUB_ENV
+          VERSION="$TAG_NAME" | tr -d v
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "PACKAGE_NAME=${{ github.event.repository.name }}-$TAG_NAME.apk" >> $GITHUB_ENV
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -110,7 +111,7 @@ jobs:
           gh release create "${{ github.ref_name }}"
           "${{ env.PACKAGE_NAME }}"
           --repo "${{ github.event.repository.full_name }}"
-          --title "${{ github.ref_name }}"
+          --title "${{ env.VERSION }}"
           --notes "${{ env.TAG_MESSAGE2 }}"
           --verify-tag
 
@@ -127,9 +128,8 @@ jobs:
       - name: Set variables
         run: |
           TAG_NAME="${{ github.ref_name }}"
-          TAG_NAME="$(echo $TAG_NAME | tr -d v)"
           echo "$TAG_NAME"
-          echo "PACKAGE_NAME=${{ github.event.repository.name }}-v$TAG_NAME.apk" >> $GITHUB_ENV
+          echo "PACKAGE_NAME=${{ github.event.repository.name }}-$TAG_NAME.apk" >> $GITHUB_ENV
 
       - name: Set variables 2
         run: |
@@ -156,5 +156,5 @@ jobs:
             {
               "username": "Notifications",
               "avatar_url": "https://raw.githubusercontent.com/${{ github.event.repository.full_name }}/master/favicon.png",
-              "content": "**${{ github.event.repository.name }}** new version released!\nVersion: `${{ github.ref_name }}`\n\n${{ env.RELEASE_BODY }}\n\nDownload: <${{ github.event.repository.html_url }}/download/${{ github.ref_name }}/${{ env.PACKAGE_NAME }}>"
+              "content": "**${{ github.event.repository.name }}** new version released!\nVersion: `${{ github.ref_name }}`\n\n${{ env.RELEASE_BODY }}\n\nDownload: <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/${{ env.PACKAGE_NAME }}>"
             }
