@@ -80,7 +80,7 @@ jobs:
         run: |
           TAG_NAME="${{ github.ref_name }}"
           echo $TAG_NAME
-          VERSION="$TAG_NAME" | tr -d v
+          VERSION="$(echo $TAG_NAME | tr -d v)"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "PACKAGE_NAME=${{ github.event.repository.name }}-$TAG_NAME.apk" >> $GITHUB_ENV
 
