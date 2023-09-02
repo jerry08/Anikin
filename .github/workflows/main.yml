@@ -81,7 +81,7 @@ jobs:
           TAG_NAME="${{ github.ref_name }}"
           TAG_NAME="$(echo $TAG_NAME | tr -d v)"
           echo $TAG_NAME
-          echo "PACKAGE_NAME=${{ github.event.repository.name }}-$TAG_NAME.apk" >> $GITHUB_ENV
+          echo "PACKAGE_NAME=${{ github.event.repository.name }}-v$TAG_NAME.apk" >> $GITHUB_ENV
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -97,7 +97,7 @@ jobs:
           echo "$TAG_MESSAGE" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Clean up build artifacts
+      - name: Clean up downloaded artifacts
         run: |
           set -e
 
@@ -129,7 +129,7 @@ jobs:
           TAG_NAME="${{ github.ref_name }}"
           TAG_NAME="$(echo $TAG_NAME | tr -d v)"
           echo "$TAG_NAME"
-          echo "PACKAGE_NAME=${{ github.event.repository.name }}-$TAG_NAME.zip" >> $GITHUB_ENV
+          echo "PACKAGE_NAME=${{ github.event.repository.name }}-v$TAG_NAME.apk" >> $GITHUB_ENV
 
       - name: Set variables 2
         run: |
