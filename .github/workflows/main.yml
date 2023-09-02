@@ -1,15 +1,8 @@
-name: CI Build
+name: main
 
 on:
   push:
-    branches: [ master ]
-    paths-ignore:
-      - '**/*.md'
-      - '**/*.gitignore'
-      - '**/*.gitattributes'
   pull_request:
-    branches: [ master ]
-  workflow_dispatch:
 
 env:
   DOTNET_NOLOGO: true                     # Disable the .NET logo
