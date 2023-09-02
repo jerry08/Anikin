@@ -97,12 +97,18 @@ jobs:
           echo "$TAG_MESSAGE" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
+      - name: Clean up build artifacts
+        run: |
+          set -e
+
+          mv AniStream/AniStream.apk ${{ env.PACKAGE_NAME }}
+
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           gh release create "${{ github.ref_name }}"
-          "AniStream.apk"
+          "${{ env.PACKAGE_NAME }}"
           --repo "${{ github.event.repository.full_name }}"
           --title "${{ github.ref_name }}"
           --notes "${{ env.TAG_MESSAGE2 }}"
