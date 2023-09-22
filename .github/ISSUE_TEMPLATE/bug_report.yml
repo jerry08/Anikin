@@ -1,0 +1,80 @@
+name: Bug Report
+description: Report broken or incorrect behaviour
+labels: [bug]
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking your time to fill out this form. For real-time support, consider asking in the `#support` channel on our Discord: https://discord.gg/mhxsSMy2Nf
+
+        - Avoid generic or vague titles such as "Something's not working" or "A couple of problems" — be as descriptive as possible.
+        - Keep your issue focused on one single problem. If you have multiple bug reports, please create a separate issue for each of them.
+        - Remember that **AniStream** is an open-source project funded by the community. If you find it useful, **please consider [donating](https://www.buymeacoffee.com/jerry08) to support its development**.
+
+        Please note that this form is for bug reports only!
+
+  - type: input
+    attributes:
+      label: Summary
+      description: A short summary of the bug report.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: >
+        Minimum steps required to reproduce the bug, including prerequisites or other relevant items.
+        The information provided in this field must be readily actionable, meaning that anyone should be able to reproduce the bug by following these steps.
+      placeholder: |
+        Steps:
+        - Step 1
+        - Step 2
+        - Step 3
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected Result
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Actual Result
+      description: What actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Device Information
+      description: |
+        Please provide some information of the device you are using.
+      placeholder: |
+        Platform: Android 13
+        AniStream Version: X.X.X
+    validations:
+      required: true
+
+  - type: checkboxes
+    attributes:
+      label: Checklist
+      description: Quick list of checks to ensure that everything is in order.
+      options:
+        - label: I have searched the existing issues and this is a new ticket, **NOT** a duplicate or related to another open or closed issue.
+          required: true
+        - label: I have written a short but informative title.
+          required: true
+        - label: I have made sure that that this bug is reproducible on the latest version of the application.
+          required: true
+        - label: I have provided all the information needed to reproduce this bug as efficiently as possible.
+          required: true
+
+  - type: textarea
+    attributes:
+      label: Additional Information
+      description: If there is anything else to say, please do so here.
