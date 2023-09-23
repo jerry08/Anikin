@@ -26,7 +26,7 @@ public class RecentlyWatchedActivity : AndroidX.AppCompat.App.AppCompatActivity
 
     private readonly BookmarkManager _bookmarkManager = new("recently_watched");
 
-    protected override async void OnCreate(Bundle savedInstanceState)
+    protected override async void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
         Platform.Init(this, savedInstanceState);

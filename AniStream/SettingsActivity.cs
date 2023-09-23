@@ -35,7 +35,7 @@ public class SettingsActivity : AppCompatActivity
     SwitchMaterial dontAskForUpdate = default!;
     Button button_login = default!;
 
-    protected override async void OnCreate(Bundle savedInstanceState)
+    protected override async void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
         Platform.Init(this, savedInstanceState);
@@ -61,7 +61,9 @@ public class SettingsActivity : AppCompatActivity
         button_check_for_updates = FindViewById<Button>(Resource.Id.button_check_for_updates)!;
         dontAskForUpdate = FindViewById<SwitchMaterial>(Resource.Id.dontAskForUpdate)!;
 
-        var packageInfo = PackageManager!.GetPackageInfo(PackageName!, 0)!;
+        var packageInfo = Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu
+            ? PackageManager!.GetPackageInfo(PackageName!, PackageManager.PackageInfoFlags.Of(0))!
+            : PackageManager!.GetPackageInfo(PackageName!, 0)!;
 
         var dontShow = false;
         var dontShowStr = await SecureStorage.GetAsync($"dont_ask_for_update_{packageInfo.VersionName}");

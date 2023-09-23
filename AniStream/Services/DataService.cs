@@ -23,7 +23,7 @@ public class DataService
     private readonly BookmarkManager _bookmarkManager = new("bookmarks");
     private readonly BookmarkManager _rwBookmarkManager = new("recently_watched");
 
-    private readonly TaskCompletionSource<string> _getDataTcs = new();
+    private readonly TaskCompletionSource<string?> _getDataTcs = new();
 
     public DataService(Activity activity)
     {
@@ -127,31 +127,38 @@ public class DataService
 
     class DataValueEventListener : Java.Lang.Object, IValueEventListener
     {
-        private readonly TaskCompletionSource<string> _getDataTcs;
+        private readonly TaskCompletionSource<string?> _getDataTcs;
 
-        public DataValueEventListener(TaskCompletionSource<string> getDataTcs)
+        public DataValueEventListener(TaskCompletionSource<string?> getDataTcs)
         {
             _getDataTcs = getDataTcs;
         }
 
         public void OnCancelled(DatabaseError error)
         {
-            _getDataTcs.TrySetResult("");
+            _getDataTcs.TrySetResult(null);
         }
 
         public void OnDataChange(DataSnapshot snapshot)
         {
-            var dict = ((JavaDictionary)snapshot.Value).ToDictionary();
-
-            var serializeOptions = new JsonSerializerOptions
+            try
             {
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                //Encoder = JavaScriptEncoder.Create(new TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All))
-            };
+                var dictionary = ((JavaDictionary?)snapshot.Value)?.ToDictionary();
 
-            var json = JsonSerializer.Serialize(dict, serializeOptions);
+                var serializeOptions = new JsonSerializerOptions
+                {
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                    //Encoder = JavaScriptEncoder.Create(new TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All))
+                };
 
-            _getDataTcs.TrySetResult(json);
+                var json = JsonSerializer.Serialize(dictionary, serializeOptions);
+
+                _getDataTcs.TrySetResult(json);
+            }
+            catch
+            {
+                _getDataTcs.TrySetResult(null);
+            }
         }
     }
 
