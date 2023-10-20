@@ -154,6 +154,13 @@ public class MainActivity : ActivityBase, ViewPager.IOnPageChangeListener
         //    //StartService(intent);
         //    this.StartForegroundService(intent);
         //}
+
+        try
+        {
+            await SecureStorage.SetAsync("RepositoryOwner", "jerry08");
+            await SecureStorage.SetAsync("RepositoryName", "Juro");
+        }
+        catch { }
     }
 
     public void CreateNotificationChannel()
