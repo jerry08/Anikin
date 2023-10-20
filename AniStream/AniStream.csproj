@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
     <UseMauiEssentials>true</UseMauiEssentials>
     <ApplicationId>com.oneb.anistream</ApplicationId>
-    <ApplicationVersion>36</ApplicationVersion>
-    <ApplicationDisplayVersion>1.9.91</ApplicationDisplayVersion>
+    <ApplicationVersion>37</ApplicationVersion>
+    <ApplicationDisplayVersion>1.9.92</ApplicationDisplayVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,7 +19,7 @@
     <PackageReference Include="JCogwheel" Version="1.0.1" />
     <PackageReference Include="Jerro.FFmpegKit.Min.Android" Version="1.0.0" />
     <PackageReference Include="Juro" Version="1.1.13" />
-    <PackageReference Include="Octokit" Version="7.1.0" />
+    <PackageReference Include="Octokit" Version="8.1.1" />
     <PackageReference Include="Square.Picasso" Version="2.71828.0" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.19.1" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer.OkHttp" Version="2.19.1" />
