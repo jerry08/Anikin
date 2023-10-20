@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using AndroidX.Fragment.App;
 using AniStream.Utils.Downloading;
@@ -16,7 +15,6 @@ public class AppUpdater
 
     private readonly string _repositoryOwner = "jerry08";
     private readonly string _repostoryName = "Anistream";
-    private Release LatestRelease = default!;
 
     public AppUpdater()
     {
@@ -36,8 +34,7 @@ public class AppUpdater
 
         try
         {
-            var releases = await _releaseClient.GetAll(_repositoryOwner, _repostoryName);
-            var latestRelease = releases.FirstOrDefault()!;
+            var latestRelease = await _releaseClient.GetLatest(_repositoryOwner, _repostoryName);
 
             var latestVersionName = new Version(latestRelease.Name);
             var currentVersionName = AppInfo.Current.Version;
@@ -52,7 +49,7 @@ public class AppUpdater
                 builder.SetTitle("Update available");
                 builder.SetPositiveButton("Download", (s, e) =>
                 {
-                    var asset = latestRelease.Assets.FirstOrDefault()!;
+                    var asset = latestRelease.Assets[0];
 
                     var downloader = new Downloader(activity);
                     downloader.Download(asset.Name, asset.BrowserDownloadUrl);
@@ -71,10 +68,5 @@ public class AppUpdater
         }
 
         return false;
-    }
-
-    public async Task<string> RenderReleaseNotes()
-    {
-        return LatestRelease is null ? throw new InvalidOperationException() : await _github.Markdown.RenderRawMarkdown(LatestRelease.Body);
     }
 }
