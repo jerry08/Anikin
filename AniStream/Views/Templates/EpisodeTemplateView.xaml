@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Border
+    x:Class="AniStream.Views.Templates.EpisodeTemplateView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:converters="clr-namespace:AniStream.Converters"
+    xmlns:local="clr-namespace:AniStream"
+    xmlns:models="clr-namespace:Juro.Core.Models.Anime;assembly=Juro.Core"
+    x:Name="this"
+    Margin="3"
+    Padding="0"
+    x:DataType="models:Episode"
+    BackgroundColor="Transparent"
+    HeightRequest="70"
+    MinimumWidthRequest="70">
+    <Border.Resources>
+        <ResourceDictionary>
+            <converters:WatchedEpisodeProgressConverter x:Key="WatchedEpisodeProgressConverter" />
+            <converters:IsWatchedEpisodeProgressVisibleConverter x:Key="IsWatchedEpisodeProgressVisibleConverter" />
+        </ResourceDictionary>
+    </Border.Resources>
+    <Grid BackgroundColor="Transparent">
+        <Grid.Behaviors>
+            <berry:TouchBehavior NativeAnimation="True" />
+            <berry:TouchBehavior
+                Command="{Binding Parent.BindingContext.ItemClickCommand, Source={x:Reference this}}"
+                CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
+                LongPressCommand="{Binding Parent.BindingContext.ShowSheetCommand, Source={x:Reference this}}"
+                LongPressCommandParameter="{Binding BindingContext, Source={x:Reference this}}" />
+        </Grid.Behaviors>
+        <Border
+            Grid.Column="0"
+            BackgroundColor="{StaticResource Gray900}"
+            HorizontalOptions="FillAndExpand"
+            Stroke="White"
+            StrokeThickness="0"
+            VerticalOptions="FillAndExpand">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="14" />
+            </Border.StrokeShape>
+
+            <Grid>
+                <!--  Display Progress  -->
+                <Grid IsVisible="{Binding Progress, Converter={StaticResource IsWatchedEpisodeProgressVisibleConverter}}">
+                    <Grid.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Offset="{Binding Progress, Converter={StaticResource WatchedEpisodeProgressConverter}}" Color="{StaticResource Gray600}" />
+                            <GradientStop Offset="0" Color="Transparent" />
+                        </LinearGradientBrush>
+                    </Grid.Background>
+                </Grid>
+
+                <Label
+                    Grid.Row="1"
+                    Padding="10"
+                    FontAttributes="Bold"
+                    FontFamily="SoraBold"
+                    FontSize="16"
+                    HorizontalTextAlignment="Center"
+                    Text="{Binding Number}"
+                    VerticalOptions="Center" />
+            </Grid>
+        </Border>
+    </Grid>
+</Border>

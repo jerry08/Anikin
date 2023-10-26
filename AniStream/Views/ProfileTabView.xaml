@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="AniStream.Views.ProfileTabView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:converters="clr-namespace:AniStream.Converters"
+    xmlns:local="clr-namespace:AniStream"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:models="clr-namespace:Jita.AniList.Models;assembly=Jita.AniList"
+    xmlns:viewModels="clr-namespace:AniStream.ViewModels"
+    x:Name="this"
+    x:DataType="viewModels:ProfileViewModel">
+    <Grid
+        Margin="10,60"
+        RowDefinitions="auto,*"
+        RowSpacing="5">
+        <Button Command="{Binding LoginWithAnilistCommand}" Text="Anilist" />
+        <!--  Webview causing other views when navigating to lose touch effect color  -->
+        <!--<WebView
+            x:Name="webView"
+            Grid.Row="1"
+            HorizontalOptions="FillAndExpand"
+            VerticalOptions="FillAndExpand" />-->
+    </Grid>
+</ContentView>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+  <style name="Maui.MainTheme" parent="Theme.Material3.DayNight">
+    <!--<item name="android:navigationBarColor">@android:color/transparent</item>
+    <item name="android:navigationBarColor">@color/colorPrimary</item>-->
+    <!--<item name="android:statusBarColor">@color/colorPrimaryDark</item>-->
+    <!--<item name="android:windowLightStatusBar">false</item>-->
+
+    <item name="android:navigationBarColor">
+      @android:color/transparent
+    </item>
+
+    <!-- Optional: set to transparent if your app is drawing behind the status bar. -->
+    <item name="android:statusBarColor">
+      @android:color/transparent
+    </item>
+
+    <!-- Optional: set for a light status bar with dark content. -->
+    <item name="android:windowLightStatusBar">
+      false
+    </item>
+
+    <item name="android:windowTranslucentStatus">true</item>
+    <item name="android:windowTranslucentNavigation">true</item>
+
+    <!--<item name="android:enforceStatusBarContrast" tools:targetApi="q">true</item>
+    <item name="android:enforceNavigationBarContrast" tools:targetApi="q">true</item>-->
+
+    <item name="elevationOverlayEnabled">false</item>
+    <item name="windowActionBar">false</item>
+    <item name="windowNoTitle">true</item>
+    <item name="android:windowContentTransitions">true</item>
+    <item name="android:windowBackground">@android:color/transparent</item>
+    <item name="android:ambientShadowAlpha">0.7</item>
+    <item name="android:spotShadowAlpha">0.7</item>
+    <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
+
+    <!--<item name="colorPrimary">#d74c4c</item>-->
+    <!--<item name="colorOnPrimary">#ffffff</item>-->
+    <!--<item name="backgroundTint">#cd5</item>-->
+
+    <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialogTheme</item>
+
+    <!-- To change the background of options menu-->
+    <!--<item name="android:itemBackground">@color/bottomSheetBg</item>-->
+
+    <!-- To change the popup menu and app text color  -->
+    <item name="android:textColor">@color/textColor</item>
+
+    <!--
+    <item name="android:colorBackground">#cd5</item>
+    <item name="colorOnBackground">@color/blue2</item>
+    <item name="colorSurface">@color/purple1</item>
+    <item name="colorOnSurface">@color/purple2</item>
+    <item name="colorSurfaceVariant">@color/purple3</item>
+    <item name="colorOnSurfaceVariant">@color/purple4</item>
+    <item name="colorSurfaceInverse">@color/purple5</item>
+    <item name="colorOnSurfaceInverse">@color/purple6</item>
+    -->
+
+    <item name="colorSurface">@color/colorSurface</item>
+
+    <item name="popupMenuStyle">@style/PopupMenu</item>
+
+    <item name="alertDialogTheme">@style/DialogStyle</item>
+
+    <item name="android:alertDialogTheme">@style/DialogStyle</item>
+    <item name="android:timePickerDialogTheme">@style/DialogStyle</item>
+    <item name="android:datePickerDialogTheme">@style/DialogStyle</item>
+  </style>
+
+  <style name="DialogStyle" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+    <!-- dialog_background is drawable shape with corner radius -->
+    <!--<item name="android:background">@drawable/dialog_background</item>-->
+
+    <!--<item name="backgroundTint">#bae</item>
+    <item name="rippleColor">#bae3</item>-->
+
+    <!--<item name="backgroundTint">@color/colorPrimaryDark</item>
+    <item name="rippleColor">@color/colorAccent</item>-->
+
+    <item name="android:windowBackground">@drawable/dialog_background</item>
+
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+  </style>
+
+  <style name="CustomBottomSheetDialogTheme" parent="@style/ThemeOverlay.Material3.BottomSheetDialog">
+    <item name="bottomSheetStyle">@style/Berry.BottomSheetDialog</item>
+
+    <item name="android:windowIsFloating">false</item>
+    <item name="android:navigationBarColor">@color/bottomSheetBg</item>
+    <item name="android:windowLightStatusBar">false</item>
+    <item name="android:windowLightNavigationBar">true</item>
+    <!--<item name="android:statusBarColor">@android:color/transparent</item>-->
+  </style>
+
+  <style name="Berry.BottomSheetDialog" parent="Widget.Material3.BottomSheet.Modal">
+    <item name="backgroundTint">@color/bottomSheetBg</item>
+    <item name="android:elevation">0dp</item>
+    <item name="elevation">0dp</item>
+  </style>
+
+  <style name="Berry.PopupMenu" parent="Widget.Material3.PopupMenu">
+    <item name="backgroundTint">@color/bottomSheetBg</item>
+    <item name="android:elevation">0dp</item>
+    <item name="elevation">0dp</item>
+  </style>
+
+  <style name="PopupMenu" parent="Widget.AppCompat.PopupMenu">
+    <!--<item name="android:popupBackground">@color/bottomSheetBg</item>-->
+    <item name="android:popupBackground">@drawable/popupMenuBackground</item>
+  </style>
+
+  <style name="VideoPlayerTheme" parent="Theme.Material3.Light.NoActionBar">
+    <item name="android:navigationBarColor">@color/colorPrimary</item>
+    <item name="colorControlHighlight">@color/colorAccent</item>
+  </style>
+</resources>

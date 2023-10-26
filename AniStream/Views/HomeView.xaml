@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="AniStream.Views.HomeView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:skl="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
+    xmlns:tabs="http://sharpnado.com"
+    xmlns:templates="clr-namespace:AniStream.Views.Templates"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:AniStream.ViewModels"
+    xmlns:views="clr-namespace:AniStream.Views"
+    x:Name="this"
+    x:DataType="viewModels:HomeViewModel">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+
+            <DataTemplate x:Key="AnimeInfoDataTemplate">
+                <views:AnimeItemView />
+            </DataTemplate>
+
+            <DataTemplate x:Key="HomeDataTemplate">
+                <templates:HomeTemplateView />
+            </DataTemplate>
+
+            <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
+            <views:MainDataTemplateSelector x:Key="HomeDataTemplateSelector" DataTemplate="{StaticResource HomeDataTemplate}" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+        <tabs:ViewSwitcher
+            x:Name="Switcher"
+            Margin="0"
+            Animate="True"
+            SelectedIndex="{Binding SelectedViewModelIndex, Mode=TwoWay}">
+            <tabs:DelayedView
+                x:TypeArguments="views:AnimeTabView"
+                AccentColor="{StaticResource Primary}"
+                Animate="True"
+                BindingContext="{Binding}"
+                UseActivityIndicator="True" />
+            <tabs:LazyView
+                x:TypeArguments="views:ProfileTabView"
+                AccentColor="{StaticResource Primary}"
+                Animate="True"
+                BindingContext="{Binding ProfileViewModel}"
+                UseActivityIndicator="True" />
+        </tabs:ViewSwitcher>
+
+        <berry:AcrylicView
+            x:Name="ViewContent"
+            Padding="0"
+            CornerRadius="30"
+            HeightRequest="60"
+            TintColor="{StaticResource Gray900}"
+            TintOpacity=".50"
+            VerticalOptions="End"
+            WidthRequest="225">
+            <!--<ui:AcrylicView.Background>
+                <LinearGradientBrush EndPoint="0,0.98">
+                    <GradientStop Offset="0.1" Color="Transparent" />
+                    <GradientStop Offset="1.0" Color="Black" />
+                </LinearGradientBrush>
+            </ui:AcrylicView.Background>-->
+
+            <tabs:TabHostView
+                x:Name="tabHostView"
+                Padding="15,0"
+                BackgroundColor="Transparent"
+                CornerRadius="30"
+                HeightRequest="60"
+                HorizontalOptions="Center"
+                IsSegmented="True"
+                Orientation="Horizontal"
+                SegmentedOutlineColor="Transparent"
+                SelectedIndex="{Binding SelectedViewModelIndex, Mode=TwoWay}"
+                TabType="Fixed"
+                WidthRequest="250">
+                <!--<tabs:TabHostView.Shadow>
+                    <Shadow
+                        Opacity="0.7"
+                        Radius="30"
+                        Offset="0,10" />
+                </tabs:TabHostView.Shadow>-->
+                <tabs:MaterialUnderlinedTabItem
+                    IconOptions="IconOnly"
+                    IconSize="30"
+                    SelectedTabColor="#9575ff"
+                    UnderlineHeight="0"
+                    UnselectedLabelColor="{StaticResource Gray400}">
+                    <tabs:MaterialUnderlinedTabItem.IconImageSource>
+                        <FontImageSource
+                            FontFamily="Material"
+                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Movie}"
+                            Color="{AppThemeBinding Light={StaticResource Gray400},
+                                                    Dark={StaticResource White}}" />
+                    </tabs:MaterialUnderlinedTabItem.IconImageSource>
+                </tabs:MaterialUnderlinedTabItem>
+                <tabs:MaterialUnderlinedTabItem
+                    IconOptions="IconOnly"
+                    IconSize="30"
+                    SelectedTabColor="#9575ff"
+                    UnderlineHeight="0"
+                    UnselectedLabelColor="{StaticResource Gray400}">
+                    <tabs:MaterialUnderlinedTabItem.IconImageSource>
+                        <FontImageSource
+                            FontFamily="Material"
+                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Person}"
+                            Color="{AppThemeBinding Light={StaticResource Gray400},
+                                                    Dark={StaticResource White}}" />
+                    </tabs:MaterialUnderlinedTabItem.IconImageSource>
+                </tabs:MaterialUnderlinedTabItem>
+                <tabs:MaterialUnderlinedTabItem
+                    IconOptions="IconOnly"
+                    IconSize="30"
+                    SelectedTabColor="#9575ff"
+                    UnderlineHeight="0"
+                    UnselectedLabelColor="{StaticResource Gray400}">
+                    <tabs:MaterialUnderlinedTabItem.IconImageSource>
+                        <FontImageSource
+                            FontFamily="Material"
+                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Book}"
+                            Color="{AppThemeBinding Light={StaticResource Gray400},
+                                                    Dark={StaticResource White}}" />
+                    </tabs:MaterialUnderlinedTabItem.IconImageSource>
+                </tabs:MaterialUnderlinedTabItem>
+            </tabs:TabHostView>
+        </berry:AcrylicView>
+    </Grid>
+</ContentPage>

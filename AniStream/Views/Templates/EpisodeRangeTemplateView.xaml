@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Border
+    x:Class="AniStream.Views.Templates.EpisodeRangeTemplateView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:AniStream"
+    xmlns:models="clr-namespace:AniStream.Models"
+    x:Name="this"
+    Margin="0"
+    Padding="5,0,0,0"
+    x:DataType="models:Range"
+    BackgroundColor="Transparent">
+    <Grid BackgroundColor="Transparent">
+        <Border
+            Grid.Column="0"
+            BackgroundColor="{StaticResource Gray800}"
+            HorizontalOptions="FillAndExpand"
+            Stroke="{StaticResource Gray700}"
+            StrokeThickness="0"
+            VerticalOptions="FillAndExpand">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="22" />
+            </Border.StrokeShape>
+            <Label
+                Grid.Row="1"
+                Padding="15,8"
+                FontAttributes="Bold"
+                FontFamily="SoraBold"
+                FontSize="15"
+                HorizontalTextAlignment="Center"
+                Text="{Binding Name}" />
+        </Border>
+    </Grid>
+</Border>

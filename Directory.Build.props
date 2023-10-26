@@ -1,0 +1,12 @@
+<Project>
+
+  <PropertyGroup>
+    <Company>Jerro</Company>
+    <Copyright>Copyright (C) Jerry Berry</Copyright>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <!--<WarningsAsErrors>nullable</WarningsAsErrors>-->
+    <NoWarn>RCS1102</NoWarn>
+  </PropertyGroup>
+
+</Project>

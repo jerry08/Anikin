@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="colorPrimary">#ffffff</color>
+  <color name="colorPrimaryDark">#ffffff</color>
+  <color name="colorAccent">#ffffff</color>
+  <color name="bottomSheetBg">#212121</color>
+  <color name="textColor">#fff</color>
+  <color name="colorSurface">@color/bottomSheetBg</color>
+
+  <color name="white">#FFF</color>
+  <color name="offwhite">#e8e8e8</color>
+  <color name="black">#000</color>
+
+  <color name="pink_200">#FF5DAE</color>
+  <color name="pink_500">#FF007F</color>
+  <color name="pink_500_25">#40FF007F</color>
+  <color name="pink_700">#C50053</color>
+  <color name="violet_400">#91A6FF</color>
+  <color name="violet_700">#3358FF</color>
+  <color name="violet_400_50">#8091A6FF</color>
+  <color name="bg_black">#000000</color>
+  <color name="bg_white">#EEEEEE</color>
+  <color name="bg">@color/bg_white</color>
+  <color name="bg_opp">@color/bg_black</color>
+  <color name="fg">#A8000000</color>
+  <color name="nav_bg">#fff</color>
+  <color name="nav_bg_inv">#00FFFFFF</color>
+  <color name="nav_tab">#40000000</color>
+  <color name="nav_tab_disabled">#19000000</color>
+  <color name="status">#54EEEEEE</color>
+  <color name="button_icon">#A9FFFFFF</color>
+  <color name="nav_status">#80FFFFFF</color>
+  <color name="fav">#E63956</color>
+  <color name="filler">#54FF8400</color>
+</resources>

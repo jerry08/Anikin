@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="colorPrimary">#512BD4</color>
+  <color name="colorPrimaryDark">#2B0B98</color>
+  <color name="colorAccent">#2B0B98</color>
+
+  <color name="white">#FFF</color>
+  <color name="offwhite">#e8e8e8</color>
+  <color name="black">#000</color>
+
+  <color name="colorActionMenuTextColor">#d74c4c</color>
+
+  <color name="maui_splash_color">@color/colorPrimary</color>
+
+  <color name="bottomSheetBg">#fff</color>
+  <color name="textColor">#000</color>
+  <color name="colorSurface">@color/bottomSheetBg</color>
+
+  <color name="blue1">#0048FF</color>
+  <color name="blue2">#487CFF</color>
+
+  <color name="purple1">#9500FF</color>
+  <color name="purple2">#AD3AFF</color>
+  <color name="purple3">#C169FF</color>
+  <color name="purple4">#D8A1FF</color>
+  <color name="purple5">#E6C2FF</color>
+  <color name="purple6">#F3E1FF</color>
+
+  <color name="pink_200">#FF5DAE</color>
+  <color name="pink_500">#FF007F</color>
+  <color name="pink_500_25">#40FF007F</color>
+  <color name="pink_700">#C50053</color>
+  <color name="violet_400">#91A6FF</color>
+  <color name="violet_700">#3358FF</color>
+  <color name="violet_400_50">#8091A6FF</color>
+  <color name="bg_black">#000000</color>
+  <color name="bg_white">#EEEEEE</color>
+  <color name="bg">@color/bg_white</color>
+  <color name="bg_opp">@color/bg_black</color>
+  <color name="fg">#A8000000</color>
+  <color name="nav_bg">#fff</color>
+  <color name="nav_bg_inv">#00FFFFFF</color>
+  <color name="nav_tab">#40000000</color>
+  <color name="nav_tab_disabled">#19000000</color>
+  <color name="status">#54EEEEEE</color>
+  <color name="button_icon">#A9FFFFFF</color>
+  <color name="nav_status">#80FFFFFF</color>
+  <color name="fav">#E63956</color>
+  <color name="filler">#54FF8400</color>
+
+  <!--Media Player Controls-->
+  <color name="media_player_controls">#ffffff</color>
+  <color name="buffer_loading">#CCFFFFFF</color>
+  <color name="media_player_controls_background">#80000000</color>
+</resources>

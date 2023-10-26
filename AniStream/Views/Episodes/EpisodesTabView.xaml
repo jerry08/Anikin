@@ -1,0 +1,275 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="AniStream.Views.EpisodesTabView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:components="clr-namespace:AniStream.ViewModels.Components"
+    xmlns:converters="clr-namespace:AniStream.Converters"
+    xmlns:local="clr-namespace:AniStream"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:models="clr-namespace:Juro.Core.Models.Anime;assembly=Juro.Core"
+    xmlns:tabs="http://sharpnado.com"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:AniStream.ViewModels"
+    xmlns:viewTemplates="clr-namespace:AniStream.Views.Templates"
+    xmlns:views="clr-namespace:AniStream.Views"
+    x:Name="this"
+    x:DataType="viewModels:EpisodeViewModel">
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <toolkit:IsListNotNullOrEmptyConverter x:Key="IsListNotNullOrEmptyConverter" />
+            <converters:RatingConverter x:Key="RatingConverter" />
+
+            <DataTemplate x:Key="AnimeInfoDataTemplate">
+                <views:AnimeItemView />
+            </DataTemplate>
+
+            <DataTemplate x:Key="GenreTemplate">
+                <viewTemplates:GenreTemplateView />
+            </DataTemplate>
+
+            <DataTemplate x:Key="EpisodeTemplate">
+                <viewTemplates:EpisodeTemplateView />
+            </DataTemplate>
+
+            <DataTemplate x:Key="SemiEpisodeTemplate">
+                <viewTemplates:SemiEpisodeTemplateView />
+            </DataTemplate>
+
+            <DataTemplate x:Key="EpisodeRangeTemplate">
+                <viewTemplates:EpisodeRangeTemplateView />
+            </DataTemplate>
+
+            <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
+            <views:MainDataTemplateSelector x:Key="GenreTemplateSelector" DataTemplate="{StaticResource GenreTemplate}" />
+            <views:MainDataTemplateSelector x:Key="EpisodeTemplateSelector" DataTemplate="{StaticResource EpisodeTemplate}" />
+            <views:MainDataTemplateSelector x:Key="SemiEpisodeTemplateSelector" DataTemplate="{StaticResource SemiEpisodeTemplate}" />
+            <views:MainDataTemplateSelector x:Key="EpisodeRangeTemplateSelector" DataTemplate="{StaticResource EpisodeRangeTemplate}" />
+        </ResourceDictionary>
+    </ContentView.Resources>
+
+    <VerticalStackLayout>
+        <Grid Margin="10,2" ColumnDefinitions="*,auto,auto,auto">
+            <Label
+                Margin="10,0"
+                FontAttributes="Bold"
+                FontSize="18"
+                HorizontalTextAlignment="Start"
+                Text="Episodes"
+                VerticalOptions="Center" />
+
+            <Button
+                Grid.Column="1"
+                Margin="0"
+                Padding="0"
+                BackgroundColor="Transparent"
+                Command="{Binding ChangeGridModeCommand}"
+                CommandParameter="{x:Static components:GridLayoutMode.Full}">
+                <Button.ImageSource>
+                    <FontImageSource
+                        FontFamily="Material"
+                        Glyph="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
+                        Size="25"
+                        Color="{AppThemeBinding Light={StaticResource Black},
+                                                Dark={StaticResource Gray600}}" />
+                </Button.ImageSource>
+                <Button.Triggers>
+                    <DataTrigger
+                        Binding="{Binding GridLayoutMode}"
+                        TargetType="Button"
+                        Value="{x:Static components:GridLayoutMode.Full}">
+                        <Setter Property="ImageSource">
+                            <Setter.Value>
+                                <FontImageSource
+                                    FontFamily="Material"
+                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
+                                    Size="25" />
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+
+            <Button
+                Grid.Column="2"
+                Margin="0"
+                Padding="0"
+                BackgroundColor="Transparent"
+                Command="{Binding ChangeGridModeCommand}"
+                CommandParameter="{x:Static components:GridLayoutMode.Semi}">
+                <Button.ImageSource>
+                    <FontImageSource
+                        FontFamily="Material"
+                        Glyph="{x:Static materialDesign:MaterialDesignIcons.GridView}"
+                        Size="25"
+                        Color="{AppThemeBinding Light={StaticResource Black},
+                                                Dark={StaticResource Gray600}}" />
+                </Button.ImageSource>
+                <Button.Triggers>
+                    <DataTrigger
+                        Binding="{Binding GridLayoutMode}"
+                        TargetType="Button"
+                        Value="{x:Static components:GridLayoutMode.Semi}">
+                        <Setter Property="ImageSource">
+                            <Setter.Value>
+                                <FontImageSource
+                                    FontFamily="Material"
+                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.GridView}"
+                                    Size="25" />
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+
+            <Button
+                Grid.Column="3"
+                Margin="0"
+                Padding="0"
+                BackgroundColor="Transparent"
+                Command="{Binding ChangeGridModeCommand}"
+                CommandParameter="{x:Static components:GridLayoutMode.Compact}">
+                <Button.ImageSource>
+                    <FontImageSource
+                        FontFamily="Material"
+                        Glyph="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
+                        Size="25"
+                        Color="{AppThemeBinding Light={StaticResource Black},
+                                                Dark={StaticResource Gray600}}" />
+                </Button.ImageSource>
+                <Button.Triggers>
+                    <DataTrigger
+                        Binding="{Binding GridLayoutMode}"
+                        TargetType="Button"
+                        Value="{x:Static components:GridLayoutMode.Compact}">
+                        <Setter Property="ImageSource">
+                            <Setter.Value>
+                                <FontImageSource
+                                    FontFamily="Material"
+                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
+                                    Size="25" />
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+        </Grid>
+
+        <!--<FlexLayout
+            BindableLayout.ItemTemplateSelector="{StaticResource EpisodeTemplateSelector}"
+            BindableLayout.ItemsSource="{Binding Entities}"
+            HorizontalOptions="Center"
+            JustifyContent="Start"
+            Wrap="Wrap" />-->
+
+        <Grid ColumnDefinitions="*,auto">
+            <Label
+                Grid.Column="0"
+                FontAttributes="Bold"
+                FontSize="12"
+                Text="{Binding SearchingText}" />
+
+            <Grid Grid.Column="1">
+                <Grid.Behaviors>
+                    <berry:TouchBehavior Command="{Binding BindingContext.ShowProviderSearchCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                </Grid.Behaviors>
+                <Label
+                    FontAttributes="Bold"
+                    FontSize="12"
+                    Text="Wrong Title?" />
+            </Grid>
+        </Grid>
+
+        <CollectionView
+            HorizontalOptions="Center"
+            IsVisible="{Binding Ranges, Converter={StaticResource IsListNotNullOrEmptyConverter}}"
+            ItemTemplate="{StaticResource EpisodeRangeTemplateSelector}"
+            ItemsSource="{Binding Ranges}"
+            RemainingItemsThreshold="1">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout ItemSpacing="0" Orientation="Horizontal" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.EmptyView>
+                <Grid
+                    HorizontalOptions="FillAndExpand"
+                    IsVisible="False"
+                    VerticalOptions="FillAndExpand">
+                    <Grid.Triggers>
+                        <DataTrigger
+                            Binding="{Binding IsBusy}"
+                            TargetType="Grid"
+                            Value="False">
+                            <Setter Property="IsVisible" Value="True" />
+                        </DataTrigger>
+                    </Grid.Triggers>
+                    <Label
+                        FontSize="16"
+                        HorizontalOptions="Center"
+                        Text="Empty"
+                        VerticalOptions="Center" />
+                </Grid>
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <!--<CollectionView
+            x:Name="EpCollectionView"
+            Margin="20,10"
+            HorizontalOptions="Center"
+            IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+            ItemTemplate="{StaticResource EpisodeTemplateSelector}"
+            ItemsSource="{Binding Entities}"
+            RemainingItemsThreshold="1">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout
+                    HorizontalItemSpacing="5"
+                    Orientation="Vertical"
+                    Span="3"
+                    VerticalItemSpacing="5" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.EmptyView>
+                <Grid
+                    HorizontalOptions="FillAndExpand"
+                    IsVisible="False"
+                    VerticalOptions="FillAndExpand">
+                    <Grid.Triggers>
+                        <DataTrigger
+                            Binding="{Binding IsBusy}"
+                            TargetType="Grid"
+                            Value="False">
+                            <Setter Property="IsVisible" Value="True" />
+                        </DataTrigger>
+                    </Grid.Triggers>
+                    <Label
+                        FontSize="16"
+                        HorizontalOptions="Center"
+                        Text="Empty"
+                        VerticalOptions="Center" />
+                </Grid>
+            </CollectionView.EmptyView>
+        </CollectionView>-->
+
+        <FlexLayout
+            Margin="0,10"
+            BindableLayout.ItemsSource="{Binding Entities}"
+            HorizontalOptions="Center"
+            JustifyContent="Center"
+            Wrap="Wrap">
+            <FlexLayout.Triggers>
+                <DataTrigger
+                    Binding="{Binding GridLayoutMode}"
+                    TargetType="FlexLayout"
+                    Value="{x:Static components:GridLayoutMode.Semi}">
+                    <Setter Property="BindableLayout.ItemTemplateSelector" Value="{StaticResource SemiEpisodeTemplateSelector}" />
+                </DataTrigger>
+                <DataTrigger
+                    Binding="{Binding GridLayoutMode}"
+                    TargetType="FlexLayout"
+                    Value="{x:Static components:GridLayoutMode.Compact}">
+                    <Setter Property="BindableLayout.ItemTemplateSelector" Value="{StaticResource EpisodeTemplateSelector}" />
+                </DataTrigger>
+            </FlexLayout.Triggers>
+        </FlexLayout>
+    </VerticalStackLayout>
+</ContentView>

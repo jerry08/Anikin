@@ -1,10 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
 using AniStream.Models;
-using Firebase.Auth;
-using Firebase.Database;
-using JCogwheel;
+using Cogwheel;
 using Microsoft.Maui.Storage;
 
 namespace AniStream.Services;
@@ -60,22 +57,22 @@ public class PlayerSettings : SettingsBase
 
     private async void SaveToCloudAsync()
     {
-        // Check if user is signed in (non-null)
-        var currentUser = FirebaseAuth.Instance.CurrentUser;
-        if (currentUser is null)
-            return;
-
-        var database = FirebaseDatabase.GetInstance("https://anistream-e4d6d-default-rtdb.firebaseio.com/");
-        var userRef = database.Reference.Child($"users/{FirebaseAuth.Instance.CurrentUser.Uid}");
-
-        //userRef.AddListenerForSingleValueEvent(new DeleteValueEventListener());
-
-        //await userRef.Child("bookmarks").SetValueAsync("test1");
-        //await userRef.Child("bookmarks").Push().SetValueAsync("test1");
-
-        var data = JsonSerializer.Serialize(this);
-
-        await userRef.Child("playerSettings").SetValueAsync(data);
+        //// Check if user is signed in (non-null)
+        //var currentUser = FirebaseAuth.Instance.CurrentUser;
+        //if (currentUser is null)
+        //    return;
+        //
+        //var database = FirebaseDatabase.GetInstance("https://anistream-e4d6d-default-rtdb.firebaseio.com/");
+        //var userRef = database.Reference.Child($"users/{FirebaseAuth.Instance.CurrentUser.Uid}");
+        //
+        ////userRef.AddListenerForSingleValueEvent(new DeleteValueEventListener());
+        //
+        ////await userRef.Child("bookmarks").SetValueAsync("test1");
+        ////await userRef.Child("bookmarks").Push().SetValueAsync("test1");
+        //
+        //var data = JsonSerializer.Serialize(this);
+        //
+        //await userRef.Child("playerSettings").SetValueAsync(data);
     }
 }
 

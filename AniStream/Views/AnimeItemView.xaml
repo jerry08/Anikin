@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Border
+    x:Class="AniStream.Views.AnimeItemView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:converters="clr-namespace:AniStream.Converters"
+    xmlns:local="clr-namespace:AniStream"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:models="clr-namespace:Jita.AniList.Models;assembly=Jita.AniList"
+    x:Name="this"
+    Margin="0"
+    Padding="0"
+    x:DataType="models:Media"
+    BackgroundColor="Transparent">
+    <Border.Resources>
+        <ResourceDictionary>
+            <converters:RatingConverter x:Key="RatingConverter" />
+        </ResourceDictionary>
+    </Border.Resources>
+    <Grid
+        Margin="10"
+        BackgroundColor="Transparent"
+        RowDefinitions="auto,*"
+        RowSpacing="5"
+        WidthRequest="120">
+        <!--<ActivityIndicator
+            Grid.Column="0"
+            HeightRequest="40"
+            HorizontalOptions="CenterAndExpand"
+            IsRunning="True"
+            VerticalOptions="CenterAndExpand"
+            WidthRequest="40"
+            ZIndex="-1"
+            Color="{StaticResource Gray400}" />-->
+        <Border
+            Grid.Column="0"
+            HeightRequest="160"
+            HorizontalOptions="FillAndExpand"
+            StrokeThickness="0"
+            VerticalOptions="FillAndExpand"
+            WidthRequest="120">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="14" />
+            </Border.StrokeShape>
+            <Grid>
+                <Image
+                    Aspect="AspectFill"
+                    BackgroundColor="{StaticResource Gray800}"
+                    Source="{Binding Cover.ExtraLargeImageUrl}">
+                    <!--<Image.Behaviors>
+                        <beh2:TouchBehavior TouchAction="OnTouchBehaviorActive" />
+                    </Image.Behaviors>-->
+                    <Image.Behaviors>
+                        <!--<berry:TouchBehavior
+                            Command="{Binding Parent.BindingContext.ItemSelectedCommand, Source={x:Reference this}}"
+                            CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
+                            NativeAnimation="True"
+                            NativeAnimationColor="Green"
+                            PressedBackgroundColor="Red" />-->
+                        <berry:TouchBehavior
+                            Command="{Binding Parent.BindingContext.ItemSelectedCommand, Source={x:Reference this}}"
+                            CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
+                            NativeAnimation="True" />
+                    </Image.Behaviors>
+                </Image>
+                <!--<Border
+                    BackgroundColor="#CE512BD4"
+                    HorizontalOptions="End"
+                    StrokeThickness="0"
+                    TranslationY="10"
+                    VerticalOptions="End">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="20,0,20,20" />
+                    </Border.StrokeShape>
+                    <HorizontalStackLayout Margin="10,5,5,0" Padding="0,0,0,15">
+                        <Label Text="{Binding MeanScore, Converter={StaticResource RatingConverter}}" />
+                        <Image>
+                            <Image.Source>
+                                <FontImageSource
+                                    FontFamily="Material"
+                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
+                                    Size="15"
+                                    Color="Gold" />
+                            </Image.Source>
+                        </Image>
+                    </HorizontalStackLayout>
+                </Border>-->
+                <Border
+                    HorizontalOptions="End"
+                    StrokeThickness="0"
+                    TranslationY="10"
+                    VerticalOptions="End">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Offset="0.4" Color="#AE000000" />
+                            <GradientStop Offset="1" Color="#31000000" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="20,0,20,20" />
+                    </Border.StrokeShape>
+                    <HorizontalStackLayout Margin="10,5,5,0" Padding="0,0,0,15">
+                        <Label FontAttributes="Bold" Text="{Binding MeanScore, Converter={StaticResource RatingConverter}}" />
+                        <Image>
+                            <Image.Source>
+                                <FontImageSource
+                                    FontFamily="Material"
+                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
+                                    Size="17"
+                                    Color="Gold" />
+                            </Image.Source>
+                        </Image>
+                    </HorizontalStackLayout>
+                </Border>
+            </Grid>
+        </Border>
+        <Label
+            Grid.Row="1"
+            FontAttributes="Bold"
+            FontSize="12"
+            HeightRequest="30"
+            HorizontalTextAlignment="Center"
+            LineBreakMode="TailTruncation"
+            MaxLines="2"
+            Text="{Binding Title.PreferredTitle}"
+            TextColor="#E9FFFFFF" />
+    </Grid>
+</Border>

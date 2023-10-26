@@ -1,0 +1,515 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="AniStream.Views.AnimeTabView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:skl="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
+    xmlns:tabs="http://sharpnado.com"
+    xmlns:templates="clr-namespace:AniStream.Views.Templates"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:AniStream.ViewModels"
+    xmlns:views="clr-namespace:AniStream.Views"
+    x:Name="this"
+    x:DataType="viewModels:HomeViewModel">
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+
+            <DataTemplate x:Key="AnimeInfoDataTemplate">
+                <views:AnimeItemView />
+            </DataTemplate>
+
+            <DataTemplate x:Key="HomeDataTemplate">
+                <templates:HomeTemplateView />
+            </DataTemplate>
+
+            <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
+            <views:MainDataTemplateSelector x:Key="HomeDataTemplateSelector" DataTemplate="{StaticResource HomeDataTemplate}" />
+        </ResourceDictionary>
+    </ContentView.Resources>
+
+    <RefreshView
+        Margin="0,0,0,0"
+        Command="{Binding RefreshCommand}"
+        IsRefreshing="{Binding IsRefreshing}"
+        ZIndex="-1">
+        <ScrollView>
+            <Grid x:Name="MainGrid" RowDefinitions="auto,*">
+                <!--<skl:SKLottieView
+                    Grid.Column="1"
+                    BackgroundColor="Transparent"
+                    HeightRequest="20"
+                    HorizontalOptions="Start"
+                    IsVisible="true"
+                    RepeatCount="-1"
+                    Source="typing.json"
+                    VerticalOptions="Center"
+                    WidthRequest="70" />-->
+
+                <!--<Image
+                    x:Name="img1"
+                    Grid.Row="0"
+                    Aspect="AspectFill"
+                    HeightRequest="270"
+                    HorizontalOptions="FillAndExpand"
+                    IsAnimationPlaying="False"
+                    IsVisible="True"
+                    Source="https://media.tenor.com/l47dR9-6BGIAAAAd/demon-slayer-kimetsu-no-yaiba.gif"
+                    VerticalOptions="Start" />-->
+
+                <CarouselView
+                    x:Name="test3"
+                    IsBounceEnabled="true"
+                    IsSwipeEnabled="true"
+                    ItemTemplate="{StaticResource HomeDataTemplate}"
+                    ItemsUpdatingScrollMode="KeepItemsInView"
+                    PeekAreaInsets="0">
+                    <CarouselView.ItemsLayout>
+                        <LinearItemsLayout
+                            ItemSpacing="0"
+                            Orientation="Horizontal"
+                            SnapPointsAlignment="Start"
+                            SnapPointsType="MandatorySingle" />
+                    </CarouselView.ItemsLayout>
+                </CarouselView>
+
+                <Grid
+                    Grid.Row="0"
+                    HeightRequest="270"
+                    HorizontalOptions="FillAndExpand">
+                    <Grid.Background>
+                        <!--  StartPoint defaults to (0,0)  -->
+                        <LinearGradientBrush EndPoint="0,0.98">
+                            <GradientStop Offset="0.1" Color="Transparent" />
+                            <GradientStop Offset="1.0" Color="Black" />
+                        </LinearGradientBrush>
+                    </Grid.Background>
+                </Grid>
+
+                <!--  Command="{Binding GithubCommand}"  -->
+                <ImageButton
+                    Grid.Row="0"
+                    Margin="20,50,0,0"
+                    HeightRequest="35"
+                    HorizontalOptions="Start"
+                    Source="logo.svg"
+                    VerticalOptions="Start"
+                    WidthRequest="35">
+                    <ImageButton.Behaviors>
+                        <toolkit:IconTintColorBehavior TintColor="#D9FFFFFF" />
+                    </ImageButton.Behaviors>
+                </ImageButton>
+
+                <ImageButton
+                    Grid.Row="0"
+                    Margin="0,50,20,0"
+                    Command="{Binding GoToSearchCommand}"
+                    HeightRequest="35"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    WidthRequest="35">
+                    <ImageButton.Source>
+                        <FontImageSource
+                            FontFamily="Material"
+                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Search}"
+                            Size="Medium"
+                            Color="{AppThemeBinding Light={StaticResource Gray400},
+                                                    Dark={StaticResource White}}" />
+                    </ImageButton.Source>
+                </ImageButton>
+
+                <!--<Label
+                    Grid.Row="0"
+                    FontFamily="BloodCrow"
+                    VerticalOptions="EndAndExpand"
+                    FontSize="30"
+                    Margin="20,20"
+                    Text="Demon&#10;Slayer" />-->
+
+                <Label
+                    Grid.Row="0"
+                    Margin="20,20"
+                    FontFamily="BloodCrow"
+                    FontSize="30"
+                    HorizontalOptions="Start"
+                    HorizontalTextAlignment="Center"
+                    Text="Demon"
+                    VerticalOptions="EndAndExpand"
+                    WidthRequest="120" />
+                <Label
+                    Grid.Row="0"
+                    Margin="20,0"
+                    FontFamily="BloodCrow"
+                    FontSize="30"
+                    HorizontalOptions="Start"
+                    HorizontalTextAlignment="Center"
+                    Text="Slayer"
+                    VerticalOptions="EndAndExpand"
+                    WidthRequest="120" />
+
+                <VerticalStackLayout Grid.Row="1">
+                    <Grid
+                        Grid.Row="0"
+                        Margin="10,15,10,0"
+                        ColumnDefinitions="auto,*">
+                        <Label Grid.Column="0">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span
+                                        FontAttributes="Bold"
+                                        FontSize="Body"
+                                        Text="Top "
+                                        TextColor="#D9FFFFFF" />
+                                    <Span
+                                        FontSize="Body"
+                                        Text="Airing "
+                                        TextColor="#D9FFFFFF" />
+                                    <Span
+                                        FontSize="Body"
+                                        Text="Anime"
+                                        TextColor="#D9FFFFFF" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                        <Label
+                            Grid.Column="1"
+                            FontAttributes="Bold"
+                            FontSize="11"
+                            HorizontalOptions="End"
+                            Text="See all &gt;"
+                            TextColor="#D9FFFFFF" />
+                    </Grid>
+
+                    <CollectionView
+                        x:Name="AlbumCollectionView"
+                        HorizontalOptions="Center"
+                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                        ItemTemplate="{StaticResource MainDataTemplateSelector}"
+                        ItemsSource="{Binding PopularAnimes}"
+                        RemainingItemsThreshold="1">
+                        <CollectionView.ItemsLayout>
+                            <!--<GridItemsLayout
+                                x:Name="AlbumViewLayout"
+                                HorizontalItemSpacing="4"
+                                Orientation="Vertical"
+                                Span="5"
+                                VerticalItemSpacing="4" />-->
+
+                            <!--<GridItemsLayout
+                                x:Name="AlbumViewLayout"
+                                HorizontalItemSpacing="4"
+                                Orientation="Horizontal"
+                                Span="5"
+                                VerticalItemSpacing="4" />-->
+
+                            <LinearItemsLayout Orientation="Horizontal" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.EmptyView>
+                            <Grid
+                                HorizontalOptions="FillAndExpand"
+                                IsVisible="False"
+                                VerticalOptions="FillAndExpand">
+                                <Grid.Triggers>
+                                    <DataTrigger
+                                        Binding="{Binding IsBusy}"
+                                        TargetType="Grid"
+                                        Value="False">
+                                        <Setter Property="IsVisible" Value="True" />
+                                    </DataTrigger>
+                                </Grid.Triggers>
+                                <Label
+                                    FontSize="16"
+                                    HorizontalOptions="Center"
+                                    Text="Empty"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+
+                    <!--<StackLayout x:Name="test2">
+                        <views:HomeViewTextCol x:Name="test1" />
+                    </StackLayout>-->
+
+                    <Grid
+                        Grid.Row="0"
+                        Margin="10,5,10,0"
+                        ColumnDefinitions="auto,*">
+                        <Label Grid.Column="0">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span
+                                        FontAttributes="Bold"
+                                        FontSize="Body"
+                                        Text="Recently "
+                                        TextColor="#D9FFFFFF" />
+                                    <Span
+                                        FontSize="Body"
+                                        Text="Updated "
+                                        TextColor="#D9FFFFFF" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                        <Label
+                            Grid.Column="1"
+                            FontAttributes="Bold"
+                            FontSize="11"
+                            HorizontalOptions="End"
+                            Text="See all &gt;"
+                            TextColor="#D9FFFFFF" />
+                    </Grid>
+
+                    <CollectionView
+                        HorizontalOptions="Center"
+                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                        ItemTemplate="{StaticResource MainDataTemplateSelector}"
+                        ItemsSource="{Binding LastUpdatedAnimes}"
+                        RemainingItemsThreshold="1">
+                        <CollectionView.ItemsLayout>
+                            <!--
+                                Issue where GridItemsLayout was snapping when scrolling slowish sometimes.
+                                Maybe it was one of the Snap variables?
+                            -->
+                            <!--<GridItemsLayout
+                                HorizontalItemSpacing="4"
+                                Orientation="Horizontal"
+                                Span="1"
+                                VerticalItemSpacing="4" />-->
+                            <LinearItemsLayout Orientation="Horizontal" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.EmptyView>
+                            <Grid
+                                HorizontalOptions="FillAndExpand"
+                                IsVisible="False"
+                                VerticalOptions="FillAndExpand">
+                                <Grid.Triggers>
+                                    <DataTrigger
+                                        Binding="{Binding IsBusy}"
+                                        TargetType="Grid"
+                                        Value="False">
+                                        <Setter Property="IsVisible" Value="True" />
+                                    </DataTrigger>
+                                </Grid.Triggers>
+                                <Label
+                                    FontSize="16"
+                                    HorizontalOptions="Center"
+                                    Text="Empty"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+
+                    <Grid
+                        Grid.Row="0"
+                        Margin="10,5,10,0"
+                        ColumnDefinitions="auto,*">
+                        <Label Grid.Column="0">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span
+                                        FontAttributes="Bold"
+                                        FontSize="Body"
+                                        Text="New "
+                                        TextColor="#D9FFFFFF" />
+                                    <Span
+                                        FontSize="Body"
+                                        Text="Season"
+                                        TextColor="#D9FFFFFF" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                        <Label
+                            Grid.Column="1"
+                            FontAttributes="Bold"
+                            FontSize="11"
+                            HorizontalOptions="End"
+                            Text="See all &gt;"
+                            TextColor="#D9FFFFFF" />
+                    </Grid>
+
+                    <CollectionView
+                        HorizontalOptions="Center"
+                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                        ItemTemplate="{StaticResource MainDataTemplateSelector}"
+                        ItemsSource="{Binding CurrentSeasonAnimes}"
+                        RemainingItemsThreshold="1">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.EmptyView>
+                            <Grid
+                                HorizontalOptions="FillAndExpand"
+                                IsVisible="False"
+                                VerticalOptions="FillAndExpand">
+                                <Grid.Triggers>
+                                    <DataTrigger
+                                        Binding="{Binding IsBusy}"
+                                        TargetType="Grid"
+                                        Value="False">
+                                        <Setter Property="IsVisible" Value="True" />
+                                    </DataTrigger>
+                                </Grid.Triggers>
+                                <Label
+                                    FontSize="16"
+                                    HorizontalOptions="Center"
+                                    Text="Empty"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+
+                    <Grid
+                        Grid.Row="0"
+                        Margin="10,5,10,0"
+                        ColumnDefinitions="auto,*">
+                        <Label
+                            Grid.Column="0"
+                            FontAttributes="Bold"
+                            FontSize="Body"
+                            Text="Dumpster fire"
+                            TextColor="#D9FFFFFF" />
+                        <Label
+                            Grid.Column="1"
+                            FontAttributes="Bold"
+                            FontSize="11"
+                            HorizontalOptions="End"
+                            Text="See all &gt;"
+                            TextColor="#D9FFFFFF" />
+                    </Grid>
+
+                    <CollectionView
+                        HorizontalOptions="Center"
+                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                        ItemTemplate="{StaticResource MainDataTemplateSelector}"
+                        ItemsSource="{Binding TrashMedia}"
+                        RemainingItemsThreshold="1">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.EmptyView>
+                            <Grid
+                                HorizontalOptions="FillAndExpand"
+                                IsVisible="False"
+                                VerticalOptions="FillAndExpand">
+                                <Grid.Triggers>
+                                    <DataTrigger
+                                        Binding="{Binding IsBusy}"
+                                        TargetType="Grid"
+                                        Value="False">
+                                        <Setter Property="IsVisible" Value="True" />
+                                    </DataTrigger>
+                                </Grid.Triggers>
+                                <Label
+                                    FontSize="16"
+                                    HorizontalOptions="Center"
+                                    Text="Empty"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+
+                    <Grid
+                        Grid.Row="0"
+                        Margin="10,5,10,0"
+                        ColumnDefinitions="auto,*">
+                        <Label
+                            Grid.Column="0"
+                            FontAttributes="Bold"
+                            FontSize="Body"
+                            Text="Best for feminine audiences"
+                            TextColor="#D9FFFFFF" />
+                        <Label
+                            Grid.Column="1"
+                            FontAttributes="Bold"
+                            FontSize="11"
+                            HorizontalOptions="End"
+                            Text="See all &gt;"
+                            TextColor="#D9FFFFFF" />
+                    </Grid>
+
+                    <CollectionView
+                        HorizontalOptions="Center"
+                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                        ItemTemplate="{StaticResource MainDataTemplateSelector}"
+                        ItemsSource="{Binding FeminineMedia}"
+                        RemainingItemsThreshold="1">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.EmptyView>
+                            <Grid
+                                HorizontalOptions="FillAndExpand"
+                                IsVisible="False"
+                                VerticalOptions="FillAndExpand">
+                                <Grid.Triggers>
+                                    <DataTrigger
+                                        Binding="{Binding IsBusy}"
+                                        TargetType="Grid"
+                                        Value="False">
+                                        <Setter Property="IsVisible" Value="True" />
+                                    </DataTrigger>
+                                </Grid.Triggers>
+                                <Label
+                                    FontSize="16"
+                                    HorizontalOptions="Center"
+                                    Text="Empty"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+
+                    <Grid
+                        Grid.Row="0"
+                        Margin="10,5,10,0"
+                        ColumnDefinitions="auto,*">
+                        <Label
+                            Grid.Column="0"
+                            FontAttributes="Bold"
+                            FontSize="Body"
+                            Text="Best for male audiences"
+                            TextColor="#D9FFFFFF" />
+                        <Label
+                            Grid.Column="1"
+                            FontAttributes="Bold"
+                            FontSize="11"
+                            HorizontalOptions="End"
+                            Text="See all &gt;"
+                            TextColor="#D9FFFFFF" />
+                    </Grid>
+
+                    <CollectionView
+                        HorizontalOptions="Center"
+                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                        ItemTemplate="{StaticResource MainDataTemplateSelector}"
+                        ItemsSource="{Binding MaleMedia}"
+                        RemainingItemsThreshold="1">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.EmptyView>
+                            <Grid
+                                HorizontalOptions="FillAndExpand"
+                                IsVisible="False"
+                                VerticalOptions="FillAndExpand">
+                                <Grid.Triggers>
+                                    <DataTrigger
+                                        Binding="{Binding IsBusy}"
+                                        TargetType="Grid"
+                                        Value="False">
+                                        <Setter Property="IsVisible" Value="True" />
+                                    </DataTrigger>
+                                </Grid.Triggers>
+                                <Label
+                                    FontSize="16"
+                                    HorizontalOptions="Center"
+                                    Text="Empty"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Grid>
+        </ScrollView>
+    </RefreshView>
+</ContentView>

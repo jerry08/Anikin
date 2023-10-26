@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="AniStream.Views.OverviewTabView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:converters="clr-namespace:AniStream.Converters"
+    xmlns:local="clr-namespace:AniStream"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:models="clr-namespace:Juro.Core.Models.Anime;assembly=Juro.Core"
+    xmlns:tabs="http://sharpnado.com"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:AniStream.ViewModels"
+    xmlns:viewTemplates="clr-namespace:AniStream.Views.Templates"
+    xmlns:views="clr-namespace:AniStream.Views"
+    x:Name="this"
+    x:DataType="viewModels:EpisodeViewModel">
+    <VerticalStackLayout Spacing="4">
+        <Label
+            Margin="10,5"
+            HorizontalTextAlignment="Start"
+            FontSize="20"
+            Opacity="0.8"
+            FontAttributes="Bold"
+            Text="Description"
+            VerticalOptions="Start" />
+
+        <Label
+            Margin="10,5"
+            HorizontalTextAlignment="Start"
+            Text="{Binding Entity.Description}"
+            VerticalOptions="Start" />
+    </VerticalStackLayout>
+</ContentView>

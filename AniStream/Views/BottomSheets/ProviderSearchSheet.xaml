@@ -1,0 +1,196 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<local:BaseBottomSheetView
+    x:Class="AniStream.Views.BottomSheets.ProviderSearchSheet"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:local="clr-namespace:AniStream.Views.BottomSheets"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:the49="https://schemas.the49.com/dotnet/2023/maui"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:AniStream.ViewModels"
+    xmlns:views="clr-namespace:AniStream.Views"
+    xmlns:vmodels="clr-namespace:Juro.Core.Models.Videos;assembly=Juro.Core"
+    x:Name="this"
+    Margin="0"
+    x:DataType="viewModels:ProviderSearchViewModel"
+    BackgroundColor="{StaticResource Gray900}"
+    HasBackdrop="True"
+    HasHandle="True">
+    <the49:BottomSheet.Detents>
+        <the49:DetentsCollection>
+            <the49:RatioDetent Ratio="0.40" />
+            <!--<the49:RatioDetent Ratio="0.85" />-->
+            <!--<the49:RatioDetent Ratio="1" />-->
+            <!--<the49:ContentDetent />-->
+            <the49:FullscreenDetent />
+        </the49:DetentsCollection>
+    </the49:BottomSheet.Detents>
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <toolkit:IsListNullOrEmptyConverter x:Key="IsListNullOrEmptyConverter" />
+            <toolkit:IsListNotNullOrEmptyConverter x:Key="IsListNotNullOrEmptyConverter" />
+
+            <DataTemplate x:Key="AnimeInfoDataTemplate">
+                <views:ProviderAnimeItemView />
+            </DataTemplate>
+
+            <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
+        </ResourceDictionary>
+    </ContentView.Resources>
+
+    <Grid x:Name="MainGrid" RowDefinitions="auto,auto,*">
+        <!--  SEARCH  -->
+        <Grid Grid.Row="0">
+            <Border Style="{StaticResource EntrySearchBorderStyle}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="25" />
+                </Border.StrokeShape>
+                <Grid ColumnDefinitions="auto,*" ColumnSpacing="2">
+                    <Image Style="{StaticResource EntrySearchImageStyle}" />
+                    <Entry
+                        x:Name="SearchEntry"
+                        FontAttributes="Bold"
+                        FontSize="16"
+                        HeightRequest="45"
+                        Placeholder="Search query"
+                        Style="{StaticResource EntrySearchStyle}"
+                        Text="{Binding Query}">
+                        <Entry.Behaviors>
+                            <!--<woka:TapToCloseBehavior />-->
+                            <toolkit:EventToCommandBehavior Command="{Binding QueryChangedCommand}" EventName="Completed" />
+                        </Entry.Behaviors>
+                        <!--<Entry.GestureRecognizers>
+                            <TapGestureRecognizer NumberOfTapsRequired="1" Tapped="TapGestureRecognizer_Tapped" />
+                        </Entry.GestureRecognizers>-->
+                    </Entry>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid
+            Grid.Row="1"
+            Margin="10,5"
+            ColumnDefinitions="*,auto,auto,auto"
+            IsVisible="{Binding Entities, Converter={StaticResource IsListNotNullOrEmptyConverter}}">
+            <Label
+                Margin="10,0"
+                FontAttributes="Bold"
+                FontSize="18"
+                HorizontalTextAlignment="Start"
+                Text="Results"
+                VerticalOptions="Center" />
+
+            <Button
+                Grid.Column="1"
+                Margin="0"
+                Padding="0"
+                BackgroundColor="Transparent">
+                <Button.ImageSource>
+                    <FontImageSource
+                        FontFamily="Material"
+                        Glyph="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
+                        Size="25"
+                        Color="{AppThemeBinding Light={StaticResource Black},
+                                                Dark={StaticResource Gray600}}" />
+                </Button.ImageSource>
+            </Button>
+
+            <Button
+                Grid.Column="2"
+                Margin="0"
+                Padding="0"
+                BackgroundColor="Transparent">
+                <Button.ImageSource>
+                    <FontImageSource
+                        FontFamily="Material"
+                        Glyph="{x:Static materialDesign:MaterialDesignIcons.GridView}"
+                        Size="25"
+                        Color="{AppThemeBinding Light={StaticResource Black},
+                                                Dark={StaticResource White}}" />
+                </Button.ImageSource>
+            </Button>
+
+            <Button
+                Grid.Column="3"
+                Margin="0"
+                Padding="0"
+                BackgroundColor="Transparent">
+                <Button.ImageSource>
+                    <FontImageSource
+                        FontFamily="Material"
+                        Glyph="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
+                        Size="25"
+                        Color="{AppThemeBinding Light={StaticResource Black},
+                                                Dark={StaticResource Gray600}}" />
+                </Button.ImageSource>
+            </Button>
+        </Grid>
+
+        <Grid
+            Grid.Row="2"
+            HorizontalOptions="FillAndExpand"
+            IsVisible="False"
+            VerticalOptions="FillAndExpand">
+            <Grid.Triggers>
+                <MultiTrigger TargetType="Grid">
+                    <MultiTrigger.Conditions>
+                        <BindingCondition Binding="{Binding IsBusy}" Value="False" />
+                        <BindingCondition Binding="{Binding Entities, Converter={StaticResource IsListNullOrEmptyConverter}}" Value="True" />
+                    </MultiTrigger.Conditions>
+                    <MultiTrigger.Setters>
+                        <Setter Property="IsVisible" Value="True" />
+                    </MultiTrigger.Setters>
+                </MultiTrigger>
+            </Grid.Triggers>
+            <Label
+                FontSize="16"
+                HorizontalOptions="Center"
+                Text="Nothing found :("
+                VerticalOptions="Center" />
+        </Grid>
+
+        <CollectionView
+            x:Name="SearchCollectionView"
+            Grid.Row="2"
+            ItemTemplate="{StaticResource MainDataTemplateSelector}"
+            ItemsSource="{Binding Entities}">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.Footer>
+                <Grid Margin="0,20,0,0" HeightRequest="50">
+                    <ActivityIndicator
+                        HeightRequest="40"
+                        HorizontalOptions="{OnPlatform WinUI=FillAndExpand,
+                                                       Default=CenterAndExpand}"
+                        IsRunning="{Binding IsBusy}"
+                        IsVisible="{Binding IsBusy}"
+                        VerticalOptions="Center"
+                        WidthRequest="40" />
+                </Grid>
+            </CollectionView.Footer>
+            <!--<CollectionView.EmptyView>
+                <Grid
+                    HorizontalOptions="FillAndExpand"
+                    IsVisible="False"
+                    VerticalOptions="FillAndExpand">
+                    <Grid.Triggers>
+                        <DataTrigger
+                            Binding="{Binding IsBusy}"
+                            TargetType="Grid"
+                            Value="False">
+                            <Setter Property="IsVisible" Value="True" />
+                        </DataTrigger>
+                    </Grid.Triggers>
+                    <Label
+                        FontSize="16"
+                        HorizontalOptions="Center"
+                        Text="Empty"
+                        VerticalOptions="Center" />
+                </Grid>
+            </CollectionView.EmptyView>-->
+        </CollectionView>
+    </Grid>
+</local:BaseBottomSheetView>
