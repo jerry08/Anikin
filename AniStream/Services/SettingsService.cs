@@ -21,6 +21,8 @@ public partial class SettingsService : SettingsBase, INotifyPropertyChanged
 
     public GridLayoutMode EpisodesGridLayoutMode { get; set; } = GridLayoutMode.Semi;
 
+    public bool EpisodesDescending { get; set; } = true;
+
     public SettingsService()
         : base(Path.Combine(FileSystem.AppDataDirectory, "settings.json"))
     {

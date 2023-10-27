@@ -29,35 +29,17 @@
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-android|AnyCPU'">
-    <AndroidKeyStore>True</AndroidKeyStore>
-    <AndroidSigningKeyStore>..\key.keystore</AndroidSigningKeyStore>
-    <AndroidSigningKeyAlias>DrMedia</AndroidSigningKeyAlias>
-    <AndroidSigningStorePass>jonothan1999</AndroidSigningStorePass>
-    <AndroidSigningKeyPass>jonothan1999</AndroidSigningKeyPass>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-android|AnyCPU'">
-    <AndroidKeyStore>True</AndroidKeyStore>
-    <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
-    <AndroidSigningKeyStore>..\key.keystore</AndroidSigningKeyStore>
-    <AndroidSigningKeyAlias>DrMedia</AndroidSigningKeyAlias>
-    <AndroidSigningStorePass>jonothan1999</AndroidSigningStorePass>
-    <AndroidSigningKeyPass>jonothan1999</AndroidSigningKeyPass>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<!-- App Icon -->
 		<!--<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />-->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
-
+    <MauiIcon Include="Resources\AppIcon\appicon.png" />
+		
 		<!-- Splash Screen -->
 		<!--<MauiSplashScreen Include="Resources\Splash\splash2.svg" Color="#512BD4" BaseSize="128,128" />-->
-		<MauiSplashScreen Include="Resources\Splash\splash2.svg" Color="#8700e5" BaseSize="128,128" />
+		<MauiSplashScreen Include="Resources\Splash\splash.png" Color="#181A19" BaseSize="128,128" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
-		<MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
 
 		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />
@@ -71,12 +53,10 @@
 		<PackageReference Include="Berry.Maui.MediaElement" Version="1.0.0" />
 		<PackageReference Include="Cogwheel" Version="2.0.4" />
 		<PackageReference Include="CommunityToolkit.Maui" Version="6.0.0" />
-    <!--<PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="2.0.0" />-->
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="Httpz" Version="1.1.3" />
     <PackageReference Include="Jita.AniList" Version="0.0.3" />
-    <PackageReference Include="Juro" Version="1.2.1" />
-    <PackageReference Include="Juro.Providers" Version="1.2.1" />
+    <PackageReference Include="Juro.Providers" Version="1.2.13" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
     <PackageReference Include="Octokit" Version="8.1.1" />
 		<PackageReference Include="Plugin.ContextMenuContainer" Version="1.0.3" />
@@ -86,7 +66,6 @@
 		<PackageReference Include="TaskExecutor" Version="1.0.3" />
 		<PackageReference Include="The49.Maui.BottomSheet" Version="1.0.4" />
 		<PackageReference Include="Woka" Version="1.0.14" />
-		<!--<PackageReference Include="Woka" Version="1.0.13" />-->
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0-ios'">

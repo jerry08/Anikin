@@ -1193,9 +1193,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     {
         if (exoPlayer.VideoFormat is null)
             return;
-        
+
         AspectRatio = new(exoPlayer.VideoFormat.Height, exoPlayer.VideoFormat.Width);
-        
+
         VideoInfo.Text = $"{exoPlayer.VideoFormat.Width} x {exoPlayer.VideoFormat.Height}";
 
         if (!IsTimeStampsLoaded)

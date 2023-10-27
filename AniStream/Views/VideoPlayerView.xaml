@@ -14,10 +14,7 @@
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
-    <Grid
-        Margin="30,0"
-        HorizontalOptions="FillAndExpand"
-        VerticalOptions="FillAndExpand">
+    <Grid HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
         <ActivityIndicator
             HeightRequest="{OnPlatform Default=60,
                                        WinUI=100}"

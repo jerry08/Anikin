@@ -3,6 +3,7 @@
     x:Class="AniStream.Views.Templates.EpisodeRangeTemplateView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
     xmlns:local="clr-namespace:AniStream"
     xmlns:models="clr-namespace:AniStream.Models"
     x:Name="this"
@@ -13,9 +14,8 @@
     <Grid BackgroundColor="Transparent">
         <Border
             Grid.Column="0"
-            BackgroundColor="{StaticResource Gray800}"
+            BackgroundColor="{StaticResource Gray830}"
             HorizontalOptions="FillAndExpand"
-            Stroke="{StaticResource Gray700}"
             StrokeThickness="0"
             VerticalOptions="FillAndExpand">
             <Border.StrokeShape>
@@ -23,12 +23,19 @@
             </Border.StrokeShape>
             <Label
                 Grid.Row="1"
-                Padding="15,8"
+                Padding="20,13"
                 FontAttributes="Bold"
                 FontFamily="SoraBold"
                 FontSize="15"
                 HorizontalTextAlignment="Center"
-                Text="{Binding Name}" />
+                Text="{Binding Name}">
+                <Label.Behaviors>
+                    <berry:TouchBehavior
+                        Command="{Binding Parent.BindingContext.RangeSelectedCommand, Source={x:Reference this}}"
+                        CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
+                        NativeAnimation="True" />
+                </Label.Behaviors>
+            </Label>
         </Border>
     </Grid>
 </Border>

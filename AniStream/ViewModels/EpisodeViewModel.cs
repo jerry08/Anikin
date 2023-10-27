@@ -111,7 +111,12 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
         var result = await _provider.GetEpisodesAsync(anime.Id);
 
+        result = result.OrderBy(x => x.Number).ToList();
+
         EpisodeChunks = result.Chunk(50).ToList();
+
+        var ranges = new List<Range>();
+
         if (EpisodeChunks.Count > 1)
         {
             var startIndex = 1;
@@ -119,7 +124,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             for (var i = 0; i < EpisodeChunks.Count; i++)
             {
                 endIndex = startIndex + EpisodeChunks[i].Length - 1;
-                Ranges.Add(new Range(EpisodeChunks[i], startIndex, endIndex));
+                ranges.Add(new Range(EpisodeChunks[i], startIndex, endIndex));
                 startIndex += EpisodeChunks[i].Length;
             }
         }
@@ -136,8 +141,30 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             }
         }
 
+        if (_settingsService.EpisodesDescending)
+        {
+            for (var i = 0; i < EpisodeChunks.Count; i++)
+            {
+                EpisodeChunks[i] = EpisodeChunks[i].Reverse().ToArray();
+            }
+
+            EpisodeChunks.Reverse();
+
+            result = result.OrderByDescending(x => x.Number).ToList();
+            ranges.Reverse();
+        }
+
         RefreshEpisodesProgress();
         Entities.Push(EpisodeChunks[0]);
+
+        Ranges.Push(ranges);
+        OnPropertyChanged(nameof(Ranges));
+    }
+
+    [RelayCommand]
+    private void RangeSelected(Range range)
+    {
+        Entities.ReplaceRange(range.Episodes);
     }
 
     private void RefreshEpisodesProgress()

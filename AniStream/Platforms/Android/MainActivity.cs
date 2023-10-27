@@ -214,13 +214,13 @@ public class MainActivity : MauiAppCompatActivity, IOnApplyWindowInsetsListener,
         MediaElementController?.OnPiPChanged(isInPictureInPictureMode);
         base.OnPictureInPictureModeChanged(isInPictureInPictureMode);
     }
-    
+
     public override void OnPictureInPictureUiStateChanged(PictureInPictureUiState pipState)
     {
         MediaElementController?.OnPiPChanged(IsInPictureInPictureMode);
         base.OnPictureInPictureUiStateChanged(pipState);
     }
-    
+
     public override void OnPictureInPictureModeChanged(bool isInPictureInPictureMode, Configuration? newConfig)
     {
         MediaElementController?.OnPiPChanged(isInPictureInPictureMode);
