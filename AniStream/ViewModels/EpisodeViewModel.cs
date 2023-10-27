@@ -123,9 +123,15 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             var endIndex = 0;
             for (var i = 0; i < EpisodeChunks.Count; i++)
             {
-                endIndex = startIndex + EpisodeChunks[i].Length - 1;
-                ranges.Add(new Range(EpisodeChunks[i], startIndex, endIndex));
-                startIndex += EpisodeChunks[i].Length;
+                var chunk = EpisodeChunks[i].ToList();
+                if (_settingsService.EpisodesDescending)
+                {
+                    chunk.Reverse();
+                }
+
+                endIndex = startIndex + chunk.Count - 1;
+                ranges.Add(new Range(chunk, startIndex, endIndex));
+                startIndex += chunk.Count;
             }
         }
 
@@ -141,20 +147,8 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             }
         }
 
-        if (_settingsService.EpisodesDescending)
-        {
-            for (var i = 0; i < EpisodeChunks.Count; i++)
-            {
-                EpisodeChunks[i] = EpisodeChunks[i].Reverse().ToArray();
-            }
-
-            EpisodeChunks.Reverse();
-
-            result = result.OrderByDescending(x => x.Number).ToList();
-            ranges.Reverse();
-        }
-
         RefreshEpisodesProgress();
+
         Entities.Push(EpisodeChunks[0]);
 
         Ranges.Push(ranges);
@@ -195,7 +189,14 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     {
         try
         {
-            var result = await _provider.SearchAsync(Entity.Title.PreferredTitle);
+            var result = await _provider.SearchAsync(Entity.Title.RomajiTitle);
+
+            if (result.Count == 0)
+                result = await _provider.SearchAsync(Entity.Title.NativeTitle);
+
+            if (result.Count == 0)
+                result = await _provider.SearchAsync(Entity.Title.EnglishTitle);
+
             return result.FirstOrDefault();
         }
         catch
