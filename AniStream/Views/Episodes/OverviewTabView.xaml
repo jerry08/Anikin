@@ -18,10 +18,10 @@
     <VerticalStackLayout Spacing="4">
         <Label
             Margin="10,5"
-            HorizontalTextAlignment="Start"
-            FontSize="20"
-            Opacity="0.8"
             FontAttributes="Bold"
+            FontSize="20"
+            HorizontalTextAlignment="Start"
+            Opacity="0.8"
             Text="Description"
             VerticalOptions="Start" />
 

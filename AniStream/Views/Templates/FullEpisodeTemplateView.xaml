@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Border
-    x:Class="AniStream.Views.Templates.SemiEpisodeTemplateView"
+    x:Class="AniStream.Views.Templates.FullEpisodeTemplateView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
@@ -12,8 +12,7 @@
     Padding="0"
     x:DataType="models:Episode"
     BackgroundColor="Transparent"
-    HeightRequest="95"
-    MinimumWidthRequest="170">
+    HeightRequest="100">
     <Border.Resources>
         <ResourceDictionary>
             <converters:WatchedEpisodeProgressConverter x:Key="WatchedEpisodeProgressConverter" />
@@ -23,27 +22,27 @@
     <Border.StrokeShape>
         <RoundRectangle CornerRadius="10" />
     </Border.StrokeShape>
-    <Grid BackgroundColor="Transparent">
-        <!--<Image
-            effects:TouchEffect.Color="{StaticResource Primary}"
-            Aspect="AspectFill"
-            BackgroundColor="Transparent"
-            Opacity="0.8"
-            Source="{Binding Image}" />-->
-        <Image
-            Aspect="AspectFill"
-            BackgroundColor="Transparent"
-            Opacity="0.8"
-            Source="{Binding Image}">
-            <Image.Behaviors>
-                <berry:TouchBehavior NativeAnimation="True" />
-                <berry:TouchBehavior
-                    Command="{Binding Parent.BindingContext.ItemClickCommand, Source={x:Reference this}}"
-                    CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
-                    LongPressCommand="{Binding Parent.BindingContext.ShowSheetCommand, Source={x:Reference this}}"
-                    LongPressCommandParameter="{Binding BindingContext, Source={x:Reference this}}" />
-            </Image.Behaviors>
-        </Image>
+    <Grid BackgroundColor="Transparent" ColumnDefinitions="auto,*">
+        <Border StrokeThickness="0">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="10" />
+            </Border.StrokeShape>
+            <Image
+                Aspect="AspectFill"
+                BackgroundColor="Transparent"
+                Opacity="0.8"
+                Source="{Binding Image}"
+                WidthRequest="190">
+                <Image.Behaviors>
+                    <berry:TouchBehavior NativeAnimation="True" />
+                    <berry:TouchBehavior
+                        Command="{Binding Parent.BindingContext.ItemClickCommand, Source={x:Reference this}}"
+                        CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
+                        LongPressCommand="{Binding Parent.BindingContext.ShowSheetCommand, Source={x:Reference this}}"
+                        LongPressCommandParameter="{Binding BindingContext, Source={x:Reference this}}" />
+                </Image.Behaviors>
+            </Image>
+        </Border>
 
         <!--  Display Progress  -->
         <Grid IsVisible="{Binding Progress, Converter={StaticResource IsWatchedEpisodeProgressVisibleConverter}}">
@@ -80,6 +79,21 @@
             Opacity="0.7"
             Text="{Binding Number}"
             TextColor="#E9FFFFFF"
+            VerticalTextAlignment="End" />
+
+        <Label
+            Grid.Column="1"
+            Padding="8,5"
+            FontAttributes="Bold"
+            FontFamily="SoraBold"
+            FontSize="25"
+            HorizontalOptions="Center"
+            HorizontalTextAlignment="End"
+            LineBreakMode="TailTruncation"
+            Opacity="0.7"
+            Text="{Binding Number}"
+            TextColor="#E9FFFFFF"
+            VerticalOptions="Center"
             VerticalTextAlignment="End" />
     </Grid>
 </Border>

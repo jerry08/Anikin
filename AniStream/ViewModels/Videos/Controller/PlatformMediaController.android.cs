@@ -1003,27 +1003,6 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         trackDialog.Show();
     }
 
-    //public async Task UpdateProgress()
-    //{
-    //    if (!CanSaveProgress)
-    //        return;
-    //
-    //    _playerSettings.WatchedEpisodes.TryGetValue(Episode.Id,
-    //        out var watchedEpisode);
-    //
-    //    watchedEpisode ??= new();
-    //
-    //    watchedEpisode.Id = Episode.Id;
-    //    watchedEpisode.AnimeName = Anime.Title;
-    //    watchedEpisode.WatchedPercentage = (float)exoPlayer.CurrentPosition / exoPlayer.Duration * 100f;
-    //    watchedEpisode.WatchedDuration = exoPlayer.CurrentPosition;
-    //
-    //    _playerSettings.WatchedEpisodes.Remove(Episode.Id);
-    //    _playerSettings.WatchedEpisodes.Add(Episode.Id, watchedEpisode);
-    //
-    //    _playerSettings.Save();
-    //}
-    //
     //public async void PlayVideo(VideoSource video)
     //{
     //    if (exoPlayer is not null)
@@ -1118,6 +1097,11 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     //    if (hasFocus)
     //        Platform.CurrentActivity.HideSystemBars();
     //}
+
+    public void OnResume()
+    {
+        Platform.CurrentActivity.HideSystemBars();
+    }
 
     public void OnPlayerError(PlaybackException? error)
     {

@@ -202,6 +202,12 @@ public class MainActivity : MauiAppCompatActivity, IOnApplyWindowInsetsListener,
         AndroidStoragePermission?.OnRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
+    protected override void OnResume()
+    {
+        base.OnResume();
+        MediaElementController?.OnResume();
+    }
+
     protected override void OnPause()
     {
         base.OnPause();

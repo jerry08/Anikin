@@ -34,6 +34,10 @@
                 <viewTemplates:EpisodeTemplateView />
             </DataTemplate>
 
+            <DataTemplate x:Key="FullEpisodeTemplate">
+                <viewTemplates:FullEpisodeTemplateView />
+            </DataTemplate>
+
             <DataTemplate x:Key="SemiEpisodeTemplate">
                 <viewTemplates:SemiEpisodeTemplateView />
             </DataTemplate>
@@ -44,8 +48,9 @@
 
             <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
             <views:MainDataTemplateSelector x:Key="GenreTemplateSelector" DataTemplate="{StaticResource GenreTemplate}" />
-            <views:MainDataTemplateSelector x:Key="EpisodeTemplateSelector" DataTemplate="{StaticResource EpisodeTemplate}" />
+            <views:MainDataTemplateSelector x:Key="FullEpisodeTemplateSelector" DataTemplate="{StaticResource FullEpisodeTemplate}" />
             <views:MainDataTemplateSelector x:Key="SemiEpisodeTemplateSelector" DataTemplate="{StaticResource SemiEpisodeTemplate}" />
+            <views:MainDataTemplateSelector x:Key="EpisodeTemplateSelector" DataTemplate="{StaticResource EpisodeTemplate}" />
             <views:MainDataTemplateSelector x:Key="EpisodeRangeTemplateSelector" DataTemplate="{StaticResource EpisodeRangeTemplate}" />
         </ResourceDictionary>
     </ContentView.Resources>
@@ -260,6 +265,12 @@
                 <DataTrigger
                     Binding="{Binding GridLayoutMode}"
                     TargetType="FlexLayout"
+                    Value="{x:Static components:GridLayoutMode.Full}">
+                    <Setter Property="IsVisible" Value="False" />
+                </DataTrigger>
+                <DataTrigger
+                    Binding="{Binding GridLayoutMode}"
+                    TargetType="FlexLayout"
                     Value="{x:Static components:GridLayoutMode.Semi}">
                     <Setter Property="BindableLayout.ItemTemplateSelector" Value="{StaticResource SemiEpisodeTemplateSelector}" />
                 </DataTrigger>
@@ -271,5 +282,23 @@
                 </DataTrigger>
             </FlexLayout.Triggers>
         </FlexLayout>
+
+        <CollectionView
+            HorizontalOptions="Center"
+            IsVisible="False"
+            ItemTemplate="{StaticResource FullEpisodeTemplateSelector}">
+            <CollectionView.Triggers>
+                <DataTrigger
+                    Binding="{Binding GridLayoutMode}"
+                    TargetType="CollectionView"
+                    Value="{x:Static components:GridLayoutMode.Full}">
+                    <Setter Property="IsVisible" Value="True" />
+                    <Setter Property="ItemsSource" Value="{Binding Entities}" />
+                </DataTrigger>
+            </CollectionView.Triggers>
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout ItemSpacing="0" Orientation="Vertical" />
+            </CollectionView.ItemsLayout>
+        </CollectionView>
     </VerticalStackLayout>
 </ContentView>

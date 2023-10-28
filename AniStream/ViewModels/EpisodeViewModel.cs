@@ -9,6 +9,7 @@ using AniStream.ViewModels.Components;
 using AniStream.ViewModels.Framework;
 using AniStream.Views;
 using AniStream.Views.BottomSheets;
+using Com.Google.Android.Exoplayer2.Source.Chunk;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -110,6 +111,8 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         //OnPropertyChanged(nameof(Entity));
 
         var result = await _provider.GetEpisodesAsync(anime.Id);
+        if (result.Count == 0)
+            return;
 
         result = result.OrderBy(x => x.Number).ToList();
 
@@ -132,6 +135,13 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
                 endIndex = startIndex + chunk.Count - 1;
                 ranges.Add(new Range(chunk, startIndex, endIndex));
                 startIndex += chunk.Count;
+            }
+        }
+        else
+        {
+            if (_settingsService.EpisodesDescending)
+            {
+                EpisodeChunks[0] = EpisodeChunks[0].Reverse().ToArray();
             }
         }
 
