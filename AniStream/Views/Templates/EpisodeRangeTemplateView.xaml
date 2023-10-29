@@ -18,12 +18,20 @@
             HorizontalOptions="FillAndExpand"
             StrokeThickness="0"
             VerticalOptions="FillAndExpand">
+            <Border.Triggers>
+                <DataTrigger
+                    Binding="{Binding IsSelected}"
+                    TargetType="Border"
+                    Value="True">
+                    <Setter Property="BackgroundColor" Value="#4287f5" />
+                </DataTrigger>
+            </Border.Triggers>
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="22" />
             </Border.StrokeShape>
             <Label
                 Grid.Row="1"
-                Padding="20,13"
+                Padding="18,10"
                 FontAttributes="Bold"
                 FontFamily="SoraBold"
                 FontSize="15"

@@ -124,18 +124,20 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         {
             var startIndex = 1;
             var endIndex = 0;
+
             for (var i = 0; i < EpisodeChunks.Count; i++)
             {
-                var chunk = EpisodeChunks[i].ToList();
                 if (_settingsService.EpisodesDescending)
                 {
-                    chunk.Reverse();
+                    EpisodeChunks[i] = EpisodeChunks[i].Reverse().ToArray();
                 }
 
-                endIndex = startIndex + chunk.Count - 1;
-                ranges.Add(new Range(chunk, startIndex, endIndex));
-                startIndex += chunk.Count;
+                endIndex = startIndex + EpisodeChunks[i].Length - 1;
+                ranges.Add(new Range(EpisodeChunks[i], startIndex, endIndex));
+                startIndex += EpisodeChunks[i].Length;
             }
+
+            ranges[0].IsSelected = true;
         }
         else
         {
@@ -147,20 +149,9 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
         result.ForEach(ep => ep.Image = anime.Image);
 
-        foreach (var episode in result)
-        {
-            var episodeKey = $"{Entity.Id}-{episode.Number}";
-            _playerSettings.WatchedEpisodes.TryGetValue(episodeKey, out var watchedEpisode);
-            if (watchedEpisode is not null)
-            {
-                episode.Progress = watchedEpisode.WatchedPercentage;
-            }
-        }
-
         RefreshEpisodesProgress();
 
         Entities.Push(EpisodeChunks[0]);
-
         Ranges.Push(ranges);
         OnPropertyChanged(nameof(Ranges));
     }
@@ -168,6 +159,13 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     [RelayCommand]
     private void RangeSelected(Range range)
     {
+        for (var i = 0; i < Ranges.Count; i++)
+        {
+            Ranges[i].IsSelected = false;
+        }
+
+        range.IsSelected = true;
+
         Entities.ReplaceRange(range.Episodes);
     }
 

@@ -74,15 +74,33 @@ public partial class VideoPlayerViewModel : BaseViewModel
         : this(anime, episode, null, media) { }
 
     [RelayCommand]
+    public void OnLoaded(IMediaElement mediaElement)
+    {
+        Shell.Current.Navigating += Current_Navigating;
+
+        MediaElement = mediaElement;
+        Controller = new(this, _anime, _episode, default!, _media);
+        Controller.OnLoaded(mediaElement);
+    }
+
+    private void Current_Navigating(object? sender, ShellNavigatingEventArgs e)
+    {
+        _cancellationTokenSource.Cancel();
+        UpdateProgress();
+    }
+
+    [RelayCommand]
     private void OnUnloaded()
     {
+        Shell.Current.Navigating -= Current_Navigating;
+
         Controller.Dispose();
 
         ApplicationEx.SetOrientation(_initialOrientation);
     }
 
     [RelayCommand]
-    private async Task OnStateChanged(MediaElementState state)
+    private void OnStateChanged(MediaElementState state)
     {
         switch (state)
         {
@@ -97,10 +115,10 @@ public partial class VideoPlayerViewModel : BaseViewModel
                 CanSaveProgress = true;
                 break;
             case MediaElementState.Paused:
-                await UpdateProgress();
+                UpdateProgress();
                 break;
             case MediaElementState.Stopped:
-                await UpdateProgress();
+                UpdateProgress();
                 break;
             case MediaElementState.Failed:
                 CanSaveProgress = false;
@@ -108,14 +126,6 @@ public partial class VideoPlayerViewModel : BaseViewModel
             default:
                 break;
         }
-    }
-
-    [RelayCommand]
-    public void OnLoaded(IMediaElement mediaElement)
-    {
-        MediaElement = mediaElement;
-        Controller = new(this, _anime, _episode, default!, _media);
-        Controller.OnLoaded(mediaElement);
     }
 
     public async Task ShowSpeedSelector()
@@ -218,7 +228,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
         await sheet.ShowAsync();
     }
 
-    public async Task UpdateProgress()
+    public void UpdateProgress()
     {
         if (!CanSaveProgress)
             return;

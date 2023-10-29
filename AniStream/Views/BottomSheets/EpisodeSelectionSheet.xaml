@@ -70,7 +70,7 @@
                     <LinearItemsLayout ItemSpacing="8" Orientation="Vertical" />
                 </CollectionView.ItemsLayout>
                 <CollectionView.GroupHeaderTemplate>
-                    <DataTemplate x:DataType="{x:Type models:VideoServer}">
+                    <DataTemplate x:DataType="{x:Null}">
                         <Label
                             Margin="25,10,0,0"
                             FontAttributes="Bold"

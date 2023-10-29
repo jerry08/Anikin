@@ -8,11 +8,11 @@
     xmlns:local="clr-namespace:AniStream"
     xmlns:models="clr-namespace:Juro.Core.Models.Anime;assembly=Juro.Core"
     x:Name="this"
-    Margin="3,5"
+    Margin="20,5"
     Padding="0"
     x:DataType="models:Episode"
     BackgroundColor="Transparent"
-    HeightRequest="100">
+    HeightRequest="125">
     <Border.Resources>
         <ResourceDictionary>
             <converters:WatchedEpisodeProgressConverter x:Key="WatchedEpisodeProgressConverter" />
@@ -22,7 +22,15 @@
     <Border.StrokeShape>
         <RoundRectangle CornerRadius="10" />
     </Border.StrokeShape>
-    <Grid BackgroundColor="Transparent" ColumnDefinitions="auto,*">
+    <Grid BackgroundColor="{StaticResource Gray900}" ColumnDefinitions="auto,*">
+        <Grid.Behaviors>
+            <berry:TouchBehavior
+                Command="{Binding Parent.BindingContext.ItemClickCommand, Source={x:Reference this}}"
+                CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
+                LongPressCommand="{Binding Parent.BindingContext.ShowSheetCommand, Source={x:Reference this}}"
+                LongPressCommandParameter="{Binding BindingContext, Source={x:Reference this}}"
+                NativeAnimation="True" />
+        </Grid.Behaviors>
         <Border StrokeThickness="0">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="10" />
@@ -32,16 +40,7 @@
                 BackgroundColor="Transparent"
                 Opacity="0.8"
                 Source="{Binding Image}"
-                WidthRequest="190">
-                <Image.Behaviors>
-                    <berry:TouchBehavior NativeAnimation="True" />
-                    <berry:TouchBehavior
-                        Command="{Binding Parent.BindingContext.ItemClickCommand, Source={x:Reference this}}"
-                        CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
-                        LongPressCommand="{Binding Parent.BindingContext.ShowSheetCommand, Source={x:Reference this}}"
-                        LongPressCommandParameter="{Binding BindingContext, Source={x:Reference this}}" />
-                </Image.Behaviors>
-            </Image>
+                WidthRequest="200" />
         </Border>
 
         <!--  Display Progress  -->
@@ -59,39 +58,45 @@
                 VerticalOptions="End" />
         </Grid>
 
-        <Label
-            Padding="5"
-            FontAttributes="Bold"
-            FontSize="15"
-            HorizontalTextAlignment="Start"
-            LineBreakMode="TailTruncation"
-            Opacity="0.9"
-            Text="{Binding Name}"
-            TextColor="#E9FFFFFF"
-            VerticalTextAlignment="Start" />
-        <Label
-            Padding="8,5"
-            FontAttributes="Bold"
-            FontFamily="SoraBold"
-            FontSize="25"
-            HorizontalTextAlignment="End"
-            LineBreakMode="TailTruncation"
-            Opacity="0.7"
-            Text="{Binding Number}"
-            TextColor="#E9FFFFFF"
-            VerticalTextAlignment="End" />
+        <Border
+            Grid.Column="0"
+            Margin="-10,-3,0,0"
+            Padding="4"
+            HorizontalOptions="Start"
+            StrokeThickness="0"
+            VerticalOptions="Start">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Offset="0.4" Color="#AE000000" />
+                    <GradientStop Offset="1" Color="#31000000" />
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="20,0,20,20" />
+            </Border.StrokeShape>
+            <Label
+                Padding="15,8,10,6"
+                FontAttributes="Bold"
+                FontSize="20"
+                HorizontalTextAlignment="Start"
+                LineBreakMode="TailTruncation"
+                Opacity="0.9"
+                Text="{Binding Number}"
+                TextColor="#E9FFFFFF"
+                VerticalTextAlignment="Start" />
+        </Border>
 
         <Label
             Grid.Column="1"
             Padding="8,5"
             FontAttributes="Bold"
             FontFamily="SoraBold"
-            FontSize="25"
+            FontSize="20"
             HorizontalOptions="Center"
             HorizontalTextAlignment="End"
             LineBreakMode="TailTruncation"
             Opacity="0.7"
-            Text="{Binding Number}"
+            Text="{Binding Name}"
             TextColor="#E9FFFFFF"
             VerticalOptions="Center"
             VerticalTextAlignment="End" />
