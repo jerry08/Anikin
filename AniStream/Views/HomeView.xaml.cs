@@ -18,7 +18,7 @@ public partial class HomeView
         );
 
         if (navigationBarHeight > 0)
-            ViewContent.Margin = new Thickness(0, 0, 0, navigationBarHeight + 20);
+            ViewContent.Margin = new Thickness(0, 0, 0, navigationBarHeight + 10);
 
         //CommunityToolkit.Maui.Alerts.Snackbar.Make("test").Show();
         //AniStream.Controls.Snackbar.Make("test").Show();
