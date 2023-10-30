@@ -9,7 +9,6 @@ using AniStream.ViewModels.Components;
 using AniStream.ViewModels.Framework;
 using AniStream.Views;
 using AniStream.Views.BottomSheets;
-using Com.Google.Android.Exoplayer2.Source.Chunk;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -52,6 +51,8 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
     [ObservableProperty]
     private GridLayoutMode _gridLayoutMode;
+
+    private bool IsSavingFavorite { get; set; }
 
     public EpisodeViewModel(AniClient aniClient)
     {
@@ -232,6 +233,17 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     }
 
     [RelayCommand]
+    private async Task ShowCoverImage()
+    {
+        var sheet = new CoverImageSheet()
+        {
+            BindingContext = this
+        };
+
+        await sheet.ShowAsync();
+    }
+
+    [RelayCommand]
     private async Task CopyTitle()
     {
         if (!string.IsNullOrWhiteSpace(Entity?.Title?.PreferredTitle))
@@ -273,15 +285,51 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             return;
         }
 
-        await _anilistClient.ToggleMediaFavoriteAsync(Entity.Id, MediaType.Anime);
-        RefreshIsFavorite();
+        IsFavorite = !IsFavorite;
+
+        if (IsSavingFavorite)
+            return;
+
+        IsSavingFavorite = true;
+
+        await ToggleFavoriteAsync();
+    }
+
+    private async Task ToggleFavoriteAsync()
+    {
+        try
+        {
+            var isFavorite = await _anilistClient.ToggleMediaFavoriteAsync(Entity.Id, MediaType.Anime);
+            if (isFavorite != IsFavorite)
+            {
+                await ToggleFavoriteAsync();
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make(ex.ToString()).Show();
+        }
+        finally
+        {
+            IsSavingFavorite = false;
+        }
+
+        await RefreshIsFavorite();
     }
 
     private async Task RefreshIsFavorite()
     {
-        var media = await _anilistClient.GetMediaAsync(Entity.Id);
-        Entity.IsFavorite = media.IsFavorite;
-        IsFavorite = media.IsFavorite;
+        try
+        {
+            var media = await _anilistClient.GetMediaAsync(Entity.Id);
+            Entity.IsFavorite = media.IsFavorite;
+            IsFavorite = media.IsFavorite;
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make(ex.ToString()).Show();
+        }
     }
 
     [RelayCommand]
