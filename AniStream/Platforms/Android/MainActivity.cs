@@ -16,8 +16,21 @@ using static Android.Views.ViewGroup;
 
 namespace AniStream;
 
-[Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, SupportsPictureInPicture = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
-public class MainActivity : MauiAppCompatActivity, IOnApplyWindowInsetsListener, View.IOnTouchListener
+[Activity(
+    Theme = "@style/Maui.SplashTheme",
+    MainLauncher = true,
+    SupportsPictureInPicture = true,
+    ConfigurationChanges = ConfigChanges.ScreenSize
+        | ConfigChanges.Orientation
+        | ConfigChanges.UiMode
+        | ConfigChanges.ScreenLayout
+        | ConfigChanges.SmallestScreenSize
+        | ConfigChanges.Density
+)]
+public class MainActivity
+    : MauiAppCompatActivity,
+        IOnApplyWindowInsetsListener,
+        View.IOnTouchListener
 {
     public AndroidStoragePermission? AndroidStoragePermission { get; set; }
 
@@ -41,7 +54,9 @@ public class MainActivity : MauiAppCompatActivity, IOnApplyWindowInsetsListener,
 
         //Window.SetFlags(WindowManagerFlags.LayoutNoLimits, WindowManagerFlags.LayoutNoLimits);
 
-        Window.DecorView.SystemUiVisibility = (StatusBarVisibility)SystemUiFlags.LayoutFullscreen | (StatusBarVisibility)SystemUiFlags.LayoutStable;
+        Window.DecorView.SystemUiVisibility =
+            (StatusBarVisibility)SystemUiFlags.LayoutFullscreen
+            | (StatusBarVisibility)SystemUiFlags.LayoutStable;
 
         //Window.DecorView.ViewTreeObserver.GlobalLayout += (s, e) =>
         //{
@@ -60,15 +75,19 @@ public class MainActivity : MauiAppCompatActivity, IOnApplyWindowInsetsListener,
         {
             if (navBarHeight == 0)
             {
-                navBarHeight = ViewCompat.GetRootWindowInsets(Window.DecorView.FindViewById(Android.Resource.Id.Content))
+                navBarHeight = ViewCompat
+                    .GetRootWindowInsets(Window.DecorView.FindViewById(Android.Resource.Id.Content))
                     .GetInsets(WindowInsetsCompat.Type.SystemBars())
                     .Bottom;
             }
 
             HideStatusBar();
 
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.P && statusBarHeight == 0
-                && Resources.Configuration.Orientation == Android.Content.Res.Orientation.Portrait)
+            if (
+                Build.VERSION.SdkInt >= BuildVersionCodes.P
+                && statusBarHeight == 0
+                && Resources.Configuration.Orientation == Android.Content.Res.Orientation.Portrait
+            )
             {
                 var boundingRects = Window.DecorView.RootWindowInsets?.DisplayCutout?.BoundingRects;
                 statusBarHeight = Math.Min(boundingRects[0].Width(), boundingRects[0].Height());
@@ -78,7 +97,9 @@ public class MainActivity : MauiAppCompatActivity, IOnApplyWindowInsetsListener,
         {
             if (statusBarHeight == 0)
             {
-                var windowInsets = ViewCompat.GetRootWindowInsets(Window.DecorView.FindViewById(Android.Resource.Id.Content));
+                var windowInsets = ViewCompat.GetRootWindowInsets(
+                    Window.DecorView.FindViewById(Android.Resource.Id.Content)
+                );
                 if (windowInsets != null)
                 {
                     var insets = windowInsets.GetInsets(WindowInsetsCompat.Type.SystemBars());
@@ -103,7 +124,6 @@ public class MainActivity : MauiAppCompatActivity, IOnApplyWindowInsetsListener,
         {
             e.NewFocus.SetOnTouchListener(this);
         }
-
 
         if (e.NewFocus is null && e.OldFocus is not null)
         {
@@ -136,7 +156,6 @@ public class MainActivity : MauiAppCompatActivity, IOnApplyWindowInsetsListener,
 
     bool OnTouch(View v, MotionEvent e)
     {
-
         if (e.Action == MotionEventActions.Down && CurrentFocus == v)
             KeepFocus = true;
 
@@ -182,7 +201,8 @@ public class MainActivity : MauiAppCompatActivity, IOnApplyWindowInsetsListener,
     protected override void OnActivityResult(
         int requestCode,
         [GeneratedEnum] Result resultCode,
-        Intent? data)
+        Intent? data
+    )
     {
         base.OnActivityResult(requestCode, resultCode, data);
 
@@ -193,13 +213,18 @@ public class MainActivity : MauiAppCompatActivity, IOnApplyWindowInsetsListener,
     public override void OnRequestPermissionsResult(
         int requestCode,
         string[] permissions,
-        [GeneratedEnum] Permission[] grantResults)
+        [GeneratedEnum] Permission[] grantResults
+    )
     {
         Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 
         base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        AndroidStoragePermission?.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        AndroidStoragePermission?.OnRequestPermissionsResult(
+            requestCode,
+            permissions,
+            grantResults
+        );
     }
 
     protected override void OnResume()
@@ -227,7 +252,10 @@ public class MainActivity : MauiAppCompatActivity, IOnApplyWindowInsetsListener,
         base.OnPictureInPictureUiStateChanged(pipState);
     }
 
-    public override void OnPictureInPictureModeChanged(bool isInPictureInPictureMode, Configuration? newConfig)
+    public override void OnPictureInPictureModeChanged(
+        bool isInPictureInPictureMode,
+        Configuration? newConfig
+    )
     {
         MediaElementController?.OnPiPChanged(isInPictureInPictureMode);
         base.OnPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);

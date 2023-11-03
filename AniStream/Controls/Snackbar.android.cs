@@ -41,12 +41,16 @@ public partial class Snackbar
         isDisposed = true;
     }
 
-    static bool IsModalPageActive() => Application.Current?.MainPage is not null &&
-                                        Application.Current.MainPage.Navigation.ModalStack.Count > 0;
+    static bool IsModalPageActive() =>
+        Application.Current?.MainPage is not null
+        && Application.Current.MainPage.Navigation.ModalStack.Count > 0;
 
     static View GetParentView()
     {
-        var parentView = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity?.Window?.DecorView.FindViewById(Android.Resource.Id.Content);
+        var parentView =
+            Microsoft.Maui.ApplicationModel.Platform.CurrentActivity?.Window?.DecorView.FindViewById(
+                Android.Resource.Id.Content
+            );
 
         if (IsModalPageActive())
         {
@@ -70,7 +74,12 @@ public partial class Snackbar
             var layoutParameters = (FrameLayout.LayoutParams?)snackbarView.LayoutParameters;
             if (layoutParameters is not null)
             {
-                layoutParameters.SetMargins(layoutParameters.LeftMargin, layoutParameters.TopMargin, layoutParameters.RightMargin, layoutParameters.BottomMargin + navBarHeight);
+                layoutParameters.SetMargins(
+                    layoutParameters.LeftMargin,
+                    layoutParameters.TopMargin,
+                    layoutParameters.RightMargin,
+                    layoutParameters.BottomMargin + navBarHeight
+                );
                 snackbarView.LayoutParameters = layoutParameters;
 
                 // Only thing changed here compared to CommunityToolkit
@@ -111,7 +120,11 @@ public partial class Snackbar
         await DismissPlatform(token);
         token.ThrowIfCancellationRequested();
 
-        PlatformSnackbar = Google.Android.Material.Snackbar.Snackbar.Make(GetParentView(), Text, (int)Duration.TotalMilliseconds);
+        PlatformSnackbar = Google.Android.Material.Snackbar.Snackbar.Make(
+            GetParentView(),
+            Text,
+            (int)Duration.TotalMilliseconds
+        );
         var snackbarView = PlatformSnackbar.View;
 
         if (Anchor is not Page)
@@ -119,7 +132,9 @@ public partial class Snackbar
             PlatformSnackbar.SetAnchorView(Anchor?.Handler?.PlatformView as View);
         }
 
-        var fontManager = Application.Current?.RequireFontManager() ?? throw new InvalidOperationException($"{nameof(IFontManager)} Required");
+        var fontManager =
+            Application.Current?.RequireFontManager()
+            ?? throw new InvalidOperationException($"{nameof(IFontManager)} Required");
         SetLayoutParametersForView(snackbarView);
         SetContainerForView(snackbarView);
         SetMessageForView(snackbarView, fontManager);
@@ -139,15 +154,22 @@ public partial class Snackbar
                 VisualOptions.CornerRadius.BottomLeft * density,
                 VisualOptions.CornerRadius.TopLeft * density,
                 VisualOptions.CornerRadius.TopRight * density,
-                VisualOptions.CornerRadius.BottomRight * density);
+                VisualOptions.CornerRadius.BottomRight * density
+            );
 
-            shape.SetCornerRadii(new[]
-            {
-                (float)cornerRadius.Left, (float)cornerRadius.Left,
-                (float)cornerRadius.Top, (float)cornerRadius.Top,
-                (float)cornerRadius.Right, (float)cornerRadius.Right,
-                (float)cornerRadius.Bottom, (float)cornerRadius.Bottom
-            });
+            shape.SetCornerRadii(
+                new[]
+                {
+                    (float)cornerRadius.Left,
+                    (float)cornerRadius.Left,
+                    (float)cornerRadius.Top,
+                    (float)cornerRadius.Top,
+                    (float)cornerRadius.Right,
+                    (float)cornerRadius.Right,
+                    (float)cornerRadius.Bottom,
+                    (float)cornerRadius.Bottom
+                }
+            );
 
             snackbarView.SetBackground(shape);
         }
@@ -155,7 +177,9 @@ public partial class Snackbar
 
     void SetMessageForView(in View snackbarView, IFontManager fontManager)
     {
-        var snackTextView = snackbarView.FindViewById<TextView>(Resource.Id.snackbar_text) ?? throw new InvalidOperationException("Unable to find Snackbar text view");
+        var snackTextView =
+            snackbarView.FindViewById<TextView>(Resource.Id.snackbar_text)
+            ?? throw new InvalidOperationException("Unable to find Snackbar text view");
         snackTextView.SetMaxLines(10);
 
         snackTextView.SetTextColor(VisualOptions.TextColor.ToAndroid());
@@ -164,23 +188,37 @@ public partial class Snackbar
             snackTextView.SetTextSize(ComplexUnitType.Dip, (float)VisualOptions.Font.Size);
         }
 
-        snackTextView.SetTypeface(fontManager.GetTypeface(VisualOptions.Font), TypefaceStyle.Normal);
+        snackTextView.SetTypeface(
+            fontManager.GetTypeface(VisualOptions.Font),
+            TypefaceStyle.Normal
+        );
 
         snackTextView.LetterSpacing = (float)VisualOptions.CharacterSpacing;
     }
 
     [MemberNotNull(nameof(dismissedTCS))]
-    void SetActionForSnackbar(in Google.Android.Material.Snackbar.Snackbar platformSnackbar, IFontManager fontManager)
+    void SetActionForSnackbar(
+        in Google.Android.Material.Snackbar.Snackbar platformSnackbar,
+        IFontManager fontManager
+    )
     {
-        var snackActionButtonView = platformSnackbar.View.FindViewById<TextView>(Resource.Id.snackbar_action) ?? throw new InvalidOperationException("Unable to find Snackbar action button");
+        var snackActionButtonView =
+            platformSnackbar.View.FindViewById<TextView>(Resource.Id.snackbar_action)
+            ?? throw new InvalidOperationException("Unable to find Snackbar action button");
 
         platformSnackbar.SetActionTextColor(VisualOptions.ActionButtonTextColor.ToAndroid());
         if (VisualOptions.ActionButtonFont.Size > 0)
         {
-            snackActionButtonView.SetTextSize(ComplexUnitType.Dip, (float)VisualOptions.ActionButtonFont.Size);
+            snackActionButtonView.SetTextSize(
+                ComplexUnitType.Dip,
+                (float)VisualOptions.ActionButtonFont.Size
+            );
         }
 
-        snackActionButtonView.SetTypeface(fontManager.GetTypeface(VisualOptions.ActionButtonFont), TypefaceStyle.Normal);
+        snackActionButtonView.SetTypeface(
+            fontManager.GetTypeface(VisualOptions.ActionButtonFont),
+            TypefaceStyle.Normal
+        );
 
         platformSnackbar.SetAction(ActionButtonText, _ => Action?.Invoke());
 

@@ -10,7 +10,5 @@ public class PreferenceService : SettingsBase
     public AppTheme AppTheme { get; set; } = AppTheme.Dark;
 
     public PreferenceService()
-        : base(Path.Combine(FileSystem.AppDataDirectory, "preference.json"))
-    {
-    }
+        : base(Path.Combine(FileSystem.AppDataDirectory, "preference.json")) { }
 }

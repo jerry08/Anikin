@@ -6,7 +6,7 @@ using Juro.Core.Models.Videos;
 
 namespace AniStream.ViewModels;
 
-public class PlatformMediaController : IDisposable
+internal class PlatformMediaController : IDisposable
 {
     public PlatformMediaController(
         VideoPlayerViewModel playerViewModel,
@@ -17,6 +17,8 @@ public class PlatformMediaController : IDisposable
     ) { }
 
     public void OnLoaded(IMediaElement mediaElement) { }
+
+    public void Initialize() { }
 
     public void Dispose() { }
 }

@@ -49,11 +49,7 @@ public class GesturesListener : GestureDetector.SimpleOnGestureListener
     {
         var handler = new Handler(Looper.MainLooper!);
 
-        Timer = new()
-        {
-            Interval = _delay,
-            AutoReset = false
-        };
+        Timer = new() { Interval = _delay, AutoReset = false };
 
         Timer.Elapsed += (s, ev) =>
         {

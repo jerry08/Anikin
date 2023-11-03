@@ -5,10 +5,7 @@ using Microsoft.Maui.Devices;
 
 namespace AniStream.Views;
 
-public class Test1
-{
-
-}
+public class Test1 { }
 
 public partial class AnimeTabView
 {
@@ -16,7 +13,9 @@ public partial class AnimeTabView
     {
         InitializeComponent();
 
-        var navigationBarHeight = (int)(ApplicationEx.GetNavigationBarHeight() / DeviceDisplay.MainDisplayInfo.Density);
+        var navigationBarHeight = (int)(
+            ApplicationEx.GetNavigationBarHeight() / DeviceDisplay.MainDisplayInfo.Density
+        );
         if (navigationBarHeight > 0)
             MainGrid.Margin = new Thickness(0, 0, 0, navigationBarHeight + 100);
 
@@ -43,12 +42,7 @@ public partial class AnimeTabView
             //viewModel.Load();
         };
 
-        test3.ItemsSource = new[]
-        {
-            new Test1(),
-            new Test1(),
-            new Test1()
-        };
+        test3.ItemsSource = new[] { new Test1(), new Test1(), new Test1() };
 
         //img1.Loaded += delegate
         //{

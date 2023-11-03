@@ -10,7 +10,6 @@ public class DownloadServiceImpl : IDownloadService
     public async Task EnqueueAsync(
         string fileName,
         string url,
-        IDictionary<string, string>? headers = null)
-    {
-    }
+        IDictionary<string, string>? headers = null
+    ) { }
 }

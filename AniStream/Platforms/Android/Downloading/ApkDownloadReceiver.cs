@@ -16,9 +16,8 @@ public class ApkDownloadReceiver : BroadcastReceiver
         {
             //Platform.CurrentActivity.ShowToast("Download completed");
 
-            var downloadManager = (DownloadManager)Application.Context.GetSystemService(
-                Android.Content.Context.DownloadService
-            )!;
+            var downloadManager = (DownloadManager)
+                Application.Context.GetSystemService(Android.Content.Context.DownloadService)!;
 
             var downloadId = intent?.GetLongExtra(DownloadManager.ExtraDownloadId, 0) ?? 0;
 
@@ -35,9 +34,7 @@ public class ApkDownloadReceiver : BroadcastReceiver
                 if (c.GetInt(columnIndex) == (int)DownloadStatus.Successful)
                 {
                     var uri = Android.Net.Uri.Parse(
-                        c.GetString(
-                            c.GetColumnIndex(DownloadManager.ColumnLocalUri)
-                        )
+                        c.GetString(c.GetColumnIndex(DownloadManager.ColumnLocalUri))
                     );
 
                     if (uri is not null)

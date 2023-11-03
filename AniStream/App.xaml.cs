@@ -31,8 +31,7 @@ public partial class App : Application
 
         ApplyTheme();
 
-        AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
-        {
+        AppDomain.CurrentDomain.UnhandledException += (sender, args) => {
             //UnhandledException?.Invoke(sender, args);
         };
     }
@@ -43,12 +42,17 @@ public partial class App : Application
         {
             if (showSnackbar)
             {
-                Snackbar.Make("No interent", visualOptions: new SnackbarOptions()
-                {
-                    BackgroundColor = Colors.Red,
-                    TextColor = Colors.White,
-                    ActionButtonTextColor = Colors.White
-                }).Show();
+                Snackbar
+                    .Make(
+                        "No interent",
+                        visualOptions: new SnackbarOptions()
+                        {
+                            BackgroundColor = Colors.Red,
+                            TextColor = Colors.White,
+                            ActionButtonTextColor = Colors.White
+                        }
+                    )
+                    .Show();
             }
 
             return false;
@@ -57,12 +61,17 @@ public partial class App : Application
         {
             if (showSnackbar)
             {
-                Snackbar.Make("You're back online", visualOptions: new SnackbarOptions()
-                {
-                    BackgroundColor = Colors.Green,
-                    TextColor = Colors.White,
-                    ActionButtonTextColor = Colors.White
-                }).Show();
+                Snackbar
+                    .Make(
+                        "You're back online",
+                        visualOptions: new SnackbarOptions()
+                        {
+                            BackgroundColor = Colors.Green,
+                            TextColor = Colors.White,
+                            ActionButtonTextColor = Colors.White
+                        }
+                    )
+                    .Show();
             }
 
             return true;

@@ -10,7 +10,8 @@ public partial class EpisodeSelectionSheet
 
         Shown += (_, _) => DeviceDisplay.Current.MainDisplayInfoChanged += OnMainDisplayInfoChanged;
 
-        Dismissed += (_, _) => DeviceDisplay.Current.MainDisplayInfoChanged -= OnMainDisplayInfoChanged;
+        Dismissed += (_, _) =>
+            DeviceDisplay.Current.MainDisplayInfoChanged -= OnMainDisplayInfoChanged;
 
         //this.UpdateChildrenLayout();
     }

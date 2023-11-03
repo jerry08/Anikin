@@ -68,6 +68,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
     private IExoPlayer exoPlayer = default!;
     private StyledPlayerView playerView = default!;
+
     //private PlayerView playerView = default!;
     DefaultTrackSelector trackSelector = default!;
 
@@ -79,11 +80,14 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     private ImageButton exoplay = default!;
     private ImageButton exoQuality = default!;
     private ImageButton DownloadButton = default!;
+
     //private int currentVideoIndex;
     //private LinearLayout controls = default!;
     private TextView animeTitle = default!;
+
     //private SpinnerNoSwipe episodeTitle = default!;
     private TextView episodeTitle = default!;
+
     //private TextView errorText = default!;
     private TextView VideoInfo = default!;
     private TextView VideoName = default!;
@@ -115,7 +119,13 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     private bool IsSeekingBackward { get; set; }
     private bool IsSeekingForward { get; set; }
 
-    public PlatformMediaController(VideoPlayerViewModel playerViewModel, IAnimeInfo anime, Episode episode, VideoServer videoServer, Media media)
+    public PlatformMediaController(
+        VideoPlayerViewModel playerViewModel,
+        IAnimeInfo anime,
+        Episode episode,
+        VideoServer videoServer,
+        Media media
+    )
     {
         _playerViewModel = playerViewModel;
         Anime = anime;
@@ -128,7 +138,10 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         WindowCompat.SetDecorFitsSystemWindows(Platform.CurrentActivity.Window!, false);
         Platform.CurrentActivity.HideSystemBars();
 
-        if (_playerSettings.AlwaysInLandscapeMode && Build.VERSION.SdkInt >= BuildVersionCodes.Gingerbread)
+        if (
+            _playerSettings.AlwaysInLandscapeMode
+            && Build.VERSION.SdkInt >= BuildVersionCodes.Gingerbread
+        )
             Platform.CurrentActivity.RequestedOrientation = ScreenOrientation.SensorLandscape;
     }
 
@@ -139,7 +152,8 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
         var handler = (MediaElementHandler)mediaElement.Handler;
         playerView = handler.PlatformView.GetFirstChildOfType<StyledPlayerView>()!;
-        var styledPlayerControlView = handler.PlatformView.GetFirstChildOfType<StyledPlayerControlView>()!;
+        var styledPlayerControlView =
+            handler.PlatformView.GetFirstChildOfType<StyledPlayerControlView>()!;
         styledPlayerControlView.AnimationEnabled = false;
 
         //var view = (MauiMediaElement)mediaElement.ToPlatform(mediaElement.Handler.MauiContext);
@@ -238,7 +252,8 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         //
         //NextButton.Click += (s, e) => PlayNextEpisode();
 
-        var audioManager = (Android.Media.AudioManager?)Platform.CurrentActivity.GetSystemService(Context.AudioService);
+        var audioManager = (Android.Media.AudioManager?)
+            Platform.CurrentActivity.GetSystemService(Context.AudioService);
         //var audioManager = Android.Media.AudioManager.FromContext(this);
 
         var audioFocusChangeListener = new AudioFocusChangeListener();
@@ -284,16 +299,30 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 #pragma warning restore CA1422
         }
 
-        var settingsButton = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_settings)!;
+        var settingsButton = Platform.CurrentActivity.FindViewById<ImageButton>(
+            Resource.Id.exo_settings
+        )!;
         SourceButton = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_source)!;
         var subButton = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_sub)!;
-        DownloadButton = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_download)!;
+        DownloadButton = Platform.CurrentActivity.FindViewById<ImageButton>(
+            Resource.Id.exo_download
+        )!;
         var exoPip = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_pip)!;
-        ExoSkipOpEd = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_skip_op_ed)!;
-        SkipTimeButton = Platform.CurrentActivity.FindViewById<MaterialCardView>(Resource.Id.exo_skip_timestamp)!;
-        SkipTimeText = Platform.CurrentActivity.FindViewById<TextView>(Resource.Id.exo_skip_timestamp_text)!;
-        TimeStampText = Platform.CurrentActivity.FindViewById<TextView>(Resource.Id.exo_time_stamp_text)!;
-        var exoSpeed = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_playback_speed)!;
+        ExoSkipOpEd = Platform.CurrentActivity.FindViewById<ImageButton>(
+            Resource.Id.exo_skip_op_ed
+        )!;
+        SkipTimeButton = Platform.CurrentActivity.FindViewById<MaterialCardView>(
+            Resource.Id.exo_skip_timestamp
+        )!;
+        SkipTimeText = Platform.CurrentActivity.FindViewById<TextView>(
+            Resource.Id.exo_skip_timestamp_text
+        )!;
+        TimeStampText = Platform.CurrentActivity.FindViewById<TextView>(
+            Resource.Id.exo_time_stamp_text
+        )!;
+        var exoSpeed = Platform.CurrentActivity.FindViewById<ImageButton>(
+            Resource.Id.exo_playback_speed
+        )!;
         var exoScreen = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_screen)!;
         var exoSubtitle = Platform.CurrentActivity.FindViewById(Resource.Id.exo_subtitles)!;
         var exoSubtitleBtn = Platform.CurrentActivity.FindViewById(Resource.Id.exo_sub)!;
@@ -315,7 +344,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
         if (Build.VERSION.SdkInt >= BuildVersionCodes.N)
         {
-            IsPipEnabled = Platform.CurrentActivity.PackageManager!.HasSystemFeature(PackageManager.FeaturePictureInPicture);
+            IsPipEnabled = Platform.CurrentActivity.PackageManager!.HasSystemFeature(
+                PackageManager.FeaturePictureInPicture
+            );
 
             if (IsPipEnabled)
             {
@@ -387,25 +418,32 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
         if (!_playerSettings.DoubleTap)
         {
-            var fastForwardCont = Platform.CurrentActivity.FindViewById<CardView>(Resource.Id.exo_fast_forward_button_cont)!;
-            var fastRewindCont = Platform.CurrentActivity.FindViewById<CardView>(Resource.Id.exo_fast_rewind_button_cont)!;
-            var fastForwardButton = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_fast_forward_button)!;
-            var rewindButton = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_fast_rewind_button)!;
+            var fastForwardCont = Platform.CurrentActivity.FindViewById<CardView>(
+                Resource.Id.exo_fast_forward_button_cont
+            )!;
+            var fastRewindCont = Platform.CurrentActivity.FindViewById<CardView>(
+                Resource.Id.exo_fast_rewind_button_cont
+            )!;
+            var fastForwardButton = Platform.CurrentActivity.FindViewById<ImageButton>(
+                Resource.Id.exo_fast_forward_button
+            )!;
+            var rewindButton = Platform.CurrentActivity.FindViewById<ImageButton>(
+                Resource.Id.exo_fast_rewind_button
+            )!;
 
             fastForwardCont.Visibility = ViewStates.Visible;
             fastRewindCont.Visibility = ViewStates.Visible;
 
-            fastForwardButton.Click += (s, e)
-                => exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime);
+            fastForwardButton.Click += (s, e) =>
+                exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime);
 
-            rewindButton.Click += (s, e)
-                => exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime);
+            rewindButton.Click += (s, e) =>
+                exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime);
         }
 
         //playerView.ControllerShowTimeoutMs = 5000;
 
-        playerView.FindViewById(Resource.Id.exo_full_area)!.Click += (s, e)
-            => HandleController();
+        playerView.FindViewById(Resource.Id.exo_full_area)!.Click += (s, e) => HandleController();
 
         // Screen Gestures
         if (_playerSettings.DoubleTap)
@@ -421,8 +459,13 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
                     HandleController();
             };
 
-            var fastRewindDetector = new GestureDetector(Platform.CurrentActivity, fastRewindGestureListener);
-            var rewindArea = Platform.CurrentActivity.FindViewById<View>(Resource.Id.exo_rewind_area)!;
+            var fastRewindDetector = new GestureDetector(
+                Platform.CurrentActivity,
+                fastRewindGestureListener
+            );
+            var rewindArea = Platform.CurrentActivity.FindViewById<View>(
+                Resource.Id.exo_rewind_area
+            )!;
             rewindArea.Clickable = true;
             rewindArea.Touch += (_, e) =>
             {
@@ -442,8 +485,13 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
                     HandleController();
             };
 
-            var fastForwardDetector = new GestureDetector(Platform.CurrentActivity, fastForwardGestureListener);
-            var forwardArea = Platform.CurrentActivity.FindViewById<View>(Resource.Id.exo_forward_area)!;
+            var fastForwardDetector = new GestureDetector(
+                Platform.CurrentActivity,
+                fastForwardGestureListener
+            );
+            var forwardArea = Platform.CurrentActivity.FindViewById<View>(
+                Resource.Id.exo_forward_area
+            )!;
             forwardArea.Clickable = true;
             forwardArea.Touch += (s, e) =>
             {
@@ -460,22 +508,25 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
             if (exoPlayer.IsPlaying)
             {
-                Glide.With(Platform.CurrentActivity).Load(Resource.Drawable.anim_play_to_pause)
+                Glide
+                    .With(Platform.CurrentActivity)
+                    .Load(Resource.Drawable.anim_play_to_pause)
                     .Into(exoplay);
 
                 exoPlayer.Pause();
             }
             else
             {
-                Glide.With(Platform.CurrentActivity).Load(Resource.Drawable.anim_pause_to_play)
+                Glide
+                    .With(Platform.CurrentActivity)
+                    .Load(Resource.Drawable.anim_pause_to_play)
                     .Into(exoplay);
 
                 exoPlayer.Play();
             }
         };
 
-        DownloadButton.Click += async (_, _) =>
-        {
+        DownloadButton.Click += async (_, _) => {
             //if (Video is not null)
             //    await new EpisodeDownloader().EnqueueAsync(Anime, Episode, Video);
         };
@@ -485,51 +536,94 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
     private void HandleController()
     {
-        if (Build.VERSION.SdkInt >= BuildVersionCodes.N && Platform.CurrentActivity.IsInPictureInPictureMode)
+        if (
+            Build.VERSION.SdkInt >= BuildVersionCodes.N
+            && Platform.CurrentActivity.IsInPictureInPictureMode
+        )
             return;
 
-        var overshoot = AnimationUtils.LoadInterpolator(Platform.CurrentActivity, Resource.Animation.over_shoot);
+        var overshoot = AnimationUtils.LoadInterpolator(
+            Platform.CurrentActivity,
+            Resource.Animation.over_shoot
+        );
 
         if (playerView.IsControllerFullyVisible)
         {
-            ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_controller), "alpha", 1f, 0f)!
-                .SetDuration(_playerSettings.ControllerDuration).Start();
+            ObjectAnimator
+                .OfFloat(playerView.FindViewById(Resource.Id.exo_controller), "alpha", 1f, 0f)!
+                .SetDuration(_playerSettings.ControllerDuration)
+                .Start();
 
-            var animator1 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_bottom_cont), "translationY", 0f, 128f)!;
+            var animator1 = ObjectAnimator.OfFloat(
+                playerView.FindViewById(Resource.Id.exo_bottom_cont),
+                "translationY",
+                0f,
+                128f
+            )!;
             animator1.SetInterpolator(overshoot);
             animator1.SetDuration(_playerSettings.ControllerDuration);
             animator1.Start();
 
-            var animator2 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_timeline_cont), "translationY", 0f, 128f)!;
+            var animator2 = ObjectAnimator.OfFloat(
+                playerView.FindViewById(Resource.Id.exo_timeline_cont),
+                "translationY",
+                0f,
+                128f
+            )!;
             animator2.SetInterpolator(overshoot);
             animator2.SetDuration(_playerSettings.ControllerDuration);
             animator2.Start();
 
-            var animator3 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_top_cont), "translationY", 0f, -128f)!;
+            var animator3 = ObjectAnimator.OfFloat(
+                playerView.FindViewById(Resource.Id.exo_top_cont),
+                "translationY",
+                0f,
+                -128f
+            )!;
             animator3.SetInterpolator(overshoot);
             animator3.SetDuration(_playerSettings.ControllerDuration);
             animator3.Start();
 
-            playerView.PostDelayed(() => playerView.HideController(), _playerSettings.ControllerDuration);
+            playerView.PostDelayed(
+                () => playerView.HideController(),
+                _playerSettings.ControllerDuration
+            );
         }
         else
         {
             playerView.ShowController();
 
-            ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_controller), "alpha", 0f, 1f)!
-                .SetDuration(_playerSettings.ControllerDuration).Start();
+            ObjectAnimator
+                .OfFloat(playerView.FindViewById(Resource.Id.exo_controller), "alpha", 0f, 1f)!
+                .SetDuration(_playerSettings.ControllerDuration)
+                .Start();
 
-            var animator1 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_bottom_cont), "translationY", 128f, 0f)!;
+            var animator1 = ObjectAnimator.OfFloat(
+                playerView.FindViewById(Resource.Id.exo_bottom_cont),
+                "translationY",
+                128f,
+                0f
+            )!;
             animator1.SetInterpolator(overshoot);
             animator1.SetDuration(_playerSettings.ControllerDuration);
             animator1.Start();
 
-            var animator2 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_timeline_cont), "translationY", 128f, 0f)!;
+            var animator2 = ObjectAnimator.OfFloat(
+                playerView.FindViewById(Resource.Id.exo_timeline_cont),
+                "translationY",
+                128f,
+                0f
+            )!;
             animator2.SetInterpolator(overshoot);
             animator2.SetDuration(_playerSettings.ControllerDuration);
             animator2.Start();
 
-            var animator3 = ObjectAnimator.OfFloat(playerView.FindViewById(Resource.Id.exo_top_cont), "translationY", -128f, 0f)!;
+            var animator3 = ObjectAnimator.OfFloat(
+                playerView.FindViewById(Resource.Id.exo_top_cont),
+                "translationY",
+                -128f,
+                0f
+            )!;
             animator3.SetInterpolator(overshoot);
             animator3.SetDuration(_playerSettings.ControllerDuration);
             animator3.Start();
@@ -605,6 +699,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     private System.Timers.Timer seekTimerR = new();
     private long seekTimesF;
     private long seekTimesR;
+
     public void Seek(bool forward, MotionEvent? @event = null)
     {
         var rewindText = playerView.FindViewById<TextView>(Resource.Id.exo_fast_rewind_anim)!;
@@ -619,7 +714,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         {
             forwardText.Text = $"+{(_playerSettings.SeekTime / 1000) * ++seekTimesF}";
 
-            _handler.Post(() => exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime));
+            _handler.Post(
+                () => exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime)
+            );
 
             card = fastForwardCard;
             text = forwardText;
@@ -628,7 +725,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         {
             rewindText.Text = $"-{(_playerSettings.SeekTime / 1000) * ++seekTimesR}";
 
-            _handler.Post(() => exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime));
+            _handler.Post(
+                () => exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime)
+            );
 
             card = fastRewindCard;
             text = rewindText;
@@ -641,8 +740,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         {
             showTextAnim!.Start();
 
-            if (text.GetCompoundDrawables()?[1] is IAnimatable animatable
-                && !animatable.IsRunning)
+            if (text.GetCompoundDrawables()?[1] is IAnimatable animatable && !animatable.IsRunning)
             {
                 animatable.Start();
             }
@@ -675,11 +773,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             IsSeekingForward = true;
 
             seekTimerF.Stop();
-            seekTimerF = new()
-            {
-                Interval = 850,
-                AutoReset = false
-            };
+            seekTimerF = new() { Interval = 850, AutoReset = false };
 
             seekTimerF.Elapsed += (s, e) =>
             {
@@ -697,11 +791,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             IsSeekingBackward = true;
 
             seekTimerR.Stop();
-            seekTimerR = new()
-            {
-                Interval = 850,
-                AutoReset = false
-            };
+            seekTimerR = new() { Interval = 850, AutoReset = false };
 
             seekTimerR.Elapsed += (s, e) =>
             {
@@ -715,7 +805,6 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             seekTimerR.Start();
         }
     }
-
 
     ///// <summary>
     ///// Load next or previous episode
@@ -877,6 +966,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
     private List<Stamp> SkippedTimeStamps { get; set; } = new();
     private Stamp? CurrentTimeStamp { get; set; }
+
     private async void LoadTimeStamps()
     {
         if (IsTimeStampsLoaded)
@@ -886,11 +976,13 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
         try
         {
-            var searchResults = await client.SearchMediaAsync(new Jita.AniList.Parameters.SearchMediaFilter()
-            {
-                Type = Jita.AniList.Models.MediaType.Anime,
-                Query = Anime.Title
-            });
+            var searchResults = await client.SearchMediaAsync(
+                new Jita.AniList.Parameters.SearchMediaFilter()
+                {
+                    Type = Jita.AniList.Models.MediaType.Anime,
+                    Query = Anime.Title
+                }
+            );
             if (searchResults is null)
                 return;
 
@@ -904,7 +996,11 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
             var aniskipClient = new AniskipClient();
 
-            var timeStamps = await aniskipClient.GetAsync(media.MalId.Value, (int)Episode.Number, exoPlayer.Duration / 1000);
+            var timeStamps = await aniskipClient.GetAsync(
+                media.MalId.Value,
+                (int)Episode.Number,
+                exoPlayer.Duration / 1000
+            );
             if (timeStamps is null)
                 return;
 
@@ -940,8 +1036,11 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     private void UpdateTimeStamp()
     {
         var playerCurrentTime = exoPlayer.CurrentPosition / 1000;
-        CurrentTimeStamp = SkippedTimeStamps.Find(x => x.Interval.StartTime <= playerCurrentTime
-            && playerCurrentTime < x.Interval.EndTime - 1);
+        CurrentTimeStamp = SkippedTimeStamps.Find(
+            x =>
+                x.Interval.StartTime <= playerCurrentTime
+                && playerCurrentTime < x.Interval.EndTime - 1
+        );
 
         if (CurrentTimeStamp is not null)
         {
@@ -973,10 +1072,13 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             ExoSkip.Visibility = ViewStates.Visible;
         }
 
-        _handler.PostDelayed(() =>
-        {
-            UpdateTimeStamp();
-        }, 500);
+        _handler.PostDelayed(
+            () =>
+            {
+                UpdateTimeStamp();
+            },
+            500
+        );
     }
 
     // QUALITY SELECTOR
@@ -989,7 +1091,10 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
         var trackSelectionDialogBuilder = new TrackSelectionDialogBuilder(
             Platform.CurrentActivity,
-            new Java.Lang.String("Available Qualities"), exoPlayer, C.TrackTypeVideo);
+            new Java.Lang.String("Available Qualities"),
+            exoPlayer,
+            C.TrackTypeVideo
+        );
 
         //trackSelectionDialogBuilder.SetTheme(Resource.Style.DialogTheme);
         //trackSelectionDialogBuilder.SetTrackNameProvider(this);
@@ -1028,13 +1133,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     //    //});
     //}
 
-    public void OnMediaItemTransition(MediaItem? mediaItem, int reason)
-    {
-    }
+    public void OnMediaItemTransition(MediaItem? mediaItem, int reason) { }
 
-    public void OnAvailableCommandsChanged(Commands? availableCommands)
-    {
-    }
+    public void OnAvailableCommandsChanged(Commands? availableCommands) { }
 
     public void OnPlaybackStateChanged(int playbackState)
     {
@@ -1049,21 +1150,13 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         //    PlayNextEpisode();
     }
 
-    public void OnPlaybackSuppressionReasonChanged(int playbackSuppressionReason)
-    {
-    }
+    public void OnPlaybackSuppressionReasonChanged(int playbackSuppressionReason) { }
 
-    public void OnRepeatModeChanged(int repeatMode)
-    {
-    }
+    public void OnRepeatModeChanged(int repeatMode) { }
 
-    public void OnAudioSessionIdChanged(int audioSessionId)
-    {
-    }
+    public void OnAudioSessionIdChanged(int audioSessionId) { }
 
-    public void OnMediaMetadataChanged(MediaMetadata? mediaMetadata)
-    {
-    }
+    public void OnMediaMetadataChanged(MediaMetadata? mediaMetadata) { }
 
     public void OnTracksChanged(Tracks? tracks)
     {
@@ -1086,9 +1179,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         exoQuality.Click += (s, e) => ShowM3U8TrackSelector();
     }
 
-    public void OnTimelineChanged(Timeline? timeline, int reason)
-    {
-    }
+    public void OnTimelineChanged(Timeline? timeline, int reason) { }
 
     //public override void OnWindowFocusChanged(bool hasFocus)
     //{
@@ -1118,60 +1209,42 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
             if (isPlaying)
             {
-                Glide.With(Platform.CurrentActivity).Load(Resource.Drawable.anim_play_to_pause)
+                Glide
+                    .With(Platform.CurrentActivity)
+                    .Load(Resource.Drawable.anim_play_to_pause)
                     .Into(exoplay);
             }
             else
             {
-                Glide.With(Platform.CurrentActivity).Load(Resource.Drawable.anim_pause_to_play)
+                Glide
+                    .With(Platform.CurrentActivity)
+                    .Load(Resource.Drawable.anim_pause_to_play)
                     .Into(exoplay);
             }
         }
     }
 
-    public void OnLoadingChanged(bool isLoading)
-    {
-    }
+    public void OnLoadingChanged(bool isLoading) { }
 
-    public void OnPlaybackParametersChanged(PlaybackParameters? playbackParameters)
-    {
-    }
+    public void OnPlaybackParametersChanged(PlaybackParameters? playbackParameters) { }
 
-    public void OnPositionDiscontinuity(int reason)
-    {
-    }
+    public void OnPositionDiscontinuity(int reason) { }
 
-    public void OnSeekProcessed()
-    {
-    }
+    public void OnSeekProcessed() { }
 
-    public void OnShuffleModeEnabledChanged(bool shuffleModeEnabled)
-    {
-    }
+    public void OnShuffleModeEnabledChanged(bool shuffleModeEnabled) { }
 
-    public void OnPlayerStateChanged(bool playWhenReady, int playbackState)
-    {
-    }
+    public void OnPlayerStateChanged(bool playWhenReady, int playbackState) { }
 
-    public void OnPlayWhenReadyChanged(bool playWhenReady, int reason)
-    {
-    }
+    public void OnPlayWhenReadyChanged(bool playWhenReady, int reason) { }
 
-    public void OnEvents(IPlayer? player, Events? events)
-    {
-    }
+    public void OnEvents(IPlayer? player, Events? events) { }
 
-    public void OnSurfaceSizeChanged(int width, int height)
-    {
-    }
+    public void OnSurfaceSizeChanged(int width, int height) { }
 
-    public void OnIsLoadingChanged(bool isLoading)
-    {
-    }
+    public void OnIsLoadingChanged(bool isLoading) { }
 
-    public void OnVideoSizeChanged(VideoSize? videoSize)
-    {
-    }
+    public void OnVideoSizeChanged(VideoSize? videoSize) { }
 
     public void OnRenderedFirstFrame()
     {
@@ -1203,45 +1276,25 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         }
     }
 
-    public void OnDeviceVolumeChanged(int volume, bool muted)
-    {
-    }
+    public void OnDeviceVolumeChanged(int volume, bool muted) { }
 
-    public void OnAudioAttributesChanged(AudioAttributes? audioAttributes)
-    {
-    }
+    public void OnAudioAttributesChanged(AudioAttributes? audioAttributes) { }
 
-    public void OnCues(CueGroup? cueGroup)
-    {
-    }
+    public void OnCues(CueGroup? cueGroup) { }
 
-    public void OnDeviceInfoChanged(DeviceInfo? deviceInfo)
-    {
-    }
+    public void OnDeviceInfoChanged(DeviceInfo? deviceInfo) { }
 
-    public void OnMaxSeekToPreviousPositionChanged(long maxSeekToPreviousPositionMs)
-    {
-    }
+    public void OnMaxSeekToPreviousPositionChanged(long maxSeekToPreviousPositionMs) { }
 
-    public void OnMetadata(Metadata? metadata)
-    {
-    }
+    public void OnMetadata(Metadata? metadata) { }
 
-    public void OnPlaylistMetadataChanged(MediaMetadata? mediaMetadata)
-    {
-    }
+    public void OnPlaylistMetadataChanged(MediaMetadata? mediaMetadata) { }
 
-    public void OnSeekBackIncrementChanged(long seekBackIncrementMs)
-    {
-    }
+    public void OnSeekBackIncrementChanged(long seekBackIncrementMs) { }
 
-    public void OnSeekForwardIncrementChanged(long seekForwardIncrementMs)
-    {
-    }
+    public void OnSeekForwardIncrementChanged(long seekForwardIncrementMs) { }
 
-    public void OnSkipSilenceEnabledChanged(bool skipSilenceEnabled)
-    {
-    }
+    public void OnSkipSilenceEnabledChanged(bool skipSilenceEnabled) { }
 
     public void OnVolumeChanged(float volume)
     {
@@ -1258,9 +1311,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         return null;
     }
 
-    public void OnTrackSelectionParametersChanged(TrackSelectionParameters? parameters)
-    {
-    }
+    public void OnTrackSelectionParametersChanged(TrackSelectionParameters? parameters) { }
 
 #pragma warning disable CS0618, CS0672, CA1422
     private void EnterPipMode()
@@ -1269,9 +1320,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
-                Platform.CurrentActivity.EnterPictureInPictureMode(new PictureInPictureParams.Builder()
-                    .SetAspectRatio(AspectRatio)!
-                    .Build()!);
+                Platform.CurrentActivity.EnterPictureInPictureMode(
+                    new PictureInPictureParams.Builder().SetAspectRatio(AspectRatio)!.Build()!
+                );
             }
             else if (Build.VERSION.SdkInt >= BuildVersionCodes.N)
             {

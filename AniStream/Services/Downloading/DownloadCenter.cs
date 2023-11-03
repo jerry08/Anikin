@@ -6,12 +6,13 @@ namespace AniStream.Services;
 
 public class DownloadCenter
 {
-    private static readonly Lazy<IDownloadService> implementation = new(CreateDownloadService, LazyThreadSafetyMode.PublicationOnly);
+    private static readonly Lazy<IDownloadService> implementation =
+        new(CreateDownloadService, LazyThreadSafetyMode.PublicationOnly);
 
     private static IDownloadService CreateDownloadService()
     {
 #if NETSTANDARD2_0
-            return null;
+        return null;
 #else
         return new DownloadServiceImpl();
 #endif

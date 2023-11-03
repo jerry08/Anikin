@@ -64,10 +64,6 @@ public partial class VideoPlayerViewModel : BaseViewModel
         IsBusy = true;
 
         _playerSettings.Load();
-
-#if ANDROID
-        //Setup();
-#endif
     }
 
     public VideoPlayerViewModel(IAnimeInfo anime, Episode episode, Media media)
@@ -133,7 +129,12 @@ public partial class VideoPlayerViewModel : BaseViewModel
         var speeds = _playerSettings.GetSpeeds();
         var speedsName = speeds.Select(x => $"{x}x").ToList();
 
-        var speedName = await Shell.Current.DisplayActionSheet("Playback Speed", "", "", speedsName.ToArray());
+        var speedName = await Shell.Current.DisplayActionSheet(
+            "Playback Speed",
+            "",
+            "",
+            speedsName.ToArray()
+        );
         if (string.IsNullOrWhiteSpace(speedName))
             return;
 

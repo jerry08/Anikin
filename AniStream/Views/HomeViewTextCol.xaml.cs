@@ -7,7 +7,8 @@ public partial class HomeViewTextCol
 {
     double width2;
 
-    public HomeViewTextCol(double width) : this()
+    public HomeViewTextCol(double width)
+        : this()
     {
         width2 = width;
     }
@@ -20,7 +21,10 @@ public partial class HomeViewTextCol
 
         //(AlbumCollectionView.ItemsLayout as GridItemsLayout)!.Span = columns;
 
-        AlbumCollectionView.ItemsLayout = new GridItemsLayout(columns, ItemsLayoutOrientation.Vertical);
+        AlbumCollectionView.ItemsLayout = new GridItemsLayout(
+            columns,
+            ItemsLayoutOrientation.Vertical
+        );
 
         (this as IView).InvalidateArrange();
 

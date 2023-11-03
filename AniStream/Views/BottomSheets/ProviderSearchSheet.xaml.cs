@@ -27,20 +27,28 @@ public partial class ProviderSearchSheet
             SearchEntry.Completed -= SearchEntry_Completed;
         };
 
-        var statusBarHeight = ApplicationEx.GetStatusBarHeight() / DeviceDisplay.MainDisplayInfo.Density;
+        var statusBarHeight =
+            ApplicationEx.GetStatusBarHeight() / DeviceDisplay.MainDisplayInfo.Density;
         MainGrid.Margin = new Thickness(5, statusBarHeight + 10, 5, 0);
 
         SizeChanged += (_, _) =>
         {
             //var columns = 1 + (int)(Width / ItemWidth);
-            var columns = 1 + (int)((MainGrid.Width - (MainGrid.Margin.Left + MainGrid.Margin.Right)) / ItemWidth);
+            var columns =
+                1
+                + (int)(
+                    (MainGrid.Width - (MainGrid.Margin.Left + MainGrid.Margin.Right)) / ItemWidth
+                );
 
             // Fix Maui bug where margins are reducing view when rotating device from
             // Portrait to Landscape then back to Portrait
             if (LastDisplayOrientation != DeviceDisplay.Current.MainDisplayInfo.Orientation)
             {
                 LastDisplayOrientation = DeviceDisplay.Current.MainDisplayInfo.Orientation;
-                SearchCollectionView.ItemsLayout = new GridItemsLayout(columns, ItemsLayoutOrientation.Vertical);
+                SearchCollectionView.ItemsLayout = new GridItemsLayout(
+                    columns,
+                    ItemsLayoutOrientation.Vertical
+                );
             }
             else
             {

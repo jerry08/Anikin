@@ -16,9 +16,7 @@ public class ObservableRangeCollection<T> : ObservableCollection<T>
     /// Initializes a new instance of the System.Collections.ObjectModel.ObservableCollection(Of T) class.
     /// </summary>
     public ObservableRangeCollection()
-        : base()
-    {
-    }
+        : base() { }
 
     /// <summary>
     /// Initializes a new instance of the System.Collections.ObjectModel.ObservableCollection(Of T) class that contains elements copied from the specified collection.
@@ -26,17 +24,24 @@ public class ObservableRangeCollection<T> : ObservableCollection<T>
     /// <param name="collection">collection: The collection from which the elements are copied.</param>
     /// <exception cref="ArgumentNullException">The collection parameter cannot be null.</exception>
     public ObservableRangeCollection(IEnumerable<T> collection)
-        : base(collection)
-    {
-    }
+        : base(collection) { }
 
     /// <summary>
     /// Adds the elements of the specified collection to the end of the ObservableCollection(Of T).
     /// </summary>
-    public void AddRange(IEnumerable<T> collection, NotifyCollectionChangedAction notificationMode = NotifyCollectionChangedAction.Add)
+    public void AddRange(
+        IEnumerable<T> collection,
+        NotifyCollectionChangedAction notificationMode = NotifyCollectionChangedAction.Add
+    )
     {
-        if (notificationMode != NotifyCollectionChangedAction.Add && notificationMode != NotifyCollectionChangedAction.Reset)
-            throw new ArgumentException("Mode must be either Add or Reset for AddRange.", nameof(notificationMode));
+        if (
+            notificationMode != NotifyCollectionChangedAction.Add
+            && notificationMode != NotifyCollectionChangedAction.Reset
+        )
+            throw new ArgumentException(
+                "Mode must be either Add or Reset for AddRange.",
+                nameof(notificationMode)
+            );
         if (collection == null)
             throw new ArgumentNullException(nameof(collection));
 
@@ -61,16 +66,26 @@ public class ObservableRangeCollection<T> : ObservableCollection<T>
         RaiseChangeNotificationEvents(
             action: NotifyCollectionChangedAction.Add,
             changedItems: changedItems,
-            startingIndex: startIndex);
+            startingIndex: startIndex
+        );
     }
 
     /// <summary>
     /// Removes the first occurence of each item in the specified collection from ObservableCollection(Of T). NOTE: with notificationMode = Remove, removed items starting index is not set because items are not guaranteed to be consecutive.
     /// </summary>
-    public void RemoveRange(IEnumerable<T> collection, NotifyCollectionChangedAction notificationMode = NotifyCollectionChangedAction.Reset)
+    public void RemoveRange(
+        IEnumerable<T> collection,
+        NotifyCollectionChangedAction notificationMode = NotifyCollectionChangedAction.Reset
+    )
     {
-        if (notificationMode != NotifyCollectionChangedAction.Remove && notificationMode != NotifyCollectionChangedAction.Reset)
-            throw new ArgumentException("Mode must be either Remove or Reset for RemoveRange.", nameof(notificationMode));
+        if (
+            notificationMode != NotifyCollectionChangedAction.Remove
+            && notificationMode != NotifyCollectionChangedAction.Reset
+        )
+            throw new ArgumentException(
+                "Mode must be either Remove or Reset for RemoveRange.",
+                nameof(notificationMode)
+            );
         if (collection == null)
             throw new ArgumentNullException(nameof(collection));
 
@@ -106,7 +121,8 @@ public class ObservableRangeCollection<T> : ObservableCollection<T>
 
         RaiseChangeNotificationEvents(
             action: NotifyCollectionChangedAction.Remove,
-            changedItems: changedItems);
+            changedItems: changedItems
+        );
     }
 
     /// <summary>
@@ -149,7 +165,11 @@ public class ObservableRangeCollection<T> : ObservableCollection<T>
         return itemAdded;
     }
 
-    private void RaiseChangeNotificationEvents(NotifyCollectionChangedAction action, List<T>? changedItems = null, int startingIndex = -1)
+    private void RaiseChangeNotificationEvents(
+        NotifyCollectionChangedAction action,
+        List<T>? changedItems = null,
+        int startingIndex = -1
+    )
     {
         OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
         OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
@@ -157,6 +177,12 @@ public class ObservableRangeCollection<T> : ObservableCollection<T>
         if (changedItems is null)
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(action));
         else
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, changedItems: changedItems, startingIndex: startingIndex));
+            OnCollectionChanged(
+                new NotifyCollectionChangedEventArgs(
+                    action,
+                    changedItems: changedItems,
+                    startingIndex: startingIndex
+                )
+            );
     }
 }

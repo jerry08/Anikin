@@ -93,7 +93,7 @@ public partial class SearchViewModel : CollectionViewModel<Jita.AniList.Models.M
         //
         //            }
         //        }
-        //        
+        //
         //    });
         //}
         //
@@ -130,18 +130,14 @@ public partial class SearchViewModel : CollectionViewModel<Jita.AniList.Models.M
 
             PageIndex++;
 
-            var data = result.Data.Where(x => x.CountryOfOrigin == "JP")
-                .ToList();
+            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
 
             Push(data);
             //Offset += data.Count;
         }
         catch (Exception ex)
         {
-            if (ex is OperationCanceledException)
-            {
-
-            }
+            if (ex is OperationCanceledException) { }
             //else if (ex is WebSocketException webSocketException)
             //else if (ex is WebException webException)
             //{

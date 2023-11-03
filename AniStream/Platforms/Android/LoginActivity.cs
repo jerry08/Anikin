@@ -15,12 +15,16 @@ namespace AniStream;
     DataSchemes = new[] { "anistream" },
     //DataScheme = "anistream",
     DataHosts = new[] { "anilist" }
-    //DataHost = "anilist"
-    //DataPathPatterns = new[] { "/.*/.*" },
-    //DataPathPrefix = "/anime/"
+//DataHost = "anilist"
+//DataPathPatterns = new[] { "/.*/.*" },
+//DataPathPrefix = "/anime/"
 )]
-
-[Activity(LaunchMode = LaunchMode.SingleTask, MainLauncher = false, Exported = true, ExcludeFromRecents = true)]
+[Activity(
+    LaunchMode = LaunchMode.SingleTask,
+    MainLauncher = false,
+    Exported = true,
+    ExcludeFromRecents = true
+)]
 public class LoginActivity : AppCompatActivity
 {
     private readonly SettingsService _settingsService = new();

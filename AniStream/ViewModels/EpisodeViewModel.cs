@@ -235,10 +235,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     [RelayCommand]
     private async Task ShowCoverImage()
     {
-        var sheet = new CoverImageSheet()
-        {
-            BindingContext = this
-        };
+        var sheet = new CoverImageSheet() { BindingContext = this };
 
         await sheet.ShowAsync();
     }
@@ -299,7 +296,10 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     {
         try
         {
-            var isFavorite = await _anilistClient.ToggleMediaFavoriteAsync(Entity.Id, MediaType.Anime);
+            var isFavorite = await _anilistClient.ToggleMediaFavoriteAsync(
+                Entity.Id,
+                MediaType.Anime
+            );
             if (isFavorite != IsFavorite)
             {
                 await ToggleFavoriteAsync();

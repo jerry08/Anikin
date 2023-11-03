@@ -24,7 +24,5 @@ public partial class SettingsService : SettingsBase, INotifyPropertyChanged
     public bool EpisodesDescending { get; set; } = true;
 
     public SettingsService()
-        : base(Path.Combine(FileSystem.AppDataDirectory, "settings.json"))
-    {
-    }
+        : base(Path.Combine(FileSystem.AppDataDirectory, "settings.json")) { }
 }

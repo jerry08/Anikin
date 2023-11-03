@@ -2,7 +2,6 @@
 using System.Net.Http.Headers;
 using AniStream.Services;
 using AniStream.Services.AlertDialog;
-using AniStream.Utils;
 using AniStream.ViewModels;
 using AniStream.Views;
 using Berry.Maui;
@@ -12,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
-using Microsoft.Maui.LifecycleEvents;
 using Sharpnado.Tabs;
 using Woka;
 
@@ -30,9 +28,7 @@ public static class MauiProgram
             .UseBerryMediaElement()
             .ConfigureWorkarounds()
             .UseSharpnadoTabs(loggerEnable: true, debugLogEnable: true)
-            .ConfigureEffects(e =>
-            {
-            })
+            .ConfigureEffects(e => { })
             .ConfigureMauiHandlers(handlers =>
             {
 #if WINDOWS
@@ -61,25 +57,6 @@ public static class MauiProgram
                 //fonts.AddFont("MaterialIconsOutlined-Regular.otf", "Material");
                 fonts.AddFont("MaterialIconsRound-Regular.otf", "Material");
                 fonts.AddFont("fa-solid-900.ttf", "FaSolid");
-            })
-            .ConfigureLifecycleEvents(events =>
-            {
-#if ANDROID
-                events.AddAndroid(android => android
-                    .OnCreate((activity, bundle) =>
-                    {
-                        var manager = new StatusBarStyleManager();
-                        manager.SetDefault();
-                    })
-                );
-#elif IOS
-                events.AddiOS(ios => ios
-                    .OnActivated((app) =>
-                    {
-                        var manager = new StatusBarStyleManager();
-                        manager.SetDefault();
-                    }));
-#endif
             });
 
 #if DEBUG
@@ -117,10 +94,7 @@ public static class MauiProgram
 
         var token = settingsService.AnilistAccessToken;
         var http = new HttpClient();
-        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            token
-        );
+        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         return new AniClient(http);
     }

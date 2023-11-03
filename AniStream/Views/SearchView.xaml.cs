@@ -35,8 +35,11 @@ public partial class SearchView
         //    CornerRadius = 20
         //}, anchor: test24).Show();
 
-        var statusBarHeight = ApplicationEx.GetStatusBarHeight() / DeviceDisplay.MainDisplayInfo.Density;
-        var navigationBarHeight = (int)(ApplicationEx.GetNavigationBarHeight() / DeviceDisplay.MainDisplayInfo.Density);
+        var statusBarHeight =
+            ApplicationEx.GetStatusBarHeight() / DeviceDisplay.MainDisplayInfo.Density;
+        var navigationBarHeight = (int)(
+            ApplicationEx.GetNavigationBarHeight() / DeviceDisplay.MainDisplayInfo.Density
+        );
         //MainGrid.Margin = new Thickness(5, statusBarHeight + 10, 5, navigationBarHeight + 10);
 
         if (statusBarHeight > 0)
@@ -55,7 +58,11 @@ public partial class SearchView
         SizeChanged += (s, e) =>
         {
             //var columns = 1 + (int)(Width / ItemWidth);
-            var columns = 1 + (int)((MainGrid.Width - (MainGrid.Margin.Left + MainGrid.Margin.Right)) / ItemWidth);
+            var columns =
+                1
+                + (int)(
+                    (MainGrid.Width - (MainGrid.Margin.Left + MainGrid.Margin.Right)) / ItemWidth
+                );
 
             /*//test2.Children.Clear();
             //test2.Children.Add(new HomeViewTextCol(Width));
@@ -78,7 +85,10 @@ public partial class SearchView
             if (LastDisplayOrientation != DeviceDisplay.Current.MainDisplayInfo.Orientation)
             {
                 LastDisplayOrientation = DeviceDisplay.Current.MainDisplayInfo.Orientation;
-                SearchCollectionView.ItemsLayout = new GridItemsLayout(columns, ItemsLayoutOrientation.Vertical);
+                SearchCollectionView.ItemsLayout = new GridItemsLayout(
+                    columns,
+                    ItemsLayoutOrientation.Vertical
+                );
             }
             else
             {
@@ -99,6 +109,7 @@ public partial class SearchView
     }
 
     private Timer Timer = new();
+
     private void SearchEntry_TextChanged(object? sender, TextChangedEventArgs e)
     {
         if (e.OldTextValue != e.NewTextValue)
