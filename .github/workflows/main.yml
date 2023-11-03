@@ -83,6 +83,12 @@ jobs:
           VERSION="$(echo $TAG_NAME | tr -d v)"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "PACKAGE_NAME=${{ github.event.repository.name }}-$TAG_NAME.apk" >> $GITHUB_ENV
+          Prerelease_Param=""
+          if [[ $TAG_NAME == *"-pre"* || $TAG_NAME == *"-beta"* || $TAG_NAME == *"-alpha"* ]]; then
+            Prerelease_Param="--prerelease"
+          fi
+          echo $Prerelease_Param
+          echo "Prerelease_Param=$Prerelease_Param" >> $GITHUB_ENV
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -114,6 +120,17 @@ jobs:
           --title "${{ env.VERSION }}"
           --notes "${{ env.TAG_MESSAGE2 }}"
           --verify-tag
+          ${{ env.Prerelease_Param }}
+
+      - name: Delete Old Pre-Releases
+        id: delete-pre-releases
+        uses: sgpublic/delete-release-action@master
+        with:
+          pre-release-drop: true
+          pre-release-keep-count: 3
+          pre-release-drop-tag: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   notify:
     needs: deploy
