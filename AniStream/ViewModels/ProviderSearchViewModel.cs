@@ -5,7 +5,7 @@ using AniStream.ViewModels.Framework;
 using CommunityToolkit.Mvvm.Input;
 using Juro.Core.Models.Anime;
 using Juro.Core.Providers;
-using The49.Maui.BottomSheet;
+using Berry.Maui.Controls;
 
 namespace AniStream.ViewModels;
 

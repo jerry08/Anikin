@@ -58,7 +58,7 @@ public partial class ProviderSearchSheet
 
     private void SearchEntry_Focused(object? sender, FocusEventArgs e)
     {
-        SelectedDetent = Detents[1];
+        SelectedDetent = Detents[2];
 
         if (IsEntryCompleted)
         {
@@ -77,7 +77,7 @@ public partial class ProviderSearchSheet
         //        SearchEntry.CursorPosition = 0;
         //        SearchEntry.SelectionLength = (SearchEntry.Text?.Length) ?? 0;
         //
-        //        SelectedDetent = Detents[1];
+        //        SelectedDetent = Detents[2];
         //    }
         //});
 

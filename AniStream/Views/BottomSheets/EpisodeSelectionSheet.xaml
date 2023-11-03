@@ -8,7 +8,6 @@
     xmlns:local="clr-namespace:AniStream.Views.BottomSheets"
     xmlns:materialDesign="clr-namespace:MaterialDesign"
     xmlns:models="clr-namespace:Juro.Core.Models.Videos;assembly=Juro.Core"
-    xmlns:the49="https://schemas.the49.com/dotnet/2023/maui"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:viewModels="clr-namespace:AniStream.ViewModels"
     xmlns:vmodels="clr-namespace:Juro.Core.Models.Videos;assembly=Juro.Core"
@@ -18,16 +17,14 @@
     BackgroundColor="{StaticResource Gray900}"
     HandleColor="{StaticResource Gray800}"
     HasBackdrop="True"
-    HasHandle="True">
-    <the49:BottomSheet.Detents>
-        <the49:DetentsCollection>
-            <the49:RatioDetent Ratio="0.35" />
-            <!--<the49:RatioDetent Ratio="0.85" />-->
-            <!--<the49:RatioDetent Ratio="1" />-->
-            <controls:CustomRatioDetent Ratio="0.85" />
-            <!--<the49:FullscreenDetent />-->
-        </the49:DetentsCollection>
-    </the49:BottomSheet.Detents>
+    HasHandle="True"
+    UseNavigationBarArea="True">
+    <berry:BottomSheet.Detents>
+        <berry:DetentsCollection>
+            <berry:RatioDetent Ratio="0.35" />
+            <berry:RatioDetent Ratio="0.85" />
+        </berry:DetentsCollection>
+    </berry:BottomSheet.Detents>
     <ContentView.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -67,7 +64,10 @@
                 IsGrouped="True"
                 ItemsSource="{Binding Entities}">
                 <CollectionView.ItemsLayout>
-                    <LinearItemsLayout ItemSpacing="8" Orientation="Vertical" />
+                    <LinearItemsLayout
+                        ItemSpacing="8"
+                        Orientation="Vertical"
+                        SnapPointsType="None" />
                 </CollectionView.ItemsLayout>
                 <CollectionView.GroupHeaderTemplate>
                     <DataTemplate x:DataType="{x:Null}">

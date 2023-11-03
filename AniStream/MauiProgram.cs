@@ -14,7 +14,6 @@ using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using Microsoft.Maui.LifecycleEvents;
 using Sharpnado.Tabs;
-using The49.Maui.BottomSheet;
 using Woka;
 
 namespace AniStream;
@@ -27,11 +26,9 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
+            .UseBerry()
             .UseBerryMediaElement()
             .ConfigureWorkarounds()
-            .UseBerry()
-            .UseBottomSheet()
-            .UseInsets()
             .UseSharpnadoTabs(loggerEnable: true, debugLogEnable: true)
             .ConfigureEffects(e =>
             {

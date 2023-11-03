@@ -1,5 +1,5 @@
 ﻿using Microsoft.Maui.Controls;
-using The49.Maui.BottomSheet;
+using Berry.Maui.Controls;
 
 namespace AniStream.Views.BottomSheets;
 

@@ -6,7 +6,6 @@
     xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
     xmlns:local="clr-namespace:AniStream.Views.BottomSheets"
     xmlns:materialDesign="clr-namespace:MaterialDesign"
-    xmlns:the49="https://schemas.the49.com/dotnet/2023/maui"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:viewModels="clr-namespace:AniStream.ViewModels"
     xmlns:views="clr-namespace:AniStream.Views"
@@ -15,14 +14,14 @@
     x:DataType="viewModels:EpisodeViewModel"
     BackgroundColor="{StaticResource Gray900}"
     HasBackdrop="True"
-    HasHandle="True">
-    <the49:BottomSheet.Detents>
-        <the49:DetentsCollection>
-            <the49:RatioDetent Ratio="0.60" />
-            <!--<the49:RatioDetent Ratio="1" />-->
-            <the49:FullscreenDetent />
-        </the49:DetentsCollection>
-    </the49:BottomSheet.Detents>
+    HasHandle="True"
+    UseNavigationBarArea="False">
+    <berry:BottomSheet.Detents>
+        <berry:DetentsCollection>
+            <berry:ContentDetent />
+            <berry:RatioDetent IsDefault="True" Ratio="0.60" />
+        </berry:DetentsCollection>
+    </berry:BottomSheet.Detents>
 
     <ScrollView>
         <VerticalStackLayout x:Name="MainGrid">
@@ -35,13 +34,15 @@
                 Text="{Binding Entity.Title.PreferredTitle}"
                 VerticalTextAlignment="Center" />
 
+            <!--  Set image height so that bottom sheet can get correct height  -->
             <Image
                 Margin="10,0,10,0"
                 Aspect="AspectFill"
+                HeightRequest="620"
                 Source="{Binding Entity.Cover.ExtraLargeImageUrl}" />
 
             <Grid
-                Margin="20,10,20,10"
+                Margin="20,10,20,0"
                 ColumnDefinitions="*,*"
                 ColumnSpacing="10">
                 <Button

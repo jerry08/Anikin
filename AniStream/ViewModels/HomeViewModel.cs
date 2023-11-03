@@ -199,7 +199,8 @@ public partial class HomeViewModel : BaseViewModel
                 NotYetAired = false,
                 Sort = MediaScheduleSort.Time,
                 SortDescending = true
-            }
+            },
+            new AniPaginationOptions(1, 50)
         );
 
         var data = recentlyUpdateResult.Data
