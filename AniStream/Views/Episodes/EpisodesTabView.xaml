@@ -56,6 +56,93 @@
     </ContentView.Resources>
 
     <VerticalStackLayout>
+        <Grid Margin="20,0,10,0" ColumnDefinitions="*,auto">
+            <Label
+                Grid.Column="0"
+                Padding="0,5"
+                FontAttributes="Bold"
+                FontFamily="SoraBold"
+                FontSize="16"
+                HorizontalTextAlignment="Center"
+                Text="{Binding SearchingText}" />
+        </Grid>
+
+        <Grid
+            Margin="0,10,0,10"
+            Padding="20,0"
+            ColumnDefinitions="auto,*"
+            ColumnSpacing="10">
+            <Label
+                FontAttributes="Bold"
+                FontSize="15"
+                Text="Source:"
+                VerticalOptions="Center" />
+            <Border Grid.Column="1" Style="{StaticResource Entry.Border}">
+                <Picker
+                    x:Name="ProviderPicker"
+                    Margin="10,2"
+                    FontAttributes="Bold"
+                    FontSize="15"
+                    ItemsSource="{Binding ProviderNames}"
+                    SelectedIndex="{Binding ProviderIndex}"
+                    VerticalTextAlignment="Center">
+                    <Picker.Behaviors>
+                        <toolkit:EventToCommandBehavior
+                            Command="{Binding ProviderChangedCommand}"
+                            CommandParameter="{Binding Source={x:Reference ProviderPicker}, Path=SelectedIndex}"
+                            EventName="SelectedIndexChanged" />
+                    </Picker.Behaviors>
+                </Picker>
+            </Border>
+        </Grid>
+
+        <Grid Margin="20,0,10,0" ColumnDefinitions="auto,*">
+            <HorizontalStackLayout Grid.Column="0" Spacing="10">
+                <Switch
+                    IsToggled="{Binding IsDubSelected}"
+                    OnColor="{StaticResource Primary}"
+                    ThumbColor="{StaticResource Secondary}"
+                    VerticalOptions="Center" />
+                <Label
+                    FontAttributes="Bold"
+                    FontFamily="SoraBold"
+                    FontSize="16"
+                    Text="Subbed"
+                    VerticalOptions="Center">
+                    <Label.Triggers>
+                        <DataTrigger
+                            Binding="{Binding IsDubSelected}"
+                            TargetType="Label"
+                            Value="True">
+                            <Setter Property="Text" Value="Dubbed" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </HorizontalStackLayout>
+
+            <Border
+                Grid.Column="1"
+                HorizontalOptions="End"
+                StrokeThickness="0"
+                VerticalOptions="Center">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+                <Grid Padding="12,7">
+                    <Grid.Behaviors>
+                        <berry:TouchBehavior Command="{Binding BindingContext.ShowProviderSearchCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                    </Grid.Behaviors>
+                    <Label
+                        FontAttributes="Bold"
+                        FontFamily="SoraBold"
+                        FontSize="16"
+                        Text="Wrong Title?"
+                        TextColor="{StaticResource Secondary}"
+                        TextDecorations="Underline" />
+                </Grid>
+            </Border>
+        </Grid>
+
         <Grid Margin="10,2" ColumnDefinitions="*,auto,auto,auto">
             <Label
                 Margin="10,0"
@@ -169,22 +256,19 @@
             JustifyContent="Start"
             Wrap="Wrap" />-->
 
-        <Grid ColumnDefinitions="*,auto">
-            <Label
-                Grid.Column="0"
-                FontAttributes="Bold"
-                FontSize="12"
-                Text="{Binding SearchingText}" />
-
-            <Grid Grid.Column="1">
-                <Grid.Behaviors>
-                    <berry:TouchBehavior Command="{Binding BindingContext.ShowProviderSearchCommand, Source={x:Reference this}}" NativeAnimation="True" />
-                </Grid.Behaviors>
-                <Label
-                    FontAttributes="Bold"
-                    FontSize="12"
-                    Text="Wrong Title?" />
-            </Grid>
+        <Grid
+            HorizontalOptions="CenterAndExpand"
+            IsVisible="{Binding IsBusy}"
+            VerticalOptions="CenterAndExpand">
+            <ActivityIndicator
+                Margin="0,30,0,0"
+                HeightRequest="{OnPlatform Default=52,
+                                           WinUI=100}"
+                HorizontalOptions="CenterAndExpand"
+                IsRunning="True"
+                VerticalOptions="CenterAndExpand"
+                WidthRequest="{OnPlatform Default=52,
+                                          WinUI=100}" />
         </Grid>
 
         <CollectionView

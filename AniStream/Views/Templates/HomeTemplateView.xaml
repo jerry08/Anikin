@@ -9,6 +9,7 @@
     Margin="0"
     Padding="0"
     BackgroundColor="Transparent">
+    <!--  Source="https://media.tenor.com/l47dR9-6BGIAAAAd/demon-slayer-kimetsu-no-yaiba.gif"  -->
     <Image
         x:Name="img1"
         Grid.Row="0"
@@ -17,6 +18,6 @@
         HorizontalOptions="FillAndExpand"
         IsAnimationPlaying="False"
         IsVisible="True"
-        Source="https://media.tenor.com/l47dR9-6BGIAAAAd/demon-slayer-kimetsu-no-yaiba.gif"
+        Source="home_cover.gif"
         VerticalOptions="Start" />
 </Border>

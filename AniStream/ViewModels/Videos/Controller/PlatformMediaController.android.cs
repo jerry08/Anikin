@@ -406,7 +406,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             //selector = SelectorDialogFragment.NewInstance(Anime, Episode, this);
             //selector.Show(SupportFragmentManager, "dialog");
 
-            var sheet = new EpisodeSelectionSheet();
+            var sheet = new VideoSourceSheet();
             sheet.BindingContext = new VideoSourceViewModel(sheet, Anime, Episode, _media);
 
             await sheet.ShowAsync();

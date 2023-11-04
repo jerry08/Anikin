@@ -94,6 +94,14 @@
         <Setter Property="VerticalOptions" Value="Center" />
     </Style>
 
+    <Style x:Key="Entry.Border" TargetType="Border">
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="Stroke" Value="{StaticResource Secondary}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 8" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+    
     <Style x:Key="EntrySearchBorderStyle" TargetType="Border">
         <Setter Property="Padding" Value="20,0" />
         <Setter Property="Margin" Value="12,0" />

@@ -6,6 +6,7 @@ using AniStream.Utils;
 using AniStream.Utils.Extensions;
 using AniStream.ViewModels.Framework;
 using AniStream.Views;
+using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jita.AniList;
@@ -52,13 +53,13 @@ public partial class HomeViewModel : BaseViewModel
 
         try
         {
-            Load1();
-            Load2();
-            Load3();
-            Load4();
-            Load5();
-            Load6();
-            Load7();
+            LoadPopular();
+            LoadCurrentSeason();
+            LoadTrending();
+            LoadLastUpdated();
+            LoadNewSeason();
+            LoadFeminineMedia();
+            LoadMaleMedia();
             LoadTrashMedia();
 
             //var pages2 = await _anilistClient.GetTrendingMediaAsync();
@@ -123,114 +124,158 @@ public partial class HomeViewModel : BaseViewModel
         await Shell.Current.GoToAsync(nameof(SearchView));
     }
 
-    private async void Load7()
+    private async void LoadMaleMedia()
     {
-        var result = await _anilistClient.SearchMediaAsync(
-            new SearchMediaFilter()
-            {
-                Tags = new Dictionary<string, bool>() { ["Shounen"] = true },
-                Type = MediaType.Anime,
-                IsAdult = false,
-                Sort = MediaSort.Popularity
-            }
-        );
+        try
+        {
+            var result = await _anilistClient.SearchMediaAsync(
+                new SearchMediaFilter()
+                {
+                    Tags = new Dictionary<string, bool>() { ["Shounen"] = true },
+                    Type = MediaType.Anime,
+                    IsAdult = false,
+                    Sort = MediaSort.Popularity
+                }
+            );
 
-        var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
 
-        MaleMedia.Clear();
-        MaleMedia.Push(data);
+            MaleMedia.Clear();
+            MaleMedia.Push(data);
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make(ex.ToString()).Show();
+        }
     }
 
-    private async void Load6()
+    private async void LoadFeminineMedia()
     {
-        var result = await _anilistClient.SearchMediaAsync(
-            new SearchMediaFilter()
-            {
-                Tags = new Dictionary<string, bool>() { ["Shoujo"] = true },
-                Type = MediaType.Anime,
-                IsAdult = false,
-                Sort = MediaSort.Popularity
-            }
-        );
+        try
+        {
+            var result = await _anilistClient.SearchMediaAsync(
+                new SearchMediaFilter()
+                {
+                    Tags = new Dictionary<string, bool>() { ["Shoujo"] = true },
+                    Type = MediaType.Anime,
+                    IsAdult = false,
+                    Sort = MediaSort.Popularity
+                }
+            );
 
-        var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
 
-        FeminineMedia.Clear();
-        FeminineMedia.Push(data);
+            FeminineMedia.Clear();
+            FeminineMedia.Push(data);
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make(ex.ToString()).Show();
+        }
     }
 
     private async void LoadTrashMedia()
     {
-        var result = await _anilistClient.SearchMediaAsync(
-            new SearchMediaFilter()
-            {
-                Type = MediaType.Anime,
-                IsAdult = false,
-                Sort = MediaSort.Favorites,
-                SortDescending = false
-            }
-        );
+        try
+        {
+            var result = await _anilistClient.SearchMediaAsync(
+                new SearchMediaFilter()
+                {
+                    Type = MediaType.Anime,
+                    IsAdult = false,
+                    Sort = MediaSort.Favorites,
+                    SortDescending = false
+                }
+            );
 
-        var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
 
-        TrashMedia.Clear();
-        TrashMedia.Push(data);
+            TrashMedia.Clear();
+            TrashMedia.Push(data);
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make(ex.ToString()).Show();
+        }
     }
 
-    private async void Load5()
+    private async void LoadNewSeason()
     {
-        var result = await _anilistClient.SearchMediaAsync(
-            new SearchMediaFilter { Season = MediaSeason.Winter }
-        );
+        try
+        {
+            var result = await _anilistClient.SearchMediaAsync(
+                new SearchMediaFilter { Season = MediaSeason.Winter }
+            );
 
-        var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
 
-        NewSeasonAnimes.Clear();
-        NewSeasonAnimes.Push(data);
+            NewSeasonAnimes.Clear();
+            NewSeasonAnimes.Push(data);
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make(ex.ToString()).Show();
+        }
     }
 
-    private async void Load4()
+    private async void LoadLastUpdated()
     {
-        var recentlyUpdateResult = await _anilistClient.GetMediaSchedulesAsync(
-            new MediaSchedulesFilter
-            {
-                StartedAfterDate = DateTime.Now.AddDays(-7),
-                EndedBeforeDate = DateTime.Now,
-                NotYetAired = false,
-                Sort = MediaScheduleSort.Time,
-                SortDescending = true
-            },
-            new AniPaginationOptions(1, 50)
-        );
+        try
+        {
+            var recentlyUpdateResult = await _anilistClient.GetMediaSchedulesAsync(
+                new MediaSchedulesFilter
+                {
+                    StartedAfterDate = DateTime.Now.AddDays(-7),
+                    EndedBeforeDate = DateTime.Now,
+                    NotYetAired = false,
+                    Sort = MediaScheduleSort.Time,
+                    SortDescending = true
+                },
+                new AniPaginationOptions(1, 50)
+            );
 
-        var data = recentlyUpdateResult.Data
-            .Where(x => x.Media is not null && !x.Media.IsAdult && x.Media.CountryOfOrigin == "JP")
-            .Select(x => x.Media!)
-            .GroupBy(x => x.Id)
-            .Select(x => x.First())
-            .ToList();
+            var data = recentlyUpdateResult.Data
+                .Where(
+                    x => x.Media is not null && !x.Media.IsAdult && x.Media.CountryOfOrigin == "JP"
+                )
+                .Select(x => x.Media!)
+                .GroupBy(x => x.Id)
+                .Select(x => x.First())
+                .ToList();
 
-        LastUpdatedAnimes.Clear();
-        LastUpdatedAnimes.Push(data);
+            LastUpdatedAnimes.Clear();
+            LastUpdatedAnimes.Push(data);
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make(ex.ToString()).Show();
+        }
     }
 
-    private async void Load3()
+    private async void LoadTrending()
     {
-        var result4 = await _anilistClient.GetTrendingMediaAsync(
-            new MediaTrendFilter() { Sort = MediaTrendSort.Popularity },
-            new AniPaginationOptions()
-        );
+        try
+        {
+            var result = await _anilistClient.GetTrendingMediaAsync(
+                new MediaTrendFilter() { Sort = MediaTrendSort.Popularity },
+                new AniPaginationOptions()
+            );
 
-        var data = result4.Data
-            .Where(x => x.Media is not null && x.Media.CountryOfOrigin == "JP")
-            .Select(x => x.Media!)
-            .ToList();
+            var data = result.Data
+                .Where(x => x.Media is not null && x.Media.CountryOfOrigin == "JP")
+                .Select(x => x.Media!)
+                .ToList();
 
-        TrendingAnimes.Clear();
-        TrendingAnimes.Push(data);
+            TrendingAnimes.Clear();
+            TrendingAnimes.Push(data);
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make(ex.ToString()).Show();
+        }
     }
 
-    private async void Load2()
+    private async void LoadCurrentSeason()
     {
         var currentMediaSeason = DateTime.Now.Month switch
         {
@@ -241,42 +286,56 @@ public partial class HomeViewModel : BaseViewModel
             _ => MediaSeason.Winter,
         };
 
-        var result = await _anilistClient.SearchMediaAsync(
-            new SearchMediaFilter()
-            {
-                Type = MediaType.Anime,
-                Sort = MediaSort.Popularity,
-                Season = currentMediaSeason,
-                IsAdult = false,
-            }
-        );
+        try
+        {
+            var result = await _anilistClient.SearchMediaAsync(
+                new SearchMediaFilter()
+                {
+                    Type = MediaType.Anime,
+                    Sort = MediaSort.Popularity,
+                    Season = currentMediaSeason,
+                    IsAdult = false,
+                }
+            );
 
-        var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
 
-        CurrentSeasonAnimes.Clear();
-        CurrentSeasonAnimes.Push(data);
+            CurrentSeasonAnimes.Clear();
+            CurrentSeasonAnimes.Push(data);
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make(ex.ToString()).Show();
+        }
     }
 
-    private async void Load1()
+    private async void LoadPopular()
     {
-        //var result = await _anilistClient.SearchMediaAsync(new SearchMediaFilter()
-        //{
-        //    Query = "demon slayer",
-        //    Type = MediaType.Anime,
-        //});
+        try
+        {
+            //var result = await _anilistClient.SearchMediaAsync(new SearchMediaFilter()
+            //{
+            //    Query = "demon slayer",
+            //    Type = MediaType.Anime,
+            //});
 
-        var result = await _anilistClient.SearchMediaAsync(
-            new SearchMediaFilter()
-            {
-                Type = MediaType.Anime,
-                Sort = MediaSort.Popularity,
-                IsAdult = false,
-            }
-        );
+            var result = await _anilistClient.SearchMediaAsync(
+                new SearchMediaFilter()
+                {
+                    Type = MediaType.Anime,
+                    Sort = MediaSort.Popularity,
+                    IsAdult = false,
+                }
+            );
 
-        var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
 
-        PopularAnimes.Clear();
-        PopularAnimes.Push(data);
+            PopularAnimes.Clear();
+            PopularAnimes.Push(data);
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make(ex.ToString()).Show();
+        }
     }
 }

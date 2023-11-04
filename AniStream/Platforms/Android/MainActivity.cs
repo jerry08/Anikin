@@ -20,6 +20,7 @@ namespace AniStream;
     Theme = "@style/Maui.SplashTheme",
     MainLauncher = true,
     SupportsPictureInPicture = true,
+    ClearTaskOnLaunch = true,
     ConfigurationChanges = ConfigChanges.ScreenSize
         | ConfigChanges.Orientation
         | ConfigChanges.UiMode

@@ -14,7 +14,7 @@ public partial class HomeTemplateView
 
             Task.Run(async () =>
             {
-                await Task.Delay(500);
+                await Task.Delay(200);
                 img1.IsAnimationPlaying = true;
             });
         };

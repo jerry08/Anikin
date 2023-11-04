@@ -223,7 +223,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
     async Task ShowSheet()
     {
-        var sheet = new EpisodeSelectionSheet();
+        var sheet = new VideoSourceSheet();
         sheet.BindingContext = new VideoSourceViewModel(sheet, _anime, _episode, _media);
 
         await sheet.ShowAsync();

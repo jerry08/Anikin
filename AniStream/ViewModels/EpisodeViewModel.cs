@@ -29,7 +29,10 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     private readonly PlayerSettings _playerSettings = new();
     private readonly SettingsService _settingsService = new();
 
-    private readonly IAnimeProvider _provider = ProviderResolver.GetAnimeProvider();
+    private IAnimeProvider _provider = ProviderResolver.GetAnimeProvider();
+    private readonly List<IAnimeProvider> _providers = ProviderResolver.GetAnimeProviders();
+
+    public ObservableRangeCollection<string> ProviderNames { get; set; } = new();
 
     [ObservableProperty]
     private Media? _entity;
@@ -52,6 +55,12 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     [ObservableProperty]
     private GridLayoutMode _gridLayoutMode;
 
+    [ObservableProperty]
+    private bool _isDubSelected;
+
+    [ObservableProperty]
+    private int _providerIndex;
+
     private bool IsSavingFavorite { get; set; }
 
     public EpisodeViewModel(AniClient aniClient)
@@ -60,12 +69,45 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
         SelectedViewModelIndex = 1;
 
+        ProviderNames.AddRange(_providers.ConvertAll(x => x.Name));
+        ProviderIndex = 0;
+
         //Load();
 
         _playerSettings.Load();
         _settingsService.Load();
 
         GridLayoutMode = _settingsService.EpisodesGridLayoutMode;
+
+        PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(IsDubSelected))
+                IsDubSelectedChanged();
+        };
+    }
+
+    private async void IsDubSelectedChanged()
+    {
+        Entities.Clear();
+        await LoadCore();
+    }
+
+    [RelayCommand]
+    private async Task ProviderChanged(int index)
+    {
+        // Todo
+        ProviderIndex = 0;
+        await App.AlertService.ShowAlertAsync(
+            "Coming soon",
+            "This feature will be available in the coming releases."
+        );
+        //
+
+        return;
+
+        Entities.Clear();
+        _provider = _providers[index];
+        await LoadCore();
     }
 
     protected override async Task LoadCore()
@@ -86,6 +128,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             Anime = await TryFindBestAnime();
             if (Anime is null)
             {
+                await Toast.Make("Nothing found").Show();
                 await ShowProviderSearch();
                 return;
             }
@@ -198,13 +241,17 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     {
         try
         {
-            var result = await _provider.SearchAsync(Entity.Title.RomajiTitle);
+            var dubText = IsDubSelected ? " (dub)" : "";
+
+            SearchingText = $"Searching : {Entity.Title?.PreferredTitle}" + dubText;
+
+            var result = await _provider.SearchAsync(Entity.Title.RomajiTitle + dubText);
 
             if (result.Count == 0)
-                result = await _provider.SearchAsync(Entity.Title.NativeTitle);
+                result = await _provider.SearchAsync(Entity.Title.NativeTitle + dubText);
 
             if (result.Count == 0)
-                result = await _provider.SearchAsync(Entity.Title.EnglishTitle);
+                result = await _provider.SearchAsync(Entity.Title.EnglishTitle + dubText);
 
             return result.FirstOrDefault();
         }
@@ -263,11 +310,11 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         if (Anime is null)
             return;
 
-        //var test1 = new EpisodeSelectionSheet2();
+        //var test1 = new VideoSourceSheet2();
         //Shell.Current.ShowBottomSheet(test1, false);
         //return;
 
-        var sheet = new EpisodeSelectionSheet();
+        var sheet = new VideoSourceSheet();
         sheet.BindingContext = new VideoSourceViewModel(sheet, Anime, episode, Entity);
 
         await sheet.ShowAsync();
@@ -324,7 +371,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         {
             var media = await _anilistClient.GetMediaAsync(Entity.Id);
             Entity.IsFavorite = media.IsFavorite;
-            IsFavorite = media.IsFavorite;
+            //IsFavorite = media.IsFavorite;
         }
         catch (Exception ex)
         {
@@ -375,8 +422,6 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         IsFavorite = Entity.IsFavorite;
 
         OnPropertyChanged(nameof(Entity));
-
-        SearchingText = $"Searching : {Entity.Title?.PreferredTitle}";
 
         RefreshIsFavorite();
     }

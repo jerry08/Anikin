@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AniStream.Utils;
 using AniStream.ViewModels.Framework;
@@ -24,10 +25,14 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
     private readonly IAnimeInfo _anime;
     private readonly Episode _episode;
 
-    private EpisodeSelectionSheet EpisodeSelectionSheet { get; set; }
+    private readonly CancellationTokenSource _cancellationTokenSource = new();
+
+    public CancellationToken CancellationToken => _cancellationTokenSource.Token;
+
+    private VideoSourceSheet VideoSourceSheet { get; set; }
 
     public VideoSourceViewModel(
-        EpisodeSelectionSheet episodeSelectionSheet,
+        VideoSourceSheet episodeSelectionSheet,
         IAnimeInfo anime,
         Episode episode,
         Media media
@@ -37,7 +42,7 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
         _episode = episode;
         _media = media;
 
-        EpisodeSelectionSheet = episodeSelectionSheet;
+        VideoSourceSheet = episodeSelectionSheet;
 
         //var list = new List<VideoSource>();
         //list.Add(new VideoSource()
@@ -64,78 +69,45 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
         IsBusy = true;
         IsLoading = true;
 
-        var servers = await _provider.GetVideoServersAsync(_episode.Id);
-
-        foreach (var server in servers)
+        try
         {
-            var videos = await _provider.GetVideosAsync(server);
-            //Push(videos);
+            var servers = await _provider.GetVideoServersAsync(_episode.Id, CancellationToken);
 
-            if (videos.Count == 0)
-                continue;
-
-            foreach (var video in videos)
+            foreach (var server in servers)
             {
-                video.Title ??= !string.IsNullOrEmpty(video.Title)
-                    ? video.Title
-                    : !string.IsNullOrEmpty(video.Resolution)
-                        ? video.Resolution
-                        : "Default Quality";
+                var videos = await _provider.GetVideosAsync(server, CancellationToken);
+                //Push(videos);
+
+                if (videos.Count == 0)
+                    continue;
+
+                foreach (var video in videos)
+                {
+                    video.Title ??= !string.IsNullOrEmpty(video.Title)
+                        ? video.Title
+                        : !string.IsNullOrEmpty(video.Resolution)
+                            ? video.Resolution
+                            : "Default Quality";
+                }
+
+                Entities.Add(new(server.Name, videos));
             }
-
-            Entities.Add(new(server.Name, videos));
         }
-
-        IsBusy = false;
-        IsRefreshing = false;
-        IsLoading = false;
-
-        OnPropertyChanged(nameof(Entities));
-
-        return;
-
-        var functions = Enumerable
-            .Range(0, servers.Count)
-            .Select(i => (Func<Task<List<VideoSource>>>)(async () => await GetVideos(servers[i])));
-
-        var results = await TaskEx.Run(functions, 10);
-
-        var list = results.SelectMany(x => x).ToList();
-        //list.AddRange(list);
-        //list.AddRange(list);
-
-        for (var i = 0; i < 30; i++)
+        catch (Exception ex)
         {
-            list.Add(new VideoSource() { Title = $"Test {i + 1}", });
+            if (!CancellationToken.IsCancellationRequested)
+            {
+                await App.AlertService.ShowAlertAsync("Error", ex.ToString());
+            }
         }
-
-        for (var i = 0; i < list.Count; i++)
+        finally
         {
-            list[i].Title += $" {i + 1}";
+            IsBusy = false;
+            IsRefreshing = false;
+            IsLoading = false;
+
+            OnPropertyChanged(nameof(Entities));
         }
-
-        //Push(list);
-
-        EpisodeSelectionSheet.Detents[1].IsDefault = true;
-        EpisodeSelectionSheet.SelectedDetent = EpisodeSelectionSheet.Detents[1];
-        //EpisodeSelectionSheet.SelectedDetent = EpisodeSelectionSheet.Detents[1];
-        //EpisodeSelectionSheet.SetHeights();
-        //EpisodeSelectionSheet.Test();
-        //EpisodeSelectionSheet.ForceLayout();
-        return;
-
-        await EpisodeSelectionSheet.DismissAsync(false);
-
-        EpisodeSelectionSheet = new() { BindingContext = this };
-
-        EpisodeSelectionSheet.Detents[0].IsDefault = true;
-
-        //EpisodeSelectionSheet.Showing += (s, e) =>
-        //{
-        //    EpisodeSelectionSheet.Controller.Behavior.DisableShapeAnimations();
-        //};
-
-        await EpisodeSelectionSheet.ShowAsync(false);
     }
 
     private async Task<List<VideoSource>> GetVideos(VideoServer videoServer)
@@ -148,13 +120,15 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
     [RelayCommand]
     private async Task ItemClick(VideoSource video)
     {
-        await EpisodeSelectionSheet.DismissAsync();
+        await VideoSourceSheet.DismissAsync();
 
-        var page1 = new VideoPlayerView();
-        page1.BindingContext = new VideoPlayerViewModel(_anime, _episode, video, _media);
+        var page = new VideoPlayerView
+        {
+            BindingContext = new VideoPlayerViewModel(_anime, _episode, video, _media)
+        };
 
-        await Shell.Current.Navigation.PushAsync(page1);
+        await Shell.Current.Navigation.PushAsync(page);
     }
 
-    public void Cancel() { }
+    public void Cancel() => _cancellationTokenSource.Cancel();
 }

@@ -161,7 +161,7 @@
             <Label
                 FontSize="16"
                 HorizontalOptions="Center"
-                Text="Nothing found :("
+                Text="Empty"
                 VerticalOptions="Center" />
         </Grid>
 
