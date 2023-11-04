@@ -169,7 +169,7 @@
         android:layout_height="48dp"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="64dp"
+        android:layout_marginBottom="74dp"
         android:clickable="true"
         android:focusable="true"
         android:visibility="gone"
