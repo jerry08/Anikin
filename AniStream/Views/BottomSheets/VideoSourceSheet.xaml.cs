@@ -1,17 +1,25 @@
-﻿using Microsoft.Maui.Devices;
+﻿using AniStream.ViewModels;
+using Microsoft.Maui.Devices;
 
 namespace AniStream.Views.BottomSheets;
 
-public partial class EpisodeSelectionSheet
+public partial class VideoSourceSheet
 {
-    public EpisodeSelectionSheet()
+    public VideoSourceSheet()
     {
         InitializeComponent();
 
         Shown += (_, _) => DeviceDisplay.Current.MainDisplayInfoChanged += OnMainDisplayInfoChanged;
 
         Dismissed += (_, _) =>
+        {
             DeviceDisplay.Current.MainDisplayInfoChanged -= OnMainDisplayInfoChanged;
+
+            if (BindingContext is VideoSourceViewModel viewModel)
+            {
+                viewModel.Cancel();
+            }
+        };
 
         //this.UpdateChildrenLayout();
     }

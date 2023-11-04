@@ -1,4 +1,5 @@
-﻿using Berry.Maui;
+﻿using AniStream.ViewModels;
+using Berry.Maui;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
@@ -25,6 +26,11 @@ public partial class ProviderSearchSheet
         {
             SearchEntry.Focused -= SearchEntry_Focused;
             SearchEntry.Completed -= SearchEntry_Completed;
+
+            if (BindingContext is ProviderSearchViewModel viewModel)
+            {
+                viewModel.Cancel();
+            }
         };
 
         var statusBarHeight =

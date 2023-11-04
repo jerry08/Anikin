@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using AniStream.Utils;
 using AniStream.ViewModels.Framework;
+using Berry.Maui.Controls;
 using CommunityToolkit.Mvvm.Input;
 using Juro.Core.Models.Anime;
 using Juro.Core.Providers;
-using Berry.Maui.Controls;
 
 namespace AniStream.ViewModels;
 
@@ -14,6 +15,10 @@ public partial class ProviderSearchViewModel : CollectionViewModel<IAnimeInfo>
     private readonly IAnimeProvider _provider = ProviderResolver.GetAnimeProvider();
     private readonly BottomSheet _bottomSheet;
     private readonly EpisodeViewModel _episodeViewModel;
+
+    private readonly CancellationTokenSource _cancellationTokenSource = new();
+
+    public CancellationToken CancellationToken => _cancellationTokenSource.Token;
 
     public ProviderSearchViewModel(
         EpisodeViewModel episodeViewModel,
@@ -46,13 +51,16 @@ public partial class ProviderSearchViewModel : CollectionViewModel<IAnimeInfo>
 
         try
         {
-            var result = await _provider.SearchAsync(Query);
+            var result = await _provider.SearchAsync(Query, CancellationToken);
             Push(result);
             Offset += result.Count;
         }
         catch (Exception ex)
         {
-            await App.AlertService.ShowAlertAsync("Error", ex.ToString());
+            if (!CancellationToken.IsCancellationRequested)
+            {
+                await App.AlertService.ShowAlertAsync("Error", ex.ToString());
+            }
         }
         finally
         {
@@ -67,4 +75,6 @@ public partial class ProviderSearchViewModel : CollectionViewModel<IAnimeInfo>
         await _bottomSheet.DismissAsync();
         await _episodeViewModel.LoadEpisodes(item);
     }
+
+    public void Cancel() => _cancellationTokenSource.Cancel();
 }
