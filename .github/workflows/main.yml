@@ -49,6 +49,7 @@ jobs:
             -p:AndroidSigningStorePass="${{ secrets.PASSWORD }}"
             -p:AndroidSigningKeyAlias="DrMedia"
             -p:AndroidSigningKeyPass="${{ secrets.PASSWORD }}"
+            /p:CSharpier_Bypass=true
 
       - name: Rename file
         run: |
