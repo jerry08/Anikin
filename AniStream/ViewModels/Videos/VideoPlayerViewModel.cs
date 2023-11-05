@@ -29,10 +29,11 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
     private readonly IAnimeProvider _provider = ProviderResolver.GetAnimeProvider();
 
-    private readonly Media _media;
-    private readonly IAnimeInfo _anime;
-    private readonly Episode _episode;
-    private readonly VideoSource? _video;
+    public Media Media { get; private set; }
+    public IAnimeInfo Anime { get; private set; }
+    public VideoSource? Video { get; private set; }
+
+    public Episode Episode { get; private set; }
 
     public Episode? PreviousEpisode { get; private set; }
 
@@ -46,7 +47,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
     [ObservableProperty]
     private bool _startedPlaying;
 
-    public string EpisodeKey { get; set; }
+    public string EpisodeKey { get; set; } = default!;
 
     private readonly CancellationTokenSource _cancellationTokenSource = new();
 
@@ -57,34 +58,74 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
     public VideoPlayerViewModel(IAnimeInfo anime, Episode episode, VideoSource? video, Media media)
     {
-        _anime = anime;
-        _episode = episode;
-        _video = video;
-        _media = media;
+        Episode = episode;
+
+        Anime = anime;
+        Video = video;
+        Media = media;
+
         _initialOrientation = DeviceDisplay.Current.MainDisplayInfo.Orientation;
 
         IsBusy = true;
 
         _playerSettings.Load();
 
-        SetCurrent();
+        SetEpisode(Episode);
     }
 
     public VideoPlayerViewModel(IAnimeInfo anime, Episode episode, Media media)
         : this(anime, episode, null, media) { }
 
-    public void SetCurrent()
+    public void SetEpisode(Episode episode)
     {
-        var index = EpisodeViewModel.Episodes.OrderBy(x => x.Number).ToList()
-            .IndexOf(_episode);
+        Episode = episode;
 
-        PreviousEpisode = EpisodeViewModel.Episodes.OrderBy(x => x.Number)
+        var index = EpisodeViewModel.Episodes.OrderBy(x => x.Number).ToList().IndexOf(Episode);
+
+        PreviousEpisode = EpisodeViewModel.Episodes
+            .OrderBy(x => x.Number)
             .ElementAtOrDefault(index - 1);
 
-        NextEpisode = EpisodeViewModel.Episodes.OrderBy(x => x.Number)
+        NextEpisode = EpisodeViewModel.Episodes
+            .OrderBy(x => x.Number)
             .ElementAtOrDefault(index + 1);
 
-        EpisodeKey = $"{_media.Id}-{_episode.Number}";
+        EpisodeKey = $"{Media.Id}-{Episode.Number}";
+    }
+
+    public bool IsChangingSource { get; set; }
+
+    public async void UpdateSource()
+    {
+        IsChangingSource = true;
+        StartedPlaying = false;
+
+        await Load();
+        Controller.UpdateSourceInfo();
+
+        IsChangingSource = false;
+    }
+
+    public void PlayPrevious()
+    {
+        if (PreviousEpisode is null)
+            return;
+
+        MediaElement.Stop();
+
+        SetEpisode(PreviousEpisode);
+        UpdateSource();
+    }
+
+    public void PlayNext()
+    {
+        if (NextEpisode is null)
+            return;
+
+        MediaElement.Stop();
+
+        SetEpisode(NextEpisode);
+        UpdateSource();
     }
 
     [RelayCommand]
@@ -93,7 +134,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
         Shell.Current.Navigating += Current_Navigating;
 
         MediaElement = mediaElement;
-        Controller = new(this, _anime, _episode, default!, _media);
+        Controller = new(this, default!);
         Controller.OnLoaded(mediaElement);
     }
 
@@ -107,10 +148,8 @@ public partial class VideoPlayerViewModel : BaseViewModel
     private void OnUnloaded()
     {
         Shell.Current.Navigating -= Current_Navigating;
-
-        Controller.Dispose();
-
         ApplicationEx.SetOrientation(_initialOrientation);
+        Controller.Dispose();
     }
 
     [RelayCommand]
@@ -171,7 +210,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
         try
         {
-            var video = _video ?? await GetVideoAsync();
+            var video = Video ?? await GetVideoAsync();
             if (video is null)
                 return;
 
@@ -183,8 +222,11 @@ public partial class VideoPlayerViewModel : BaseViewModel
             Source = source;
 
 #if ANDROID
-            // This runs after source is created and attached to exoplayer
-            Controller.Initialize();
+            if (!IsChangingSource)
+            {
+                // This runs after source is created and attached to exoplayer
+                Controller.Initialize();
+            }
 #endif
 
             _playerSettings.WatchedEpisodes.TryGetValue(EpisodeKey, out var watchedEpisode);
@@ -227,7 +269,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
     private async Task<VideoServer?> GetVideoServerAsync()
     {
-        var videoServers = await _provider.GetVideoServersAsync(_episode.Id, CancellationToken);
+        var videoServers = await _provider.GetVideoServersAsync(Episode.Id, CancellationToken);
         if (videoServers.Count == 0)
             return null;
 
@@ -242,13 +284,16 @@ public partial class VideoPlayerViewModel : BaseViewModel
     async Task ShowSheet()
     {
         var sheet = new VideoSourceSheet();
-        sheet.BindingContext = new VideoSourceViewModel(sheet, _anime, _episode, _media);
+        sheet.BindingContext = new VideoSourceViewModel(sheet, Anime, Episode, Media);
 
         await sheet.ShowAsync();
     }
 
     public void UpdateProgress()
     {
+        if (IsChangingSource)
+            return;
+
         if (!CanSaveProgress)
             return;
 
@@ -257,7 +302,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
         watchedEpisode ??= new();
 
         watchedEpisode.Id = EpisodeKey;
-        watchedEpisode.AnimeName = _anime.Title;
+        watchedEpisode.AnimeName = Anime.Title;
         watchedEpisode.WatchedPercentage =
             (float)MediaElement.Position.TotalMilliseconds
             / (float)MediaElement.Duration.TotalMilliseconds

@@ -15,14 +15,22 @@
         </ResourceDictionary>
     </ContentPage.Resources>
     <Grid HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-        <ActivityIndicator
-            HeightRequest="{OnPlatform Default=60,
-                                       WinUI=100}"
-            HorizontalOptions="CenterAndExpand"
-            IsRunning="{Binding StartedPlaying, Converter={StaticResource InvertedBoolConverter}}"
-            VerticalOptions="CenterAndExpand"
-            WidthRequest="{OnPlatform Default=60,
-                                      WinUI=100}" />
+        <Grid
+            BackgroundColor="#6A000000"
+            ZIndex="1000"
+            HorizontalOptions="FillAndExpand"
+            VerticalOptions="FillAndExpand"
+            IsVisible="{Binding StartedPlaying, Converter={StaticResource InvertedBoolConverter}}">
+            <ActivityIndicator
+                HeightRequest="{OnPlatform Default=60,
+                                           WinUI=100}"
+                HorizontalOptions="CenterAndExpand"
+                IsRunning="{Binding StartedPlaying, Converter={StaticResource InvertedBoolConverter}}"
+                VerticalOptions="CenterAndExpand"
+                WidthRequest="{OnPlatform Default=60,
+                                          WinUI=100}" />
+        </Grid>
+
         <berry:MediaElement
             x:Name="videoPlayer"
             HorizontalOptions="FillAndExpand"

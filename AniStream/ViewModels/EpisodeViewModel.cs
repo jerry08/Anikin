@@ -32,7 +32,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     private IAnimeProvider _provider = ProviderResolver.GetAnimeProvider();
     private readonly List<IAnimeProvider> _providers = ProviderResolver.GetAnimeProviders();
 
-    public static List<Episode> Episodes { get; private set; }
+    public static List<Episode> Episodes { get; private set; } = new();
 
     public ObservableRangeCollection<string> ProviderNames { get; set; } = new();
 
@@ -158,53 +158,71 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         //Entity = animeInfo;
         //OnPropertyChanged(nameof(Entity));
 
-        var result = await _provider.GetEpisodesAsync(anime.Id);
-        if (result.Count == 0)
-            return;
+        IsBusy = true;
+        IsRefreshing = true;
 
-        result = result.OrderBy(x => x.Number).ToList();
+        Ranges.Clear();
+        Entities.Clear();
 
-        Episodes.Clear();
-        Episodes.AddRange(result);
-
-        EpisodeChunks = result.Chunk(50).ToList();
-
-        var ranges = new List<Range>();
-
-        if (EpisodeChunks.Count > 1)
+        try
         {
-            var startIndex = 1;
-            var endIndex = 0;
+            var result = await _provider.GetEpisodesAsync(anime.Id);
+            if (result.Count == 0)
+                return;
 
-            for (var i = 0; i < EpisodeChunks.Count; i++)
+            result = result.OrderBy(x => x.Number).ToList();
+
+            Episodes.Clear();
+            Episodes.AddRange(result);
+
+            EpisodeChunks = result.Chunk(50).ToList();
+
+            var ranges = new List<Range>();
+
+            if (EpisodeChunks.Count > 1)
+            {
+                var startIndex = 1;
+                var endIndex = 0;
+
+                for (var i = 0; i < EpisodeChunks.Count; i++)
+                {
+                    if (_settingsService.EpisodesDescending)
+                    {
+                        EpisodeChunks[i] = EpisodeChunks[i].Reverse().ToArray();
+                    }
+
+                    endIndex = startIndex + EpisodeChunks[i].Length - 1;
+                    ranges.Add(new Range(EpisodeChunks[i], startIndex, endIndex));
+                    startIndex += EpisodeChunks[i].Length;
+                }
+
+                ranges[0].IsSelected = true;
+            }
+            else
             {
                 if (_settingsService.EpisodesDescending)
                 {
-                    EpisodeChunks[i] = EpisodeChunks[i].Reverse().ToArray();
+                    EpisodeChunks[0] = EpisodeChunks[0].Reverse().ToArray();
                 }
-
-                endIndex = startIndex + EpisodeChunks[i].Length - 1;
-                ranges.Add(new Range(EpisodeChunks[i], startIndex, endIndex));
-                startIndex += EpisodeChunks[i].Length;
             }
 
-            ranges[0].IsSelected = true;
+            result.ForEach(ep => ep.Image = anime.Image);
+
+            RefreshEpisodesProgress();
+
+            Entities.Push(EpisodeChunks[0]);
+            Ranges.Push(ranges);
+            OnPropertyChanged(nameof(Ranges));
         }
-        else
+        catch
         {
-            if (_settingsService.EpisodesDescending)
-            {
-                EpisodeChunks[0] = EpisodeChunks[0].Reverse().ToArray();
-            }
+            SearchingText = "Nothing Found";
         }
-
-        result.ForEach(ep => ep.Image = anime.Image);
-
-        RefreshEpisodesProgress();
-
-        Entities.Push(EpisodeChunks[0]);
-        Ranges.Push(ranges);
-        OnPropertyChanged(nameof(Ranges));
+        finally
+        {
+            IsBusy = false;
+            IsRefreshing = false;
+        }
     }
 
     [RelayCommand]

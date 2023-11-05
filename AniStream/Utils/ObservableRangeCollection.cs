@@ -38,10 +38,13 @@ public class ObservableRangeCollection<T> : ObservableCollection<T>
             notificationMode != NotifyCollectionChangedAction.Add
             && notificationMode != NotifyCollectionChangedAction.Reset
         )
+        {
             throw new ArgumentException(
                 "Mode must be either Add or Reset for AddRange.",
                 nameof(notificationMode)
             );
+        }
+
         if (collection == null)
             throw new ArgumentNullException(nameof(collection));
 
@@ -82,10 +85,13 @@ public class ObservableRangeCollection<T> : ObservableCollection<T>
             notificationMode != NotifyCollectionChangedAction.Remove
             && notificationMode != NotifyCollectionChangedAction.Reset
         )
+        {
             throw new ArgumentException(
                 "Mode must be either Remove or Reset for RemoveRange.",
                 nameof(notificationMode)
             );
+        }
+
         if (collection == null)
             throw new ArgumentNullException(nameof(collection));
 

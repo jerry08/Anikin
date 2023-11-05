@@ -261,7 +261,7 @@
             IsVisible="{Binding IsBusy}"
             VerticalOptions="CenterAndExpand">
             <ActivityIndicator
-                Margin="0,30,0,0"
+                Margin="0,30,0,60"
                 HeightRequest="{OnPlatform Default=52,
                                            WinUI=100}"
                 HorizontalOptions="CenterAndExpand"

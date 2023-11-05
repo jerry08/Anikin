@@ -60,14 +60,14 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
-    private readonly Media _media;
-    private IAnimeInfo Anime = default!;
-    private Episode Episode = default!;
-    private VideoSource? Video;
-    private VideoServer? VideoServer;
+    Media _media;
+    IAnimeInfo Anime = default!;
+    Episode Episode = default!;
+    VideoSource? Video;
+    VideoServer? VideoServer;
 
-    private IExoPlayer exoPlayer = default!;
-    private StyledPlayerView playerView = default!;
+    IExoPlayer exoPlayer = default!;
+    StyledPlayerView playerView = default!;
 
     //private PlayerView playerView = default!;
     DefaultTrackSelector trackSelector = default!;
@@ -119,19 +119,13 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     private bool IsSeekingBackward { get; set; }
     private bool IsSeekingForward { get; set; }
 
-    public PlatformMediaController(
-        VideoPlayerViewModel playerViewModel,
-        IAnimeInfo anime,
-        Episode episode,
-        VideoServer videoServer,
-        Media media
-    )
+    public PlatformMediaController(VideoPlayerViewModel playerViewModel, VideoServer videoServer)
     {
         _playerViewModel = playerViewModel;
-        Anime = anime;
-        Episode = episode;
+        Anime = _playerViewModel.Anime;
+        Episode = _playerViewModel.Episode;
         VideoServer = videoServer;
-        _media = media;
+        _media = _playerViewModel.Media;
 
         _playerSettings.Load();
 
@@ -142,7 +136,21 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             _playerSettings.AlwaysInLandscapeMode
             && Build.VERSION.SdkInt >= BuildVersionCodes.Gingerbread
         )
+        {
             Platform.CurrentActivity.RequestedOrientation = ScreenOrientation.SensorLandscape;
+        }
+    }
+
+    public void UpdateSourceInfo()
+    {
+        Anime = _playerViewModel.Anime;
+        Episode = _playerViewModel.Episode;
+        _media = _playerViewModel.Media;
+
+        animeTitle.Text = Anime.Title;
+        episodeTitle.Text = Episode.Name;
+
+        SetNextAndPrev();
     }
 
     #region Setup
@@ -248,9 +256,8 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         PrevButton = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_prev_ep)!;
         NextButton = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_next_ep)!;
 
-        //PrevButton.Click += (s, e) => PlayPreviousEpisode();
-        //
-        //NextButton.Click += (s, e) => PlayNextEpisode();
+        PrevButton.Click += (_, _) => _playerViewModel.PlayPrevious();
+        NextButton.Click += (_, _) => _playerViewModel.PlayNext();
 
         var audioManager = (Android.Media.AudioManager?)
             Platform.CurrentActivity.GetSystemService(Context.AudioService);
@@ -335,7 +342,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         subButton.Visibility = ViewStates.Gone;
         lockButton.Visibility = ViewStates.Gone;
 
-        //SetNextAndPrev();
+        SetNextAndPrev();
 
         //if (Android.Provider.Settings.System.GetInt(ContentResolver, Android.Provider.Settings.System.AccelerometerRotation, 0) != 1)
         //{
@@ -537,7 +544,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             Build.VERSION.SdkInt >= BuildVersionCodes.N
             && Platform.CurrentActivity.IsInPictureInPictureMode
         )
+        {
             return;
+        }
 
         var overshoot = AnimationUtils.LoadInterpolator(
             Platform.CurrentActivity,
@@ -838,12 +847,12 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     //
     //    RunOnUiThread(SetNextAndPrev);
     //}
-    
+
     private void SetNextAndPrev()
     {
         PrevButton.Visibility = ViewStates.Visible;
         NextButton.Visibility = ViewStates.Visible;
-    
+
         if (_playerViewModel.PreviousEpisode is not null)
         {
             PrevButton.Enabled = true;
@@ -854,7 +863,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             PrevButton.Enabled = false;
             PrevButton.Alpha = 0.5f;
         }
-    
+
         if (_playerViewModel.NextEpisode is not null)
         {
             NextButton.Enabled = true;
@@ -866,7 +875,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             NextButton.Alpha = 0.5f;
         }
     }
-    
+
     //public Episode? GetPreviousEpisode()
     //{
     //    var currentEpisode = EpisodesActivity.Episodes.Find(x => x.Id == Episode.Id);

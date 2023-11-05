@@ -1,22 +1,19 @@
 ﻿using System;
 using Berry.Maui.Core;
-using Jita.AniList.Models;
-using Juro.Core.Models.Anime;
 using Juro.Core.Models.Videos;
 
 namespace AniStream.ViewModels;
 
-public class PlatformMediaController : IDisposable
+internal class PlatformMediaController : IDisposable
 {
-    public PlatformMediaController(
-        VideoPlayerViewModel playerViewModel,
-        IAnimeInfo anime,
-        Episode episode,
-        VideoServer videoServer,
-        Media media
-    ) { }
+    public PlatformMediaController(VideoPlayerViewModel playerViewModel, VideoServer videoServer)
+    { }
 
     public void OnLoaded(IMediaElement mediaElement) { }
+
+    public void Initialize() { }
+
+    public void UpdateSourceInfo() { }
 
     public void Dispose() { }
 }

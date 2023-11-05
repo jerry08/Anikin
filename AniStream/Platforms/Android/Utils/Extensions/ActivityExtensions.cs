@@ -227,8 +227,10 @@ public static class ActivityExtensions
 
             var canRequestPackageInstalls = mainActivity.PackageInstallPermission.CheckStatus();
             if (!canRequestPackageInstalls)
+            {
                 canRequestPackageInstalls =
                     await mainActivity.PackageInstallPermission.RequestAsync();
+            }
 
             if (!canRequestPackageInstalls)
                 return;
