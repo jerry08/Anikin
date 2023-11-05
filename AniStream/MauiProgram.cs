@@ -9,10 +9,17 @@ using CommunityToolkit.Maui;
 using Jita.AniList;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui;
 using Microsoft.Maui.Controls.Hosting;
+using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Handlers;
 using Microsoft.Maui.Hosting;
 using Sharpnado.Tabs;
 using Woka;
+
+#if ANDROID
+using Microsoft.Maui.Controls.Compatibility.Platform.Android;
+#endif
 
 namespace AniStream;
 
@@ -62,6 +69,28 @@ public static class MauiProgram
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
+
+        EntryHandler.Mapper.AppendToMapping(
+            "NoUnderline",
+            (handler, v) => {
+#if ANDROID
+                // Remove underline:
+                handler.PlatformView.BackgroundTintList =
+                    Android.Content.Res.ColorStateList.ValueOf(Colors.Transparent.ToAndroid());
+
+                //Set cursor color
+                if (
+                    Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Q
+                    && v.TextColor is not null
+                )
+                {
+#pragma warning disable CA1416
+                    handler.PlatformView.TextCursorDrawable?.SetTint(v.TextColor.ToAndroid());
+#pragma warning restore CA1416
+                }
+#endif
+            }
+        );
 
         // Views
         builder.Services.AddTransient<HomeView>();

@@ -34,6 +34,10 @@ public partial class VideoPlayerViewModel : BaseViewModel
     private readonly Episode _episode;
     private readonly VideoSource? _video;
 
+    public Episode? PreviousEpisode { get; private set; }
+
+    public Episode? NextEpisode { get; private set; }
+
     private PlatformMediaController Controller { get; set; } = default!;
     private IMediaElement MediaElement { get; set; } = default!;
 
@@ -59,15 +63,29 @@ public partial class VideoPlayerViewModel : BaseViewModel
         _media = media;
         _initialOrientation = DeviceDisplay.Current.MainDisplayInfo.Orientation;
 
-        EpisodeKey = $"{_media.Id}-{_episode.Number}";
-
         IsBusy = true;
 
         _playerSettings.Load();
+
+        SetCurrent();
     }
 
     public VideoPlayerViewModel(IAnimeInfo anime, Episode episode, Media media)
         : this(anime, episode, null, media) { }
+
+    public void SetCurrent()
+    {
+        var index = EpisodeViewModel.Episodes.OrderBy(x => x.Number).ToList()
+            .IndexOf(_episode);
+
+        PreviousEpisode = EpisodeViewModel.Episodes.OrderBy(x => x.Number)
+            .ElementAtOrDefault(index - 1);
+
+        NextEpisode = EpisodeViewModel.Episodes.OrderBy(x => x.Number)
+            .ElementAtOrDefault(index + 1);
+
+        EpisodeKey = $"{_media.Id}-{_episode.Number}";
+    }
 
     [RelayCommand]
     public void OnLoaded(IMediaElement mediaElement)

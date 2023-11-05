@@ -65,7 +65,7 @@
 		<PackageReference Include="Sharpnado.Tabs.Maui" Version="3.0.1" />
 		<PackageReference Include="SkiaSharp.Extended.UI.Maui" Version="2.0.0-preview.86" />
 		<PackageReference Include="TaskExecutor" Version="1.0.3" />
-		<PackageReference Include="Woka" Version="1.0.15" />
+		<PackageReference Include="Woka" Version="1.0.16" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0-ios'">

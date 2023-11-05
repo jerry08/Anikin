@@ -95,6 +95,8 @@
                                     <berry:TouchBehavior
                                         Command="{Binding BindingContext.ItemClickCommand, Source={x:Reference this}}"
                                         CommandParameter="{Binding BindingContext, Source={x:Reference videoSourceGrid}}"
+                                        LongPressCommand="{Binding BindingContext.ItemLongClickCommand, Source={x:Reference this}}"
+                                        LongPressCommandParameter="{Binding BindingContext, Source={x:Reference videoSourceGrid}}"
                                         NativeAnimation="True"
                                         ShouldMakeChildrenInputTransparent="False" />
                                 </Grid.Behaviors>

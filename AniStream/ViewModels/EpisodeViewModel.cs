@@ -32,6 +32,8 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     private IAnimeProvider _provider = ProviderResolver.GetAnimeProvider();
     private readonly List<IAnimeProvider> _providers = ProviderResolver.GetAnimeProviders();
 
+    public static List<Episode> Episodes { get; private set; }
+
     public ObservableRangeCollection<string> ProviderNames { get; set; } = new();
 
     [ObservableProperty]
@@ -148,6 +150,8 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
     public async Task LoadEpisodes(IAnimeInfo anime)
     {
+        Anime = anime;
+
         SearchingText = $"Found : {anime.Title}";
 
         //var animeInfo = await _provider.GetAnimeInfoAsync(anime.Id);
@@ -159,6 +163,9 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             return;
 
         result = result.OrderBy(x => x.Number).ToList();
+
+        Episodes.Clear();
+        Episodes.AddRange(result);
 
         EpisodeChunks = result.Chunk(50).ToList();
 

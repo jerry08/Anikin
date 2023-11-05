@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AniStream.Utils;
 using AniStream.ViewModels.Framework;
 using AniStream.Views;
 using AniStream.Views.BottomSheets;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Mvvm.Input;
 using Juro.Core.Models.Anime;
 using Juro.Core.Models.Videos;
 using Juro.Core.Providers;
+using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
-using TaskExecutor;
 using Media = Jita.AniList.Models.Media;
 
 namespace AniStream.ViewModels;
@@ -128,6 +130,34 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
         };
 
         await Shell.Current.Navigation.PushAsync(page);
+    }
+
+    [RelayCommand]
+    private async Task ItemLongClick(VideoSource video)
+    {
+        var url = video.VideoUrl.Replace(" ", "%20");
+
+        await Clipboard.Default.SetTextAsync(url);
+
+        await Toast
+            .Make($"Copied to clipboard:{Environment.NewLine}{url}", ToastDuration.Short, 17)
+            .Show();
+
+#if ANDROID
+        var videoUri = Android.Net.Uri.Parse(url);
+
+        var intent = new Android.Content.Intent(Android.Content.Intent.ActionView);
+        intent.SetDataAndType(videoUri, "video/*");
+        intent.SetFlags(Android.Content.ActivityFlags.NewTask);
+
+        //_activity.CopyToClipboard(url, false);
+        //_activity.ShowToast($"Copied \"{url}\"");
+
+        var i = Android.Content.Intent.CreateChooser(intent, "Open Video in :")!;
+        i.SetFlags(Android.Content.ActivityFlags.NewTask);
+
+        Platform.CurrentActivity?.StartActivity(i);
+#endif
     }
 
     public void Cancel() => _cancellationTokenSource.Cancel();

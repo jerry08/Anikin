@@ -403,9 +403,6 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
         SourceButton.Click += async (s, e) =>
         {
-            //selector = SelectorDialogFragment.NewInstance(Anime, Episode, this);
-            //selector.Show(SupportFragmentManager, "dialog");
-
             var sheet = new VideoSourceSheet();
             sheet.BindingContext = new VideoSourceViewModel(sheet, Anime, Episode, _media);
 
@@ -841,41 +838,35 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     //
     //    RunOnUiThread(SetNextAndPrev);
     //}
-    //
-    //private void SetNextAndPrev()
-    //{
-    //    PrevButton.Visibility = ViewStates.Visible;
-    //    NextButton.Visibility = ViewStates.Visible;
-    //
-    //    var prevEpisode = GetPreviousEpisode();
-    //    var prevEpisodeKey = prevEpisode?.Link ?? prevEpisode?.Id;
-    //    if (prevEpisode is not null
-    //        && SelectorDialogFragment.Cache.ContainsKey(prevEpisodeKey!))
-    //    {
-    //        PrevButton.Enabled = true;
-    //        PrevButton.Alpha = 1f;
-    //    }
-    //    else
-    //    {
-    //        PrevButton.Enabled = false;
-    //        PrevButton.Alpha = 0.5f;
-    //    }
-    //
-    //    var nextEpisode = GetNextEpisode();
-    //    var nextEpisodeKey = nextEpisode?.Link ?? nextEpisode?.Id;
-    //    if (nextEpisode is not null
-    //        && SelectorDialogFragment.Cache.ContainsKey(nextEpisodeKey!))
-    //    {
-    //        NextButton.Enabled = true;
-    //        NextButton.Alpha = 1f;
-    //    }
-    //    else
-    //    {
-    //        NextButton.Enabled = false;
-    //        NextButton.Alpha = 0.5f;
-    //    }
-    //}
-    //
+    
+    private void SetNextAndPrev()
+    {
+        PrevButton.Visibility = ViewStates.Visible;
+        NextButton.Visibility = ViewStates.Visible;
+    
+        if (_playerViewModel.PreviousEpisode is not null)
+        {
+            PrevButton.Enabled = true;
+            PrevButton.Alpha = 1f;
+        }
+        else
+        {
+            PrevButton.Enabled = false;
+            PrevButton.Alpha = 0.5f;
+        }
+    
+        if (_playerViewModel.NextEpisode is not null)
+        {
+            NextButton.Enabled = true;
+            NextButton.Alpha = 1f;
+        }
+        else
+        {
+            NextButton.Enabled = false;
+            NextButton.Alpha = 0.5f;
+        }
+    }
+    
     //public Episode? GetPreviousEpisode()
     //{
     //    var currentEpisode = EpisodesActivity.Episodes.Find(x => x.Id == Episode.Id);
