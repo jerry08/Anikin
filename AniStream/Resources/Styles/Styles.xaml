@@ -101,7 +101,7 @@
         <Setter Property="StrokeShape" Value="RoundRectangle 8" />
         <Setter Property="VerticalOptions" Value="Center" />
     </Style>
-    
+
     <Style x:Key="EntrySearchBorderStyle" TargetType="Border">
         <Setter Property="Padding" Value="20,0" />
         <Setter Property="Margin" Value="12,0" />
@@ -319,7 +319,9 @@
     </Style>
 
     <Style TargetType="RefreshView">
-        <Setter Property="RefreshColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}" />
+        <!--<Setter Property="RefreshColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}" />-->
+        <Setter Property="RefreshColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" />
     </Style>
 
     <Style TargetType="SearchBar">
