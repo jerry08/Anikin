@@ -151,6 +151,11 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         episodeTitle.Text = Episode.Name;
 
         SetNextAndPrev();
+
+        var handler = (MediaElementHandler)MediaElement.Handler;
+        playerView = handler.PlatformView.GetFirstChildOfType<StyledPlayerView>()!;
+        exoPlayer = (IExoPlayer)playerView.Player;
+        exoPlayer.AddListener(this);
     }
 
     #region Setup
