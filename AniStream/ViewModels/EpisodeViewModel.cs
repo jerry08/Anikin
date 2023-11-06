@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AniStream.Services;
 using AniStream.Utils;
@@ -65,6 +66,12 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
     private bool IsSavingFavorite { get; set; }
 
+    private bool IsProviderSearchSheetShowing { get; set; }
+
+    private readonly CancellationTokenSource _cancellationTokenSource = new();
+
+    public CancellationToken CancellationToken => _cancellationTokenSource.Token;
+
     public EpisodeViewModel(AniClient aniClient)
     {
         _anilistClient = aniClient;
@@ -86,6 +93,14 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             if (e.PropertyName == nameof(IsDubSelected))
                 IsDubSelectedChanged();
         };
+
+        Shell.Current.Navigating += Current_Navigating;
+    }
+
+    private void Current_Navigating(object? sender, ShellNavigatingEventArgs e)
+    {
+        Shell.Current.Navigating -= Current_Navigating;
+        _cancellationTokenSource.Cancel();
     }
 
     private async void IsDubSelectedChanged()
@@ -128,6 +143,10 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         {
             // Find best match
             Anime = await TryFindBestAnime();
+
+            if (CancellationToken.IsCancellationRequested)
+                return;
+
             if (Anime is null)
             {
                 await Toast.Make("Nothing found").Show();
@@ -137,9 +156,12 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
             await LoadEpisodes(Anime);
         }
-        catch (Exception e)
+        catch
         {
-            SearchingText = "Nothing Found";
+            if (!CancellationToken.IsCancellationRequested)
+            {
+                SearchingText = "Nothing Found";
+            }
         }
         finally
         {
@@ -166,7 +188,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
         try
         {
-            var result = await _provider.GetEpisodesAsync(anime.Id);
+            var result = await _provider.GetEpisodesAsync(anime.Id, CancellationToken);
             if (result.Count == 0)
                 return;
 
@@ -270,13 +292,22 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
             SearchingText = $"Searching : {Entity.Title?.PreferredTitle}" + dubText;
 
-            var result = await _provider.SearchAsync(Entity.Title.RomajiTitle + dubText);
+            var result = await _provider.SearchAsync(
+                Entity.Title.RomajiTitle + dubText,
+                CancellationToken
+            );
 
             if (result.Count == 0)
-                result = await _provider.SearchAsync(Entity.Title.NativeTitle + dubText);
+                result = await _provider.SearchAsync(
+                    Entity.Title.NativeTitle + dubText,
+                    CancellationToken
+                );
 
             if (result.Count == 0)
-                result = await _provider.SearchAsync(Entity.Title.EnglishTitle + dubText);
+                result = await _provider.SearchAsync(
+                    Entity.Title.EnglishTitle + dubText,
+                    CancellationToken
+                );
 
             return result.FirstOrDefault();
         }
@@ -431,12 +462,20 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     [RelayCommand]
     private async Task ShowProviderSearch()
     {
+        if (IsProviderSearchSheetShowing)
+            return;
+
+        IsProviderSearchSheetShowing = true;
+
         var sheet = new ProviderSearchSheet();
         sheet.BindingContext = new ProviderSearchViewModel(
             this,
             sheet,
             Entity.Title.PreferredTitle
         );
+
+        sheet.Dismissed += (_, _) => IsProviderSearchSheetShowing = false;
+
         await sheet.ShowAsync();
     }
 
@@ -450,4 +489,6 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
         RefreshIsFavorite();
     }
+
+    public void Cancel() => _cancellationTokenSource.Cancel();
 }
