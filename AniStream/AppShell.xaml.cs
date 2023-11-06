@@ -18,6 +18,7 @@ public partial class AppShell : Shell
 
         Routing.RegisterRoute(nameof(SearchView), typeof(SearchView));
         Routing.RegisterRoute(nameof(EpisodePage), typeof(EpisodePage));
+        Routing.RegisterRoute(nameof(AnilistLoginView), typeof(AnilistLoginView));
 
         Navigated += async (s, e) =>
         {

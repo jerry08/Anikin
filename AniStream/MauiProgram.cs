@@ -98,6 +98,7 @@ public static class MauiProgram
         builder.Services.AddTransient<ProfileTabView>();
         builder.Services.AddTransient<SearchView>();
         builder.Services.AddTransient<EpisodePage>();
+        builder.Services.AddTransient<AnilistLoginView>();
 
         // ViewModels
         builder.Services.AddTransient<HomeViewModel>();
