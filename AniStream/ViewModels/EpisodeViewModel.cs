@@ -79,7 +79,12 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         SelectedViewModelIndex = 1;
 
         ProviderNames.AddRange(_providers.ConvertAll(x => x.Name));
-        ProviderIndex = 0;
+
+        var providerIndex = _providers.FindIndex(x => x.Key == _provider.Key);
+        if (providerIndex < 0)
+            providerIndex = 0;
+
+        ProviderIndex = providerIndex;
 
         //Load();
 
@@ -112,18 +117,15 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     [RelayCommand]
     private async Task ProviderChanged(int index)
     {
-        // Todo
-        ProviderIndex = 0;
-        await App.AlertService.ShowAlertAsync(
-            "Coming soon",
-            "This feature will be available in the coming releases."
-        );
-        //
-
-        return;
-
         Entities.Clear();
-        _provider = _providers[index];
+
+        var provider = _providers[index];
+
+        _settingsService.LastProviderKey = provider.Key;
+        _settingsService.Save();
+
+        _provider = provider;
+
         await LoadCore();
     }
 
@@ -232,9 +234,11 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
             RefreshEpisodesProgress();
 
-            Entities.Push(EpisodeChunks[0]);
             Ranges.Push(ranges);
             OnPropertyChanged(nameof(Ranges));
+
+            Entities.Push(EpisodeChunks[0]);
+            OnPropertyChanged(nameof(Entities));
         }
         catch
         {
@@ -441,14 +445,16 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         if (Entity.Url is null)
             return;
 
-        await Share.Default.RequestAsync(
-            new ShareTextRequest
-            {
-                //Uri = $"https://anilist.cs/anime/{Entity.Id}",
-                Uri = Entity.Url.OriginalString,
-                Title = "Share Anilist Link"
-            }
-        );
+        await Share
+            .Default
+            .RequestAsync(
+                new ShareTextRequest
+                {
+                    //Uri = $"https://anilist.cs/anime/{Entity.Id}",
+                    Uri = Entity.Url.OriginalString,
+                    Title = "Share Anilist Link"
+                }
+            );
     }
 
     [RelayCommand]
