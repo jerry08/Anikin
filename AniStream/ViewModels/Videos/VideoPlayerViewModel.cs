@@ -31,7 +31,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
     public Media Media { get; private set; }
     public IAnimeInfo Anime { get; private set; }
-    public VideoSource? Video { get; private set; }
+    public VideoSource? Video { get; set; }
 
     public Episode Episode { get; private set; }
 

@@ -46,20 +46,6 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
 
         VideoSourceSheet = episodeSelectionSheet;
 
-        //var list = new List<VideoSource>();
-        //list.Add(new VideoSource()
-        //{
-        //    Title = "test",
-        //    Resolution = ""
-        //});
-        //
-        //list.AddRange(list);
-        //list.AddRange(list);
-        //list.AddRange(list);
-        //list.AddRange(list);
-        //
-        //Push(list);
-
         Load();
     }
 
@@ -77,22 +63,29 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
 
             foreach (var server in servers)
             {
-                var videos = await _provider.GetVideosAsync(server, CancellationToken);
-                //Push(videos);
-
-                if (videos.Count == 0)
-                    continue;
-
-                foreach (var video in videos)
+                try
                 {
-                    video.Title ??= !string.IsNullOrEmpty(video.Title)
-                        ? video.Title
-                        : !string.IsNullOrEmpty(video.Resolution)
-                            ? video.Resolution
-                            : "Default Quality";
-                }
+                    var videos = await _provider.GetVideosAsync(server, CancellationToken);
+                    //Push(videos);
 
-                Entities.Add(new(server.Name, videos));
+                    if (videos.Count == 0)
+                        continue;
+
+                    foreach (var video in videos)
+                    {
+                        video.Title ??= !string.IsNullOrEmpty(video.Title)
+                            ? video.Title
+                            : !string.IsNullOrEmpty(video.Resolution)
+                                ? video.Resolution
+                                : "Default Quality";
+                    }
+
+                    Entities.Add(new(server.Name, videos));
+                }
+                catch
+                {
+                    // Ignore
+                }
             }
         }
         catch (Exception ex)
@@ -123,6 +116,13 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
     private async Task ItemClick(VideoSource video)
     {
         await VideoSourceSheet.DismissAsync();
+
+        if (Shell.Current.CurrentPage?.BindingContext is VideoPlayerViewModel videoPlayerViewModel)
+        {
+            videoPlayerViewModel.Video = video;
+            videoPlayerViewModel.UpdateSource();
+            return;
+        }
 
         var page = new VideoPlayerView
         {
