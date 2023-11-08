@@ -4,10 +4,10 @@ using AniStream.Services.AlertDialog;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Networking;
-
 #if ANDROID
 using Snackbar = AniStream.Controls.Snackbar;
 #endif
@@ -78,13 +78,20 @@ public partial class App : Application
         }
     }
 
-    public static void ApplyTheme()
+    public static void ApplyTheme(bool force = false)
     {
+        if (Current is null)
+            return;
+
         var preferenceService = new PreferenceService();
         preferenceService.Load();
 
-        if (Current is not null)
-            Current.UserAppTheme = preferenceService.AppTheme;
+        if (force)
+        {
+            Current.UserAppTheme = AppTheme.Unspecified;
+        }
+
+        Current.UserAppTheme = preferenceService.AppTheme;
     }
 
     protected override void OnAppLinkRequestReceived(Uri uri)

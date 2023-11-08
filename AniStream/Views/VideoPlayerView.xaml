@@ -17,10 +17,10 @@
     <Grid HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
         <Grid
             BackgroundColor="#6A000000"
-            ZIndex="1000"
             HorizontalOptions="FillAndExpand"
+            IsVisible="{Binding StartedPlaying, Converter={StaticResource InvertedBoolConverter}}"
             VerticalOptions="FillAndExpand"
-            IsVisible="{Binding StartedPlaying, Converter={StaticResource InvertedBoolConverter}}">
+            ZIndex="1000">
             <ActivityIndicator
                 HeightRequest="{OnPlatform Default=60,
                                            WinUI=100}"

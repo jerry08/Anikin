@@ -13,23 +13,6 @@
     xmlns:views="clr-namespace:AniStream.Views"
     x:Name="this"
     x:DataType="viewModels:HomeViewModel">
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
-
-            <DataTemplate x:Key="AnimeInfoDataTemplate">
-                <views:AnimeItemView />
-            </DataTemplate>
-
-            <DataTemplate x:Key="HomeDataTemplate">
-                <templates:HomeTemplateView />
-            </DataTemplate>
-
-            <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
-            <views:MainDataTemplateSelector x:Key="HomeDataTemplateSelector" DataTemplate="{StaticResource HomeDataTemplate}" />
-        </ResourceDictionary>
-    </ContentPage.Resources>
-
     <Grid>
         <tabs:ViewSwitcher
             x:Name="Switcher"

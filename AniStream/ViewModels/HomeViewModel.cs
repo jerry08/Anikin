@@ -234,7 +234,8 @@ public partial class HomeViewModel : BaseViewModel
                 new AniPaginationOptions(1, 50)
             );
 
-            var data = recentlyUpdateResult.Data
+            var data = recentlyUpdateResult
+                .Data
                 .Where(
                     x => x.Media is not null && !x.Media.IsAdult && x.Media.CountryOfOrigin == "JP"
                 )
@@ -261,7 +262,8 @@ public partial class HomeViewModel : BaseViewModel
                 new AniPaginationOptions()
             );
 
-            var data = result.Data
+            var data = result
+                .Data
                 .Where(x => x.Media is not null && x.Media.CountryOfOrigin == "JP")
                 .Select(x => x.Media!)
                 .ToList();

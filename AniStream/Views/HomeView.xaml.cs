@@ -13,12 +13,7 @@ public partial class HomeView
 
         BindingContext = viewModel;
 
-        var navigationBarHeight = (int)(
-            ApplicationEx.GetNavigationBarHeight() / DeviceDisplay.MainDisplayInfo.Density
-        );
-
-        if (navigationBarHeight > 0)
-            ViewContent.Margin = new Thickness(0, 0, 0, navigationBarHeight + 10);
+        SizeChanged += (_, _) => SetMargins();
 
         //CommunityToolkit.Maui.Alerts.Snackbar.Make("test").Show();
         //AniStream.Controls.Snackbar.Make("test").Show();
@@ -42,5 +37,15 @@ public partial class HomeView
         //snackBar.View.TranslationZ = 32f;
         //snackBar.View.SetPadding(16, 0, 16, 0);
         //snackBar.Show();
+    }
+
+    private void SetMargins()
+    {
+        var navigationBarHeight = (int)(
+            ApplicationEx.GetNavigationBarHeight() / DeviceDisplay.MainDisplayInfo.Density
+        );
+
+        if (navigationBarHeight > 0)
+            ViewContent.Margin = new Thickness(0, 0, 0, navigationBarHeight + 10);
     }
 }

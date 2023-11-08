@@ -51,7 +51,8 @@ public partial class AnilistLoginView
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        DeviceDisplay.Current.MainDisplayInfoChanged -= (_, _) => SetMargins();
+
+        App.ApplyTheme(true);
     }
 
     private void SetMargins()
