@@ -6,6 +6,7 @@ using AniStream.ViewModels;
 using AniStream.Views;
 using Berry.Maui;
 using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Markup;
 using Jita.AniList;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,6 @@ using Microsoft.Maui.Handlers;
 using Microsoft.Maui.Hosting;
 using Sharpnado.Tabs;
 using Woka;
-
 #if ANDROID
 using Microsoft.Maui.Controls.Compatibility.Platform.Android;
 #endif
@@ -31,6 +31,7 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
+            .UseMauiCommunityToolkitMarkup()
             .UseBerry()
             .UseBerryMediaElement()
             .ConfigureWorkarounds()
@@ -70,27 +71,32 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        EntryHandler.Mapper.AppendToMapping(
-            "NoUnderline",
-            (handler, v) => {
+        EntryHandler
+            .Mapper
+            .AppendToMapping(
+                "NoUnderline",
+                (handler, v) => {
 #if ANDROID
-                // Remove underline:
-                handler.PlatformView.BackgroundTintList =
-                    Android.Content.Res.ColorStateList.ValueOf(Colors.Transparent.ToAndroid());
+                    // Remove underline:
+                    handler.PlatformView.BackgroundTintList = Android
+                        .Content
+                        .Res
+                        .ColorStateList
+                        .ValueOf(Colors.Transparent.ToAndroid());
 
-                //Set cursor color
-                if (
-                    Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Q
-                    && v.TextColor is not null
-                )
-                {
+                    //Set cursor color
+                    if (
+                        Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Q
+                        && v.TextColor is not null
+                    )
+                    {
 #pragma warning disable CA1416
-                    handler.PlatformView.TextCursorDrawable?.SetTint(v.TextColor.ToAndroid());
+                        handler.PlatformView.TextCursorDrawable?.SetTint(v.TextColor.ToAndroid());
 #pragma warning restore CA1416
-                }
+                    }
 #endif
-            }
-        );
+                }
+            );
 
         // Views
         builder.Services.AddTransient<HomeView>();

@@ -21,12 +21,12 @@
                 <views:AnimeItemView />
             </DataTemplate>
 
-            <DataTemplate x:Key="HomeDataTemplate">
-                <templates:HomeTemplateView />
+            <DataTemplate x:Key="AnimeCarouselDataTemplate">
+                <templates:AnimeCarouselTemplateView />
             </DataTemplate>
 
             <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
-            <views:MainDataTemplateSelector x:Key="HomeDataTemplateSelector" DataTemplate="{StaticResource HomeDataTemplate}" />
+            <views:MainDataTemplateSelector x:Key="AnimeCarouselDataTemplateSelector" DataTemplate="{StaticResource AnimeCarouselDataTemplate}" />
         </ResourceDictionary>
     </ContentView.Resources>
 
@@ -59,66 +59,67 @@
                     Source="https://media.tenor.com/l47dR9-6BGIAAAAd/demon-slayer-kimetsu-no-yaiba.gif"
                     VerticalOptions="Start" />-->
 
-                <CarouselView
-                    x:Name="test3"
-                    IsBounceEnabled="true"
-                    IsSwipeEnabled="true"
-                    ItemTemplate="{StaticResource HomeDataTemplate}"
-                    ItemsUpdatingScrollMode="KeepItemsInView"
-                    PeekAreaInsets="0">
-                    <CarouselView.ItemsLayout>
+                <ContentView x:Name="CarouselContent">
+                    <!--<CarouselView
+                        IsBounceEnabled="False"
+                        IsScrollAnimated="False"
+                        IsSwipeEnabled="True"
+                        ItemTemplate="{StaticResource AnimeCarouselDataTemplateSelector}"
+                        ItemsSource="{Binding CurrentSeasonAnimes}"
+                        ItemsUpdatingScrollMode="KeepItemsInView"
+                        PeekAreaInsets="0">
+                        <CarouselView.ItemsLayout>
+                            <LinearItemsLayout
+                                ItemSpacing="0"
+                                Orientation="Horizontal"
+                                SnapPointsAlignment="Start"
+                                SnapPointsType="MandatorySingle" />
+                        </CarouselView.ItemsLayout>
+                    </CarouselView>-->
+                </ContentView>
+
+                <!--<CollectionView
+                    HorizontalOptions="FillAndExpand"
+                    ItemTemplate="{StaticResource AnimeCarouselDataTemplateSelector}"
+                    ItemsSource="{Binding CurrentSeasonAnimes}"
+                    VerticalOptions="FillAndExpand">
+                    <CollectionView.ItemsLayout>
                         <LinearItemsLayout
-                            ItemSpacing="0"
-                            Orientation="Horizontal"
-                            SnapPointsAlignment="Start"
+                            
+                            SnapPointsAlignment="Center"
                             SnapPointsType="MandatorySingle" />
-                    </CarouselView.ItemsLayout>
-                </CarouselView>
+                    </CollectionView.ItemsLayout>
+                </CollectionView>-->
 
-                <Grid
-                    Grid.Row="0"
-                    HeightRequest="270"
-                    HorizontalOptions="FillAndExpand">
-                    <Grid.Background>
-                        <!--  StartPoint defaults to (0,0)  -->
-                        <LinearGradientBrush EndPoint="0,0.98">
-                            <GradientStop Offset="0.1" Color="Transparent" />
-                            <GradientStop Offset="1.0" Color="Black" />
-                        </LinearGradientBrush>
-                    </Grid.Background>
+                <Grid x:Name="NavGrid" Grid.Row="0">
+                    <!--  Command="{Binding GithubCommand}"  -->
+                    <ImageButton
+                        HeightRequest="35"
+                        HorizontalOptions="Start"
+                        Source="logo.svg"
+                        VerticalOptions="Start"
+                        WidthRequest="35">
+                        <ImageButton.Behaviors>
+                            <toolkit:IconTintColorBehavior TintColor="#D9FFFFFF" />
+                        </ImageButton.Behaviors>
+                    </ImageButton>
+
+                    <ImageButton
+                        Command="{Binding GoToSearchCommand}"
+                        HeightRequest="35"
+                        HorizontalOptions="End"
+                        VerticalOptions="Start"
+                        WidthRequest="35">
+                        <ImageButton.Source>
+                            <FontImageSource
+                                FontFamily="Material"
+                                Glyph="{x:Static materialDesign:MaterialDesignIcons.Search}"
+                                Size="Medium"
+                                Color="{AppThemeBinding Light={StaticResource Gray400},
+                                                        Dark={StaticResource White}}" />
+                        </ImageButton.Source>
+                    </ImageButton>
                 </Grid>
-
-                <!--  Command="{Binding GithubCommand}"  -->
-                <ImageButton
-                    Grid.Row="0"
-                    Margin="20,50,0,0"
-                    HeightRequest="35"
-                    HorizontalOptions="Start"
-                    Source="logo.svg"
-                    VerticalOptions="Start"
-                    WidthRequest="35">
-                    <ImageButton.Behaviors>
-                        <toolkit:IconTintColorBehavior TintColor="#D9FFFFFF" />
-                    </ImageButton.Behaviors>
-                </ImageButton>
-
-                <ImageButton
-                    Grid.Row="0"
-                    Margin="0,50,20,0"
-                    Command="{Binding GoToSearchCommand}"
-                    HeightRequest="35"
-                    HorizontalOptions="End"
-                    VerticalOptions="Start"
-                    WidthRequest="35">
-                    <ImageButton.Source>
-                        <FontImageSource
-                            FontFamily="Material"
-                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Search}"
-                            Size="Medium"
-                            Color="{AppThemeBinding Light={StaticResource Gray400},
-                                                    Dark={StaticResource White}}" />
-                    </ImageButton.Source>
-                </ImageButton>
 
                 <!--<Label
                     Grid.Row="0"
@@ -128,7 +129,7 @@
                     Margin="20,20"
                     Text="Demon&#10;Slayer" />-->
 
-                <Label
+                <!--<Label
                     Grid.Row="0"
                     Margin="20,20"
                     FontFamily="BloodCrow"
@@ -147,7 +148,7 @@
                     HorizontalTextAlignment="Center"
                     Text="Slayer"
                     VerticalOptions="EndAndExpand"
-                    WidthRequest="120" />
+                    WidthRequest="120" />-->
 
                 <VerticalStackLayout Grid.Row="1">
                     <Grid
