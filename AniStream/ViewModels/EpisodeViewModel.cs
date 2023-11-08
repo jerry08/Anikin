@@ -302,16 +302,20 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             );
 
             if (result.Count == 0)
+            {
                 result = await _provider.SearchAsync(
                     Entity.Title.NativeTitle + dubText,
                     CancellationToken
                 );
+            }
 
             if (result.Count == 0)
+            {
                 result = await _provider.SearchAsync(
                     Entity.Title.EnglishTitle + dubText,
                     CancellationToken
                 );
+            }
 
             return result.FirstOrDefault();
         }
