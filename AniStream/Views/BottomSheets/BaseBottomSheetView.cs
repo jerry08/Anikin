@@ -1,5 +1,5 @@
-﻿using Microsoft.Maui.Controls;
-using Berry.Maui.Controls;
+﻿using Berry.Maui.Controls;
+using Microsoft.Maui.Controls;
 
 namespace AniStream.Views.BottomSheets;
 

@@ -82,11 +82,13 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
         var index = EpisodeViewModel.Episodes.OrderBy(x => x.Number).ToList().IndexOf(Episode);
 
-        PreviousEpisode = EpisodeViewModel.Episodes
+        PreviousEpisode = EpisodeViewModel
+            .Episodes
             .OrderBy(x => x.Number)
             .ElementAtOrDefault(index - 1);
 
-        NextEpisode = EpisodeViewModel.Episodes
+        NextEpisode = EpisodeViewModel
+            .Episodes
             .OrderBy(x => x.Number)
             .ElementAtOrDefault(index + 1);
 
@@ -186,12 +188,9 @@ public partial class VideoPlayerViewModel : BaseViewModel
         var speeds = _playerSettings.GetSpeeds();
         var speedsName = speeds.Select(x => $"{x}x").ToList();
 
-        var speedName = await Shell.Current.DisplayActionSheet(
-            "Playback Speed",
-            "",
-            "",
-            speedsName.ToArray()
-        );
+        var speedName = await Shell
+            .Current
+            .DisplayActionSheet("Playback Speed", "", "", speedsName.ToArray());
         if (string.IsNullOrWhiteSpace(speedName))
             return;
 

@@ -165,8 +165,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
         var handler = (MediaElementHandler)mediaElement.Handler;
         playerView = handler.PlatformView.GetFirstChildOfType<StyledPlayerView>()!;
-        var styledPlayerControlView =
-            handler.PlatformView.GetFirstChildOfType<StyledPlayerControlView>()!;
+        var styledPlayerControlView = handler
+            .PlatformView
+            .GetFirstChildOfType<StyledPlayerControlView>()!;
         styledPlayerControlView.AnimationEnabled = false;
 
         //var view = (MauiMediaElement)mediaElement.ToPlatform(mediaElement.Handler.MauiContext);
@@ -311,30 +312,30 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 #pragma warning restore CA1422
         }
 
-        var settingsButton = Platform.CurrentActivity.FindViewById<ImageButton>(
-            Resource.Id.exo_settings
-        )!;
+        var settingsButton = Platform
+            .CurrentActivity
+            .FindViewById<ImageButton>(Resource.Id.exo_settings)!;
         SourceButton = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_source)!;
         var subButton = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_sub)!;
-        DownloadButton = Platform.CurrentActivity.FindViewById<ImageButton>(
-            Resource.Id.exo_download
-        )!;
+        DownloadButton = Platform
+            .CurrentActivity
+            .FindViewById<ImageButton>(Resource.Id.exo_download)!;
         var exoPip = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_pip)!;
-        ExoSkipOpEd = Platform.CurrentActivity.FindViewById<ImageButton>(
-            Resource.Id.exo_skip_op_ed
-        )!;
-        SkipTimeButton = Platform.CurrentActivity.FindViewById<MaterialCardView>(
-            Resource.Id.exo_skip_timestamp
-        )!;
-        SkipTimeText = Platform.CurrentActivity.FindViewById<TextView>(
-            Resource.Id.exo_skip_timestamp_text
-        )!;
-        TimeStampText = Platform.CurrentActivity.FindViewById<TextView>(
-            Resource.Id.exo_time_stamp_text
-        )!;
-        var exoSpeed = Platform.CurrentActivity.FindViewById<ImageButton>(
-            Resource.Id.exo_playback_speed
-        )!;
+        ExoSkipOpEd = Platform
+            .CurrentActivity
+            .FindViewById<ImageButton>(Resource.Id.exo_skip_op_ed)!;
+        SkipTimeButton = Platform
+            .CurrentActivity
+            .FindViewById<MaterialCardView>(Resource.Id.exo_skip_timestamp)!;
+        SkipTimeText = Platform
+            .CurrentActivity
+            .FindViewById<TextView>(Resource.Id.exo_skip_timestamp_text)!;
+        TimeStampText = Platform
+            .CurrentActivity
+            .FindViewById<TextView>(Resource.Id.exo_time_stamp_text)!;
+        var exoSpeed = Platform
+            .CurrentActivity
+            .FindViewById<ImageButton>(Resource.Id.exo_playback_speed)!;
         var exoScreen = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_screen)!;
         var exoSubtitle = Platform.CurrentActivity.FindViewById(Resource.Id.exo_subtitles)!;
         var exoSubtitleBtn = Platform.CurrentActivity.FindViewById(Resource.Id.exo_sub)!;
@@ -356,9 +357,10 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
         if (Build.VERSION.SdkInt >= BuildVersionCodes.N)
         {
-            IsPipEnabled = Platform.CurrentActivity.PackageManager!.HasSystemFeature(
-                PackageManager.FeaturePictureInPicture
-            );
+            IsPipEnabled = Platform
+                .CurrentActivity
+                .PackageManager!
+                .HasSystemFeature(PackageManager.FeaturePictureInPicture);
 
             if (IsPipEnabled)
             {
@@ -427,18 +429,18 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
         if (!_playerSettings.DoubleTap)
         {
-            var fastForwardCont = Platform.CurrentActivity.FindViewById<CardView>(
-                Resource.Id.exo_fast_forward_button_cont
-            )!;
-            var fastRewindCont = Platform.CurrentActivity.FindViewById<CardView>(
-                Resource.Id.exo_fast_rewind_button_cont
-            )!;
-            var fastForwardButton = Platform.CurrentActivity.FindViewById<ImageButton>(
-                Resource.Id.exo_fast_forward_button
-            )!;
-            var rewindButton = Platform.CurrentActivity.FindViewById<ImageButton>(
-                Resource.Id.exo_fast_rewind_button
-            )!;
+            var fastForwardCont = Platform
+                .CurrentActivity
+                .FindViewById<CardView>(Resource.Id.exo_fast_forward_button_cont)!;
+            var fastRewindCont = Platform
+                .CurrentActivity
+                .FindViewById<CardView>(Resource.Id.exo_fast_rewind_button_cont)!;
+            var fastForwardButton = Platform
+                .CurrentActivity
+                .FindViewById<ImageButton>(Resource.Id.exo_fast_forward_button)!;
+            var rewindButton = Platform
+                .CurrentActivity
+                .FindViewById<ImageButton>(Resource.Id.exo_fast_rewind_button)!;
 
             fastForwardCont.Visibility = ViewStates.Visible;
             fastRewindCont.Visibility = ViewStates.Visible;
@@ -472,9 +474,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
                 Platform.CurrentActivity,
                 fastRewindGestureListener
             );
-            var rewindArea = Platform.CurrentActivity.FindViewById<View>(
-                Resource.Id.exo_rewind_area
-            )!;
+            var rewindArea = Platform
+                .CurrentActivity
+                .FindViewById<View>(Resource.Id.exo_rewind_area)!;
             rewindArea.Clickable = true;
             rewindArea.Touch += (_, e) =>
             {
@@ -498,9 +500,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
                 Platform.CurrentActivity,
                 fastForwardGestureListener
             );
-            var forwardArea = Platform.CurrentActivity.FindViewById<View>(
-                Resource.Id.exo_forward_area
-            )!;
+            var forwardArea = Platform
+                .CurrentActivity
+                .FindViewById<View>(Resource.Id.exo_forward_area)!;
             forwardArea.Clickable = true;
             forwardArea.Touch += (s, e) =>
             {
@@ -1325,9 +1327,11 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
-                Platform.CurrentActivity.EnterPictureInPictureMode(
-                    new PictureInPictureParams.Builder().SetAspectRatio(AspectRatio)!.Build()!
-                );
+                Platform
+                    .CurrentActivity
+                    .EnterPictureInPictureMode(
+                        new PictureInPictureParams.Builder().SetAspectRatio(AspectRatio)!.Build()!
+                    );
             }
             else if (Build.VERSION.SdkInt >= BuildVersionCodes.N)
             {

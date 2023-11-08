@@ -17,8 +17,10 @@ public partial class ProfileViewModel : BaseViewModel
 
         var clientID = "14733";
 
-        var result = await Browser.Default.OpenAsync(
-            $"https://anilist.co/api/v2/oauth/authorize?client_id={clientID}&response_type=token"
-        );
+        var result = await Browser
+            .Default
+            .OpenAsync(
+                $"https://anilist.co/api/v2/oauth/authorize?client_id={clientID}&response_type=token"
+            );
     }
 }
