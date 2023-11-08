@@ -46,14 +46,16 @@ public class AndroidStoragePermission
         {
             // since sdk 23-28 we request write/read external storage only
             hasPermissions = (
-                _activity.PackageManager.CheckPermission(
-                    Manifest.Permission.ReadExternalStorage,
-                    _activity.PackageName
-                ) == Permission.Granted
-                && _activity.PackageManager.CheckPermission(
-                    Manifest.Permission.WriteExternalStorage,
-                    _activity.PackageName
-                ) == Permission.Granted
+                _activity
+                    .PackageManager
+                    .CheckPermission(Manifest.Permission.ReadExternalStorage, _activity.PackageName)
+                    == Permission.Granted
+                && _activity
+                    .PackageManager
+                    .CheckPermission(
+                        Manifest.Permission.WriteExternalStorage,
+                        _activity.PackageName
+                    ) == Permission.Granted
             );
         }
         else

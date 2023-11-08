@@ -43,10 +43,13 @@ internal class AlertService : IAlertService
         string cancel = "No"
     )
     {
-        Shell.Current.Dispatcher.Dispatch(async () =>
-        {
-            var answer = await ShowConfirmationAsync(title, message, accept, cancel);
-            callback(answer);
-        });
+        Shell
+            .Current
+            .Dispatcher
+            .Dispatch(async () =>
+            {
+                var answer = await ShowConfirmationAsync(title, message, accept, cancel);
+                callback(answer);
+            });
     }
 }
