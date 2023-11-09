@@ -23,6 +23,7 @@ using AniStream.ViewModels;
 using AniStream.Views.BottomSheets;
 using Berry.Maui.Core;
 using Berry.Maui.Core.Handlers;
+using Berry.Maui.Core.Primitives;
 using Bumptech.Glide;
 using Com.Google.Android.Exoplayer2;
 using Com.Google.Android.Exoplayer2.Audio;
@@ -156,6 +157,8 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         playerView = handler.PlatformView.GetFirstChildOfType<StyledPlayerView>()!;
         exoPlayer = (IExoPlayer)playerView.Player;
         exoPlayer.AddListener(this);
+
+        SetMediaSession();
     }
 
     #region Setup
@@ -189,6 +192,10 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             exoPlayer.Release();
         }
 
+        MediaSession?.Release();
+        MediaSessionConnector?.Dispose();
+        MediaSession?.Dispose();
+
         CancellationTokenSource.Cancel();
 
         Platform.CurrentActivity.RequestedOrientation = ScreenOrientation.Unspecified;
@@ -211,11 +218,8 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     }
     #endregion
 
-    public void Initialize()
+    private void SetMediaSession()
     {
-        exoPlayer = (IExoPlayer)playerView.Player;
-        exoPlayer.AddListener(this);
-
         try
         {
             MediaSession = new(Platform.CurrentActivity, "AniStreamMediaSession");
@@ -227,6 +231,20 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         {
             Snackbar.Make(e.Message).Show();
         }
+    }
+
+    public void Initialize()
+    {
+        exoPlayer = (IExoPlayer)playerView.Player;
+        exoPlayer.AddListener(this);
+
+        MediaElement.StateChanged += (s, e) =>
+        {
+            if (e.NewState == MediaElementState.Paused && !playerView.IsControllerFullyVisible)
+                HandleController();
+        };
+
+        SetMediaSession();
 
         //var bookmarkManager = new BookmarkManager("recently_watched");
         //
@@ -285,7 +303,8 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             }
         };
 
-        if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
+        //if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
+        if (OperatingSystem.IsAndroidVersionAtLeast(26))
         {
             var audioAttributes = new Android.Media.AudioAttributes.Builder()
                 .SetUsage(Android.Media.AudioUsageKind.Media)!
@@ -545,7 +564,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
     private void DoubleTap(bool forward, MotionEvent @event) => Seek(forward, @event);
 
-    private void HandleController()
+    public void HandleController()
     {
         if (
             Build.VERSION.SdkInt >= BuildVersionCodes.N
