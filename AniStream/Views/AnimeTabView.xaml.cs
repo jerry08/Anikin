@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Linq;
 using AniStream.ViewModels;
 using AniStream.Views.Templates;
 using Berry.Maui;
-using Berry.Maui.Behaviors;
 using CommunityToolkit.Maui.Markup;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
+using Microsoft.Maui.Dispatching;
 
 namespace AniStream.Views;
 
@@ -112,80 +111,38 @@ public partial class AnimeTabView
         //.Bind(ItemsView.ItemsSourceProperty, nameof(HomeViewModel.CurrentSeasonAnimes));
         .Bind(ItemsView.ItemsSourceProperty, (HomeViewModel vm) => vm.CurrentSeasonAnimes);
 
-        var isPressing = false;
+        IDispatcherTimer? timer = null;
 
-        var brh = new TouchBehavior();
-        //brh.Completed += (s, e) =>
-        //{
-        //    var gg = "";
-        //};
-        brh.ShouldMakeChildrenInputTransparent = true;
+        view.Scrolled += (_, _) => SetTimer();
+        view.Loaded += (_, _) => SetTimer();
 
-        //brh.Command = new Command(() =>
-        //{
-        //    isPressing = true;
-        //});
-        brh.Completed += (s, e) =>
+        void SetTimer()
         {
-            isPressing = false;
-
-            //view.Behaviors.Remove(brh);
-            //view.Behaviors.Add(brh);
-        };
-
-        brh.StateChanged += (s, e) =>
-        {
-            //isPressing = e.TouchInteractionStatus == TouchInteractionStatus.Started;
-            isPressing = e.State == TouchState.Pressed;
-        };
-        //brh.StatusChanged += (s, e) =>
-        //{
-        //    isPressing = e.Status == TouchStatus.Started;
-        //};
-
-        //view.Behaviors.Add(brh);
-
-        var timer = Dispatcher.CreateTimer();
-        timer.Interval = TimeSpan.FromMilliseconds(3000);
-
-        view.Scrolled += (s, e) =>
-        {
-            timer.Stop();
+            timer?.Stop();
 
             timer = Dispatcher.CreateTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(4000);
+            timer.Interval = TimeSpan.FromMilliseconds(4200);
             timer.Tick += (s, e) =>
             {
-                //if (isPressing)
-                //    return;
-
                 if (BindingContext is HomeViewModel vm)
                 {
-                    //view.Position = (view.Position + 1) % vm.CurrentSeasonAnimes.Count;
-                    view.ScrollTo((view.Position + 1) % vm.CurrentSeasonAnimes.Count);
-                    //view.ScrollTo();
+                    if (!App.IsOnline(false))
+                        return;
+
+                    try
+                    {
+                        //view.Position = (view.Position + 1) % vm.CurrentSeasonAnimes.Count;
+                        view?.ScrollTo((view.Position + 1) % vm.CurrentSeasonAnimes.Count);
+                        //view.ScrollTo();
+                    }
+                    catch
+                    {
+                        // Ignore
+                    }
                 }
             };
             timer.Start();
-        };
-
-        view.Loaded += (s, e) =>
-        {
-            timer.Start();
-        };
-
-        timer.Tick += (s, e) =>
-        {
-            //if (isPressing)
-            //    return;
-
-            if (BindingContext is HomeViewModel vm)
-            {
-                //view.Position = (view.Position + 1) % vm.CurrentSeasonAnimes.Count;
-                view.ScrollTo((view.Position + 1) % vm.CurrentSeasonAnimes.Count);
-                //view.ScrollTo();
-            }
-        };
+        }
 
         CarouselContent.Content = view;
     }
