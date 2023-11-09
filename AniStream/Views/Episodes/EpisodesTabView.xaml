@@ -80,6 +80,7 @@
             <Border Grid.Column="1" Style="{StaticResource Entry.Border}">
                 <Picker
                     x:Name="ProviderPicker"
+                    Title="Select Server"
                     Margin="10,2"
                     FontAttributes="Bold"
                     FontSize="15"

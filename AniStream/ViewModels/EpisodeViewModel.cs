@@ -105,7 +105,9 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     private void Current_Navigating(object? sender, ShellNavigatingEventArgs e)
     {
         Shell.Current.Navigating -= Current_Navigating;
-        _cancellationTokenSource.Cancel();
+
+        if (e.Source is ShellNavigationSource.PopToRoot or ShellNavigationSource.Pop)
+            Cancel();
     }
 
     private async void IsDubSelectedChanged()
@@ -321,6 +323,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         }
         catch
         {
+            SearchingText = "Nothing found";
             return null;
         }
     }
@@ -328,6 +331,10 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     public override void OnAppearing()
     {
         base.OnAppearing();
+
+        Shell.Current.Navigating -= Current_Navigating;
+        Shell.Current.Navigating += Current_Navigating;
+
         RefreshEpisodesProgress();
     }
 
@@ -337,10 +344,12 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         if (Anime is null)
             return;
 
-        var page1 = new VideoPlayerView();
-        page1.BindingContext = new VideoPlayerViewModel(this.Anime, episode, Entity);
+        var page = new VideoPlayerView
+        {
+            BindingContext = new VideoPlayerViewModel(Anime, episode, Entity)
+        };
 
-        await Shell.Current.Navigation.PushAsync(page1);
+        await Shell.Current.Navigation.PushAsync(page);
     }
 
     [RelayCommand]
