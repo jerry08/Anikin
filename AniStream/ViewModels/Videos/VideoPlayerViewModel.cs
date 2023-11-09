@@ -102,6 +102,8 @@ public partial class VideoPlayerViewModel : BaseViewModel
         IsChangingSource = true;
         StartedPlaying = false;
 
+        MediaElement.Stop();
+
         await Load();
         Controller.UpdateSourceInfo();
 
@@ -113,8 +115,6 @@ public partial class VideoPlayerViewModel : BaseViewModel
         if (PreviousEpisode is null)
             return;
 
-        MediaElement.Stop();
-
         SetEpisode(PreviousEpisode);
         UpdateSource();
     }
@@ -123,8 +123,6 @@ public partial class VideoPlayerViewModel : BaseViewModel
     {
         if (NextEpisode is null)
             return;
-
-        MediaElement.Stop();
 
         SetEpisode(NextEpisode);
         UpdateSource();
