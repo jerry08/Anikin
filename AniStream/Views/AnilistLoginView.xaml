@@ -32,6 +32,7 @@
         <WebView
             x:Name="webView"
             Grid.Row="1"
+            BackgroundColor="Transparent"
             HorizontalOptions="FillAndExpand"
             VerticalOptions="FillAndExpand" />
     </Grid>
