@@ -374,10 +374,6 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         if (Anime is null)
             return;
 
-        //var test1 = new VideoSourceSheet2();
-        //Shell.Current.ShowBottomSheet(test1, false);
-        //return;
-
         var sheet = new VideoSourceSheet();
         sheet.BindingContext = new VideoSourceViewModel(sheet, Anime, episode, Entity);
 
