@@ -51,9 +51,6 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
 
     protected override async Task LoadCore()
     {
-        //IsBusy = false;
-        //return;
-
         IsBusy = true;
         IsLoading = true;
 
@@ -105,13 +102,6 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
         }
     }
 
-    private async Task<List<VideoSource>> GetVideos(VideoServer videoServer)
-    {
-        var videos = await _provider.GetVideosAsync(videoServer);
-
-        return videos;
-    }
-
     [RelayCommand]
     private async Task ItemClick(VideoSource video)
     {
@@ -140,7 +130,7 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
         await Clipboard.Default.SetTextAsync(url);
 
         await Toast
-            .Make($"Copied to clipboard:{Environment.NewLine}{url}", ToastDuration.Short, 17)
+            .Make($"Copied to clipboard:{Environment.NewLine}{url}", ToastDuration.Short, 16)
             .Show();
 
 #if ANDROID
@@ -153,10 +143,10 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
         //_activity.CopyToClipboard(url, false);
         //_activity.ShowToast($"Copied \"{url}\"");
 
-        var i = Android.Content.Intent.CreateChooser(intent, "Open Video in :")!;
-        i.SetFlags(Android.Content.ActivityFlags.NewTask);
+        var chooserIntent = Android.Content.Intent.CreateChooser(intent, "Open Video in :")!;
+        chooserIntent.SetFlags(Android.Content.ActivityFlags.NewTask);
 
-        Platform.CurrentActivity?.StartActivity(i);
+        Platform.CurrentActivity?.StartActivity(chooserIntent);
 #endif
     }
 

@@ -64,8 +64,6 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     Media _media;
     IAnimeInfo Anime = default!;
     Episode Episode = default!;
-    VideoSource? Video;
-    VideoServer? VideoServer;
 
     IExoPlayer exoPlayer = default!;
     StyledPlayerView playerView = default!;
@@ -120,12 +118,11 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     private bool IsSeekingBackward { get; set; }
     private bool IsSeekingForward { get; set; }
 
-    public PlatformMediaController(VideoPlayerViewModel playerViewModel, VideoServer videoServer)
+    public PlatformMediaController(VideoPlayerViewModel playerViewModel)
     {
         _playerViewModel = playerViewModel;
         Anime = _playerViewModel.Anime;
         Episode = _playerViewModel.Episode;
-        VideoServer = videoServer;
         _media = _playerViewModel.Media;
 
         _playerSettings.Load();
@@ -150,6 +147,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
         animeTitle.Text = Anime.Title;
         episodeTitle.Text = Episode.Name;
+        VideoName.Text = _playerViewModel.Video?.VideoServer?.Name ?? "Default Server";
 
         SetNextAndPrev();
 
@@ -258,7 +256,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         episodeTitle = Platform.CurrentActivity.FindViewById<TextView>(Resource.Id.exo_ep_sel)!;
 
         animeTitle.Text = Anime.Title;
-        episodeTitle.Text = Episode.Name;
+        episodeTitle.Text = Episode.Name ?? $"Episode {Episode.Number}";
 
         exoplay = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_play)!;
         exoQuality = Platform.CurrentActivity.FindViewById<ImageButton>(Resource.Id.exo_quality)!;
@@ -270,10 +268,8 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
         ServerInfo.Text = Anime.Site.ToString();
 
-        VideoName.Text = VideoServer?.Name;
+        VideoName.Text = _playerViewModel.Video?.VideoServer?.Name ?? "Default Server";
         VideoName.Selected = true;
-
-        VideoName.Text = "My server test";
 
         ExoSkip = Platform.CurrentActivity.FindViewById<MaterialCardView>(Resource.Id.exo_skip)!;
 
@@ -838,42 +834,6 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         }
     }
 
-    ///// <summary>
-    ///// Load next or previous episode
-    ///// </summary>
-    ///// <param name="episode">Next or previous episode</param>
-    //private async Task LoadEpisode(Episode? episode)
-    //{
-    //    if (episode is null) return;
-    //
-    //    var videoServers = await _client.GetVideoServersAsync(episode.Id);
-    //    if (videoServers.Count == 0)
-    //        return;
-    //
-    //    var allVideos = new List<VideoSource>();
-    //
-    //    foreach (var server in videoServers)
-    //    {
-    //        try
-    //        {
-    //            allVideos.AddRange(await _client.GetVideosAsync(server));
-    //        }
-    //        catch { }
-    //    }
-    //
-    //    var epKey = episode.Link ?? episode.Id;
-    //
-    //    if (!SelectorDialogFragment.Cache.ContainsKey(epKey))
-    //    {
-    //        var serverWithVideos = videoServers
-    //            .ConvertAll(x => new ServerWithVideos(x, allVideos));
-    //
-    //        SelectorDialogFragment.Cache.Add(epKey, serverWithVideos);
-    //    }
-    //
-    //    RunOnUiThread(SetNextAndPrev);
-    //}
-
     private void SetNextAndPrev()
     {
         PrevButton.Visibility = ViewStates.Visible;
@@ -901,94 +861,6 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             NextButton.Alpha = 0.5f;
         }
     }
-
-    //public Episode? GetPreviousEpisode()
-    //{
-    //    var currentEpisode = EpisodesActivity.Episodes.Find(x => x.Id == Episode.Id);
-    //    if (currentEpisode is null)
-    //        return null;
-    //
-    //    var index = EpisodesActivity.Episodes.OrderBy(x => x.Number).ToList()
-    //        .IndexOf(currentEpisode);
-    //
-    //    var prevEpisode = EpisodesActivity.Episodes.OrderBy(x => x.Number)
-    //        .ElementAtOrDefault(index - 1);
-    //
-    //    return prevEpisode;
-    //}
-    //
-    //private async void PlayPreviousEpisode()
-    //{
-    //    var prevEpisode = GetPreviousEpisode();
-    //    if (prevEpisode is null)
-    //        return;
-    //
-    //    Episode = prevEpisode;
-    //
-    //    exoPlayer.Pause();
-    //    await UpdateProgress();
-    //
-    //    Episode = prevEpisode;
-    //
-    //    exoPlayer.Stop();
-    //    exoPlayer.SeekTo(0);
-    //    //exoPlayer.Release();
-    //
-    //    CancellationTokenSource.Cancel();
-    //    VideoCache.Release();
-    //    //SetupExoPlayer();
-    //
-    //    animeTitle.Text = Anime.Title;
-    //    episodeTitle.Text = Episode.Name;
-    //
-    //    //progressBar.Visibility = ViewStates.Visible;
-    //
-    //    await SetEpisodeAsync(prevEpisode.Id);
-    //    SetNextAndPrev();
-    //}
-    //
-    //public Episode? GetNextEpisode()
-    //{
-    //    var currentEpisode = EpisodesActivity.Episodes.Find(x => x.Id == Episode.Id);
-    //    if (currentEpisode is null)
-    //        return null;
-    //
-    //    var index = EpisodesActivity.Episodes.OrderBy(x => x.Number).ToList()
-    //        .IndexOf(currentEpisode);
-    //
-    //    var nextEpisode = EpisodesActivity.Episodes.OrderBy(x => x.Number)
-    //        .ElementAtOrDefault(index + 1);
-    //
-    //    return nextEpisode;
-    //}
-    //
-    //private async void PlayNextEpisode()
-    //{
-    //    var nextEpisode = GetNextEpisode();
-    //    if (nextEpisode is null)
-    //        return;
-    //
-    //    exoPlayer.Pause();
-    //    await UpdateProgress();
-    //
-    //    Episode = nextEpisode;
-    //
-    //    exoPlayer.Stop();
-    //    exoPlayer.SeekTo(0);
-    //    //exoPlayer.Release();
-    //
-    //    CancellationTokenSource.Cancel();
-    //    VideoCache.Release();
-    //    //SetupExoPlayer();
-    //
-    //    animeTitle.Text = Anime.Title;
-    //    episodeTitle.Text = Episode.Name;
-    //
-    //    //progressBar.Visibility = ViewStates.Visible;
-    //
-    //    await SetEpisodeAsync(Episode.Id);
-    //    SetNextAndPrev();
-    //}
 
     private List<Stamp> SkippedTimeStamps { get; set; } = new();
     private Stamp? CurrentTimeStamp { get; set; }
@@ -1133,31 +1005,6 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
         trackDialog.Show();
     }
-
-    //public async void PlayVideo(VideoSource video)
-    //{
-    //    if (exoPlayer is not null)
-    //    {
-    //        exoPlayer.Pause();
-    //        exoPlayer.Stop();
-    //    }
-    //
-    //    Video = video;
-    //
-    //    await UpdateProgress();
-    //
-    //    _playerSettings.WatchedEpisodes.TryGetValue(Episode.Id,
-    //        out var watchedEpisode);
-    //
-    //    if (watchedEpisode is not null)
-    //        exoPlayer.SeekTo(watchedEpisode.WatchedDuration);
-    //
-    //    //await Task.Run(async () =>
-    //    //{
-    //    //    await LoadEpisode(GetNextEpisode());
-    //    //    await LoadEpisode(GetPreviousEpisode());
-    //    //});
-    //}
 
     public void OnMediaItemTransition(MediaItem? mediaItem, int reason) { }
 

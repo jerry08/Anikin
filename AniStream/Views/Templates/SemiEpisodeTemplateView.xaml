@@ -13,7 +13,7 @@
     x:DataType="models:Episode"
     BackgroundColor="Transparent"
     HeightRequest="95"
-    MinimumWidthRequest="170">
+    WidthRequest="170">
     <Border.Resources>
         <ResourceDictionary>
             <converters:WatchedEpisodeProgressConverter x:Key="WatchedEpisodeProgressConverter" />

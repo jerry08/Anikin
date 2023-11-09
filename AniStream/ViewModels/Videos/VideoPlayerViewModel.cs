@@ -115,6 +115,9 @@ public partial class VideoPlayerViewModel : BaseViewModel
         if (PreviousEpisode is null)
             return;
 
+        MediaElement.PositionChanged += MediaElement_PositionChanged;
+
+        Video = null;
         SetEpisode(PreviousEpisode);
         UpdateSource();
     }
@@ -124,8 +127,39 @@ public partial class VideoPlayerViewModel : BaseViewModel
         if (NextEpisode is null)
             return;
 
+        MediaElement.PositionChanged += MediaElement_PositionChanged;
+
+        Video = null;
         SetEpisode(NextEpisode);
         UpdateSource();
+    }
+
+    private void MediaElement_PositionChanged(object? sender, MediaPositionChangedEventArgs e)
+    {
+        MediaElement.PositionChanged -= MediaElement_PositionChanged;
+
+        if (
+            MediaElement.Duration.TotalMilliseconds - 8000
+            <= MediaElement.Position.TotalMilliseconds
+        )
+        {
+            MediaElement.SeekTo(
+                TimeSpan.FromMilliseconds(MediaElement.Position.TotalMilliseconds - 8000)
+            );
+        }
+    }
+
+    public async void MediaEnded()
+    {
+        await Task.Delay(3500);
+
+        if (CancellationToken.IsCancellationRequested)
+            return;
+
+        if (MediaElement.Position.TotalMilliseconds == MediaElement.Duration.TotalMilliseconds)
+        {
+            PlayNext();
+        }
     }
 
     [RelayCommand]
@@ -134,8 +168,10 @@ public partial class VideoPlayerViewModel : BaseViewModel
         Shell.Current.Navigating += Current_Navigating;
 
         MediaElement = mediaElement;
-        Controller = new(this, default!);
+        Controller = new(this);
         Controller.OnLoaded(mediaElement);
+
+        MediaElement.PositionChanged += MediaElement_PositionChanged;
     }
 
     private void Current_Navigating(object? sender, ShellNavigatingEventArgs e)
@@ -172,6 +208,17 @@ public partial class VideoPlayerViewModel : BaseViewModel
                 break;
             case MediaElementState.Stopped:
                 UpdateProgress();
+
+                if (
+                    MediaElement.Duration.TotalMilliseconds > 0
+                    && (
+                        MediaElement.Position.TotalMilliseconds
+                        == MediaElement.Duration.TotalMilliseconds
+                    )
+                )
+                {
+                    MediaEnded();
+                }
                 break;
             case MediaElementState.Failed:
                 CanSaveProgress = false;
@@ -211,6 +258,8 @@ public partial class VideoPlayerViewModel : BaseViewModel
             if (video is null)
                 return;
 
+            Video = video;
+
             var source = (UriMediaSource)MediaSource.FromUri(video.VideoUrl)!;
             source.UserAgent =
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36";
@@ -229,7 +278,9 @@ public partial class VideoPlayerViewModel : BaseViewModel
             _playerSettings.WatchedEpisodes.TryGetValue(EpisodeKey, out var watchedEpisode);
 
             if (watchedEpisode is not null)
+            {
                 MediaElement.SeekTo(TimeSpan.FromMilliseconds(watchedEpisode.WatchedDuration));
+            }
         }
         catch (Exception ex)
         {
