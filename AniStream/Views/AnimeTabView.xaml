@@ -100,7 +100,7 @@
                         VerticalOptions="Start"
                         WidthRequest="35">
                         <ImageButton.Behaviors>
-                            <toolkit:IconTintColorBehavior TintColor="#D9FFFFFF" />
+                            <toolkit:IconTintColorBehavior TintColor="#A9FFFFFF" />
                         </ImageButton.Behaviors>
                     </ImageButton>
 
