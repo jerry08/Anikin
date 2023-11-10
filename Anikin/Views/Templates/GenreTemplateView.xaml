@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Border
+    x:Class="Anikin.Views.Templates.GenreTemplateView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:Anikin"
+    xmlns:models="clr-namespace:Juro.Core.Models.Anime;assembly=Juro.Core"
+    x:Name="this"
+    Margin="0"
+    Padding="0"
+    BackgroundColor="Transparent"
+    HeightRequest="35">
+    <Grid BackgroundColor="Transparent">
+        <Border
+            Grid.Column="0"
+            BackgroundColor="{StaticResource Gray830}"
+            HorizontalOptions="Center"
+            StrokeThickness="0"
+            VerticalOptions="FillAndExpand">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8" />
+            </Border.StrokeShape>
+            <Label
+                Grid.Row="1"
+                Padding="12,6"
+                FontAttributes="Bold"
+                FontSize="13"
+                HorizontalOptions="Center"
+                HorizontalTextAlignment="Center"
+                Text="{Binding}"
+                VerticalTextAlignment="Center" />
+        </Border>
+    </Grid>
+</Border>

@@ -1,0 +1,104 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Border
+    x:Class="Anikin.Views.Templates.FullEpisodeTemplateView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:converters="clr-namespace:Anikin.Converters"
+    xmlns:local="clr-namespace:Anikin"
+    xmlns:models="clr-namespace:Juro.Core.Models.Anime;assembly=Juro.Core"
+    x:Name="this"
+    Margin="20,5"
+    Padding="0"
+    x:DataType="models:Episode"
+    BackgroundColor="Transparent"
+    HeightRequest="125">
+    <Border.Resources>
+        <ResourceDictionary>
+            <converters:WatchedEpisodeProgressConverter x:Key="WatchedEpisodeProgressConverter" />
+            <converters:IsWatchedEpisodeProgressVisibleConverter x:Key="IsWatchedEpisodeProgressVisibleConverter" />
+        </ResourceDictionary>
+    </Border.Resources>
+    <Border.StrokeShape>
+        <RoundRectangle CornerRadius="10" />
+    </Border.StrokeShape>
+    <Grid BackgroundColor="{StaticResource Gray900}" ColumnDefinitions="auto,*">
+        <Grid.Behaviors>
+            <berry:TouchBehavior
+                Command="{Binding Parent.BindingContext.ItemClickCommand, Source={x:Reference this}}"
+                CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
+                LongPressCommand="{Binding Parent.BindingContext.ShowSheetCommand, Source={x:Reference this}}"
+                LongPressCommandParameter="{Binding BindingContext, Source={x:Reference this}}"
+                NativeAnimation="True" />
+        </Grid.Behaviors>
+        <Border StrokeThickness="0">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="10" />
+            </Border.StrokeShape>
+            <Image
+                Aspect="AspectFill"
+                BackgroundColor="Transparent"
+                Opacity="0.8"
+                Source="{Binding Image}"
+                WidthRequest="200" />
+        </Border>
+
+        <!--  Display Progress  -->
+        <Grid IsVisible="{Binding Progress, Converter={StaticResource IsWatchedEpisodeProgressVisibleConverter}}">
+            <ProgressBar
+                HeightRequest="5"
+                Progress="{Binding Progress, Converter={StaticResource WatchedEpisodeProgressConverter}}"
+                ProgressColor="{StaticResource Primary}"
+                VerticalOptions="End"
+                ZIndex="2" />
+            <Grid
+                BackgroundColor="White"
+                HeightRequest="5"
+                Opacity="0.5"
+                VerticalOptions="End" />
+        </Grid>
+
+        <Border
+            Grid.Column="0"
+            Margin="-10,-3,0,0"
+            Padding="4"
+            HorizontalOptions="Start"
+            StrokeThickness="0"
+            VerticalOptions="Start">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Offset="0.4" Color="#AE000000" />
+                    <GradientStop Offset="1" Color="#31000000" />
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="20,0,20,20" />
+            </Border.StrokeShape>
+            <Label
+                Padding="15,8,10,6"
+                FontAttributes="Bold"
+                FontSize="20"
+                HorizontalTextAlignment="Start"
+                LineBreakMode="TailTruncation"
+                Opacity="0.9"
+                Text="{Binding Number}"
+                TextColor="#E9FFFFFF"
+                VerticalTextAlignment="Start" />
+        </Border>
+
+        <Label
+            Grid.Column="1"
+            Padding="8,5"
+            FontAttributes="Bold"
+            FontFamily="SoraBold"
+            FontSize="20"
+            HorizontalOptions="Center"
+            HorizontalTextAlignment="End"
+            LineBreakMode="TailTruncation"
+            Opacity="0.7"
+            Text="{Binding Name}"
+            TextColor="#E9FFFFFF"
+            VerticalOptions="Center"
+            VerticalTextAlignment="End" />
+    </Grid>
+</Border>

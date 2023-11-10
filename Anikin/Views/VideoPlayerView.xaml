@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Anikin.Views.VideoPlayerView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://github.com/jerry08/Berry.Maui"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels"
+    xmlns:views="clr-namespace:Anikin.Views"
+    x:Name="this"
+    x:DataType="viewModels:VideoPlayerViewModel">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <Grid HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+        <Grid
+            BackgroundColor="#6A000000"
+            HorizontalOptions="FillAndExpand"
+            IsVisible="{Binding StartedPlaying, Converter={StaticResource InvertedBoolConverter}}"
+            VerticalOptions="FillAndExpand"
+            ZIndex="1000">
+            <ActivityIndicator
+                HeightRequest="{OnPlatform Default=60,
+                                           WinUI=100}"
+                HorizontalOptions="CenterAndExpand"
+                IsRunning="{Binding StartedPlaying, Converter={StaticResource InvertedBoolConverter}}"
+                VerticalOptions="CenterAndExpand"
+                WidthRequest="{OnPlatform Default=60,
+                                          WinUI=100}" />
+        </Grid>
+
+        <berry:MediaElement
+            x:Name="videoPlayer"
+            HorizontalOptions="FillAndExpand"
+            IsVisible="{Binding StartedPlaying}"
+            ShouldAutoPlay="True"
+            ShouldShowPlaybackControls="True"
+            Source="{Binding Source}"
+            VerticalOptions="FillAndExpand">
+            <berry:MediaElement.Behaviors>
+                <toolkit:EventToCommandBehavior
+                    Command="{Binding LoadedCommand}"
+                    CommandParameter="{x:Reference videoPlayer}"
+                    EventName="Loaded" />
+                <toolkit:EventToCommandBehavior
+                    Command="{Binding StateChangedCommand}"
+                    CommandParameter="{Binding CurrentState, Source={x:Reference videoPlayer}}"
+                    EventName="StateChanged" />
+                <toolkit:EventToCommandBehavior Command="{Binding UnloadedCommand}" EventName="Unloaded" />
+            </berry:MediaElement.Behaviors>
+        </berry:MediaElement>
+    </Grid>
+</ContentPage>

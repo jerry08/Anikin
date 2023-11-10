@@ -1,6 +1,0 @@
-<resources>
-  <string name="com.crashlytics.android.build_id">AniStreamVersion20</string>
-
-  <string name="animations">Animations</string>
-  <string name="skip">Skip</string>
-</resources>

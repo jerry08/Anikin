@@ -1,0 +1,334 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="Anikin.Views.EpisodePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:converters="clr-namespace:Anikin.Converters"
+    xmlns:local="clr-namespace:Anikin"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:models="clr-namespace:Juro.Core.Models.Anime;assembly=Juro.Core"
+    xmlns:tabs="http://sharpnado.com"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels"
+    xmlns:viewTemplates="clr-namespace:Anikin.Views.Templates"
+    xmlns:views="clr-namespace:Anikin.Views"
+    x:Name="this"
+    berry:Insets.EdgeToEdge="True"
+    berry:Insets.StatusBarStyle="LightContent"
+    x:DataType="viewModels:EpisodeViewModel">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <converters:RatingConverter x:Key="RatingConverter" />
+
+            <DataTemplate x:Key="AnimeInfoDataTemplate">
+                <views:AnimeItemView />
+            </DataTemplate>
+
+            <DataTemplate x:Key="GenreTemplate">
+                <viewTemplates:GenreTemplateView />
+            </DataTemplate>
+
+            <DataTemplate x:Key="EpisodeTemplate">
+                <viewTemplates:EpisodeTemplateView />
+            </DataTemplate>
+
+            <DataTemplate x:Key="SemiEpisodeTemplate">
+                <viewTemplates:SemiEpisodeTemplateView />
+            </DataTemplate>
+
+            <DataTemplate x:Key="EpisodeRangeTemplate">
+                <viewTemplates:EpisodeRangeTemplateView />
+            </DataTemplate>
+
+            <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
+            <views:MainDataTemplateSelector x:Key="GenreTemplateSelector" DataTemplate="{StaticResource GenreTemplate}" />
+            <views:MainDataTemplateSelector x:Key="EpisodeTemplateSelector" DataTemplate="{StaticResource EpisodeTemplate}" />
+            <views:MainDataTemplateSelector x:Key="SemiEpisodeTemplateSelector" DataTemplate="{StaticResource SemiEpisodeTemplate}" />
+            <views:MainDataTemplateSelector x:Key="EpisodeRangeTemplateSelector" DataTemplate="{StaticResource EpisodeRangeTemplate}" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+        <Grid
+            HeightRequest="50"
+            VerticalOptions="Start"
+            ZIndex="1">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Offset="0" Color="#BE000000" />
+                    <GradientStop Offset="1" Color="Transparent" />
+                </LinearGradientBrush>
+            </Grid.Background>
+        </Grid>
+
+        <ScrollView>
+            <VerticalStackLayout Margin="0,0,0,50">
+                <Grid>
+                    <!--<Image
+                        x:Name="testImg"
+                        Margin="0,0,0,-100"
+                        Aspect="AspectFill"
+                        HeightRequest="400"
+                        Source="{Binding Entity.Image}"
+                        TranslationY="-100"
+                        VerticalOptions="Start" />-->
+
+                    <Image
+                        x:Name="testImg"
+                        Margin="0,0,0,-260"
+                        Aspect="AspectFill"
+                        HeightRequest="620"
+                        Source="{Binding Entity.Cover.ExtraLargeImageUrl}"
+                        VerticalOptions="Start">
+                        <Image.GestureRecognizers>
+                            <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="CoverImage_OnDoubleTap" />
+                        </Image.GestureRecognizers>
+                        <Image.Behaviors>
+                            <berry:TouchBehavior LongPressCommand="{Binding BindingContext.ShowCoverImageCommand, Source={x:Reference this}}" />
+                        </Image.Behaviors>
+                    </Image>
+
+                    <Border
+                        Grid.Column="0"
+                        Margin="2"
+                        Padding="4"
+                        HorizontalOptions="End"
+                        StrokeThickness="0"
+                        VerticalOptions="End">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Offset="0.4" Color="#AE000000" />
+                                <GradientStop Offset="1" Color="#31000000" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="20,0,20,20" />
+                        </Border.StrokeShape>
+                        <HorizontalStackLayout Margin="10,5,5,5">
+                            <Label FontAttributes="Bold" Text="{Binding Entity.MeanScore, Converter={StaticResource RatingConverter}}" />
+                            <Image>
+                                <Image.Source>
+                                    <FontImageSource
+                                        FontFamily="Material"
+                                        Glyph="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
+                                        Size="17"
+                                        Color="Gold" />
+                                </Image.Source>
+                            </Image>
+                        </HorizontalStackLayout>
+                    </Border>
+
+                    <!--<Border
+                        Grid.Column="0"
+                        Margin="2"
+                        Padding="4"
+                        BackgroundColor="#BE000000"
+                        HorizontalOptions="End"
+                        StrokeThickness="0"
+                        VerticalOptions="End">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18" />
+                        </Border.StrokeShape>
+                        <HorizontalStackLayout HorizontalOptions="End" VerticalOptions="End">
+                            <Image
+                                Margin="0"
+                                BackgroundColor="Transparent"
+                                VerticalOptions="Center">
+                                <Image.Source>
+                                    <FontImageSource
+                                        FontFamily="Material"
+                                        Glyph="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
+                                        Size="18"
+                                        Color="#AD3AFF" />
+                                </Image.Source>
+                            </Image>
+                            <Label
+                                Margin="0,0,5,0"
+                                FontAttributes="Bold"
+                                FontSize="12"
+                                Text="{Binding Entity.MeanScore, Converter={StaticResource RatingConverter}}"
+                                VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </Border>-->
+                </Grid>
+
+                <VerticalStackLayout>
+                    <VerticalStackLayout.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,0.2">
+                            <GradientStop Offset="0" Color="Transparent" />
+                            <GradientStop Offset="0.16" Color="#5E000000" />
+                            <GradientStop Offset="1" Color="Black" />
+                        </LinearGradientBrush>
+                    </VerticalStackLayout.Background>
+
+                    <Grid
+                        Margin="8,10"
+                        ColumnDefinitions="auto,*,auto,auto"
+                        HeightRequest="30">
+                        <Label
+                            Grid.Column="1"
+                            FontAttributes="Bold"
+                            FontSize="20"
+                            HorizontalTextAlignment="Start"
+                            LineBreakMode="TailTruncation"
+                            MaxLines="1"
+                            Text="{Binding Entity.Title.PreferredTitle}"
+                            VerticalOptions="Center">
+                            <Label.Behaviors>
+                                <berry:TouchBehavior LongPressCommand="{Binding BindingContext.CopyTitleCommand, Source={x:Reference this}}" />
+                            </Label.Behaviors>
+                        </Label>
+
+                        <ImageButton
+                            x:Name="favouriteBtn"
+                            Grid.Column="2"
+                            Margin="0"
+                            Padding="5"
+                            BackgroundColor="Transparent"
+                            Clicked="FavouriteButton_OnClick"
+                            HeightRequest="50">
+                            <ImageButton.Triggers>
+                                <DataTrigger
+                                    Binding="{Binding IsFavorite}"
+                                    TargetType="ImageButton"
+                                    Value="True">
+                                    <Setter Property="Source">
+                                        <Setter.Value>
+                                            <FontImageSource
+                                                FontFamily="Material"
+                                                Glyph="{x:Static materialDesign:MaterialDesignIcons.Favorite}"
+                                                Size="30"
+                                                Color="{AppThemeBinding Light={StaticResource Black},
+                                                                        Dark=Red}" />
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                                <DataTrigger
+                                    Binding="{Binding IsFavorite}"
+                                    TargetType="ImageButton"
+                                    Value="False">
+                                    <Setter Property="Source">
+                                        <Setter.Value>
+                                            <FontImageSource
+                                                FontFamily="Material"
+                                                Glyph="{x:Static materialDesign:MaterialDesignIcons.FavoriteOutline}"
+                                                Size="30"
+                                                Color="{AppThemeBinding Light={StaticResource Black},
+                                                                        Dark={StaticResource White}}" />
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                            </ImageButton.Triggers>
+                        </ImageButton>
+
+                        <Button
+                            Grid.Column="3"
+                            Margin="0"
+                            Padding="0"
+                            BackgroundColor="Transparent"
+                            Command="{Binding ShareUriCommand}"
+                            HeightRequest="50">
+                            <Button.ImageSource>
+                                <FontImageSource
+                                    FontFamily="Material"
+                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.Share}"
+                                    Size="30"
+                                    Color="{AppThemeBinding Light={StaticResource Black},
+                                                            Dark={StaticResource White}}" />
+                            </Button.ImageSource>
+                        </Button>
+                    </Grid>
+
+                    <!--<FlexLayout
+                        Margin="0,0,0,10"
+                        BindableLayout.ItemTemplateSelector="{StaticResource GenreTemplateSelector}"
+                        BindableLayout.ItemsSource="{Binding Entity.Genres}"
+                        JustifyContent="Center"
+                        Wrap="Wrap" />-->
+
+                    <CollectionView
+                        Margin="0,0,0,10"
+                        HorizontalOptions="Center"
+                        ItemTemplate="{StaticResource GenreTemplateSelector}"
+                        ItemsSource="{Binding Entity.Genres}"
+                        RemainingItemsThreshold="1">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout ItemSpacing="2" Orientation="Horizontal" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.EmptyView>
+                            <Grid
+                                HorizontalOptions="FillAndExpand"
+                                IsVisible="False"
+                                VerticalOptions="FillAndExpand">
+                                <Label
+                                    FontSize="16"
+                                    HorizontalOptions="Center"
+                                    Text="Empty"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+
+                    <tabs:TabHostView
+                        x:Name="tabHostView"
+                        Padding="0,0"
+                        BackgroundColor="Transparent"
+                        HeightRequest="60"
+                        HorizontalOptions="Center"
+                        IsSegmented="True"
+                        Orientation="Horizontal"
+                        SegmentedOutlineColor="Transparent"
+                        SelectedIndex="{Binding SelectedViewModelIndex, Mode=TwoWay}"
+                        TabType="Fixed"
+                        WidthRequest="250">
+                        <tabs:UnderlinedTabItem
+                            FontFamily="SoraBold"
+                            Label="Overview"
+                            LabelSize="16"
+                            SelectedTabColor="#9575ff"
+                            UnderlineHeight="1"
+                            UnselectedLabelColor="{StaticResource Gray400}" />
+                        <tabs:MaterialUnderlinedTabItem
+                            FontFamily="SoraBold"
+                            IconOptions="TextOnly"
+                            IconSize="30"
+                            Label="Episodes"
+                            LabelSize="16"
+                            SelectedTabColor="#9575ff"
+                            UnderlineHeight="1"
+                            UnselectedLabelColor="{StaticResource Gray400}">
+                            <tabs:MaterialUnderlinedTabItem.IconImageSource>
+                                <FontImageSource
+                                    FontFamily="Material"
+                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.Person}"
+                                    Color="{AppThemeBinding Light={StaticResource Gray400},
+                                                            Dark={StaticResource White}}" />
+                            </tabs:MaterialUnderlinedTabItem.IconImageSource>
+                        </tabs:MaterialUnderlinedTabItem>
+                    </tabs:TabHostView>
+
+                    <tabs:ViewSwitcher
+                        x:Name="Switcher"
+                        Grid.RowSpan="3"
+                        Margin="0,10,0,0"
+                        Animate="True"
+                        SelectedIndex="{Binding SelectedViewModelIndex, Mode=TwoWay}">
+                        <tabs:LazyView
+                            x:TypeArguments="views:OverviewTabView"
+                            AccentColor="{StaticResource Primary}"
+                            Animate="True"
+                            BindingContext="{Binding}"
+                            UseActivityIndicator="True" />
+                        <tabs:LazyView
+                            x:TypeArguments="views:EpisodesTabView"
+                            AccentColor="{StaticResource Primary}"
+                            Animate="True"
+                            UseActivityIndicator="True" />
+                    </tabs:ViewSwitcher>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</views:BasePage>

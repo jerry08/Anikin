@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<local:BaseBottomSheetView
+    x:Class="Anikin.Views.BottomSheets.VideoSourceSheet"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:controls="clr-namespace:Anikin.Controls"
+    xmlns:local="clr-namespace:Anikin.Views.BottomSheets"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:models="clr-namespace:Juro.Core.Models.Videos;assembly=Juro.Core"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels"
+    xmlns:vmodels="clr-namespace:Juro.Core.Models.Videos;assembly=Juro.Core"
+    x:Name="this"
+    Margin="0"
+    x:DataType="viewModels:VideoSourceViewModel"
+    BackgroundColor="{StaticResource Gray900}"
+    HandleColor="{StaticResource Gray800}"
+    HasBackdrop="True"
+    HasHandle="True"
+    UseNavigationBarArea="True">
+    <berry:BottomSheet.Detents>
+        <berry:DetentsCollection>
+            <berry:RatioDetent Ratio="0.35" />
+            <berry:RatioDetent Ratio="0.85" />
+        </berry:DetentsCollection>
+    </berry:BottomSheet.Detents>
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </ContentView.Resources>
+    <Border
+        Grid.Column="0"
+        HorizontalOptions="FillAndExpand"
+        Stroke="{StaticResource Gray700}"
+        StrokeThickness="0"
+        VerticalOptions="FillAndExpand">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="22" />
+        </Border.StrokeShape>
+        <Grid x:Name="Main" RowDefinitions="auto,auto,*">
+            <!--  Text="{Binding Entities.Count}"  -->
+            <Label
+                Grid.Row="0"
+                Margin="0,5,0,0"
+                FontAttributes="Bold"
+                FontSize="20"
+                HeightRequest="60"
+                HorizontalOptions="CenterAndExpand"
+                HorizontalTextAlignment="Center"
+                Text="Select server"
+                TextTransform="Uppercase"
+                VerticalTextAlignment="Center" />
+
+            <BoxView Grid.Row="1" Style="{StaticResource SeparatorBoxView}" />
+
+            <!--<Label HeightRequest="50" />-->
+
+            <CollectionView
+                x:Name="test24"
+                Grid.Row="2"
+                Margin="10,10,10,0"
+                IsGrouped="True"
+                ItemsSource="{Binding Entities}">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout
+                        ItemSpacing="8"
+                        Orientation="Vertical"
+                        SnapPointsType="None" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate x:DataType="{x:Null}">
+                        <Label
+                            Margin="25,10,0,0"
+                            FontAttributes="Bold"
+                            FontSize="18"
+                            HorizontalTextAlignment="Start"
+                            Text="{Binding Name}" />
+                    </DataTemplate>
+                </CollectionView.GroupHeaderTemplate>
+                <!--<CollectionView.GroupFooterTemplate>
+                    <DataTemplate x:DataType="{x:Null}">
+                        <Label Margin="10,0,0,10" Text="{Binding Count, StringFormat='Total records: {0:D}'}" />
+                    </DataTemplate>
+                </CollectionView.GroupFooterTemplate>-->
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="{x:Type vmodels:VideoSource}">
+                        <Border BackgroundColor="{StaticResource Gray800}" StrokeThickness="0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="18" />
+                            </Border.StrokeShape>
+                            <Grid x:Name="videoSourceGrid" ColumnDefinitions="*,auto">
+                                <Grid.Behaviors>
+                                    <berry:TouchBehavior
+                                        Command="{Binding BindingContext.ItemClickCommand, Source={x:Reference this}}"
+                                        CommandParameter="{Binding BindingContext, Source={x:Reference videoSourceGrid}}"
+                                        LongPressCommand="{Binding BindingContext.ItemLongClickCommand, Source={x:Reference this}}"
+                                        LongPressCommandParameter="{Binding BindingContext, Source={x:Reference videoSourceGrid}}"
+                                        NativeAnimation="True"
+                                        ShouldMakeChildrenInputTransparent="False" />
+                                </Grid.Behaviors>
+                                <Label
+                                    Grid.Column="0"
+                                    Margin="15,20"
+                                    FontAttributes="Bold"
+                                    FontSize="18"
+                                    HorizontalOptions="FillAndExpand"
+                                    Text="{Binding Title}"
+                                    VerticalOptions="Center" />
+                                <Button
+                                    Grid.Column="1"
+                                    Margin="0"
+                                    BackgroundColor="Transparent"
+                                    FontAttributes="Bold"
+                                    FontSize="14"
+                                    HorizontalOptions="Center"
+                                    WidthRequest="90">
+                                    <Button.ImageSource>
+                                        <FontImageSource
+                                            FontFamily="Material"
+                                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Download}"
+                                            Size="25"
+                                            Color="{AppThemeBinding Light={StaticResource Black},
+                                                                    Dark={StaticResource White}}" />
+                                    </Button.ImageSource>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.Footer>
+                    <StackLayout HeightRequest="50">
+                        <ActivityIndicator
+                            HeightRequest="40"
+                            HorizontalOptions="{OnPlatform WinUI=FillAndExpand,
+                                                           Default=CenterAndExpand}"
+                            IsRunning="{Binding IsLoading}"
+                            IsVisible="{Binding IsLoading}"
+                            VerticalOptions="CenterAndExpand"
+                            WidthRequest="40" />
+                    </StackLayout>
+                </CollectionView.Footer>
+                <CollectionView.EmptyView>
+                    <Grid
+                        HorizontalOptions="FillAndExpand"
+                        IsVisible="False"
+                        VerticalOptions="FillAndExpand">
+                        <Grid.Triggers>
+                            <DataTrigger
+                                Binding="{Binding IsBusy}"
+                                TargetType="Grid"
+                                Value="False">
+                                <Setter Property="IsVisible" Value="True" />
+                            </DataTrigger>
+                        </Grid.Triggers>
+                        <Label
+                            FontSize="16"
+                            HorizontalOptions="Center"
+                            Text="Nothing found :("
+                            VerticalOptions="Center" />
+                    </Grid>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </Grid>
+    </Border>
+</local:BaseBottomSheetView>

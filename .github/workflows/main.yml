@@ -37,11 +37,11 @@ jobs:
         run: dotnet workload install maui --ignore-failed-sources
 
       - name: Restore Dependencies
-        run: dotnet restore AniStream/
+        run: dotnet restore Anikin/
 
       - name: Publish MAUI Android
         run: >
-            dotnet publish AniStream/
+            dotnet publish Anikin/
             -c Release
             -f net7.0-android
             -p:AndroidKeyStore=true
@@ -55,14 +55,14 @@ jobs:
         run: |
           set -e
 
-          mv AniStream/bin/Release/net7.0-android/com.oneb.anistream-Signed.apk AniStream.apk
+          mv Anikin/bin/Release/net7.0-android/com.oneb.anikin-Signed.apk Anikin.apk
         shell: bash
         
       - name: Upload Android Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: AniStream
-          path: AniStream.apk
+          name: Anikin
+          path: Anikin.apk
 
   deploy:
     if: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
@@ -94,8 +94,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
-          name: AniStream
-          path: AniStream
+          name: Anikin
+          path: Anikin
 
       - name: Set body
         run: |
@@ -109,7 +109,7 @@ jobs:
         run: |
           set -e
 
-          mv AniStream/AniStream.apk ${{ env.PACKAGE_NAME }}
+          mv Anikin/Anikin.apk ${{ env.PACKAGE_NAME }}
 
       - name: Create release
         env:
