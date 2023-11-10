@@ -12,7 +12,7 @@ public class UpdateService
     private readonly GitHubClient _github;
 
     private readonly string _repositoryOwner = "jerry08";
-    private readonly string _repostoryName = "Anistream";
+    private readonly string _repostoryName = "Anikin";
 
     public UpdateService()
     {

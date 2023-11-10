@@ -15,7 +15,7 @@
 		<ApplicationTitle>Anikin</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.oneb.anistream</ApplicationId>
+		<ApplicationId>com.oneb.anikin</ApplicationId>
 		<ApplicationIdGuid>c9293998-a5d0-4219-85dc-3c69b19ca380</ApplicationIdGuid>
 
 		<!-- Versions -->
