@@ -12,10 +12,25 @@
     x:Name="this"
     x:DataType="viewModels:ProfileViewModel">
     <Grid
-        Margin="10,60"
+        Margin="16,60"
         RowDefinitions="auto,*"
-        RowSpacing="5">
-        <Button Command="{Binding LoginWithAnilistCommand}" Text="Anilist" />
+        RowSpacing="5"
+        VerticalOptions="Center">
+        <Border Padding="0,5">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="15" />
+            </Border.StrokeShape>
+            <Button
+                BackgroundColor="Transparent"
+                BorderColor="White"
+                Command="{Binding LoginWithAnilistCommand}"
+                FontAttributes="Bold"
+                FontSize="16"
+                Text="Anilist Login"
+                TextColor="White"
+                VerticalOptions="Center" />
+        </Border>
+
         <!--  Webview causing other views when navigating to lose touch effect color  -->
         <!--<WebView
             x:Name="webView"
