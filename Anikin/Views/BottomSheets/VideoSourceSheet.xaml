@@ -64,15 +64,13 @@
                 IsGrouped="True"
                 ItemsSource="{Binding Entities}">
                 <CollectionView.ItemsLayout>
-                    <LinearItemsLayout
-                        ItemSpacing="8"
-                        Orientation="Vertical"
-                        SnapPointsType="None" />
+                    <!--  ItemSpacing bug https://github.com/dotnet/maui/issues/8422  -->
+                    <LinearItemsLayout Orientation="Vertical" SnapPointsType="None" />
                 </CollectionView.ItemsLayout>
                 <CollectionView.GroupHeaderTemplate>
                     <DataTemplate x:DataType="{x:Null}">
                         <Label
-                            Margin="25,10,0,0"
+                            Margin="25,15,0,0"
                             FontAttributes="Bold"
                             FontSize="18"
                             HorizontalTextAlignment="Start"
@@ -86,7 +84,10 @@
                 </CollectionView.GroupFooterTemplate>-->
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="{x:Type vmodels:VideoSource}">
-                        <Border BackgroundColor="{StaticResource Gray800}" StrokeThickness="0">
+                        <Border
+                            Margin="0,4"
+                            BackgroundColor="{StaticResource Gray800}"
+                            StrokeThickness="0">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="18" />
                             </Border.StrokeShape>

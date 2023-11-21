@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup
+    x:Class="Anikin.Views.Popups.ExtensionsPopup"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:Anikin"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels.Popups"
+    x:Name="this"
+    x:DataType="{x:Type viewModels:ExtensionsPopupViewModel}"
+    CanBeDismissedByTappingOutsideOfPopup="True"
+    Color="Transparent">
+    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray830}}" StrokeThickness="0">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="25" />
+        </Border.StrokeShape>
+        <VerticalStackLayout Spacing="10">
+            <Grid Grid.Row="0">
+                <!--<Border
+                    Margin="12,0"
+                    Padding="20,0"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100},
+                                                      Dark={StaticResource Gray700}}"
+                    StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="25" />
+                    </Border.StrokeShape>
+
+                </Border>-->
+
+                <local:MaterialEntry
+                    FontAttributes="Bold"
+                    FontSize="16"
+                    Keyboard="Url"
+                    Placeholder="Github url"
+                    PlaceholderColor="{AppThemeBinding Light={StaticResource Gray300},
+                                                       Dark={StaticResource Gray100}}"
+                    Style="{StaticResource EntrySearchStyle}"
+                    VerticalOptions="Center">
+                    <Entry.Behaviors>
+                        <local:TapToCloseBehavior />
+                    </Entry.Behaviors>
+                </local:MaterialEntry>
+            </Grid>
+        </VerticalStackLayout>
+    </Border>
+</toolkit:Popup>

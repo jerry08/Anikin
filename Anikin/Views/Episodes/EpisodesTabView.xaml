@@ -335,7 +335,7 @@
             ItemsSource="{Binding Ranges}"
             RemainingItemsThreshold="1">
             <CollectionView.ItemsLayout>
-                <LinearItemsLayout ItemSpacing="0" Orientation="Horizontal" />
+                <LinearItemsLayout Orientation="Horizontal" />
             </CollectionView.ItemsLayout>
             <CollectionView.EmptyView>
                 <Grid
@@ -438,7 +438,7 @@
                 </DataTrigger>
             </CollectionView.Triggers>
             <CollectionView.ItemsLayout>
-                <LinearItemsLayout ItemSpacing="0" Orientation="Vertical" />
+                <LinearItemsLayout Orientation="Vertical" />
             </CollectionView.ItemsLayout>
         </CollectionView>
     </VerticalStackLayout>

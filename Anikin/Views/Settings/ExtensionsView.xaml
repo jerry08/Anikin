@@ -1,0 +1,224 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Anikin.Views.Settings.ExtensionsView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:local="clr-namespace:Anikin"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:models="clr-namespace:Anikin.Models"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels"
+    xmlns:views="clr-namespace:Anikin.Views"
+    xmlns:woka="clr-namespace:Woka;assembly=Woka"
+    x:Name="this"
+    x:DataType="viewModels:ExtensionsViewModel">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <toolkit:IsListNullOrEmptyConverter x:Key="IsListNullOrEmptyConverter" />
+            <toolkit:IsListNotNullOrEmptyConverter x:Key="IsListNotNullOrEmptyConverter" />
+
+            <DataTemplate x:Key="AnimeInfoDataTemplate">
+                <views:AnimeItemView />
+            </DataTemplate>
+
+            <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector">
+                <views:MainDataTemplateSelector.DataTemplate>
+                    <DataTemplate x:DataType="models:ModuleItem">
+                        <Border
+                            Margin="0,4"
+                            BackgroundColor="{StaticResource Gray800}"
+                            StrokeThickness="0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="18" />
+                            </Border.StrokeShape>
+                            <Grid x:Name="videoSourceGrid" ColumnDefinitions="*">
+                                <!--<Grid.Behaviors>
+                                    <berry:TouchBehavior
+                                        Command="{Binding BindingContext.ItemClickCommand, Source={x:Reference this}}"
+                                        CommandParameter="{Binding BindingContext, Source={x:Reference videoSourceGrid}}"
+                                        LongPressCommand="{Binding BindingContext.ItemLongClickCommand, Source={x:Reference this}}"
+                                        LongPressCommandParameter="{Binding BindingContext, Source={x:Reference videoSourceGrid}}"
+                                        NativeAnimation="True"
+                                        ShouldMakeChildrenInputTransparent="False" />
+                                </Grid.Behaviors>-->
+                                <Label
+                                    Grid.Column="0"
+                                    Margin="15,20"
+                                    FontAttributes="Bold"
+                                    FontSize="18"
+                                    HorizontalOptions="FillAndExpand"
+                                    Text="{Binding Name}"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </views:MainDataTemplateSelector.DataTemplate>
+            </views:MainDataTemplateSelector>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid
+        x:Name="MainGrid"
+        Margin="5,0,5,0"
+        RowDefinitions="*,auto">
+        <!--  SEARCH  -->
+        <!--<Grid Grid.Row="0">
+            <Border Style="{StaticResource EntrySearchBorderStyle}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="25" />
+                </Border.StrokeShape>
+                <Grid ColumnDefinitions="auto,*" ColumnSpacing="2">
+                    <Image Style="{StaticResource EntrySearchImageStyle}" />
+                    <Entry
+                        x:Name="SearchEntry"
+                        FontAttributes="Bold"
+                        FontSize="16"
+                        HeightRequest="45"
+                        Placeholder="Search query"
+                        Style="{StaticResource EntrySearchStyle}"
+                        Text="{Binding Query}" />
+                </Grid>
+            </Border>
+        </Grid>-->
+
+        <Grid
+            Grid.Row="0"
+            HorizontalOptions="CenterAndExpand"
+            IsVisible="{Binding IsBusy}"
+            VerticalOptions="CenterAndExpand"
+            ZIndex="1000">
+            <ActivityIndicator
+                HeightRequest="{OnPlatform Default=60,
+                                           WinUI=100}"
+                HorizontalOptions="CenterAndExpand"
+                IsRunning="True"
+                VerticalOptions="CenterAndExpand"
+                WidthRequest="{OnPlatform Default=60,
+                                          WinUI=100}">
+                <ActivityIndicator.Triggers>
+                    <DataTrigger
+                        Binding="{Binding IsLoading}"
+                        TargetType="ActivityIndicator"
+                        Value="True">
+                        <Setter Property="IsRunning" Value="False" />
+                        <Setter Property="BackgroundColor" Value="Transparent" />
+                    </DataTrigger>
+                </ActivityIndicator.Triggers>
+            </ActivityIndicator>
+        </Grid>
+
+        <Grid
+            Grid.Row="0"
+            HorizontalOptions="FillAndExpand"
+            IsVisible="False"
+            VerticalOptions="FillAndExpand">
+            <Grid.Triggers>
+                <MultiTrigger TargetType="Grid">
+                    <MultiTrigger.Conditions>
+                        <BindingCondition Binding="{Binding IsBusy}" Value="False" />
+                        <BindingCondition Binding="{Binding IsVisible, Source={x:Reference SearchCollectionView}}" Value="True" />
+                        <BindingCondition Binding="{Binding Entities, Converter={StaticResource IsListNullOrEmptyConverter}}" Value="True" />
+                    </MultiTrigger.Conditions>
+                    <MultiTrigger.Setters>
+                        <Setter Property="IsVisible" Value="True" />
+                    </MultiTrigger.Setters>
+                </MultiTrigger>
+            </Grid.Triggers>
+            <Label
+                FontSize="16"
+                HorizontalOptions="Center"
+                Text="Empty"
+                VerticalOptions="Center" />
+        </Grid>
+
+        <Grid Grid.Column="0">
+            <CollectionView
+                x:Name="SearchCollectionView"
+                HorizontalOptions="Center"
+                IsGrouped="True"
+                IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                ItemTemplate="{StaticResource MainDataTemplateSelector}"
+                ItemsSource="{Binding Entities}">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate x:DataType="{x:Null}">
+                        <Label
+                            Margin="25,15,0,0"
+                            FontAttributes="Bold"
+                            FontSize="18"
+                            HorizontalTextAlignment="Start"
+                            Text="{Binding Module.Name}" />
+                    </DataTemplate>
+                </CollectionView.GroupHeaderTemplate>
+                <CollectionView.Footer>
+                    <StackLayout x:Name="CollectionFooter" HeightRequest="50">
+                        <ActivityIndicator
+                            HeightRequest="40"
+                            HorizontalOptions="{OnPlatform WinUI=FillAndExpand,
+                                                           Default=CenterAndExpand}"
+                            IsRunning="{Binding IsLoading}"
+                            IsVisible="{Binding IsLoading}"
+                            VerticalOptions="CenterAndExpand"
+                            WidthRequest="40" />
+                    </StackLayout>
+                </CollectionView.Footer>
+                <!--<CollectionView.EmptyView>
+                    <Grid
+                        HorizontalOptions="FillAndExpand"
+                        IsVisible="False"
+                        VerticalOptions="FillAndExpand">
+                        <Grid.Triggers>
+                            <DataTrigger
+                                Binding="{Binding IsBusy}"
+                                TargetType="Grid"
+                                Value="False">
+                                <Setter Property="IsVisible" Value="True" />
+                            </DataTrigger>
+                        </Grid.Triggers>
+                        <Label
+                            FontSize="16"
+                            HorizontalOptions="Center"
+                            Text="Empty"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </CollectionView.EmptyView>-->
+            </CollectionView>
+
+            <Border
+                Margin="10,40"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Primary},
+                                                  Dark={StaticResource Gray830}}"
+                HeightRequest="65"
+                HorizontalOptions="EndAndExpand"
+                StrokeThickness="0"
+                VerticalOptions="End"
+                WidthRequest="65">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="24" />
+                </Border.StrokeShape>
+                <Grid>
+                    <Grid.Behaviors>
+                        <berry:TouchBehavior Command="{Binding BindingContext.AddExtensionCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                    </Grid.Behaviors>
+                    <Image
+                        Margin="5"
+                        BackgroundColor="Transparent"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center">
+                        <Image.Source>
+                            <FontImageSource
+                                FontFamily="Material"
+                                Glyph="{x:Static materialDesign:MaterialDesignIcons.Add}"
+                                Size="35"
+                                Color="White" />
+                        </Image.Source>
+                    </Image>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentPage>

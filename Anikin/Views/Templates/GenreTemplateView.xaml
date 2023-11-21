@@ -10,7 +10,7 @@
     Padding="0"
     BackgroundColor="Transparent"
     HeightRequest="35">
-    <Grid BackgroundColor="Transparent">
+    <Grid Margin="2,0" BackgroundColor="Transparent">
         <Border
             Grid.Column="0"
             BackgroundColor="{StaticResource Gray830}"

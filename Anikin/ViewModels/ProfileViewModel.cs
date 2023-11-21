@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Anikin.ViewModels.Framework;
 using Anikin.Views;
+using Anikin.Views.Settings;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
@@ -22,5 +23,11 @@ public partial class ProfileViewModel : BaseViewModel
             .OpenAsync(
                 $"https://anilist.co/api/v2/oauth/authorize?client_id={clientID}&response_type=token"
             );
+    }
+
+    [RelayCommand]
+    async Task GoToExtensionsSettings()
+    {
+        await Shell.Current.GoToAsync(nameof(ExtensionsView));
     }
 }

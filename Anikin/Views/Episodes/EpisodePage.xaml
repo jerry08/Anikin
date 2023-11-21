@@ -66,6 +66,7 @@
         <ScrollView>
             <VerticalStackLayout Margin="0,0,0,50">
                 <Grid>
+
                     <!--<Image
                         x:Name="testImg"
                         Margin="0,0,0,-100"
@@ -89,6 +90,52 @@
                             <berry:TouchBehavior LongPressCommand="{Binding BindingContext.ShowCoverImageCommand, Source={x:Reference this}}" />
                         </Image.Behaviors>
                     </Image>
+
+                    <Grid Grid.Column="0" Margin="10,40">
+                        <Border
+                            Grid.Column="0"
+                            Margin="2"
+                            Padding="8"
+                            BackgroundColor="#77000000"
+                            HorizontalOptions="Start"
+                            StrokeThickness="0"
+                            VerticalOptions="Start">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="30" />
+                            </Border.StrokeShape>
+                            <Image Opacity="0.8">
+                                <Image.Source>
+                                    <FontImageSource
+                                        FontFamily="Material"
+                                        Glyph="{x:Static materialDesign:MaterialDesignIcons.ArrowBack}"
+                                        Size="30"
+                                        Color="White" />
+                                </Image.Source>
+                            </Image>
+                        </Border>
+
+                        <Border
+                            Grid.Column="0"
+                            Margin="2"
+                            Padding="8"
+                            BackgroundColor="#77000000"
+                            HorizontalOptions="End"
+                            StrokeThickness="0"
+                            VerticalOptions="Start">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="30" />
+                            </Border.StrokeShape>
+                            <Image Opacity="0.8">
+                                <Image.Source>
+                                    <FontImageSource
+                                        FontFamily="Material"
+                                        Glyph="{x:Static materialDesign:MaterialDesignIcons.Dns}"
+                                        Size="30"
+                                        Color="White" />
+                                </Image.Source>
+                            </Image>
+                        </Border>
+                    </Grid>
 
                     <Border
                         Grid.Column="0"
@@ -255,7 +302,7 @@
                         ItemsSource="{Binding Entity.Genres}"
                         RemainingItemsThreshold="1">
                         <CollectionView.ItemsLayout>
-                            <LinearItemsLayout ItemSpacing="2" Orientation="Horizontal" />
+                            <LinearItemsLayout Orientation="Horizontal" />
                         </CollectionView.ItemsLayout>
                         <CollectionView.EmptyView>
                             <Grid

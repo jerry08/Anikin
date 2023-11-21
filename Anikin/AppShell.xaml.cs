@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Anikin.ViewModels.Framework;
 using Anikin.Views;
+using Anikin.Views.Settings;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using Microsoft.Maui.Controls;
@@ -19,6 +20,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(SearchView), typeof(SearchView));
         Routing.RegisterRoute(nameof(EpisodePage), typeof(EpisodePage));
         Routing.RegisterRoute(nameof(AnilistLoginView), typeof(AnilistLoginView));
+        Routing.RegisterRoute(nameof(ExtensionsView), typeof(ExtensionsView));
 
         Navigated += async (s, e) =>
         {

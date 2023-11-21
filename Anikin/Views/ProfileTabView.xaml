@@ -16,17 +16,63 @@
         RowDefinitions="auto,*"
         RowSpacing="5"
         VerticalOptions="Center">
-        <Border Padding="0,5">
+        <VerticalStackLayout>
+            <Border Padding="0,5">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="15" />
+                </Border.StrokeShape>
+                <Button
+                    BackgroundColor="Transparent"
+                    BorderColor="White"
+                    Command="{Binding LoginWithAnilistCommand}"
+                    FontAttributes="Bold"
+                    FontSize="16"
+                    Text="Anilist Login"
+                    TextColor="White"
+                    VerticalOptions="Center" />
+            </Border>
+
+            <Border Padding="0,5">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="15" />
+                </Border.StrokeShape>
+                <Button
+                    BackgroundColor="Transparent"
+                    BorderColor="White"
+                    Command="{Binding GoToExtensionsSettingsCommand}"
+                    FontAttributes="Bold"
+                    FontSize="16"
+                    Text="Extensions"
+                    TextColor="White"
+                    VerticalOptions="Center" />
+            </Border>
+
+            <Entry
+                ClearButtonVisibility="WhileEditing"
+                FontAttributes="Bold"
+                Placeholder="test"
+                TextColor="White">
+                <Entry.Behaviors>
+                    <local:TapToCloseBehavior />
+                </Entry.Behaviors>
+            </Entry>
+
+        </VerticalStackLayout>
+
+        <Border
+            x:Name="test1"
+            Grid.Row="1"
+            Padding="0,5">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="15" />
             </Border.StrokeShape>
             <Button
                 BackgroundColor="Transparent"
                 BorderColor="White"
-                Command="{Binding LoginWithAnilistCommand}"
+                Command="{Binding GoToExtensionsSettingsCommand}"
                 FontAttributes="Bold"
                 FontSize="16"
-                Text="Anilist Login"
+                Text="Extensions"
                 TextColor="White"
                 VerticalOptions="Center" />
         </Border>

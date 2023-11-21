@@ -43,6 +43,8 @@ public class MainActivity
     {
         base.OnCreate(savedInstanceState);
 
+        //Window.DecorView.ViewTreeObserver.GlobalFocusChange += FocusChanged;
+
         //FirebaseApp.InitializeApp(this);
         //FirebaseCrashlytics.Instance.SetCrashlyticsCollectionEnabled(true);
         return;
@@ -114,17 +116,10 @@ public class MainActivity
         view.SetBackgroundColor(Color.Red);
     }
 
-    void FocusChanged(object sender, ViewTreeObserver.GlobalFocusChangeEventArgs e)
+    void FocusChanged(object? sender, ViewTreeObserver.GlobalFocusChangeEventArgs e)
     {
-        if (e.OldFocus is not null)
-        {
-            e.OldFocus.SetOnTouchListener(null);
-        }
-
-        if (e.NewFocus is not null)
-        {
-            e.NewFocus.SetOnTouchListener(this);
-        }
+        e.OldFocus?.SetOnTouchListener(null);
+        e.NewFocus?.SetOnTouchListener(this);
 
         if (e.NewFocus is null && e.OldFocus is not null)
         {
@@ -139,12 +134,25 @@ public class MainActivity
         }
     }
 
-    public override bool DispatchTouchEvent(MotionEvent ev)
+    public override bool DispatchTouchEvent(MotionEvent? ev)
     {
         var dispatch = base.DispatchTouchEvent(ev);
 
-        if (ev.Action == MotionEventActions.Down && CurrentFocus is not null)
+        if (ev?.Action == MotionEventActions.Down && CurrentFocus is not null)
         {
+            var outRect = new Rect();
+            CurrentFocus.GetGlobalVisibleRect(outRect);
+
+            // https://stackoverflow.com/a/28939113
+            if (!outRect.Contains((int)ev.RawX, (int)ev.RawY))
+            {
+                KeepFocus = false;
+            }
+            else
+            {
+                KeepFocus = true;
+            }
+
             if (!KeepFocus)
                 CurrentFocus.ClearFocus();
             KeepFocus = false;
@@ -153,17 +161,17 @@ public class MainActivity
         return dispatch;
     }
 
-    bool KeepFocus { get; set; }
+    public static bool KeepFocus { get; set; }
 
-    bool OnTouch(View v, MotionEvent e)
+    bool OnTouch(View? v, MotionEvent? e)
     {
-        if (e.Action == MotionEventActions.Down && CurrentFocus == v)
+        if (e?.Action == MotionEventActions.Down && CurrentFocus == v)
             KeepFocus = true;
 
-        return v.OnTouchEvent(e);
+        return v?.OnTouchEvent(e) == true;
     }
 
-    bool View.IOnTouchListener.OnTouch(View v, MotionEvent e) => OnTouch(v, e);
+    bool View.IOnTouchListener.OnTouch(View? v, MotionEvent? e) => OnTouch(v, e);
 
     //public override bool DispatchTouchEvent(MotionEvent? ev)
     //{
