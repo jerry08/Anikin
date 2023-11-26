@@ -10,8 +10,8 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true       # Disable sending .NET CLI telemetry
 
 jobs:
-  # MAUI Build
-  build:
+  # MAUI Android Build
+  build-android:
     runs-on: windows-latest
 
     env:
@@ -19,7 +19,7 @@ jobs:
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
 
-    name: Build & Upload Artifacts
+    name: Android Build
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -57,12 +57,30 @@ jobs:
 
           mv Anikin/bin/Release/net8.0-android/com.oneb.anikin-Signed.apk Anikin.apk
         shell: bash
+        
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Anikin
+          path: Anikin.apk
 
-      # Move the file with windows cmd https://stackoverflow.com/a/7268357
-      - name: Move apk file
-        run: >
-          if not exist build md build
-          move Anikin.apk build/Anikin.apk
+  build-windows:
+    runs-on: windows-latest
+    name: Windows Build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install MAUI Workload
+        run: dotnet workload install maui --ignore-failed-sources
+
+      - name: Restore Dependencies
+        run: dotnet restore Anikin/
 
       - name: Publish MAUI Windows (x64)
         run: >
@@ -76,17 +94,17 @@ jobs:
 
       - name: Create windows package
         run: powershell Compress-Archive build/windows 'Anikin (windows).zip'
-        
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v2.3.1
         with:
-          name: Anikin
-          path: build/
+          name: windows-ci-build
+          path: build/windows/Anikin (windows).zip
 
   deploy:
     if: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
 
-    needs: build
+    needs: [build-android, build-windows]
     runs-on: ubuntu-latest
 
     permissions:
@@ -116,7 +134,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: Anikin
-          path: build
+          path: Anikin.apk
 
       - name: Set body
         run: |
@@ -131,7 +149,6 @@ jobs:
           set -e
 
           mv build/Anikin.apk ${{ env.PACKAGE_NAME }}.apk
-          mv 'build/Anikin (windows).zip' '${{ env.PACKAGE_NAME }} (windows).zip'
 
       - name: Create release
         env:
