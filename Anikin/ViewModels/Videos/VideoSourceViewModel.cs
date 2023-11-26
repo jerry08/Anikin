@@ -23,7 +23,7 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
 {
     private readonly Media _media;
 
-    private readonly IAnimeProvider _provider = ProviderResolver.GetAnimeProvider();
+    private readonly IAnimeProvider? _provider = ProviderResolver.GetAnimeProvider();
     private readonly IAnimeInfo _anime;
     private readonly Episode _episode;
 
@@ -51,6 +51,14 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
 
     protected override async Task LoadCore()
     {
+        if (_provider is null)
+        {
+            IsBusy = false;
+            IsRefreshing = false;
+            await Toast.Make("No providers installed").Show();
+            return;
+        }
+
         IsBusy = true;
         IsLoading = true;
 

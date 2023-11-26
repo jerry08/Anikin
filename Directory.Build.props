@@ -1,6 +1,7 @@
 <Project>
 
   <PropertyGroup>
+    <NetVersion>net8.0</NetVersion>
     <Company>Jerro</Company>
     <Copyright>Copyright (C) Jerry Berry</Copyright>
     <LangVersion>preview</LangVersion>

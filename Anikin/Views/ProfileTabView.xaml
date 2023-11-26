@@ -24,6 +24,7 @@
                 <Button
                     BackgroundColor="Transparent"
                     BorderColor="White"
+                    BorderWidth="0"
                     Command="{Binding LoginWithAnilistCommand}"
                     FontAttributes="Bold"
                     FontSize="16"
@@ -39,6 +40,7 @@
                 <Button
                     BackgroundColor="Transparent"
                     BorderColor="White"
+                    BorderWidth="0"
                     Command="{Binding GoToExtensionsSettingsCommand}"
                     FontAttributes="Bold"
                     FontSize="16"
@@ -46,36 +48,7 @@
                     TextColor="White"
                     VerticalOptions="Center" />
             </Border>
-
-            <Entry
-                ClearButtonVisibility="WhileEditing"
-                FontAttributes="Bold"
-                Placeholder="test"
-                TextColor="White">
-                <Entry.Behaviors>
-                    <local:TapToCloseBehavior />
-                </Entry.Behaviors>
-            </Entry>
-
         </VerticalStackLayout>
-
-        <Border
-            x:Name="test1"
-            Grid.Row="1"
-            Padding="0,5">
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="15" />
-            </Border.StrokeShape>
-            <Button
-                BackgroundColor="Transparent"
-                BorderColor="White"
-                Command="{Binding GoToExtensionsSettingsCommand}"
-                FontAttributes="Bold"
-                FontSize="16"
-                Text="Extensions"
-                TextColor="White"
-                VerticalOptions="Center" />
-        </Border>
 
         <!--  Webview causing other views when navigating to lose touch effect color  -->
         <!--<WebView

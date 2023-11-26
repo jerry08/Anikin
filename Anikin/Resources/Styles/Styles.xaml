@@ -35,8 +35,10 @@
     </Style>
 
     <Style TargetType="Button">
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Primary}}" />
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
+        <!--<Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Primary}}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />-->
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray800}}" />
         <Setter Property="FontFamily" Value="SoraRegular" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="CornerRadius" Value="8" />
@@ -119,28 +121,15 @@
         <!--<Setter Property="ClearButtonVisibility" Value="WhileEditing" />-->
     </Style>
 
-    <Style x:Key="EntrySearchImageStyle" TargetType="Image">
-        <Setter Property="HeightRequest" Value="20" />
-        <Setter Property="WidthRequest" Value="20" />
-        <Setter Property="Source">
-            <FontImageSource
-                FontFamily="Material"
-                Glyph="{x:Static materialDesign:MaterialDesignIcons.Search}"
-                Size="Medium"
-                Color="{AppThemeBinding Light={StaticResource Gray400},
-                                        Dark={StaticResource White}}" />
-        </Setter>
+    <Style x:Key="Label.Icon.Search" TargetType="Label">
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontFamily" Value="Material" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource White}}" />
+        <Setter Property="Text" Value="{x:Static materialDesign:MaterialDesignIcons.Search}" />
     </Style>
     <!--#endregion-->
-
-    <!--<Style x:Key="CollectionItem.Frame" TargetType="Frame">
-        <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="Margin" Value="5" />
-        <Setter Property="Padding" Value="5" />
-        <Setter Property="HorizontalOptions" Value="FillAndExpand" />
-        <Setter Property="BorderColor" Value="Transparent" />
-        <Setter Property="HasShadow" Value="True" />
-    </Style>-->
 
     <Style TargetType="DatePicker">
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}" />

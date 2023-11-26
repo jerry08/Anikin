@@ -1,12 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentView
+<berry:DelayedView
     x:Class="Anikin.Views.AnimeTabView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
     xmlns:materialDesign="clr-namespace:MaterialDesign"
     xmlns:skl="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
-    xmlns:tabs="http://sharpnado.com"
     xmlns:templates="clr-namespace:Anikin.Views.Templates"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:viewModels="clr-namespace:Anikin.ViewModels"
@@ -85,7 +84,7 @@
                     VerticalOptions="FillAndExpand">
                     <CollectionView.ItemsLayout>
                         <LinearItemsLayout
-                            
+
                             SnapPointsAlignment="Center"
                             SnapPointsType="MandatorySingle" />
                     </CollectionView.ItemsLayout>
@@ -104,21 +103,17 @@
                         </ImageButton.Behaviors>
                     </ImageButton>
 
-                    <ImageButton
+                    <Button
+                        BackgroundColor="Transparent"
                         Command="{Binding GoToSearchCommand}"
-                        HeightRequest="35"
+                        FontFamily="Material"
+                        FontSize="28"
                         HorizontalOptions="End"
-                        VerticalOptions="Start"
-                        WidthRequest="35">
-                        <ImageButton.Source>
-                            <FontImageSource
-                                FontFamily="Material"
-                                Glyph="{x:Static materialDesign:MaterialDesignIcons.Search}"
-                                Size="Medium"
-                                Color="{AppThemeBinding Light={StaticResource Gray400},
-                                                        Dark={StaticResource White}}" />
-                        </ImageButton.Source>
-                    </ImageButton>
+                        Opacity="0.9"
+                        Text="{x:Static materialDesign:MaterialDesignIcons.Search}"
+                        TextColor="{AppThemeBinding Light={StaticResource Gray400},
+                                                    Dark={StaticResource White}}"
+                        VerticalOptions="Start" />
                 </Grid>
 
                 <!--<Label
@@ -513,4 +508,4 @@
             </Grid>
         </ScrollView>
     </RefreshView>
-</ContentView>
+</berry:DelayedView>

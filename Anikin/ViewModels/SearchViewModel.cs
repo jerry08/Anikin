@@ -3,21 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Anikin.Utils;
+using Anikin.Services;
 using Anikin.ViewModels.Framework;
 using Anikin.Views;
 using CommunityToolkit.Mvvm.Input;
 using Jita.AniList;
 using Jita.AniList.Parameters;
-using Juro.Core.Providers;
 using Microsoft.Maui.Controls;
 
 namespace Anikin.ViewModels;
 
 public partial class SearchViewModel : CollectionViewModel<Jita.AniList.Models.Media>
 {
-    private AniClient _anilistClient;
-    private readonly IAnimeProvider _provider = ProviderResolver.GetAnimeProvider();
+    private readonly AniClient _anilistClient;
+    private readonly SettingsService _settingsService;
 
     private CancellationTokenSource CancellationTokenSource = new();
 
@@ -26,9 +25,12 @@ public partial class SearchViewModel : CollectionViewModel<Jita.AniList.Models.M
     private int PageIndex { get; set; } = 1;
     private int PageSize { get; set; } = 50;
 
-    public SearchViewModel(AniClient aniClient)
+    public SearchViewModel(AniClient aniClient, SettingsService settingsService)
     {
         _anilistClient = aniClient;
+        _settingsService = settingsService;
+
+        _settingsService.Load();
 
         //PropertyChanging += async (s, e) =>
         //{
@@ -130,7 +132,10 @@ public partial class SearchViewModel : CollectionViewModel<Jita.AniList.Models.M
 
             PageIndex++;
 
-            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result
+                .Data
+                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+                .ToList();
 
             Push(data);
             //Offset += data.Count;

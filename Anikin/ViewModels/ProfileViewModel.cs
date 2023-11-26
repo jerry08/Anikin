@@ -1,8 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Anikin.ViewModels.Framework;
 using Anikin.Views;
 using Anikin.Views.Settings;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 
@@ -13,6 +16,29 @@ public partial class ProfileViewModel : BaseViewModel
     [RelayCommand]
     async Task LoginWithAnilist()
     {
+        //try
+        //{
+        //    var fontRegistrar = App.Services.GetService<IFontRegistrar>();
+        //    var test1 = fontRegistrar.GetFont("Material");
+        //
+        //    App.AlertService.ShowAlert("test1", test1);
+        //
+        //    fontRegistrar?.Register(
+        //        @"C:\Users\jerem\source\repos\MAUI\Anikin\Anikin\Resources\Fonts\MaterialIconsRound-Regular.otf",
+        //        "Material"
+        //    );
+        //
+        //    test1 = fontRegistrar.GetFont("Material");
+        //
+        //    App.AlertService.ShowAlert("test2", test1);
+        //}
+        //catch (Exception ex)
+        //{
+        //    App.AlertService.ShowAlert("Error", $"{ex}");
+        //}
+        //
+        //return;
+
         await Shell.Current.GoToAsync(nameof(AnilistLoginView));
         return;
 

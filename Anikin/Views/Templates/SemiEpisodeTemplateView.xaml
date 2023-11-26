@@ -24,6 +24,15 @@
         <RoundRectangle CornerRadius="10" />
     </Border.StrokeShape>
     <Grid BackgroundColor="Transparent">
+        <Grid.Behaviors>
+            <berry:TouchBehavior
+                Command="{Binding Parent.BindingContext.ItemClickCommand, Source={x:Reference this}}"
+                CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
+                LongPressCommand="{Binding Parent.BindingContext.ShowSheetCommand, Source={x:Reference this}}"
+                LongPressCommandParameter="{Binding BindingContext, Source={x:Reference this}}"
+                NativeAnimation="True" />
+        </Grid.Behaviors>
+
         <!--<Image
             effects:TouchEffect.Color="{StaticResource Primary}"
             Aspect="AspectFill"
@@ -34,16 +43,7 @@
             Aspect="AspectFill"
             BackgroundColor="Transparent"
             Opacity="0.8"
-            Source="{Binding Image}">
-            <Image.Behaviors>
-                <berry:TouchBehavior NativeAnimation="True" />
-                <berry:TouchBehavior
-                    Command="{Binding Parent.BindingContext.ItemClickCommand, Source={x:Reference this}}"
-                    CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
-                    LongPressCommand="{Binding Parent.BindingContext.ShowSheetCommand, Source={x:Reference this}}"
-                    LongPressCommandParameter="{Binding BindingContext, Source={x:Reference this}}" />
-            </Image.Behaviors>
-        </Image>
+            Source="{Binding Image}" />
 
         <!--  Display Progress  -->
         <Grid IsVisible="{Binding Progress, Converter={StaticResource IsWatchedEpisodeProgressVisibleConverter}}">

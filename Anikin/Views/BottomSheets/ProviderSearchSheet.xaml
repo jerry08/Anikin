@@ -16,7 +16,7 @@
     BackgroundColor="{StaticResource Gray900}"
     HasBackdrop="True"
     HasHandle="True"
-    UseNavigationBarArea="True">
+    UseNavigationBarArea="False">
     <berry:BottomSheet.Detents>
         <berry:DetentsCollection>
             <berry:RatioDetent IsDefault="True" Ratio="0.40" />
@@ -46,7 +46,7 @@
                     <RoundRectangle CornerRadius="25" />
                 </Border.StrokeShape>
                 <Grid ColumnDefinitions="auto,*" ColumnSpacing="2">
-                    <Image Style="{StaticResource EntrySearchImageStyle}" />
+                    <Label Style="{StaticResource Label.Icon.Search}" />
                     <Entry
                         x:Name="SearchEntry"
                         FontAttributes="Bold"

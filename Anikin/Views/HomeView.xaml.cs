@@ -13,6 +13,8 @@ public partial class HomeView
 
         BindingContext = viewModel;
 
+        SetMargins();
+
         SizeChanged += (_, _) => SetMargins();
 
         //CommunityToolkit.Maui.Alerts.Snackbar.Make("test").Show();

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Anikin.Utils;
 using Anikin.ViewModels.Framework;
 using Berry.Maui.Controls;
+using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Mvvm.Input;
 using Juro.Core.Models.Anime;
 using Juro.Core.Providers;
@@ -12,7 +13,7 @@ namespace Anikin.ViewModels;
 
 public partial class ProviderSearchViewModel : CollectionViewModel<IAnimeInfo>
 {
-    private readonly IAnimeProvider _provider = ProviderResolver.GetAnimeProvider();
+    private readonly IAnimeProvider? _provider = ProviderResolver.GetAnimeProvider();
     private readonly BottomSheet _bottomSheet;
     private readonly EpisodeViewModel _episodeViewModel;
 
@@ -40,6 +41,12 @@ public partial class ProviderSearchViewModel : CollectionViewModel<IAnimeInfo>
             IsRefreshing = false;
             IsBusy = false;
             Entities.Clear();
+            return;
+        }
+
+        if (_provider is null)
+        {
+            await Toast.Make("No providers installed").Show();
             return;
         }
 

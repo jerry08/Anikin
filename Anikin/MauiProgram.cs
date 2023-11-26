@@ -1,6 +1,5 @@
 ﻿using System.Net.Http;
 using System.Net.Http.Headers;
-using Anikin.Handlers;
 using Anikin.Services;
 using Anikin.Services.AlertDialog;
 using Anikin.ViewModels;
@@ -12,10 +11,9 @@ using CommunityToolkit.Maui.Markup;
 using Jita.AniList;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
-using Sharpnado.Tabs;
+using Microsoft.Maui.LifecycleEvents;
 using Woka;
 #if ANDROID
 using Microsoft.Maui.Controls.Compatibility.Platform.Android;
@@ -35,7 +33,6 @@ public static class MauiProgram
             .UseBerry()
             .UseBerryMediaElement()
             .ConfigureWorkarounds()
-            .UseSharpnadoTabs(loggerEnable: true, debugLogEnable: true)
             .ConfigureEffects(e => { })
             .ConfigureMauiHandlers(handlers =>
             {
@@ -44,8 +41,8 @@ public static class MauiProgram
 #endif
 
                 //handlers.AddHandler<Entry, MaterialEntryHandler>();
-                handlers.AddHandler<MaterialEntry, MaterialEntryHandler>();
-                handlers.AddHandler(typeof(Page), typeof(WorkaroundPageHandler));
+                //handlers.AddHandler<MaterialEntry, MaterialEntryHandler>();
+                //handlers.AddHandler(typeof(Page), typeof(WorkaroundPageHandler));
             })
             .ConfigureFonts(fonts =>
             {
@@ -69,6 +66,40 @@ public static class MauiProgram
                 //fonts.AddFont("MaterialIconsOutlined-Regular.otf", "Material");
                 fonts.AddFont("MaterialIconsRound-Regular.otf", "Material");
                 fonts.AddFont("fa-solid-900.ttf", "FaSolid");
+            })
+            .ConfigureLifecycleEvents(events =>
+            {
+#if WINDOWS
+                events.AddWindows(
+                    windows =>
+                        windows.OnWindowCreated(window =>
+                        {
+                            window.ExtendsContentIntoTitleBar = false;
+
+                            // Center WinUi window. Thanks to these links:
+                            // https://stackoverflow.com/a/71730765
+                            // https://learn.microsoft.com/en-us/answers/questions/1339421/centerscreen-in-windows-for-net-maui
+                            var handle = WinRT.Interop.WindowNative.GetWindowHandle(window);
+                            var id = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(handle);
+                            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(id);
+
+                            if (appWindow is not null)
+                            {
+                                // Resize window
+                                appWindow.Resize(new Windows.Graphics.SizeInt32(1150, 740));
+
+                                var displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(id, Microsoft.UI.Windowing.DisplayAreaFallback.Nearest);
+                                if (displayArea is not null)
+                                {
+                                    var centeredPosition = appWindow.Position;
+                                    centeredPosition.X = (displayArea.WorkArea.Width - appWindow.Size.Width) / 2;
+                                    centeredPosition.Y = (displayArea.WorkArea.Height - appWindow.Size.Height) / 2;
+                                    appWindow.Move(centeredPosition);
+                                }
+                            }
+                        })
+                );
+#endif
             });
 
 #if DEBUG
@@ -92,9 +123,11 @@ public static class MauiProgram
         builder.Services.AddTransient<EpisodeViewModel>();
 
         // Services
-        builder.Services.AddTransient<AniClient>(x => AniClientFactory());
+        builder.Services.AddTransient(x => AniClientFactory());
         builder.Services.AddSingleton<IAlertService, AlertService>();
+        builder.Services.AddScoped<SettingsService>();
         builder.Services.AddScoped<PreferenceService>();
+        builder.Services.AddScoped<ProviderService>();
 
         return builder.Build();
     }

@@ -9,54 +9,94 @@ using Juro.Clients;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
 using Octokit;
+#if WINDOWS
+using Snackbar = CommunityToolkit.Maui.Alerts.Toast;
+#endif
 
 namespace Anikin.Services;
 
 public class ProviderService
 {
-    private readonly IReleasesClient _releaseClient;
-    private readonly GitHubClient _github;
-
-    private readonly string _repositoryOwner = "jerry08";
-    private readonly string _repostoryName = "Juro";
+    private readonly string _zipPath;
+    private readonly string _extractDir;
 
     public ProviderService()
     {
-        _github = new GitHubClient(new ProductHeaderValue(_repostoryName + "-Download"));
-        _releaseClient = _github.Repository.Release;
+        var dir = OperatingSystem.IsWindows()
+            ? AppDomain.CurrentDomain.BaseDirectory
+            : FileSystem.AppDataDirectory;
+
+        _zipPath = Path.Combine(dir, "providers_temp.zip");
+        _extractDir = Path.Combine(dir, "providers_temp2");
     }
 
-    public async Task<bool> DownloadAsync()
+    public void Initialize()
+    {
+        if (!Directory.Exists(_extractDir))
+            return;
+
+        try
+        {
+            Locator.Instance.Load(_extractDir);
+        }
+        catch
+        {
+            try
+            {
+                Directory.Delete(_extractDir, true);
+            }
+            catch { }
+        }
+    }
+
+    public async Task<bool> DownloadAsync(string repoUrl)
     {
         try
         {
-            var release = await GetReleaseAsync();
+            var urlParts = repoUrl.Split("/");
+            if (urlParts.Length < 2)
+            {
+                await App.AlertService.ShowAlertAsync("Error", "Invalid GitHub url");
+                return false;
+            }
+
+            var pair = urlParts.TakeLast(2);
+            var repositoryOwner = pair.ElementAtOrDefault(0);
+            var repostoryName = pair.ElementAtOrDefault(1);
+
+            if (string.IsNullOrEmpty(repositoryOwner) || string.IsNullOrEmpty(repositoryOwner))
+            {
+                await App.AlertService.ShowAlertAsync("Error", "Invalid GitHub url");
+                return false;
+            }
+
+            var github = new GitHubClient(new ProductHeaderValue(repostoryName + "-Download"));
+            var releaseClient = github.Repository.Release;
+
+            var release = await releaseClient.GetLatest(repositoryOwner, repostoryName);
             if (release is null)
                 return false;
 
             await Snackbar.Make("Download started").Show();
 
-            var zipPath = Path.Combine(FileSystem.AppDataDirectory, "providers_temp.zip");
-            var extractPath = Path.Combine(FileSystem.AppDataDirectory, "providers_temp2");
-
-            if (Directory.Exists(extractPath))
-                Directory.Delete(extractPath, true);
+            if (Directory.Exists(_extractDir))
+                Directory.Delete(_extractDir, true);
 
             var downloader = new Downloader();
-            await downloader.DownloadAsync(release.Assets[0].BrowserDownloadUrl, zipPath);
+            await downloader.DownloadAsync(release.Assets[0].BrowserDownloadUrl, _zipPath);
 
-            System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, extractPath);
+            System.IO.Compression.ZipFile.ExtractToDirectory(_zipPath, _extractDir);
 
-            await Snackbar.Make("Download & extraction completed").Show();
+            await Snackbar.Make($"Download & extraction completed. Path: '{_extractDir}'").Show();
 
             var client = new AnimeClient();
             var providers = client.GetAllProviders();
 
             var locator = new Locator();
-            locator.Load(extractPath);
+            locator.Load(_extractDir);
 
-            var modules = locator.GetModules();
-            var configs = locator.GetClientConfigs();
+            //var modules = locator.GetModules();
+            //var configs = locator.GetClientConfigs();
 
             providers = client.GetAllProviders();
 
@@ -69,14 +109,7 @@ public class ProviderService
             // Repository not found
 
             App.AlertService.ShowAlert("Error", ex.ToString());
+            return false;
         }
-
-        return false;
-    }
-
-    private async Task<Release?> GetReleaseAsync(bool prerelease = false)
-    {
-        var releases = await _releaseClient.GetAll(_repositoryOwner, _repostoryName);
-        return releases.FirstOrDefault(x => x.Prerelease == prerelease);
     }
 }

@@ -8,7 +8,6 @@
     xmlns:local="clr-namespace:Anikin"
     xmlns:materialDesign="clr-namespace:MaterialDesign"
     xmlns:models="clr-namespace:Juro.Core.Models.Anime;assembly=Juro.Core"
-    xmlns:tabs="http://sharpnado.com"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:viewModels="clr-namespace:Anikin.ViewModels"
     xmlns:viewTemplates="clr-namespace:Anikin.Views.Templates"
@@ -95,45 +94,43 @@
                         <Border
                             Grid.Column="0"
                             Margin="2"
-                            Padding="8"
                             BackgroundColor="#77000000"
                             HorizontalOptions="Start"
                             StrokeThickness="0"
                             VerticalOptions="Start">
                             <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="30" />
+                                <RoundRectangle CornerRadius="18" />
                             </Border.StrokeShape>
-                            <Image Opacity="0.8">
-                                <Image.Source>
-                                    <FontImageSource
-                                        FontFamily="Material"
-                                        Glyph="{x:Static materialDesign:MaterialDesignIcons.ArrowBack}"
-                                        Size="30"
-                                        Color="White" />
-                                </Image.Source>
-                            </Image>
+                            <Button
+                                Padding="12"
+                                BackgroundColor="Transparent"
+                                Command="{Binding GoBackCommand}"
+                                FontFamily="Material"
+                                FontSize="26"
+                                Opacity="0.8"
+                                Text="{x:Static materialDesign:MaterialDesignIcons.ArrowBack}"
+                                TextColor="White" />
                         </Border>
 
                         <Border
                             Grid.Column="0"
                             Margin="2"
-                            Padding="8"
                             BackgroundColor="#77000000"
                             HorizontalOptions="End"
                             StrokeThickness="0"
                             VerticalOptions="Start">
                             <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="30" />
+                                <RoundRectangle CornerRadius="18" />
                             </Border.StrokeShape>
-                            <Image Opacity="0.8">
-                                <Image.Source>
-                                    <FontImageSource
-                                        FontFamily="Material"
-                                        Glyph="{x:Static materialDesign:MaterialDesignIcons.Dns}"
-                                        Size="30"
-                                        Color="White" />
-                                </Image.Source>
-                            </Image>
+                            <Button
+                                Padding="12"
+                                BackgroundColor="Transparent"
+                                FontFamily="Material"
+                                FontSize="26"
+                                Opacity="0.8"
+                                Command="{Binding ShowProviderSourcesSheetCommand}"
+                                Text="{x:Static materialDesign:MaterialDesignIcons.Dns}"
+                                TextColor="White" />
                         </Border>
                     </Grid>
 
@@ -154,16 +151,17 @@
                             <RoundRectangle CornerRadius="20,0,20,20" />
                         </Border.StrokeShape>
                         <HorizontalStackLayout Margin="10,5,5,5">
-                            <Label FontAttributes="Bold" Text="{Binding Entity.MeanScore, Converter={StaticResource RatingConverter}}" />
-                            <Image>
-                                <Image.Source>
-                                    <FontImageSource
-                                        FontFamily="Material"
-                                        Glyph="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
-                                        Size="17"
-                                        Color="Gold" />
-                                </Image.Source>
-                            </Image>
+                            <Label
+                                FontAttributes="Bold"
+                                Text="{Binding Entity.MeanScore, Converter={StaticResource RatingConverter}}"
+                                VerticalOptions="Center" />
+                            <Label
+                                FontFamily="Material"
+                                FontSize="20"
+                                Text="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
+                                TextColor="Gold"
+                                VerticalOptions="Center"
+                                VerticalTextAlignment="Center" />
                         </HorizontalStackLayout>
                     </Border>
 
@@ -318,7 +316,7 @@
                         </CollectionView.EmptyView>
                     </CollectionView>
 
-                    <tabs:TabHostView
+                    <berry:TabHostView
                         x:Name="tabHostView"
                         Padding="0,0"
                         BackgroundColor="Transparent"
@@ -330,14 +328,14 @@
                         SelectedIndex="{Binding SelectedViewModelIndex, Mode=TwoWay}"
                         TabType="Fixed"
                         WidthRequest="250">
-                        <tabs:UnderlinedTabItem
+                        <berry:UnderlinedTabItem
                             FontFamily="SoraBold"
                             Label="Overview"
                             LabelSize="16"
                             SelectedTabColor="#9575ff"
                             UnderlineHeight="1"
                             UnselectedLabelColor="{StaticResource Gray400}" />
-                        <tabs:MaterialUnderlinedTabItem
+                        <berry:MaterialUnderlinedTabItem
                             FontFamily="SoraBold"
                             IconOptions="TextOnly"
                             IconSize="30"
@@ -345,35 +343,27 @@
                             LabelSize="16"
                             SelectedTabColor="#9575ff"
                             UnderlineHeight="1"
-                            UnselectedLabelColor="{StaticResource Gray400}">
-                            <tabs:MaterialUnderlinedTabItem.IconImageSource>
-                                <FontImageSource
-                                    FontFamily="Material"
-                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.Person}"
-                                    Color="{AppThemeBinding Light={StaticResource Gray400},
-                                                            Dark={StaticResource White}}" />
-                            </tabs:MaterialUnderlinedTabItem.IconImageSource>
-                        </tabs:MaterialUnderlinedTabItem>
-                    </tabs:TabHostView>
+                            UnselectedLabelColor="{StaticResource Gray400}" />
+                    </berry:TabHostView>
 
-                    <tabs:ViewSwitcher
+                    <berry:ViewSwitcher
                         x:Name="Switcher"
                         Grid.RowSpan="3"
                         Margin="0,10,0,0"
                         Animate="True"
                         SelectedIndex="{Binding SelectedViewModelIndex, Mode=TwoWay}">
-                        <tabs:LazyView
+                        <berry:LazyView
                             x:TypeArguments="views:OverviewTabView"
                             AccentColor="{StaticResource Primary}"
                             Animate="True"
                             BindingContext="{Binding}"
                             UseActivityIndicator="True" />
-                        <tabs:LazyView
+                        <berry:LazyView
                             x:TypeArguments="views:EpisodesTabView"
                             AccentColor="{StaticResource Primary}"
                             Animate="True"
                             UseActivityIndicator="True" />
-                    </tabs:ViewSwitcher>
+                    </berry:ViewSwitcher>
                 </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>

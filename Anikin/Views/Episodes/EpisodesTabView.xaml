@@ -9,7 +9,6 @@
     xmlns:local="clr-namespace:Anikin"
     xmlns:materialDesign="clr-namespace:MaterialDesign"
     xmlns:models="clr-namespace:Juro.Core.Models.Anime;assembly=Juro.Core"
-    xmlns:tabs="http://sharpnado.com"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:viewModels="clr-namespace:Anikin.ViewModels"
     xmlns:viewTemplates="clr-namespace:Anikin.Views.Templates"
@@ -65,36 +64,6 @@
                 FontSize="16"
                 HorizontalTextAlignment="Center"
                 Text="{Binding SearchingText}" />
-        </Grid>
-
-        <Grid
-            Margin="0,10,0,10"
-            Padding="20,0"
-            ColumnDefinitions="auto,*"
-            ColumnSpacing="10">
-            <Label
-                FontAttributes="Bold"
-                FontSize="15"
-                Text="Source:"
-                VerticalOptions="Center" />
-            <Border Grid.Column="1" Style="{StaticResource Entry.Border}">
-                <Picker
-                    x:Name="ProviderPicker"
-                    Title="Select Server"
-                    Margin="10,2"
-                    FontAttributes="Bold"
-                    FontSize="15"
-                    ItemsSource="{Binding ProviderNames}"
-                    SelectedIndex="{Binding ProviderIndex}"
-                    VerticalTextAlignment="Center">
-                    <Picker.Behaviors>
-                        <toolkit:EventToCommandBehavior
-                            Command="{Binding ProviderChangedCommand}"
-                            CommandParameter="{Binding Source={x:Reference ProviderPicker}, Path=SelectedIndex}"
-                            EventName="SelectedIndexChanged" />
-                    </Picker.Behaviors>
-                </Picker>
-            </Border>
         </Grid>
 
         <Grid Margin="20,0,10,0" ColumnDefinitions="auto,*">
@@ -215,28 +184,18 @@
                 Padding="0"
                 BackgroundColor="Transparent"
                 Command="{Binding ChangeGridModeCommand}"
-                CommandParameter="{x:Static components:GridLayoutMode.Full}">
-                <Button.ImageSource>
-                    <FontImageSource
-                        FontFamily="Material"
-                        Glyph="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
-                        Size="25"
-                        Color="{AppThemeBinding Light={StaticResource Black},
-                                                Dark={StaticResource Gray600}}" />
-                </Button.ImageSource>
+                CommandParameter="{x:Static components:GridLayoutMode.Full}"
+                FontFamily="Material"
+                FontSize="25"
+                Text="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
+                TextColor="{AppThemeBinding Light={StaticResource Black},
+                                            Dark={StaticResource Gray800}}">
                 <Button.Triggers>
                     <DataTrigger
                         Binding="{Binding GridLayoutMode}"
                         TargetType="Button"
                         Value="{x:Static components:GridLayoutMode.Full}">
-                        <Setter Property="ImageSource">
-                            <Setter.Value>
-                                <FontImageSource
-                                    FontFamily="Material"
-                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
-                                    Size="25" />
-                            </Setter.Value>
-                        </Setter>
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
                     </DataTrigger>
                 </Button.Triggers>
             </Button>
@@ -247,28 +206,18 @@
                 Padding="0"
                 BackgroundColor="Transparent"
                 Command="{Binding ChangeGridModeCommand}"
-                CommandParameter="{x:Static components:GridLayoutMode.Semi}">
-                <Button.ImageSource>
-                    <FontImageSource
-                        FontFamily="Material"
-                        Glyph="{x:Static materialDesign:MaterialDesignIcons.GridView}"
-                        Size="25"
-                        Color="{AppThemeBinding Light={StaticResource Black},
-                                                Dark={StaticResource Gray600}}" />
-                </Button.ImageSource>
+                CommandParameter="{x:Static components:GridLayoutMode.Semi}"
+                FontFamily="Material"
+                FontSize="25"
+                Text="{x:Static materialDesign:MaterialDesignIcons.GridView}"
+                TextColor="{AppThemeBinding Light={StaticResource Black},
+                                            Dark={StaticResource Gray800}}">
                 <Button.Triggers>
                     <DataTrigger
                         Binding="{Binding GridLayoutMode}"
                         TargetType="Button"
                         Value="{x:Static components:GridLayoutMode.Semi}">
-                        <Setter Property="ImageSource">
-                            <Setter.Value>
-                                <FontImageSource
-                                    FontFamily="Material"
-                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.GridView}"
-                                    Size="25" />
-                            </Setter.Value>
-                        </Setter>
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
                     </DataTrigger>
                 </Button.Triggers>
             </Button>
@@ -279,28 +228,18 @@
                 Padding="0"
                 BackgroundColor="Transparent"
                 Command="{Binding ChangeGridModeCommand}"
-                CommandParameter="{x:Static components:GridLayoutMode.Compact}">
-                <Button.ImageSource>
-                    <FontImageSource
-                        FontFamily="Material"
-                        Glyph="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
-                        Size="25"
-                        Color="{AppThemeBinding Light={StaticResource Black},
-                                                Dark={StaticResource Gray600}}" />
-                </Button.ImageSource>
+                CommandParameter="{x:Static components:GridLayoutMode.Compact}"
+                FontFamily="Material"
+                FontSize="25"
+                Text="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
+                TextColor="{AppThemeBinding Light={StaticResource Black},
+                                            Dark={StaticResource Gray800}}">
                 <Button.Triggers>
                     <DataTrigger
                         Binding="{Binding GridLayoutMode}"
                         TargetType="Button"
                         Value="{x:Static components:GridLayoutMode.Compact}">
-                        <Setter Property="ImageSource">
-                            <Setter.Value>
-                                <FontImageSource
-                                    FontFamily="Material"
-                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
-                                    Size="25" />
-                            </Setter.Value>
-                        </Setter>
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
                     </DataTrigger>
                 </Button.Triggers>
             </Button>

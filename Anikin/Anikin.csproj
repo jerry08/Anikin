@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net7.0-android;net7.0-ios;net7.0-maccatalyst</TargetFrameworks>
-    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net7.0-windows10.0.19041.0</TargetFrameworks>
+		<TargetFrameworks>$(NetVersion)-android;$(NetVersion)-ios;$(NetVersion)-maccatalyst</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);$(NetVersion)-windows10.0.19041.0</TargetFrameworks>
 		<OutputType>Exe</OutputType>
 		<RootNamespace>Anikin</RootNamespace>
 		<UseMaui>true</UseMaui>
@@ -19,7 +19,7 @@
 		<ApplicationIdGuid>c9293998-a5d0-4219-85dc-3c69b19ca380</ApplicationIdGuid>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>2.0.0.1</ApplicationDisplayVersion>
+		<ApplicationDisplayVersion>2.0.1</ApplicationDisplayVersion>
 		<ApplicationVersion>38</ApplicationVersion>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
@@ -28,6 +28,14 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 	</PropertyGroup>
+
+  <Target Name="RemoveFoldersWithMuiFiles" AfterTargets="Build">
+    <ItemGroup>
+      <RemovingFiles Include="$(OutDir)*\*.mui" Exclude="$(OutDir)en-us\*.mui" />
+      <RemovingFolders Include="@(RemovingFiles->'%(RootDir)%(Directory)')" />
+    </ItemGroup>
+    <RemoveDir Directories="@(RemovingFolders)" />
+  </Target>
 
 	<ItemGroup>
 		<!-- App Icon -->
@@ -49,34 +57,30 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Models\TapToCloseBehavior - Copy %282%29.android.cs" />
-	  <Compile Remove="Models\TapToCloseBehavior - Copy.android.cs" />
-	</ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
 
-	<ItemGroup>
-		<PackageReference Include="Berry.Maui" Version="1.0.14" />
-		<PackageReference Include="Berry.Maui.MediaElement" Version="1.0.0" />
+		<PackageReference Include="Berry.Maui" Version="1.1.3" />
+		<PackageReference Include="Berry.Maui.MediaElement" Version="1.1.0" />
 		<PackageReference Include="Cogwheel" Version="2.0.4" />
-		<PackageReference Include="CommunityToolkit.Maui" Version="6.1.0" />
-		<PackageReference Include="CommunityToolkit.Maui.Markup" Version="3.3.1" />
+		<PackageReference Include="CommunityToolkit.Maui" Version="7.0.0" />
+		<PackageReference Include="CommunityToolkit.Maui.Markup" Version="4.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-    <PackageReference Include="CSharpier.MsBuild" Version="0.26.1" PrivateAssets="all" />
+    <PackageReference Include="CSharpier.MsBuild" Version="0.26.3" PrivateAssets="all" />
     <PackageReference Include="Httpz" Version="1.1.3" />
     <PackageReference Include="Jita.AniList" Version="0.0.4" />
     <PackageReference Include="Jita.Aniskip" Version="0.0.4" />
     <PackageReference Include="Juro" Version="1.2.18" />
-    <!--<PackageReference Include="Juro.Providers" Version="1.2.14" />-->
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
     <PackageReference Include="Octokit" Version="9.0.0" />
-		<PackageReference Include="Plugin.ContextMenuContainer" Version="1.0.3" />
+		<PackageReference Include="Plugin.ContextMenuContainer" Version="1.0.4" />
 		<PackageReference Include="PropertyChanged.Fody" Version="4.1.0" PrivateAssets="all" />
-		<PackageReference Include="Sharpnado.Tabs.Maui" Version="3.0.1" />
 		<PackageReference Include="SkiaSharp.Extended.UI.Maui" Version="2.0.0-preview.86" />
 		<PackageReference Include="TaskExecutor" Version="1.0.3" />
-		<PackageReference Include="Woka" Version="1.0.16" />
+		<PackageReference Include="Woka" Version="1.0.20" />
 	</ItemGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0-ios'">
+	<ItemGroup Condition="'$(TargetFramework)' == '$(NetVersion)-ios'">
     <PackageReference Include="Jerro.Maui.GoogleClient" Version="1.0.3" />
     <PackageReference Include="Xamarin.Firebase.iOS.Auth" Version="8.10.0.3" />
 		<PackageReference Include="Xamarin.Firebase.iOS.Crashlytics" Version="8.10.0.3" />
@@ -87,7 +91,7 @@
     <GoogleServicesJson Include="google-services.json" />
   </ItemGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0-android'">
+	<ItemGroup Condition="'$(TargetFramework)' == '$(NetVersion)-android'">
     <PackageReference Include="Jerro.Maui.GoogleClient" Version="1.0.3" />
     <PackageReference Include="Xamarin.Firebase.Auth" Version="121.1.0" />
     <PackageReference Include="Xamarin.Firebase.Crashlytics" Version="118.3.2.1" />

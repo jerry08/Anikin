@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Anikin.Services;
 using Anikin.Utils;
 using Anikin.Utils.Extensions;
 using Anikin.ViewModels.Framework;
@@ -19,6 +20,7 @@ namespace Anikin.ViewModels;
 public partial class HomeViewModel : BaseViewModel
 {
     private readonly AniClient _anilistClient;
+    private readonly SettingsService _settingsService;
 
     private int Page { get; set; }
 
@@ -36,10 +38,18 @@ public partial class HomeViewModel : BaseViewModel
 
     public ProfileViewModel ProfileViewModel { get; set; }
 
-    public HomeViewModel(AniClient anilistClient, ProfileViewModel profileViewModel)
+    public HomeViewModel(
+        AniClient anilistClient,
+        ProfileViewModel profileViewModel,
+        SettingsService settingsService
+    )
     {
         _anilistClient = anilistClient;
         ProfileViewModel = profileViewModel;
+        _settingsService = settingsService;
+
+        _settingsService.Load();
+
         //Load();
     }
 
@@ -138,7 +148,10 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result
+                .Data
+                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+                .ToList();
 
             MaleMedia.Clear();
             MaleMedia.Push(data);
@@ -163,7 +176,10 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result
+                .Data
+                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+                .ToList();
 
             FeminineMedia.Clear();
             FeminineMedia.Push(data);
@@ -188,7 +204,10 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result
+                .Data
+                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+                .ToList();
 
             TrashMedia.Clear();
             TrashMedia.Push(data);
@@ -207,7 +226,10 @@ public partial class HomeViewModel : BaseViewModel
                 new SearchMediaFilter { Season = MediaSeason.Winter }
             );
 
-            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result
+                .Data
+                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+                .ToList();
 
             NewSeasonAnimes.Clear();
             NewSeasonAnimes.Push(data);
@@ -237,7 +259,12 @@ public partial class HomeViewModel : BaseViewModel
             var data = recentlyUpdateResult
                 .Data
                 .Where(
-                    x => x.Media is not null && !x.Media.IsAdult && x.Media.CountryOfOrigin == "JP"
+                    x =>
+                        x.Media is not null
+                        && !x.Media.IsAdult
+                        && (
+                            _settingsService.ShowNonJapaneseAnime || x.Media.CountryOfOrigin == "JP"
+                        )
                 )
                 .Select(x => x.Media!)
                 .GroupBy(x => x.Id)
@@ -264,7 +291,13 @@ public partial class HomeViewModel : BaseViewModel
 
             var data = result
                 .Data
-                .Where(x => x.Media is not null && x.Media.CountryOfOrigin == "JP")
+                .Where(
+                    x =>
+                        x.Media is not null
+                        && (
+                            _settingsService.ShowNonJapaneseAnime || x.Media.CountryOfOrigin == "JP"
+                        )
+                )
                 .Select(x => x.Media!)
                 .ToList();
 
@@ -300,7 +333,10 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result
+                .Data
+                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+                .ToList();
 
             CurrentSeasonAnimes.Clear();
             CurrentSeasonAnimes.Push(data);
@@ -330,7 +366,10 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result.Data.Where(x => x.CountryOfOrigin == "JP").ToList();
+            var data = result
+                .Data
+                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+                .ToList();
 
             PopularAnimes.Clear();
             PopularAnimes.Push(data);

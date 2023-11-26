@@ -4,7 +4,6 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
-    xmlns:controls="clr-namespace:Anikin.Controls"
     xmlns:local="clr-namespace:Anikin.Views.BottomSheets"
     xmlns:materialDesign="clr-namespace:MaterialDesign"
     xmlns:models="clr-namespace:Juro.Core.Models.Videos;assembly=Juro.Core"
@@ -18,7 +17,7 @@
     HandleColor="{StaticResource Gray800}"
     HasBackdrop="True"
     HasHandle="True"
-    UseNavigationBarArea="True">
+    UseNavigationBarArea="False">
     <berry:BottomSheet.Detents>
         <berry:DetentsCollection>
             <berry:RatioDetent Ratio="0.35" />

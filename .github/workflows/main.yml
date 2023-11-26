@@ -31,7 +31,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: 7.0.x
+          dotnet-version: 8.0.x
 
       - name: Install MAUI Workload
         run: dotnet workload install maui --ignore-failed-sources
@@ -43,7 +43,7 @@ jobs:
         run: >
             dotnet publish Anikin/
             -c Release
-            -f net7.0-android
+            -f net8.0-android
             -p:AndroidKeyStore=true
             -p:AndroidSigningKeyStore=${{ github.workspace }}/signing-key.keystore
             -p:AndroidSigningStorePass="${{ secrets.PASSWORD }}"
@@ -55,7 +55,7 @@ jobs:
         run: |
           set -e
 
-          mv Anikin/bin/Release/net7.0-android/com.oneb.anikin-Signed.apk Anikin.apk
+          mv Anikin/bin/Release/net8.0-android/com.oneb.anikin-Signed.apk Anikin.apk
         shell: bash
         
       - name: Upload Android Artifact

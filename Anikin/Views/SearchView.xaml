@@ -28,7 +28,8 @@
 
     <Grid
         x:Name="MainGrid"
-        Margin="5,0,5,0"
+        Margin="{OnPlatform Default='5,0,5,0',
+                            WinUI='5,15,5,2'}"
         RowDefinitions="auto,auto,*">
         <!--  SEARCH  -->
         <Grid x:Name="test24" Grid.Row="0">
@@ -37,7 +38,7 @@
                     <RoundRectangle CornerRadius="25" />
                 </Border.StrokeShape>
                 <Grid ColumnDefinitions="auto,*" ColumnSpacing="2">
-                    <Image Style="{StaticResource EntrySearchImageStyle}" />
+                    <Label Style="{StaticResource Label.Icon.Search}" />
                     <Entry
                         x:Name="SearchEntry"
                         FontAttributes="Bold"
@@ -73,46 +74,34 @@
                 Grid.Column="1"
                 Margin="0"
                 Padding="0"
-                BackgroundColor="Transparent">
-                <Button.ImageSource>
-                    <FontImageSource
-                        FontFamily="Material"
-                        Glyph="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
-                        Size="25"
-                        Color="{AppThemeBinding Light={StaticResource Black},
-                                                Dark={StaticResource Gray600}}" />
-                </Button.ImageSource>
-            </Button>
+                BackgroundColor="Transparent"
+                FontFamily="Material"
+                FontSize="25"
+                Text="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
+                TextColor="{AppThemeBinding Light={StaticResource Black},
+                                            Dark={StaticResource Gray600}}" />
 
             <Button
                 Grid.Column="2"
                 Margin="0"
                 Padding="0"
-                BackgroundColor="Transparent">
-                <Button.ImageSource>
-                    <FontImageSource
-                        FontFamily="Material"
-                        Glyph="{x:Static materialDesign:MaterialDesignIcons.GridView}"
-                        Size="25"
-                        Color="{AppThemeBinding Light={StaticResource Black},
-                                                Dark={StaticResource White}}" />
-                </Button.ImageSource>
-            </Button>
+                BackgroundColor="Transparent"
+                FontFamily="Material"
+                FontSize="25"
+                Text="{x:Static materialDesign:MaterialDesignIcons.GridView}"
+                TextColor="{AppThemeBinding Light={StaticResource Black},
+                                            Dark={StaticResource White}}" />
 
             <Button
                 Grid.Column="3"
                 Margin="0"
                 Padding="0"
-                BackgroundColor="Transparent">
-                <Button.ImageSource>
-                    <FontImageSource
-                        FontFamily="Material"
-                        Glyph="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
-                        Size="25"
-                        Color="{AppThemeBinding Light={StaticResource Black},
-                                                Dark={StaticResource Gray600}}" />
-                </Button.ImageSource>
-            </Button>
+                BackgroundColor="Transparent"
+                FontFamily="Material"
+                FontSize="25"
+                Text="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
+                TextColor="{AppThemeBinding Light={StaticResource Black},
+                                            Dark={StaticResource Gray600}}" />
         </Grid>
 
         <Grid

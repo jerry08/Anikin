@@ -6,7 +6,8 @@ using Berry.Maui;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
-using Woka.Helpers.Keyboard;
+
+//using Woka.Helpers.Keyboard;
 
 namespace Anikin.Views;
 

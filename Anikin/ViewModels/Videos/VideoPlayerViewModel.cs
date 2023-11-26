@@ -27,7 +27,9 @@ public partial class VideoPlayerViewModel : BaseViewModel
     private readonly PlayerSettings _playerSettings = new();
     private readonly DisplayOrientation _initialOrientation;
 
-    private readonly IAnimeProvider _provider = ProviderResolver.GetAnimeProvider();
+    private readonly IAnimeProvider? _provider = ProviderResolver.GetAnimeProvider();
+
+    private bool IsDisposed { get; set; }
 
     public Media Media { get; private set; }
     public IAnimeInfo Anime { get; private set; }
@@ -136,6 +138,10 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
     private void MediaElement_PositionChanged(object? sender, MediaPositionChangedEventArgs e)
     {
+        // Windows MediaElement not calling StateChanged when a video starts
+        // playing for some reason.
+        OnStateChanged(MediaElementState.Playing);
+
         MediaElement.PositionChanged -= MediaElement_PositionChanged;
 
         if (
@@ -186,6 +192,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
         Shell.Current.Navigating -= Current_Navigating;
         ApplicationEx.SetOrientation(_initialOrientation);
         Controller.Dispose();
+        IsDisposed = true;
     }
 
     [RelayCommand]
@@ -222,6 +229,12 @@ public partial class VideoPlayerViewModel : BaseViewModel
                 break;
             case MediaElementState.Failed:
                 CanSaveProgress = false;
+
+#if !ANDROID
+                IsBusy = false;
+                IsRefreshing = false;
+                App.AlertService.ShowAlert("Error", "Failed to play video. Try another source.");
+#endif
                 break;
             default:
                 break;
@@ -250,6 +263,14 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
     protected override async Task LoadCore()
     {
+        if (_provider is null)
+        {
+            IsBusy = false;
+            IsRefreshing = false;
+            await Toast.Make("No providers installed").Show();
+            return;
+        }
+
         IsBusy = true;
 
         try
@@ -267,19 +288,19 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
             Source = source;
 
-#if ANDROID
             if (!IsChangingSource)
             {
                 // This runs after source is created and attached to exoplayer
                 Controller.Initialize();
             }
-#endif
 
             _playerSettings.WatchedEpisodes.TryGetValue(EpisodeKey, out var watchedEpisode);
 
             if (watchedEpisode is not null)
             {
-                MediaElement.SeekTo(TimeSpan.FromMilliseconds(watchedEpisode.WatchedDuration));
+                await MediaElement.SeekTo(
+                    TimeSpan.FromMilliseconds(watchedEpisode.WatchedDuration)
+                );
             }
         }
         catch (Exception ex)
@@ -304,6 +325,9 @@ public partial class VideoPlayerViewModel : BaseViewModel
             return null;
         }
 
+        if (_provider is null)
+            return null;
+
         var videos = await _provider.GetVideosAsync(videoServer, CancellationToken);
         if (videos.Count == 0)
         {
@@ -317,14 +341,17 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
     private async Task<VideoServer?> GetVideoServerAsync()
     {
+        if (_provider is null)
+            return null;
+
         var videoServers = await _provider.GetVideoServersAsync(Episode.Id, CancellationToken);
         if (videoServers.Count == 0)
             return null;
 
         return videoServers.Find(
                 x =>
-                    x.Name?.ToLower().Contains("streamsb") == true
-                    || x.Name?.ToLower().Contains("vidstream") == true
+                    x.Name?.Contains("streamsb", StringComparison.OrdinalIgnoreCase) == true
+                    || x.Name?.Contains("vidstream", StringComparison.OrdinalIgnoreCase) == true
                     || x.Name?.Equals("mirror", StringComparison.OrdinalIgnoreCase) == true // Indonesian
             ) ?? videoServers[0];
     }
@@ -339,10 +366,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
     public void UpdateProgress()
     {
-        if (IsChangingSource)
-            return;
-
-        if (!CanSaveProgress)
+        if (IsChangingSource || !CanSaveProgress || IsDisposed)
             return;
 
         _playerSettings.WatchedEpisodes.TryGetValue(EpisodeKey, out var watchedEpisode);

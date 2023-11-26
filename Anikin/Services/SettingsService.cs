@@ -23,6 +23,8 @@ public partial class SettingsService : SettingsBase, INotifyPropertyChanged
 
     public bool EpisodesDescending { get; set; } = true;
 
+    public bool ShowNonJapaneseAnime { get; set; }
+
     public SettingsService()
         : base(Path.Combine(FileSystem.AppDataDirectory, "settings.json")) { }
 }
