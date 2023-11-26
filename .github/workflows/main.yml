@@ -120,6 +120,7 @@ jobs:
           VERSION="$(echo $TAG_NAME | tr -d v)"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "PACKAGE_NAME=${{ github.event.repository.name }}-$TAG_NAME" >> $GITHUB_ENV
+          echo "WINDOWS_PACKAGE_NAME=${{ github.event.repository.name }}-windows-$TAG_NAME" >> $GITHUB_ENV
           Prerelease_Param=""
           if [[ $TAG_NAME == *"-pre"* || $TAG_NAME == *"-beta"* || $TAG_NAME == *"-alpha"* ]]; then
             Prerelease_Param="--prerelease"
@@ -137,7 +138,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: windows-ci-build
-          path: build/windows
+          path: build/windows/
 
       - name: Create package
         # Change into the artifacts directory to avoid including the directory itself in the zip archive
@@ -164,7 +165,7 @@ jobs:
         run: >
           gh release create "${{ github.ref_name }}"
           "${{ env.PACKAGE_NAME }}.apk"
-          "Anikin-windows.zip"
+          "${{ env.WINDOWS_PACKAGE_NAME }}.zip"
           --repo "${{ github.event.repository.full_name }}"
           --title "${{ env.VERSION }}"
           --notes "${{ env.TAG_MESSAGE2 }}"
@@ -196,6 +197,7 @@ jobs:
           TAG_NAME="${{ github.ref_name }}"
           echo "$TAG_NAME"
           echo "PACKAGE_NAME=${{ github.event.repository.name }}-$TAG_NAME" >> $GITHUB_ENV
+          echo "WINDOWS_PACKAGE_NAME=${{ github.event.repository.name }}-windows-$TAG_NAME" >> $GITHUB_ENV
 
       - name: Set variables 2
         run: |
@@ -222,5 +224,5 @@ jobs:
             {
               "username": "Notifications",
               "avatar_url": "https://raw.githubusercontent.com/${{ github.event.repository.full_name }}/master/favicon.png",
-              "content": "**${{ github.event.repository.name }}** new version released!\nVersion: `${{ github.ref_name }}`\n\n${{ env.RELEASE_BODY }}\n\nDownload: <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/${{ env.PACKAGE_NAME }}.apk>"
+              "content": "**${{ github.event.repository.name }}** new version released!\nVersion: `${{ github.ref_name }}`\n\n${{ env.RELEASE_BODY }}\n\nDownload for Android: <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/${{ env.PACKAGE_NAME }}.apk>\nDownload for Windows: <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/${{ env.WINDOWS_PACKAGE_NAME }}.zip>"
             }
