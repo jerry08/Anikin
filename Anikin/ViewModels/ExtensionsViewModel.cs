@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Anikin.Models;
+using Anikin.Services;
 using Anikin.Utils.Extensions;
 using Anikin.ViewModels.Framework;
 using Anikin.ViewModels.Popups;
@@ -20,6 +21,8 @@ namespace Anikin.ViewModels;
 
 public partial class ExtensionsViewModel : CollectionViewModel<ModuleListGroup<ModuleItem>>
 {
+    private readonly ProviderService _providerService;
+
     //private readonly List<IAnimeProvider> _providers;
     private readonly BottomSheet? _bottomSheet;
 
@@ -29,8 +32,9 @@ public partial class ExtensionsViewModel : CollectionViewModel<ModuleListGroup<M
 
     private bool IsLoaded { get; set; }
 
-    public ExtensionsViewModel()
+    public ExtensionsViewModel(ProviderService providerService)
     {
+        _providerService = providerService;
         //_providers = ProviderResolver.GetAnimeProviders();
 
         Load();
@@ -102,8 +106,31 @@ public partial class ExtensionsViewModel : CollectionViewModel<ModuleListGroup<M
     [RelayCommand]
     async Task AddExtension()
     {
-        var popup = new ExtensionsPopup(new ExtensionsPopupViewModel());
-        Application.Current?.MainPage?.ShowPopup(popup);
+        if (Application.Current?.MainPage is null)
+            return;
+
+        var viewModel = new ExtensionsPopupViewModel();
+        var popup = new ExtensionsPopup(viewModel);
+        var result = await Application.Current.MainPage.ShowPopupAsync(popup);
+
+        if (result is bool boolResult)
+        {
+            if (boolResult)
+            {
+                if (string.IsNullOrWhiteSpace(viewModel.RepoUrl))
+                {
+                    await App.AlertService.ShowAlertAsync("", "Invalid url");
+                    return;
+                }
+
+                await DownloadExtensionAsync(viewModel.RepoUrl);
+            }
+        }
+    }
+
+    async Task DownloadExtensionAsync(string repoUrl)
+    {
+        await _providerService.DownloadAsync(repoUrl);
     }
 
     public void Cancel() => _cancellationTokenSource.Cancel();

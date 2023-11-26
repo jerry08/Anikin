@@ -1,0 +1,178 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<local:BaseBottomSheetView
+    x:Class="Anikin.Views.BottomSheets.ChangeSourceSheet"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:local="clr-namespace:Anikin.Views.BottomSheets"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:models="clr-namespace:Anikin.Models"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels"
+    x:Name="this"
+    Margin="0"
+    x:DataType="viewModels:EpisodeViewModel"
+    BackgroundColor="{StaticResource Gray900}"
+    HandleColor="{StaticResource Gray800}"
+    HasBackdrop="True"
+    HasHandle="True"
+    UseNavigationBarArea="False">
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <toolkit:IsEqualConverter x:Key="IsEqualConverter" />
+        </ResourceDictionary>
+    </ContentView.Resources>
+    <berry:BottomSheet.Detents>
+        <berry:DetentsCollection>
+            <berry:RatioDetent Ratio="0.35" />
+            <berry:RatioDetent Ratio="0.85" />
+        </berry:DetentsCollection>
+    </berry:BottomSheet.Detents>
+    <Border
+        Grid.Column="0"
+        HorizontalOptions="FillAndExpand"
+        Stroke="{StaticResource Gray700}"
+        StrokeThickness="0"
+        VerticalOptions="FillAndExpand">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="22" />
+        </Border.StrokeShape>
+        <Grid RowDefinitions="auto,auto,*">
+            <Label
+                Grid.Row="0"
+                Margin="0,5,0,0"
+                FontAttributes="Bold"
+                FontSize="20"
+                HeightRequest="60"
+                HorizontalOptions="CenterAndExpand"
+                HorizontalTextAlignment="Center"
+                Text="Select source"
+                TextTransform="Uppercase"
+                VerticalTextAlignment="Center" />
+
+            <BoxView Grid.Row="1" Style="{StaticResource SeparatorBoxView}" />
+
+            <!--<ScrollView>
+                <StackLayout
+                    BindableLayout.ItemsSource="{Binding ProviderGroups}"
+                    RadioButtonGroup.GroupName="ProviderKeyRadio"
+                    RadioButtonGroup.SelectedValue="Gogo">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="{x:Null}">
+                            <StackLayout>
+                                <Label
+                                    Margin="25,15,0,0"
+                                    FontAttributes="Bold"
+                                    FontSize="18"
+                                    HorizontalTextAlignment="Start"
+                                    Text="{Binding Name}" />
+
+                                <StackLayout BindableLayout.ItemsSource="{Binding .}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="{x:Type models:ProviderModel}">
+                                            <Border
+                                                Margin="0,4"
+                                                BackgroundColor="{StaticResource Gray800}"
+                                                StrokeThickness="0">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="18" />
+                                                </Border.StrokeShape>
+                                                <Grid x:Name="sourceGrid" ColumnDefinitions="*,auto">
+                                                    <RadioButton
+                                                        Grid.Column="0"
+                                                        Margin="10"
+                                                        Content="{Binding Name}"
+                                                        FontAttributes="Bold"
+                                                        FontSize="18"
+                                                        HorizontalOptions="FillAndExpand"
+                                                        VerticalOptions="Center"
+                                                        Value="{Binding Key}">
+                                                        <RadioButton.Behaviors>
+                                                            <toolkit:EventToCommandBehavior
+                                                                Command="{Binding BindingContext.SelectedProviderKeyChangedCommand, Source={x:Reference this}}"
+                                                                CommandParameter="{Binding Key}"
+                                                                EventName="CheckedChanged" />
+                                                        </RadioButton.Behaviors>
+                                                    </RadioButton>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </StackLayout>
+                            </StackLayout>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </StackLayout>
+            </ScrollView>-->
+
+            <!--  Setting RadioButtonGroup property doesn't work in grouped CollectionView  -->
+            <CollectionView
+                Grid.Row="2"
+                Margin="10,10,10,0"
+                IsGrouped="True"
+                ItemsSource="{Binding ProviderGroups}">
+                <CollectionView.ItemsLayout>
+                    <!--  ItemSpacing bug https://github.com/dotnet/maui/issues/8422  -->
+                    <LinearItemsLayout Orientation="Vertical" SnapPointsType="None" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate x:DataType="{x:Null}">
+                        <Label
+                            Margin="25,15,0,0"
+                            FontAttributes="Bold"
+                            FontSize="18"
+                            HorizontalTextAlignment="Start"
+                            Text="{Binding Name}" />
+                    </DataTemplate>
+                </CollectionView.GroupHeaderTemplate>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="{x:Type models:ProviderModel}">
+                        <Border
+                            Margin="0,4"
+                            BackgroundColor="{StaticResource Gray800}"
+                            StrokeThickness="0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="18" />
+                            </Border.StrokeShape>
+                            <Grid x:Name="sourceGrid" ColumnDefinitions="*,auto">
+                                <!--<Grid.Behaviors>
+                                    <berry:TouchBehavior NativeAnimation="True" />
+                                </Grid.Behaviors>-->
+                                <!--  IsChecked="{Binding Key, Mode=OneWay, Converter={StaticResource IsEqualConverter}, ConverterParameter={Binding BindingContext.SelectedProviderKey, Source={x:Reference this}, Mode=OneWay}}"  -->
+                                <RadioButton
+                                    Grid.Column="0"
+                                    Margin="10"
+                                    Content="{Binding Name}"
+                                    FontAttributes="Bold"
+                                    FontSize="18"
+                                    GroupName="ProviderKeyRadio"
+                                    HorizontalOptions="FillAndExpand"
+                                    IsChecked="{Binding IsSelected}"
+                                    VerticalOptions="Center">
+                                    <RadioButton.Behaviors>
+                                        <toolkit:EventToCommandBehavior
+                                            Command="{Binding BindingContext.SelectedProviderKeyChangedCommand, Source={x:Reference this}}"
+                                            CommandParameter="{Binding Key}"
+                                            EventName="CheckedChanged" />
+                                    </RadioButton.Behaviors>
+                                </RadioButton>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.EmptyView>
+                    <Grid
+                        HorizontalOptions="FillAndExpand"
+                        IsVisible="False"
+                        VerticalOptions="FillAndExpand">
+                        <Label
+                            FontSize="16"
+                            HorizontalOptions="Center"
+                            Text="Nothing found :("
+                            VerticalOptions="Center" />
+                    </Grid>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </Grid>
+    </Border>
+</local:BaseBottomSheetView>

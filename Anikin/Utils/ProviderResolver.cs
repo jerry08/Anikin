@@ -9,17 +9,21 @@ namespace Anikin.Utils;
 
 internal static class ProviderResolver
 {
-    public static IAnimeProvider GetAnimeProvider()
+    public static IAnimeProvider? GetAnimeProvider()
     {
         var settingsService = new SettingsService();
         settingsService.Load();
 
         var providers = GetAnimeProviders();
 
-        if (string.IsNullOrWhiteSpace(settingsService.LastProviderKey))
-            return providers[0];
+        if (providers.Count == 0)
+            return null;
 
-        return providers.Find(x => x.Key == settingsService.LastProviderKey) ?? providers[0];
+        if (string.IsNullOrWhiteSpace(settingsService.LastProviderKey))
+            return providers.FirstOrDefault();
+
+        return providers.Find(x => x.Key == settingsService.LastProviderKey)
+            ?? providers.FirstOrDefault();
     }
 
     public static List<IAnimeProvider> GetAnimeProviders()

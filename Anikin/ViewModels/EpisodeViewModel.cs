@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Anikin.Models;
 using Anikin.Services;
 using Anikin.Utils;
 using Anikin.Utils.Extensions;
@@ -30,12 +32,14 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     private readonly PlayerSettings _playerSettings = new();
     private readonly SettingsService _settingsService = new();
 
-    private IAnimeProvider _provider = ProviderResolver.GetAnimeProvider();
+    private IAnimeProvider? _provider = ProviderResolver.GetAnimeProvider();
     private readonly List<IAnimeProvider> _providers = ProviderResolver.GetAnimeProviders();
 
     public static List<Episode> Episodes { get; private set; } = new();
 
     public ObservableRangeCollection<string> ProviderNames { get; set; } = new();
+
+    public ObservableRangeCollection<ListGroup<ProviderModel>> ProviderGroups { get; set; } = new();
 
     [ObservableProperty]
     private Media? _entity;
@@ -61,9 +65,6 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     [ObservableProperty]
     private bool _isDubSelected;
 
-    [ObservableProperty]
-    private int _providerIndex;
-
     private bool IsSavingFavorite { get; set; }
 
     private bool IsProviderSearchSheetShowing { get; set; }
@@ -71,6 +72,8 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     private readonly CancellationTokenSource _cancellationTokenSource = new();
 
     public CancellationToken CancellationToken => _cancellationTokenSource.Token;
+
+    private ChangeSourceSheet? ChangeSourceSheet { get; set; }
 
     public EpisodeViewModel(AniClient aniClient)
     {
@@ -80,11 +83,33 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
         ProviderNames.AddRange(_providers.ConvertAll(x => x.Name));
 
-        var providerIndex = _providers.FindIndex(x => x.Key == _provider.Key);
-        if (providerIndex < 0)
-            providerIndex = 0;
+        var providers = _providers.Select(
+            x =>
+                new ProviderModel()
+                {
+                    Key = x.Key,
+                    Language = x.Language,
+                    Name = x.Name,
+                    LanguageDisplayName = x.GetLanguageDisplayName()
+                }
+        );
 
-        ProviderIndex = providerIndex;
+        var selectedProvider = _providers.Find(x => x.Key == _provider?.Key);
+
+        var groups = providers.GroupBy(x => x.LanguageDisplayName);
+        foreach (var group in groups)
+        {
+            ProviderGroups.Add(new(group.Key, group.ToList()));
+        }
+
+        var list = ProviderGroups.SelectMany(x => x).ToList();
+        list.ForEach(x => x.IsSelected = false);
+
+        var defaultProvider = list.Find(x => x.Key == selectedProvider?.Key);
+        if (defaultProvider is not null)
+        {
+            defaultProvider.IsSelected = true;
+        }
 
         //Load();
 
@@ -117,14 +142,44 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     }
 
     [RelayCommand]
-    private async Task ProviderChanged(int index)
+    private async Task ShowProviderSourcesSheet()
     {
-        Entities.Clear();
+        ChangeSourceSheet = new ChangeSourceSheet() { BindingContext = this };
 
-        var provider = _providers[index];
+        await ChangeSourceSheet.ShowAsync();
+    }
+
+    [RelayCommand]
+    private async Task SelectedProviderKeyChanged(string? key)
+    {
+        if (string.IsNullOrWhiteSpace(key) || _provider?.Key == key)
+            return;
+
+        if (ChangeSourceSheet is not null)
+        {
+            await ChangeSourceSheet.DismissAsync();
+            ChangeSourceSheet = null;
+        }
+
+        var provider = _providers.Find(x => x.Key == key);
+        if (provider is null)
+            return;
+
+        var list = ProviderGroups.SelectMany(x => x).ToList();
+        list.ForEach(x => x.IsSelected = false);
+
+        var defaultProvider = list.Find(x => x.Key == provider.Key);
+        if (defaultProvider is not null)
+        {
+            defaultProvider.IsSelected = true;
+        }
+
+        await Snackbar.Make($"Source provider changed to {provider.Name}").Show();
 
         _settingsService.LastProviderKey = provider.Key;
         _settingsService.Save();
+
+        Entities.Clear();
 
         _provider = provider;
 
@@ -137,6 +192,14 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         {
             IsBusy = false;
             IsRefreshing = false;
+            return;
+        }
+
+        if (_provider is null)
+        {
+            IsBusy = false;
+            IsRefreshing = false;
+            await Toast.Make("No providers installed").Show();
             return;
         }
 
@@ -189,6 +252,12 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
         Ranges.Clear();
         Entities.Clear();
+
+        if (_provider is null)
+        {
+            await Toast.Make("No providers installed").Show();
+            return;
+        }
 
         try
         {
@@ -292,6 +361,9 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
     private async Task<IAnimeInfo?> TryFindBestAnime()
     {
+        if (_provider is null)
+            return null;
+
         try
         {
             var dubText = IsDubSelected ? " (dub)" : "";

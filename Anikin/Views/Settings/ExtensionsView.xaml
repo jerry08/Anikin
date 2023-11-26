@@ -28,7 +28,7 @@
                     <DataTemplate x:DataType="models:ModuleItem">
                         <Border
                             Margin="0,4"
-                            BackgroundColor="{StaticResource Gray800}"
+                            BackgroundColor="{StaticResource Gray830}"
                             StrokeThickness="0">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="18" />
@@ -70,7 +70,7 @@
                     <RoundRectangle CornerRadius="25" />
                 </Border.StrokeShape>
                 <Grid ColumnDefinitions="auto,*" ColumnSpacing="2">
-                    <Image Style="{StaticResource EntrySearchImageStyle}" />
+                    <Label Style="{StaticResource Label.Icon.Search}" />
                     <Entry
                         x:Name="SearchEntry"
                         FontAttributes="Bold"
@@ -136,14 +136,10 @@
         <Grid Grid.Column="0">
             <CollectionView
                 x:Name="SearchCollectionView"
-                HorizontalOptions="Center"
                 IsGrouped="True"
                 IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                 ItemTemplate="{StaticResource MainDataTemplateSelector}"
                 ItemsSource="{Binding Entities}">
-                <CollectionView.ItemsLayout>
-                    <GridItemsLayout Orientation="Vertical" />
-                </CollectionView.ItemsLayout>
                 <CollectionView.GroupHeaderTemplate>
                     <DataTemplate x:DataType="{x:Null}">
                         <Label
@@ -204,19 +200,15 @@
                     <Grid.Behaviors>
                         <berry:TouchBehavior Command="{Binding BindingContext.AddExtensionCommand, Source={x:Reference this}}" NativeAnimation="True" />
                     </Grid.Behaviors>
-                    <Image
+                    <Label
                         Margin="5"
                         BackgroundColor="Transparent"
+                        FontFamily="Material"
+                        FontSize="35"
                         HorizontalOptions="Center"
-                        VerticalOptions="Center">
-                        <Image.Source>
-                            <FontImageSource
-                                FontFamily="Material"
-                                Glyph="{x:Static materialDesign:MaterialDesignIcons.Add}"
-                                Size="35"
-                                Color="White" />
-                        </Image.Source>
-                    </Image>
+                        Text="{x:Static materialDesign:MaterialDesignIcons.Add}"
+                        TextColor="White"
+                        VerticalOptions="Center" />
                 </Grid>
             </Border>
         </Grid>
