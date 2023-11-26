@@ -61,7 +61,7 @@ jobs:
       - name: Upload Android Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: Anikin
+          name: android-build
           path: Anikin.apk
 
   build-windows:
@@ -92,14 +92,11 @@ jobs:
             -o build/windows
             /p:CSharpier_Bypass=true
 
-      - name: Create windows package
-        run: powershell Compress-Archive build/windows 'Anikin (windows).zip'
-
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v2.3.1
         with:
           name: windows-ci-build
-          path: build/windows/Anikin (windows).zip
+          path: build/windows/
 
   deploy:
     if: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
@@ -130,11 +127,22 @@ jobs:
           echo $Prerelease_Param
           echo "Prerelease_Param=$Prerelease_Param" >> $GITHUB_ENV
 
-      - name: Download artifacts
+      - name: Download Android artifact
         uses: actions/download-artifact@v3
         with:
-          name: Anikin
+          name: android-build
           path: Anikin.apk
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-ci-build
+          path: build/windows
+
+      - name: Create package
+        # Change into the artifacts directory to avoid including the directory itself in the zip archive
+        working-directory: build/windows/
+        run: zip -r ../Anikin-windows.zip .
 
       - name: Set body
         run: |
@@ -156,6 +164,7 @@ jobs:
         run: >
           gh release create "${{ github.ref_name }}"
           "${{ env.PACKAGE_NAME }}.apk"
+          "Anikin-windows.zip"
           --repo "${{ github.event.repository.full_name }}"
           --title "${{ env.VERSION }}"
           --notes "${{ env.TAG_MESSAGE2 }}"
