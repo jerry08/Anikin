@@ -60,7 +60,7 @@ jobs:
 
       # Move the file with windows cmd https://stackoverflow.com/a/7268357
       - name: Move apk file
-        run: |
+        run: >
           if not exist build md build
           move Anikin.apk build/Anikin.apk
 
