@@ -44,12 +44,13 @@ jobs:
             dotnet publish Anikin/
             -c Release
             -f net8.0-android
+            -o build
             -p:AndroidKeyStore=true
             -p:AndroidSigningKeyStore=${{ github.workspace }}/signing-key.keystore
             -p:AndroidSigningStorePass="${{ secrets.PASSWORD }}"
             -p:AndroidSigningKeyAlias="DrMedia"
             -p:AndroidSigningKeyPass="${{ secrets.PASSWORD }}"
-            /p:CSharpier_Bypass=true
+            -p:CSharpier_Bypass=true
 
       - name: Rename file
         run: |
