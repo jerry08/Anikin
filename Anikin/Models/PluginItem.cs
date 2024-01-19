@@ -2,7 +2,7 @@
 
 namespace Anikin.Models;
 
-public class ModuleItem
+public class PluginItem
 {
     public string? Name { get; set; }
 
@@ -10,5 +10,5 @@ public class ModuleItem
 
     public string? LanguageDisplayName { get; set; }
 
-    public Module Module { get; set; } = default!;
+    public Juro.Plugin Plugin { get; set; } = default!;
 }

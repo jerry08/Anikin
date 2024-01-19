@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Anikin.Services;
 using Anikin.ViewModels.Framework;
 using Anikin.Views;
 using Anikin.Views.Settings;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui;
@@ -13,6 +15,22 @@ namespace Anikin.ViewModels;
 
 public partial class ProfileViewModel : BaseViewModel
 {
+    [ObservableProperty]
+    private SettingsService _settings = default!;
+
+    public ProfileViewModel(SettingsService settingsService)
+    {
+        Settings = settingsService;
+        Settings.Load();
+
+        Settings.PropertyChanged += (_, _) =>
+        {
+            Settings.Save();
+
+            App.IsInDeveloperMode = Settings.EnableDeveloperMode;
+        };
+    }
+
     [RelayCommand]
     async Task LoginWithAnilist()
     {

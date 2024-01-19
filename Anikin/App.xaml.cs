@@ -21,6 +21,8 @@ public partial class App : Application
 
     public static IAlertService AlertService { get; private set; } = default!;
 
+    public static bool IsInDeveloperMode { get; set; }
+
     public App(IServiceProvider provider)
     {
         InitializeComponent();
@@ -28,7 +30,13 @@ public partial class App : Application
         MainPage = new AppShell();
 
         Services = provider;
+
         AlertService = Services.GetService<IAlertService>()!;
+        
+        var settingsService = Services.GetService<SettingsService>()!;
+        settingsService.Load();
+
+        IsInDeveloperMode = settingsService.EnableDeveloperMode;
 
         ApplyTheme();
 
@@ -104,15 +112,15 @@ public partial class App : Application
         if (Current is null)
             return;
 
-        var preferenceService = new PreferenceService();
-        preferenceService.Load();
+        var settingsService = Services.GetService<SettingsService>()!;
+        settingsService.Load();
 
         if (force)
         {
             Current.UserAppTheme = AppTheme.Unspecified;
         }
 
-        Current.UserAppTheme = preferenceService.AppTheme;
+        Current.UserAppTheme = settingsService.AppTheme;
     }
 
     protected override void OnAppLinkRequestReceived(Uri uri)

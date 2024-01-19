@@ -25,7 +25,7 @@
 
             <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector">
                 <views:MainDataTemplateSelector.DataTemplate>
-                    <DataTemplate x:DataType="models:ModuleItem">
+                    <DataTemplate x:DataType="models:PluginItem">
                         <Border
                             Margin="0,4"
                             BackgroundColor="{StaticResource Gray830}"
@@ -147,7 +147,7 @@
                             FontAttributes="Bold"
                             FontSize="18"
                             HorizontalTextAlignment="Start"
-                            Text="{Binding Module.Name}" />
+                            Text="{Binding Plugin.Name}" />
                     </DataTemplate>
                 </CollectionView.GroupHeaderTemplate>
                 <CollectionView.Footer>

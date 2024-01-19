@@ -126,7 +126,6 @@ public static class MauiProgram
         builder.Services.AddTransient(x => AniClientFactory());
         builder.Services.AddSingleton<IAlertService, AlertService>();
         builder.Services.AddScoped<SettingsService>();
-        builder.Services.AddScoped<PreferenceService>();
         builder.Services.AddScoped<ProviderService>();
 
         return builder.Build();

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Anikin.Utils;
@@ -87,9 +86,12 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
 
                     Entities.Add(new(server.Name, videos));
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore
+                    if (App.IsInDeveloperMode)
+                    {
+                        await App.AlertService.ShowAlertAsync("Error", $"{ex}");
+                    }
                 }
             }
         }

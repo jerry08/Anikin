@@ -25,6 +25,8 @@ public partial class SettingsService : SettingsBase, INotifyPropertyChanged
 
     public bool ShowNonJapaneseAnime { get; set; }
 
+    public bool EnableDeveloperMode { get; set; }
+
     public SettingsService()
         : base(Path.Combine(FileSystem.AppDataDirectory, "settings.json")) { }
 }

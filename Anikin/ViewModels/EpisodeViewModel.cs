@@ -311,8 +311,13 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             Entities.Push(EpisodeChunks[0]);
             OnPropertyChanged(nameof(Entities));
         }
-        catch
+        catch (Exception ex)
         {
+            if (App.IsInDeveloperMode)
+            {
+                await App.AlertService.ShowAlertAsync("Error", $"{ex}");
+            }
+
             SearchingText = "Nothing Found";
         }
         finally
@@ -393,9 +398,15 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
             return result.FirstOrDefault();
         }
-        catch
+        catch (Exception ex)
         {
+            if (App.IsInDeveloperMode)
+            {
+                await App.AlertService.ShowAlertAsync("Error", $"{ex}");
+            }
+
             SearchingText = "Nothing found";
+
             return null;
         }
     }
@@ -496,7 +507,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         }
         catch (Exception ex)
         {
-            await Toast.Make(ex.ToString()).Show();
+            await Toast.Make(ex.ToString(), ToastDuration.Long).Show();
         }
         finally
         {
@@ -508,6 +519,11 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
     private async Task RefreshIsFavorite()
     {
+        if (string.IsNullOrWhiteSpace(_settingsService.AnilistAccessToken))
+        {
+            return;
+        }
+
         try
         {
             var media = await _anilistClient.GetMediaAsync(Entity.Id);
@@ -516,7 +532,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         }
         catch (Exception ex)
         {
-            await Toast.Make(ex.ToString()).Show();
+            await Toast.Make(ex.ToString(), ToastDuration.Long).Show();
         }
     }
 

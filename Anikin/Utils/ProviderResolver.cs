@@ -4,6 +4,8 @@ using System.Linq;
 using Anikin.Services;
 using Juro.Clients;
 using Juro.Core.Providers;
+using Juro.Providers.Anime;
+using Juro.Providers.Anime.Indonesian;
 
 namespace Anikin.Utils;
 
@@ -28,6 +30,16 @@ internal static class ProviderResolver
 
     public static List<IAnimeProvider> GetAnimeProviders()
     {
+        return new List<IAnimeProvider>()
+        {
+            new Gogoanime(),
+            new AnimePahe(),
+            new Aniwatch(),
+            new Aniwave(),
+            new Kaido(),
+            new OtakuDesu()
+        };
+
         try
         {
             var client = new AnimeClient();
@@ -40,12 +52,11 @@ internal static class ProviderResolver
         }
         catch (Exception ex)
         {
-#if DEBUG
-            App.AlertService.ShowAlert(
-                "Error",
-                $"-- This message is shown only in debug mode --{Environment.NewLine}{ex}"
-            );
-#endif
+            if (App.IsInDeveloperMode)
+            {
+                App.AlertService.ShowAlert("Error", $"{ex}");
+            }
+
             return new();
         }
     }

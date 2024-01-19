@@ -1,11 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using CommunityToolkit.Maui.Alerts;
 using Httpz;
 using Juro;
 using Juro.Clients;
+using Juro.Utils;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
 using Octokit;
@@ -37,7 +39,7 @@ public class ProviderService
 
         try
         {
-            Locator.Instance.Load(_extractDir);
+            PluginLoader.LoadPlugins(_extractDir);
         }
         catch
         {
@@ -51,6 +53,15 @@ public class ProviderService
 
     public async Task<bool> DownloadAsync(string repoUrl)
     {
+        //var hh1 = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.ToString()).ToList();
+        //await App.AlertService.ShowConfirmationAsync("test1", string.Join(Environment.NewLine, hh1));
+        //
+        //var hh2 = AssemblyEx.GetReferencedAssemblies().ToList().Select(x => x.ToString()).ToList();
+        //await App.AlertService.ShowConfirmationAsync("test2", string.Join(Environment.NewLine, hh2));
+        //
+        //var hh3 = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.ToString()).ToList();
+        //await App.AlertService.ShowConfirmationAsync("test3", string.Join(Environment.NewLine, hh3));
+
         try
         {
             var urlParts = repoUrl.Split("/");
@@ -92,15 +103,38 @@ public class ProviderService
             var client = new AnimeClient();
             var providers = client.GetAllProviders();
 
-            var locator = new Locator();
-            locator.Load(_extractDir);
+            PluginLoader.LoadPlugins(_extractDir);
 
-            //var modules = locator.GetModules();
-            //var configs = locator.GetClientConfigs();
+            //var plugins = PluginLoader.GetPlugins();
+            //var configs = PluginLoader.GetClientConfigs();
 
             providers = client.GetAllProviders();
 
             await Snackbar.Make("Providers loaded successfully").Show();
+
+            var asemb = Assembly.LoadFrom(PluginLoader.GetPlugins()[0].FilePath);
+
+            AppDomain.CurrentDomain.Load(asemb.GetName());
+
+            //var hh1 = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.ToString()).ToList();
+            //await App.AlertService.ShowConfirmationAsync("test1", string.Join(Environment.NewLine, hh1));
+            //
+            //var hh2 = AssemblyEx.GetReferencedAssemblies(asemb).ToList().Select(x => x.ToString()).ToList();
+            //await App.AlertService.ShowConfirmationAsync("test2", string.Join(Environment.NewLine, hh2));
+            //
+            //var pathTest2 = AssemblyEx.GetReferencedAssemblies(asemb).ToList().Select(x => x.Location).ToList();
+            //await App.AlertService.ShowConfirmationAsync("ref paths", string.Join(Environment.NewLine, pathTest2));
+            
+            //var test34 = AssemblyEx.GetReferencedAssemblies(asemb);
+            //foreach (var item in test34)
+            //{
+            //    AppDomain.CurrentDomain.Load(item.GetName());
+            //}
+
+            //await App.AlertService.ShowConfirmationAsync("ref paths", string.Join(Environment.NewLine, pathTest2));
+
+            //var hh3 = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.ToString()).ToList();
+            //await App.AlertService.ShowConfirmationAsync("test3", string.Join(Environment.NewLine, hh3));
 
             return true;
         }

@@ -19,7 +19,7 @@ using Microsoft.Maui.Controls;
 
 namespace Anikin.ViewModels;
 
-public partial class ExtensionsViewModel : CollectionViewModel<ModuleListGroup<ModuleItem>>
+public partial class ExtensionsViewModel : CollectionViewModel<PluginListGroup<PluginItem>>
 {
     private readonly ProviderService _providerService;
 
@@ -59,24 +59,24 @@ public partial class ExtensionsViewModel : CollectionViewModel<ModuleListGroup<M
             //    )
             //    .ToList();
 
-            var modules = Locator.Instance.GetModules();
-            foreach (var module in modules)
+            var plugins = PluginLoader.GetPlugins();
+            foreach (var plugin in plugins)
             {
                 var list = new AnimeClient()
-                    .GetProviders(module.FilePath)
+                    .GetProviders(plugin.FilePath)
                     .Select(
                         x =>
-                            new ModuleItem()
+                            new PluginItem()
                             {
                                 Name = x.Name,
                                 Language = x.Language,
                                 LanguageDisplayName = x.GetLanguageDisplayName(),
-                                Module = module
+                                Plugin = plugin
                             }
                     )
                     .ToList();
 
-                Push(new List<ModuleListGroup<ModuleItem>>() { new(module, list) });
+                Push(new List<PluginListGroup<PluginItem>>() { new(plugin, list) });
             }
 
             //Push(result);
