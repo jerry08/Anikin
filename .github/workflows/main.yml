@@ -44,7 +44,6 @@ jobs:
             dotnet publish Anikin/
             -c Release
             -f net8.0-android
-            -o build
             -p:AndroidKeyStore=true
             -p:AndroidSigningKeyStore=${{ github.workspace }}/signing-key.keystore
             -p:AndroidSigningStorePass="${{ secrets.PASSWORD }}"
@@ -158,7 +157,7 @@ jobs:
         run: |
           set -e
 
-          mv build/Anikin.apk ${{ env.PACKAGE_NAME }}.apk
+          mv Anikin.apk ${{ env.PACKAGE_NAME }}.apk
 
       - name: Create release
         env:
