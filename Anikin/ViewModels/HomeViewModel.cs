@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Anikin.Models;
 using Anikin.Services;
 using Anikin.Utils;
 using Anikin.Utils.Extensions;
@@ -24,19 +25,19 @@ public partial class HomeViewModel : BaseViewModel
 
     private int Page { get; set; }
 
-    public ObservableRangeCollection<Media> PopularAnimes { get; set; } = new();
     public ObservableRangeCollection<Media> CurrentSeasonAnimes { get; set; } = new();
-    public ObservableRangeCollection<Media> TrendingAnimes { get; set; } = new();
+    public ObservableRangeCollection<Media> PopularAnimes { get; set; } = new();
     public ObservableRangeCollection<Media> LastUpdatedAnimes { get; set; } = new();
-    public ObservableRangeCollection<Media> NewSeasonAnimes { get; set; } = new();
-    public ObservableRangeCollection<Media> FeminineMedia { get; set; } = new();
-    public ObservableRangeCollection<Media> TrashMedia { get; set; } = new();
-    public ObservableRangeCollection<Media> MaleMedia { get; set; } = new();
 
     [ObservableProperty]
     private int _selectedViewModelIndex;
 
     public ProfileViewModel ProfileViewModel { get; set; }
+
+    public ObservableRangeCollection<AnimeHomeRange> Ranges { get; set; } = new();
+
+    [ObservableProperty]
+    AnimeHomeRange _selectedRange;
 
     public HomeViewModel(
         AniClient anilistClient,
@@ -51,6 +52,12 @@ public partial class HomeViewModel : BaseViewModel
         _settingsService.Load();
 
         //Load();
+
+        var homeTypes = Enum.GetValues(typeof(AnimeHomeTypes)).Cast<AnimeHomeTypes>();
+        Ranges.AddRange(homeTypes.Select(x => new AnimeHomeRange(x)));
+        Ranges[0].IsSelected = true;
+
+        SelectedRange = Ranges[0];
     }
 
     protected override async Task LoadCore()
@@ -61,16 +68,18 @@ public partial class HomeViewModel : BaseViewModel
         if (!IsRefreshing)
             IsBusy = true;
 
+        RangeSelected(SelectedRange);
+
         try
         {
             LoadPopular();
-            LoadCurrentSeason();
-            LoadTrending();
             LoadLastUpdated();
-            LoadNewSeason();
-            LoadFeminineMedia();
-            LoadMaleMedia();
-            LoadTrashMedia();
+            LoadCurrentSeason();
+            //LoadTrending();
+            //LoadNewSeason();
+            //LoadFeminineMedia();
+            //LoadMaleMedia();
+            //LoadTrashMedia();
 
             //var pages2 = await _anilistClient.GetTrendingMediaAsync();
             //var schedulesResult = await _anilistClient.GetMediaSchedulesAsync(
@@ -134,10 +143,53 @@ public partial class HomeViewModel : BaseViewModel
         await Shell.Current.GoToAsync(nameof(SearchView));
     }
 
+    [RelayCommand]
+    void RangeSelected(AnimeHomeRange range)
+    {
+        for (var i = 0; i < Ranges.Count; i++)
+        {
+            Ranges[i].IsSelected = false;
+        }
+
+        range.IsSelected = true;
+
+        SelectedRange = range;
+
+        switch (range.Type)
+        {
+            case AnimeHomeTypes.Popular:
+                break;
+            case AnimeHomeTypes.LastUpdated:
+                break;
+            case AnimeHomeTypes.CurrentSeason:
+                break;
+            case AnimeHomeTypes.Trending:
+                LoadTrending();
+                break;
+            case AnimeHomeTypes.NewSeason:
+                LoadNewSeason();
+                break;
+            case AnimeHomeTypes.FeminineMedia:
+                LoadFeminineMedia();
+                break;
+            case AnimeHomeTypes.MaleMedia:
+                LoadMaleMedia();
+                break;
+            case AnimeHomeTypes.TrashMedia:
+                LoadTrashMedia();
+                break;
+        }
+    }
+
     private async void LoadMaleMedia()
     {
+        var rangeItem = Ranges.First(x => x.Type == AnimeHomeTypes.MaleMedia);
+
         try
         {
+            rangeItem.IsLoading = true;
+            rangeItem.Medias.Clear();
+
             var result = await _anilistClient.SearchMediaAsync(
                 new SearchMediaFilter()
                 {
@@ -148,24 +200,31 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result
-                .Data
+            var data = result.Data
                 .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
-            MaleMedia.Clear();
-            MaleMedia.Push(data);
+            rangeItem.Medias.Push(data);
         }
         catch (Exception ex)
         {
             await Toast.Make(ex.ToString()).Show();
         }
+        finally
+        {
+            rangeItem.IsLoading = false;
+        }
     }
 
     private async void LoadFeminineMedia()
     {
+        var rangeItem = Ranges.First(x => x.Type == AnimeHomeTypes.FeminineMedia);
+
         try
         {
+            rangeItem.IsLoading = true;
+            rangeItem.Medias.Clear();
+
             var result = await _anilistClient.SearchMediaAsync(
                 new SearchMediaFilter()
                 {
@@ -176,24 +235,31 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result
-                .Data
+            var data = result.Data
                 .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
-            FeminineMedia.Clear();
-            FeminineMedia.Push(data);
+            rangeItem.Medias.Push(data);
         }
         catch (Exception ex)
         {
             await Toast.Make(ex.ToString()).Show();
         }
+        finally
+        {
+            rangeItem.IsLoading = false;
+        }
     }
 
     private async void LoadTrashMedia()
     {
+        var rangeItem = Ranges.First(x => x.Type == AnimeHomeTypes.TrashMedia);
+
         try
         {
+            rangeItem.IsLoading = true;
+            rangeItem.Medias.Clear();
+
             var result = await _anilistClient.SearchMediaAsync(
                 new SearchMediaFilter()
                 {
@@ -204,46 +270,60 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result
-                .Data
+            var data = result.Data
                 .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
-            TrashMedia.Clear();
-            TrashMedia.Push(data);
+            rangeItem.Medias.Push(data);
         }
         catch (Exception ex)
         {
             await Toast.Make(ex.ToString()).Show();
+        }
+        finally
+        {
+            rangeItem.IsLoading = false;
         }
     }
 
     private async void LoadNewSeason()
     {
+        var rangeItem = Ranges.First(x => x.Type == AnimeHomeTypes.NewSeason);
+
         try
         {
+            rangeItem.IsLoading = true;
+            rangeItem.Medias.Clear();
+
             var result = await _anilistClient.SearchMediaAsync(
                 new SearchMediaFilter { Season = MediaSeason.Winter }
             );
 
-            var data = result
-                .Data
+            var data = result.Data
                 .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
-            NewSeasonAnimes.Clear();
-            NewSeasonAnimes.Push(data);
+            rangeItem.Medias.Push(data);
         }
         catch (Exception ex)
         {
             await Toast.Make(ex.ToString()).Show();
         }
+        finally
+        {
+            rangeItem.IsLoading = false;
+        }
     }
 
     private async void LoadLastUpdated()
     {
+        var rangeItem = Ranges.First(x => x.Type == AnimeHomeTypes.LastUpdated);
+
         try
         {
+            rangeItem.IsLoading = true;
+            rangeItem.Medias.Clear();
+
             var recentlyUpdateResult = await _anilistClient.GetMediaSchedulesAsync(
                 new MediaSchedulesFilter
                 {
@@ -256,8 +336,7 @@ public partial class HomeViewModel : BaseViewModel
                 new AniPaginationOptions(1, 50)
             );
 
-            var data = recentlyUpdateResult
-                .Data
+            var data = recentlyUpdateResult.Data
                 .Where(
                     x =>
                         x.Media is not null
@@ -273,24 +352,35 @@ public partial class HomeViewModel : BaseViewModel
 
             LastUpdatedAnimes.Clear();
             LastUpdatedAnimes.Push(data);
+
+            rangeItem.Medias.Clear();
+            rangeItem.Medias.Push(data);
         }
         catch (Exception ex)
         {
             await Toast.Make(ex.ToString()).Show();
         }
+        finally
+        {
+            rangeItem.IsLoading = false;
+        }
     }
 
     private async void LoadTrending()
     {
+        var rangeItem = Ranges.First(x => x.Type == AnimeHomeTypes.Trending);
+
         try
         {
+            rangeItem.IsLoading = true;
+            rangeItem.Medias.Clear();
+
             var result = await _anilistClient.GetTrendingMediaAsync(
                 new MediaTrendFilter() { Sort = MediaTrendSort.Popularity },
                 new AniPaginationOptions()
             );
 
-            var data = result
-                .Data
+            var data = result.Data
                 .Where(
                     x =>
                         x.Media is not null
@@ -301,12 +391,16 @@ public partial class HomeViewModel : BaseViewModel
                 .Select(x => x.Media!)
                 .ToList();
 
-            TrendingAnimes.Clear();
-            TrendingAnimes.Push(data);
+            rangeItem.Medias.Clear();
+            rangeItem.Medias.Push(data);
         }
         catch (Exception ex)
         {
             await Toast.Make(ex.ToString()).Show();
+        }
+        finally
+        {
+            rangeItem.IsLoading = false;
         }
     }
 
@@ -321,8 +415,13 @@ public partial class HomeViewModel : BaseViewModel
             _ => MediaSeason.Winter,
         };
 
+        var rangeItem = Ranges.First(x => x.Type == AnimeHomeTypes.CurrentSeason);
+
         try
         {
+            rangeItem.IsLoading = true;
+            rangeItem.Medias.Clear();
+
             var result = await _anilistClient.SearchMediaAsync(
                 new SearchMediaFilter()
                 {
@@ -333,24 +432,35 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result
-                .Data
+            var data = result.Data
                 .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
             CurrentSeasonAnimes.Clear();
             CurrentSeasonAnimes.Push(data);
+
+            rangeItem.Medias.Clear();
+            rangeItem.Medias.Push(data);
         }
         catch (Exception ex)
         {
             await Toast.Make(ex.ToString()).Show();
         }
+        finally
+        {
+            rangeItem.IsLoading = false;
+        }
     }
 
     private async void LoadPopular()
     {
+        var rangeItem = Ranges.First(x => x.Type == AnimeHomeTypes.Popular);
+
         try
         {
+            rangeItem.IsLoading = true;
+            rangeItem.Medias.Clear();
+
             //var result = await _anilistClient.SearchMediaAsync(new SearchMediaFilter()
             //{
             //    Query = "demon slayer",
@@ -366,17 +476,23 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result
-                .Data
+            var data = result.Data
                 .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
             PopularAnimes.Clear();
             PopularAnimes.Push(data);
+
+            rangeItem.Medias.Clear();
+            rangeItem.Medias.Push(data);
         }
         catch (Exception ex)
         {
             await Toast.Make(ex.ToString()).Show();
+        }
+        finally
+        {
+            rangeItem.IsLoading = false;
         }
     }
 }
