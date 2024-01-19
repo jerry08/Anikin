@@ -143,7 +143,7 @@ jobs:
       - name: Create package
         # Change into the artifacts directory to avoid including the directory itself in the zip archive
         working-directory: build/windows/
-        run: zip -r ../Anikin-windows.zip .
+        run: zip -r ../${{ env.WINDOWS_PACKAGE_NAME }}.zip .
 
       - name: Set body
         run: |
