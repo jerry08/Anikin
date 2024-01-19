@@ -123,7 +123,7 @@ public static class MauiProgram
         builder.Services.AddTransient<EpisodeViewModel>();
 
         // Services
-        builder.Services.AddScoped(x => AniClientFactory());
+        builder.Services.AddTransient(x => AniClientFactory());
         builder.Services.AddSingleton<IAlertService, AlertService>();
         builder.Services.AddScoped<SettingsService>();
         builder.Services.AddScoped<ProviderService>();
