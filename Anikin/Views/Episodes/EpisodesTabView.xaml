@@ -25,10 +25,6 @@
                 <views:AnimeItemView />
             </DataTemplate>
 
-            <DataTemplate x:Key="GenreTemplate">
-                <viewTemplates:GenreTemplateView />
-            </DataTemplate>
-
             <DataTemplate x:Key="EpisodeTemplate">
                 <viewTemplates:EpisodeTemplateView />
             </DataTemplate>
@@ -46,7 +42,6 @@
             </DataTemplate>
 
             <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
-            <views:MainDataTemplateSelector x:Key="GenreTemplateSelector" DataTemplate="{StaticResource GenreTemplate}" />
             <views:MainDataTemplateSelector x:Key="FullEpisodeTemplateSelector" DataTemplate="{StaticResource FullEpisodeTemplate}" />
             <views:MainDataTemplateSelector x:Key="SemiEpisodeTemplateSelector" DataTemplate="{StaticResource SemiEpisodeTemplate}" />
             <views:MainDataTemplateSelector x:Key="EpisodeTemplateSelector" DataTemplate="{StaticResource EpisodeTemplate}" />

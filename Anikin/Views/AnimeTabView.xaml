@@ -9,12 +9,14 @@
     xmlns:templates="clr-namespace:Anikin.Views.Templates"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:viewModels="clr-namespace:Anikin.ViewModels"
+    xmlns:viewTemplates="clr-namespace:Anikin.Views.Templates"
     xmlns:views="clr-namespace:Anikin.Views"
     x:Name="this"
     x:DataType="viewModels:HomeViewModel">
     <ContentView.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <toolkit:IsListNotNullOrEmptyConverter x:Key="IsListNotNullOrEmptyConverter" />
 
             <DataTemplate x:Key="AnimeInfoDataTemplate">
                 <views:AnimeItemView />
@@ -24,8 +26,13 @@
                 <templates:AnimeCarouselTemplateView />
             </DataTemplate>
 
+            <DataTemplate x:Key="RangeTemplate">
+                <viewTemplates:AnimeTypeRangeTemplateView />
+            </DataTemplate>
+
             <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
             <views:MainDataTemplateSelector x:Key="AnimeCarouselDataTemplateSelector" DataTemplate="{StaticResource AnimeCarouselDataTemplate}" />
+            <views:MainDataTemplateSelector x:Key="RangeTemplateSelector" DataTemplate="{StaticResource RangeTemplate}" />
         </ResourceDictionary>
     </ContentView.Resources>
 
@@ -103,17 +110,20 @@
                         </ImageButton.Behaviors>
                     </ImageButton>
 
-                    <Button
-                        BackgroundColor="Transparent"
-                        Command="{Binding GoToSearchCommand}"
-                        FontFamily="Material"
-                        FontSize="28"
-                        HorizontalOptions="End"
-                        Opacity="0.9"
-                        Text="{x:Static materialDesign:MaterialDesignIcons.Search}"
-                        TextColor="{AppThemeBinding Light={StaticResource Gray400},
-                                                    Dark={StaticResource White}}"
-                        VerticalOptions="Start" />
+                    <Grid HorizontalOptions="End" VerticalOptions="Start">
+                        <Grid.Behaviors>
+                            <berry:TouchBehavior Command="{Binding BindingContext.GoToSearchCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                        </Grid.Behaviors>
+                        <Label
+                            FontFamily="Material"
+                            FontSize="28"
+                            HorizontalOptions="End"
+                            Opacity="0.9"
+                            Text="{x:Static materialDesign:MaterialDesignIcons.Search}"
+                            TextColor="{AppThemeBinding Light={StaticResource Gray400},
+                                                        Dark={StaticResource White}}"
+                            VerticalOptions="Start" />
+                    </Grid>
                 </Grid>
 
                 <!--<Label
@@ -179,7 +189,6 @@
                     </Grid>
 
                     <CollectionView
-                        x:Name="AlbumCollectionView"
                         HorizontalOptions="Center"
                         IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                         ItemTemplate="{StaticResource MainDataTemplateSelector}"
@@ -296,39 +305,12 @@
                         </CollectionView.EmptyView>
                     </CollectionView>
 
-                    <Grid
-                        Grid.Row="0"
-                        Margin="10,5,10,0"
-                        ColumnDefinitions="auto,*">
-                        <Label Grid.Column="0">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span
-                                        FontAttributes="Bold"
-                                        FontSize="Body"
-                                        Text="New "
-                                        TextColor="#D9FFFFFF" />
-                                    <Span
-                                        FontSize="Body"
-                                        Text="Season"
-                                        TextColor="#D9FFFFFF" />
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
-                        <Label
-                            Grid.Column="1"
-                            FontAttributes="Bold"
-                            FontSize="11"
-                            HorizontalOptions="End"
-                            Text="See all &gt;"
-                            TextColor="#D9FFFFFF" />
-                    </Grid>
-
                     <CollectionView
+                        Margin="0,15,0,8"
                         HorizontalOptions="Center"
-                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                        ItemTemplate="{StaticResource MainDataTemplateSelector}"
-                        ItemsSource="{Binding CurrentSeasonAnimes}"
+                        IsVisible="{Binding Ranges, Converter={StaticResource IsListNotNullOrEmptyConverter}}"
+                        ItemTemplate="{StaticResource RangeTemplateSelector}"
+                        ItemsSource="{Binding Ranges}"
                         RemainingItemsThreshold="1">
                         <CollectionView.ItemsLayout>
                             <LinearItemsLayout Orientation="Horizontal" />
@@ -355,155 +337,62 @@
                         </CollectionView.EmptyView>
                     </CollectionView>
 
-                    <Grid
-                        Grid.Row="0"
-                        Margin="10,5,10,0"
-                        ColumnDefinitions="auto,*">
-                        <Label
-                            Grid.Column="0"
-                            FontAttributes="Bold"
-                            FontSize="Body"
-                            Text="Dumpster fire"
-                            TextColor="#D9FFFFFF" />
-                        <Label
-                            Grid.Column="1"
-                            FontAttributes="Bold"
-                            FontSize="11"
-                            HorizontalOptions="End"
-                            Text="See all &gt;"
-                            TextColor="#D9FFFFFF" />
+                    <Grid>
+                        <Grid
+                            HorizontalOptions="CenterAndExpand"
+                            IsVisible="{Binding SelectedRange.IsLoading}"
+                            VerticalOptions="CenterAndExpand"
+                            ZIndex="1000">
+                            <ActivityIndicator
+                                HeightRequest="{OnPlatform Default=50,
+                                                           WinUI=100}"
+                                HorizontalOptions="CenterAndExpand"
+                                IsRunning="True"
+                                VerticalOptions="CenterAndExpand"
+                                WidthRequest="{OnPlatform Default=50,
+                                                          WinUI=100}" />
+                        </Grid>
+
+                        <CollectionView
+                            HorizontalOptions="Center"
+                            IsVisible="{Binding SelectedRange.IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                            ItemTemplate="{StaticResource MainDataTemplateSelector}"
+                            ItemsSource="{Binding SelectedRange.Medias}"
+                            RemainingItemsThreshold="1">
+                            <CollectionView.ItemsLayout>
+                                <!--
+                                    Issue where GridItemsLayout was snapping when scrolling slowish sometimes.
+                                    Maybe it was one of the Snap variables?
+                                -->
+                                <!--<GridItemsLayout
+                                    HorizontalItemSpacing="4"
+                                    Orientation="Horizontal"
+                                    Span="1"
+                                    VerticalItemSpacing="4" />-->
+                                <LinearItemsLayout Orientation="Horizontal" />
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.EmptyView>
+                                <Grid
+                                    HorizontalOptions="FillAndExpand"
+                                    IsVisible="False"
+                                    VerticalOptions="FillAndExpand">
+                                    <Grid.Triggers>
+                                        <DataTrigger
+                                            Binding="{Binding SelectedRange.IsLoading}"
+                                            TargetType="Grid"
+                                            Value="False">
+                                            <Setter Property="IsVisible" Value="True" />
+                                        </DataTrigger>
+                                    </Grid.Triggers>
+                                    <Label
+                                        FontSize="16"
+                                        HorizontalOptions="Center"
+                                        Text="Empty"
+                                        VerticalOptions="Center" />
+                                </Grid>
+                            </CollectionView.EmptyView>
+                        </CollectionView>
                     </Grid>
-
-                    <CollectionView
-                        HorizontalOptions="Center"
-                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                        ItemTemplate="{StaticResource MainDataTemplateSelector}"
-                        ItemsSource="{Binding TrashMedia}"
-                        RemainingItemsThreshold="1">
-                        <CollectionView.ItemsLayout>
-                            <LinearItemsLayout Orientation="Horizontal" />
-                        </CollectionView.ItemsLayout>
-                        <CollectionView.EmptyView>
-                            <Grid
-                                HorizontalOptions="FillAndExpand"
-                                IsVisible="False"
-                                VerticalOptions="FillAndExpand">
-                                <Grid.Triggers>
-                                    <DataTrigger
-                                        Binding="{Binding IsBusy}"
-                                        TargetType="Grid"
-                                        Value="False">
-                                        <Setter Property="IsVisible" Value="True" />
-                                    </DataTrigger>
-                                </Grid.Triggers>
-                                <Label
-                                    FontSize="16"
-                                    HorizontalOptions="Center"
-                                    Text="Empty"
-                                    VerticalOptions="Center" />
-                            </Grid>
-                        </CollectionView.EmptyView>
-                    </CollectionView>
-
-                    <Grid
-                        Grid.Row="0"
-                        Margin="10,5,10,0"
-                        ColumnDefinitions="auto,*">
-                        <Label
-                            Grid.Column="0"
-                            FontAttributes="Bold"
-                            FontSize="Body"
-                            Text="Best for feminine audiences"
-                            TextColor="#D9FFFFFF" />
-                        <Label
-                            Grid.Column="1"
-                            FontAttributes="Bold"
-                            FontSize="11"
-                            HorizontalOptions="End"
-                            Text="See all &gt;"
-                            TextColor="#D9FFFFFF" />
-                    </Grid>
-
-                    <CollectionView
-                        HorizontalOptions="Center"
-                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                        ItemTemplate="{StaticResource MainDataTemplateSelector}"
-                        ItemsSource="{Binding FeminineMedia}"
-                        RemainingItemsThreshold="1">
-                        <CollectionView.ItemsLayout>
-                            <LinearItemsLayout Orientation="Horizontal" />
-                        </CollectionView.ItemsLayout>
-                        <CollectionView.EmptyView>
-                            <Grid
-                                HorizontalOptions="FillAndExpand"
-                                IsVisible="False"
-                                VerticalOptions="FillAndExpand">
-                                <Grid.Triggers>
-                                    <DataTrigger
-                                        Binding="{Binding IsBusy}"
-                                        TargetType="Grid"
-                                        Value="False">
-                                        <Setter Property="IsVisible" Value="True" />
-                                    </DataTrigger>
-                                </Grid.Triggers>
-                                <Label
-                                    FontSize="16"
-                                    HorizontalOptions="Center"
-                                    Text="Empty"
-                                    VerticalOptions="Center" />
-                            </Grid>
-                        </CollectionView.EmptyView>
-                    </CollectionView>
-
-                    <Grid
-                        Grid.Row="0"
-                        Margin="10,5,10,0"
-                        ColumnDefinitions="auto,*">
-                        <Label
-                            Grid.Column="0"
-                            FontAttributes="Bold"
-                            FontSize="Body"
-                            Text="Best for male audiences"
-                            TextColor="#D9FFFFFF" />
-                        <Label
-                            Grid.Column="1"
-                            FontAttributes="Bold"
-                            FontSize="11"
-                            HorizontalOptions="End"
-                            Text="See all &gt;"
-                            TextColor="#D9FFFFFF" />
-                    </Grid>
-
-                    <CollectionView
-                        HorizontalOptions="Center"
-                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                        ItemTemplate="{StaticResource MainDataTemplateSelector}"
-                        ItemsSource="{Binding MaleMedia}"
-                        RemainingItemsThreshold="1">
-                        <CollectionView.ItemsLayout>
-                            <LinearItemsLayout Orientation="Horizontal" />
-                        </CollectionView.ItemsLayout>
-                        <CollectionView.EmptyView>
-                            <Grid
-                                HorizontalOptions="FillAndExpand"
-                                IsVisible="False"
-                                VerticalOptions="FillAndExpand">
-                                <Grid.Triggers>
-                                    <DataTrigger
-                                        Binding="{Binding IsBusy}"
-                                        TargetType="Grid"
-                                        Value="False">
-                                        <Setter Property="IsVisible" Value="True" />
-                                    </DataTrigger>
-                                </Grid.Triggers>
-                                <Label
-                                    FontSize="16"
-                                    HorizontalOptions="Center"
-                                    Text="Empty"
-                                    VerticalOptions="Center" />
-                            </Grid>
-                        </CollectionView.EmptyView>
-                    </CollectionView>
                 </VerticalStackLayout>
             </Grid>
         </ScrollView>

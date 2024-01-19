@@ -21,31 +21,11 @@
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:RatingConverter x:Key="RatingConverter" />
 
-            <DataTemplate x:Key="AnimeInfoDataTemplate">
-                <views:AnimeItemView />
-            </DataTemplate>
-
             <DataTemplate x:Key="GenreTemplate">
                 <viewTemplates:GenreTemplateView />
             </DataTemplate>
 
-            <DataTemplate x:Key="EpisodeTemplate">
-                <viewTemplates:EpisodeTemplateView />
-            </DataTemplate>
-
-            <DataTemplate x:Key="SemiEpisodeTemplate">
-                <viewTemplates:SemiEpisodeTemplateView />
-            </DataTemplate>
-
-            <DataTemplate x:Key="EpisodeRangeTemplate">
-                <viewTemplates:EpisodeRangeTemplateView />
-            </DataTemplate>
-
-            <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
             <views:MainDataTemplateSelector x:Key="GenreTemplateSelector" DataTemplate="{StaticResource GenreTemplate}" />
-            <views:MainDataTemplateSelector x:Key="EpisodeTemplateSelector" DataTemplate="{StaticResource EpisodeTemplate}" />
-            <views:MainDataTemplateSelector x:Key="SemiEpisodeTemplateSelector" DataTemplate="{StaticResource SemiEpisodeTemplate}" />
-            <views:MainDataTemplateSelector x:Key="EpisodeRangeTemplateSelector" DataTemplate="{StaticResource EpisodeRangeTemplate}" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -94,17 +74,18 @@
                         <Border
                             Grid.Column="0"
                             Margin="2"
-                            BackgroundColor="#77000000"
                             HorizontalOptions="Start"
                             StrokeThickness="0"
                             VerticalOptions="Start">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="18" />
                             </Border.StrokeShape>
-                            <Button
+                            <Border.Behaviors>
+                                <berry:TouchBehavior Command="{Binding BindingContext.GoBackCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                            </Border.Behaviors>
+                            <Label
                                 Padding="12"
-                                BackgroundColor="Transparent"
-                                Command="{Binding GoBackCommand}"
+                                BackgroundColor="#77000000"
                                 FontFamily="Material"
                                 FontSize="26"
                                 Opacity="0.8"
@@ -115,20 +96,21 @@
                         <Border
                             Grid.Column="0"
                             Margin="2"
-                            BackgroundColor="#77000000"
                             HorizontalOptions="End"
                             StrokeThickness="0"
                             VerticalOptions="Start">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="18" />
                             </Border.StrokeShape>
-                            <Button
+                            <Border.Behaviors>
+                                <berry:TouchBehavior Command="{Binding BindingContext.ShowProviderSourcesSheetCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                            </Border.Behaviors>
+                            <Label
                                 Padding="12"
-                                BackgroundColor="Transparent"
+                                BackgroundColor="#77000000"
                                 FontFamily="Material"
                                 FontSize="26"
                                 Opacity="0.8"
-                                Command="{Binding ShowProviderSourcesSheetCommand}"
                                 Text="{x:Static materialDesign:MaterialDesignIcons.Dns}"
                                 TextColor="White" />
                         </Border>

@@ -17,37 +17,47 @@
         RowSpacing="5"
         VerticalOptions="Center">
         <VerticalStackLayout>
-            <Border Padding="0,5">
+            <Border>
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="15" />
                 </Border.StrokeShape>
-                <Button
-                    BackgroundColor="Transparent"
-                    BorderColor="White"
-                    BorderWidth="0"
-                    Command="{Binding LoginWithAnilistCommand}"
-                    FontAttributes="Bold"
-                    FontSize="16"
-                    Text="Anilist Login"
-                    TextColor="White"
-                    VerticalOptions="Center" />
+                <Grid>
+                    <Grid.Behaviors>
+                        <berry:TouchBehavior Command="{Binding BindingContext.LoginWithAnilistCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                    </Grid.Behaviors>
+                    <Button
+                        Margin="0,5"
+                        BackgroundColor="Transparent"
+                        BorderColor="White"
+                        BorderWidth="0"
+                        FontAttributes="Bold"
+                        FontSize="16"
+                        Text="Anilist Login"
+                        TextColor="White"
+                        VerticalOptions="Center" />
+                </Grid>
             </Border>
 
-            <Border Padding="0,5">
+            <!--<Border>
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="15" />
                 </Border.StrokeShape>
-                <Button
-                    BackgroundColor="Transparent"
-                    BorderColor="White"
-                    BorderWidth="0"
-                    Command="{Binding GoToExtensionsSettingsCommand}"
-                    FontAttributes="Bold"
-                    FontSize="16"
-                    Text="Extensions"
-                    TextColor="White"
-                    VerticalOptions="Center" />
-            </Border>
+                <Grid>
+                    <Grid.Behaviors>
+                        <berry:TouchBehavior Command="{Binding BindingContext.GoToExtensionsSettingsCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                    </Grid.Behaviors>
+                    <Button
+                        Margin="0,5"
+                        BackgroundColor="Transparent"
+                        BorderColor="White"
+                        BorderWidth="0"
+                        FontAttributes="Bold"
+                        FontSize="16"
+                        Text="Extensions"
+                        TextColor="White"
+                        VerticalOptions="Center" />
+                </Grid>
+            </Border>-->
 
             <!--  Developers Mode  -->
             <Grid

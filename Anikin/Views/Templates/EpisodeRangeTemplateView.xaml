@@ -9,7 +9,7 @@
     x:Name="this"
     Margin="0"
     Padding="5,0,0,0"
-    x:DataType="models:Range"
+    x:DataType="models:EpisodeRange"
     BackgroundColor="Transparent">
     <Grid BackgroundColor="Transparent">
         <Border

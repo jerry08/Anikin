@@ -22,7 +22,7 @@ using Juro.Core.Models.Anime;
 using Juro.Core.Providers;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
-using Range = Anikin.Models.Range;
+using EpisodeRange = Anikin.Models.EpisodeRange;
 
 namespace Anikin.ViewModels;
 
@@ -46,7 +46,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
     private IAnimeInfo? Anime { get; set; }
 
-    public ObservableRangeCollection<Range> Ranges { get; set; } = new();
+    public ObservableRangeCollection<EpisodeRange> Ranges { get; set; } = new();
 
     public List<Episode[]> EpisodeChunks { get; set; } = new();
 
@@ -272,7 +272,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
             EpisodeChunks = result.Chunk(50).ToList();
 
-            var ranges = new List<Range>();
+            var ranges = new List<EpisodeRange>();
 
             if (EpisodeChunks.Count > 1)
             {
@@ -287,7 +287,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
                     }
 
                     endIndex = startIndex + EpisodeChunks[i].Length - 1;
-                    ranges.Add(new Range(EpisodeChunks[i], startIndex, endIndex));
+                    ranges.Add(new(EpisodeChunks[i], startIndex, endIndex));
                     startIndex += EpisodeChunks[i].Length;
                 }
 
@@ -328,7 +328,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     }
 
     [RelayCommand]
-    private void RangeSelected(Range range)
+    private void RangeSelected(EpisodeRange range)
     {
         for (var i = 0; i < Ranges.Count; i++)
         {

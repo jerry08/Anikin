@@ -4,7 +4,7 @@ using Juro.Core.Models.Anime;
 
 namespace Anikin.Models;
 
-public partial class Range : ObservableObject
+public partial class EpisodeRange : ObservableObject
 {
     public string Name { get; set; } = default!;
 
@@ -13,7 +13,7 @@ public partial class Range : ObservableObject
     [ObservableProperty]
     private bool _isSelected;
 
-    public Range(IEnumerable<Episode> episodes, int startIndex, int endIndex)
+    public EpisodeRange(IEnumerable<Episode> episodes, int startIndex, int endIndex)
     {
         Episodes.AddRange(episodes);
         Name = $"{startIndex} - {endIndex}";
