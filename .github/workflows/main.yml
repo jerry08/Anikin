@@ -132,7 +132,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: android-build
-          path: Anikin.apk
+          path: Anikin/Android/
 
       - name: Download Windows artifacts
         uses: actions/download-artifact@v3
@@ -157,7 +157,7 @@ jobs:
         run: |
           set -e
 
-          mv Anikin.apk ${{ env.PACKAGE_NAME }}.apk
+          mv Anikin/Android/Anikin.apk ${{ env.PACKAGE_NAME }}.apk
 
       - name: Create release
         env:
