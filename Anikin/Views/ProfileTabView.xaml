@@ -59,7 +59,7 @@
                 </Grid>
             </Border>-->
 
-            <!--  Developers Mode  -->
+            <!--  Show non-japanese anime  -->
             <Grid
                 Padding="0,5"
                 ColumnDefinitions="*,auto"
