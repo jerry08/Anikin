@@ -124,7 +124,7 @@ public class ProviderService
             //
             //var pathTest2 = AssemblyEx.GetReferencedAssemblies(asemb).ToList().Select(x => x.Location).ToList();
             //await App.AlertService.ShowConfirmationAsync("ref paths", string.Join(Environment.NewLine, pathTest2));
-            
+
             //var test34 = AssemblyEx.GetReferencedAssemblies(asemb);
             //foreach (var item in test34)
             //{

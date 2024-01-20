@@ -33,10 +33,9 @@ public class ApkDownloadReceiver : BroadcastReceiver
                 var columnIndex = c.GetColumnIndex(DownloadManager.ColumnStatus);
                 if (c.GetInt(columnIndex) == (int)DownloadStatus.Successful)
                 {
-                    var uri = Android
-                        .Net
-                        .Uri
-                        .Parse(c.GetString(c.GetColumnIndex(DownloadManager.ColumnLocalUri)));
+                    var uri = Android.Net.Uri.Parse(
+                        c.GetString(c.GetColumnIndex(DownloadManager.ColumnLocalUri))
+                    );
 
                     if (uri is not null)
                         Platform.CurrentActivity?.InstallApk(uri);

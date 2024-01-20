@@ -200,8 +200,8 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result.Data
-                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+            var data = result
+                .Data.Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
             rangeItem.Medias.Push(data);
@@ -235,8 +235,8 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result.Data
-                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+            var data = result
+                .Data.Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
             rangeItem.Medias.Push(data);
@@ -270,8 +270,8 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result.Data
-                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+            var data = result
+                .Data.Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
             rangeItem.Medias.Push(data);
@@ -299,8 +299,8 @@ public partial class HomeViewModel : BaseViewModel
                 new SearchMediaFilter { Season = MediaSeason.Winter }
             );
 
-            var data = result.Data
-                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+            var data = result
+                .Data.Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
             rangeItem.Medias.Push(data);
@@ -336,14 +336,11 @@ public partial class HomeViewModel : BaseViewModel
                 new AniPaginationOptions(1, 50)
             );
 
-            var data = recentlyUpdateResult.Data
-                .Where(
-                    x =>
-                        x.Media is not null
-                        && !x.Media.IsAdult
-                        && (
-                            _settingsService.ShowNonJapaneseAnime || x.Media.CountryOfOrigin == "JP"
-                        )
+            var data = recentlyUpdateResult
+                .Data.Where(x =>
+                    x.Media is not null
+                    && !x.Media.IsAdult
+                    && (_settingsService.ShowNonJapaneseAnime || x.Media.CountryOfOrigin == "JP")
                 )
                 .Select(x => x.Media!)
                 .GroupBy(x => x.Id)
@@ -380,13 +377,10 @@ public partial class HomeViewModel : BaseViewModel
                 new AniPaginationOptions()
             );
 
-            var data = result.Data
-                .Where(
-                    x =>
-                        x.Media is not null
-                        && (
-                            _settingsService.ShowNonJapaneseAnime || x.Media.CountryOfOrigin == "JP"
-                        )
+            var data = result
+                .Data.Where(x =>
+                    x.Media is not null
+                    && (_settingsService.ShowNonJapaneseAnime || x.Media.CountryOfOrigin == "JP")
                 )
                 .Select(x => x.Media!)
                 .ToList();
@@ -432,8 +426,8 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result.Data
-                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+            var data = result
+                .Data.Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
             CurrentSeasonAnimes.Clear();
@@ -476,8 +470,8 @@ public partial class HomeViewModel : BaseViewModel
                 }
             );
 
-            var data = result.Data
-                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+            var data = result
+                .Data.Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
             PopularAnimes.Clear();

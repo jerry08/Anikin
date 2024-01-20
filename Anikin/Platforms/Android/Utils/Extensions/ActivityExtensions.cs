@@ -84,8 +84,8 @@ public static class ActivityExtensions
             return;
 
         var windowInsetsController =
-        //ViewCompat.GetWindowInsetsController(activity.Window!.DecorView!);
-        WindowCompat.GetInsetsController(activity.Window!, activity.Window!.DecorView!);
+            //ViewCompat.GetWindowInsetsController(activity.Window!.DecorView!);
+            WindowCompat.GetInsetsController(activity.Window!, activity.Window!.DecorView!);
         if (windowInsetsController is null)
             return;
 
@@ -103,8 +103,8 @@ public static class ActivityExtensions
             return;
 
         var windowInsetsController =
-        //ViewCompat.GetWindowInsetsController(activity.Window!.DecorView!);
-        WindowCompat.GetInsetsController(activity.Window!, activity.Window!.DecorView!);
+            //ViewCompat.GetWindowInsetsController(activity.Window!.DecorView!);
+            WindowCompat.GetInsetsController(activity.Window!, activity.Window!.DecorView!);
         if (windowInsetsController is null)
             return;
 
@@ -228,9 +228,8 @@ public static class ActivityExtensions
             var canRequestPackageInstalls = mainActivity.PackageInstallPermission.CheckStatus();
             if (!canRequestPackageInstalls)
             {
-                canRequestPackageInstalls = await mainActivity
-                    .PackageInstallPermission
-                    .RequestAsync();
+                canRequestPackageInstalls =
+                    await mainActivity.PackageInstallPermission.RequestAsync();
             }
 
             if (!canRequestPackageInstalls)

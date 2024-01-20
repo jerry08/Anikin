@@ -26,7 +26,8 @@ public partial class AnimeHomeRange : ObservableObject
         Name = Type.GetBestDisplayName();
     }
 
-    public AnimeHomeRange(AnimeHomeTypes type, IEnumerable<Media> medias) : this(type)
+    public AnimeHomeRange(AnimeHomeTypes type, IEnumerable<Media> medias)
+        : this(type)
     {
         Medias.AddRange(medias);
     }

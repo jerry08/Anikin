@@ -64,16 +64,13 @@ public partial class ExtensionsViewModel : CollectionViewModel<PluginListGroup<P
             {
                 var list = new AnimeClient()
                     .GetProviders(plugin.FilePath)
-                    .Select(
-                        x =>
-                            new PluginItem()
-                            {
-                                Name = x.Name,
-                                Language = x.Language,
-                                LanguageDisplayName = x.GetLanguageDisplayName(),
-                                Plugin = plugin
-                            }
-                    )
+                    .Select(x => new PluginItem()
+                    {
+                        Name = x.Name,
+                        Language = x.Language,
+                        LanguageDisplayName = x.GetLanguageDisplayName(),
+                        Plugin = plugin
+                    })
                     .ToList();
 
                 Push(new List<PluginListGroup<PluginItem>>() { new(plugin, list) });

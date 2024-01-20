@@ -133,8 +133,7 @@ public partial class SearchViewModel : CollectionViewModel<Jita.AniList.Models.M
             PageIndex++;
 
             var data = result
-                .Data
-                .Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+                .Data.Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
                 .ToList();
 
             Push(data);

@@ -85,13 +85,11 @@ public partial class VideoPlayerViewModel : BaseViewModel
         var index = EpisodeViewModel.Episodes.OrderBy(x => x.Number).ToList().IndexOf(Episode);
 
         PreviousEpisode = EpisodeViewModel
-            .Episodes
-            .OrderBy(x => x.Number)
+            .Episodes.OrderBy(x => x.Number)
             .ElementAtOrDefault(index - 1);
 
         NextEpisode = EpisodeViewModel
-            .Episodes
-            .OrderBy(x => x.Number)
+            .Episodes.OrderBy(x => x.Number)
             .ElementAtOrDefault(index + 1);
 
         EpisodeKey = $"{Media.Id}-{Episode.Number}";
@@ -246,9 +244,12 @@ public partial class VideoPlayerViewModel : BaseViewModel
         var speeds = _playerSettings.GetSpeeds();
         var speedsName = speeds.Select(x => $"{x}x").ToList();
 
-        var speedName = await Shell
-            .Current
-            .DisplayActionSheet("Playback Speed", "", "", speedsName.ToArray());
+        var speedName = await Shell.Current.DisplayActionSheet(
+            "Playback Speed",
+            "",
+            "",
+            speedsName.ToArray()
+        );
         if (string.IsNullOrWhiteSpace(speedName))
             return;
 
@@ -348,11 +349,10 @@ public partial class VideoPlayerViewModel : BaseViewModel
         if (videoServers.Count == 0)
             return null;
 
-        return videoServers.Find(
-                x =>
-                    x.Name?.Contains("streamsb", StringComparison.OrdinalIgnoreCase) == true
-                    || x.Name?.Contains("vidstream", StringComparison.OrdinalIgnoreCase) == true
-                    || x.Name?.Equals("mirror", StringComparison.OrdinalIgnoreCase) == true // Indonesian
+        return videoServers.Find(x =>
+                x.Name?.Contains("streamsb", StringComparison.OrdinalIgnoreCase) == true
+                || x.Name?.Contains("vidstream", StringComparison.OrdinalIgnoreCase) == true
+                || x.Name?.Equals("mirror", StringComparison.OrdinalIgnoreCase) == true // Indonesian
             ) ?? videoServers[0];
     }
 

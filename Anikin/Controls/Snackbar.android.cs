@@ -48,11 +48,7 @@ public partial class Snackbar
     static View GetParentView()
     {
         var parentView = Microsoft
-            .Maui
-            .ApplicationModel
-            .Platform
-            .CurrentActivity
-            ?.Window
+            .Maui.ApplicationModel.Platform.CurrentActivity?.Window
             ?.DecorView
             .FindViewById(Android.Resource.Id.Content);
 
@@ -69,10 +65,11 @@ public partial class Snackbar
         if (IsModalPageActive() && snackbarView.Context?.Resources is not null)
         //if (snackbarView.Context?.Resources is not null)
         {
-            var resourceId = snackbarView
-                .Context
-                .Resources
-                .GetIdentifier("navigation_bar_height", "dimen", "android");
+            var resourceId = snackbarView.Context.Resources.GetIdentifier(
+                "navigation_bar_height",
+                "dimen",
+                "android"
+            );
             var navBarHeight = snackbarView.Context.Resources.GetDimensionPixelSize(resourceId);
             var layoutParameters = (FrameLayout.LayoutParams?)snackbarView.LayoutParameters;
             if (layoutParameters is not null)
@@ -123,12 +120,11 @@ public partial class Snackbar
         await DismissPlatform(token);
         token.ThrowIfCancellationRequested();
 
-        PlatformSnackbar = Google
-            .Android
-            .Material
-            .Snackbar
-            .Snackbar
-            .Make(GetParentView(), Text, (int)Duration.TotalMilliseconds);
+        PlatformSnackbar = Google.Android.Material.Snackbar.Snackbar.Make(
+            GetParentView(),
+            Text,
+            (int)Duration.TotalMilliseconds
+        );
         var snackbarView = PlatformSnackbar.View;
 
         if (Anchor is not Page)
@@ -229,7 +225,8 @@ public partial class Snackbar
         platformSnackbar.AddCallback(new SnackbarCallback(this, dismissedTCS = new()));
     }
 
-    class SnackbarCallback(in Snackbar snackbar, in TaskCompletionSource<bool> dismissedTCS) : BaseTransientBottomBar.BaseCallback
+    class SnackbarCallback(in Snackbar snackbar, in TaskCompletionSource<bool> dismissedTCS)
+        : BaseTransientBottomBar.BaseCallback
     {
         readonly Snackbar snackbar = snackbar;
         readonly TaskCompletionSource<bool> dismissedTCS = dismissedTCS;

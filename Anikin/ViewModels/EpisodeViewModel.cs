@@ -83,16 +83,13 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
         ProviderNames.AddRange(_providers.ConvertAll(x => x.Name));
 
-        var providers = _providers.Select(
-            x =>
-                new ProviderModel()
-                {
-                    Key = x.Key,
-                    Language = x.Language,
-                    Name = x.Name,
-                    LanguageDisplayName = x.GetLanguageDisplayName()
-                }
-        );
+        var providers = _providers.Select(x => new ProviderModel()
+        {
+            Key = x.Key,
+            Language = x.Language,
+            Name = x.Name,
+            LanguageDisplayName = x.GetLanguageDisplayName()
+        });
 
         var selectedProvider = _providers.Find(x => x.Key == _provider?.Key);
 
@@ -542,16 +539,14 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         if (Entity.Url is null)
             return;
 
-        await Share
-            .Default
-            .RequestAsync(
-                new ShareTextRequest
-                {
-                    //Uri = $"https://anilist.cs/anime/{Entity.Id}",
-                    Uri = Entity.Url.OriginalString,
-                    Title = "Share Anilist Link"
-                }
-            );
+        await Share.Default.RequestAsync(
+            new ShareTextRequest
+            {
+                //Uri = $"https://anilist.cs/anime/{Entity.Id}",
+                Uri = Entity.Url.OriginalString,
+                Title = "Share Anilist Link"
+            }
+        );
     }
 
     [RelayCommand]

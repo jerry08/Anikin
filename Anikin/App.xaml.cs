@@ -32,7 +32,7 @@ public partial class App : Application
         Services = provider;
 
         AlertService = Services.GetService<IAlertService>()!;
-        
+
         var settingsService = Services.GetService<SettingsService>()!;
         settingsService.Load();
 
