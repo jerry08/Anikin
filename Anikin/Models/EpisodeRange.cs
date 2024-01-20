@@ -8,7 +8,7 @@ public partial class EpisodeRange : ObservableObject
 {
     public string Name { get; set; } = default!;
 
-    public List<Episode> Episodes { get; set; } = new();
+    public List<Episode> Episodes { get; set; } = [];
 
     [ObservableProperty]
     private bool _isSelected;

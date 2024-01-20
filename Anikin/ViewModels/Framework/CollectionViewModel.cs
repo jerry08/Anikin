@@ -9,7 +9,7 @@ namespace Anikin.ViewModels.Framework;
 public partial class CollectionViewModel<T> : CollectionViewModelBase
     where T : class
 {
-    public ObservableRangeCollection<T> Entities { get; set; } = new();
+    public ObservableRangeCollection<T> Entities { get; set; } = [];
 
     [RelayCommand]
     public virtual void LoadMore()

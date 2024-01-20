@@ -24,7 +24,7 @@ public partial class CollectionViewModelBase : BaseViewModel
     [ObservableProperty]
     private int _offset;
 
-    public ObservableRangeCollection<object> SelectedEntities { get; } = new();
+    public ObservableRangeCollection<object> SelectedEntities { get; } = [];
 
     [ObservableProperty]
     private bool _isSelectAllChecked;

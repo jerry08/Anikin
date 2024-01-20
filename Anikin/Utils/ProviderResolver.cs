@@ -30,15 +30,15 @@ internal static class ProviderResolver
 
     public static List<IAnimeProvider> GetAnimeProviders()
     {
-        return new List<IAnimeProvider>()
-        {
+        return
+        [
             new Gogoanime(),
             new AnimePahe(),
             new Aniwatch(),
             new Aniwave(),
             new Kaido(),
             new OtakuDesu()
-        };
+        ];
 
         try
         {
@@ -57,7 +57,7 @@ internal static class ProviderResolver
                 App.AlertService.ShowAlert("Error", $"{ex}");
             }
 
-            return new();
+            return [];
         }
     }
 }

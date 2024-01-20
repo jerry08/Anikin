@@ -35,20 +35,20 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     private IAnimeProvider? _provider = ProviderResolver.GetAnimeProvider();
     private readonly List<IAnimeProvider> _providers = ProviderResolver.GetAnimeProviders();
 
-    public static List<Episode> Episodes { get; private set; } = new();
+    public static List<Episode> Episodes { get; private set; } = [];
 
-    public ObservableRangeCollection<string> ProviderNames { get; set; } = new();
+    public ObservableRangeCollection<string> ProviderNames { get; set; } = [];
 
-    public ObservableRangeCollection<ListGroup<ProviderModel>> ProviderGroups { get; set; } = new();
+    public ObservableRangeCollection<ListGroup<ProviderModel>> ProviderGroups { get; set; } = [];
 
     [ObservableProperty]
     private Media? _entity;
 
     private IAnimeInfo? Anime { get; set; }
 
-    public ObservableRangeCollection<EpisodeRange> Ranges { get; set; } = new();
+    public ObservableRangeCollection<EpisodeRange> Ranges { get; set; } = [];
 
-    public List<Episode[]> EpisodeChunks { get; set; } = new();
+    public List<Episode[]> EpisodeChunks { get; set; } = [];
 
     [ObservableProperty]
     private string? _searchingText;

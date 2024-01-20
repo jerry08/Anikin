@@ -861,7 +861,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         }
     }
 
-    private List<Stamp> SkippedTimeStamps { get; set; } = new();
+    private List<Stamp> SkippedTimeStamps { get; set; } = [];
     private Stamp? CurrentTimeStamp { get; set; }
 
     private async void LoadTimeStamps()

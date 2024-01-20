@@ -15,7 +15,7 @@ public partial class AnimeHomeRange : ObservableObject
 
     public AnimeHomeTypes Type { get; set; }
 
-    public ObservableRangeCollection<Media> Medias { get; set; } = new();
+    public ObservableRangeCollection<Media> Medias { get; set; } = [];
 
     [ObservableProperty]
     private bool _isSelected;

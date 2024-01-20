@@ -2,13 +2,7 @@
 
 namespace Anikin.ViewModels.Framework;
 
-public class ListGroup<T> : List<T>
+public class ListGroup<T>(string name, List<T> items) : List<T>(items)
 {
-    public string Name { get; }
-
-    public ListGroup(string name, List<T> items)
-        : base(items)
-    {
-        Name = name;
-    }
+    public string Name { get; } = name;
 }

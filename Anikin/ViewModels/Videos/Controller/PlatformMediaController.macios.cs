@@ -3,16 +3,11 @@ using Berry.Maui.Core;
 
 namespace Anikin.ViewModels;
 
-internal class PlatformMediaController : IDisposable
+internal class PlatformMediaController(VideoPlayerViewModel playerViewModel) : IDisposable
 {
-    private readonly VideoPlayerViewModel _playerViewModel;
+    private readonly VideoPlayerViewModel _playerViewModel = playerViewModel;
 
     private IMediaElement? MediaElement { get; set; }
-
-    public PlatformMediaController(VideoPlayerViewModel playerViewModel)
-    {
-        _playerViewModel = playerViewModel;
-    }
 
     public void OnLoaded(IMediaElement mediaElement)
     {

@@ -229,16 +229,10 @@ public partial class Snackbar
         platformSnackbar.AddCallback(new SnackbarCallback(this, dismissedTCS = new()));
     }
 
-    class SnackbarCallback : BaseTransientBottomBar.BaseCallback
+    class SnackbarCallback(in Snackbar snackbar, in TaskCompletionSource<bool> dismissedTCS) : BaseTransientBottomBar.BaseCallback
     {
-        readonly Snackbar snackbar;
-        readonly TaskCompletionSource<bool> dismissedTCS;
-
-        public SnackbarCallback(in Snackbar snackbar, in TaskCompletionSource<bool> dismissedTCS)
-        {
-            this.snackbar = snackbar;
-            this.dismissedTCS = dismissedTCS;
-        }
+        readonly Snackbar snackbar = snackbar;
+        readonly TaskCompletionSource<bool> dismissedTCS = dismissedTCS;
 
         public override void OnShown(Object? transientBottomBar)
         {

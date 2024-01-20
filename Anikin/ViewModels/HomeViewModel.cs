@@ -25,16 +25,16 @@ public partial class HomeViewModel : BaseViewModel
 
     private int Page { get; set; }
 
-    public ObservableRangeCollection<Media> CurrentSeasonAnimes { get; set; } = new();
-    public ObservableRangeCollection<Media> PopularAnimes { get; set; } = new();
-    public ObservableRangeCollection<Media> LastUpdatedAnimes { get; set; } = new();
+    public ObservableRangeCollection<Media> CurrentSeasonAnimes { get; set; } = [];
+    public ObservableRangeCollection<Media> PopularAnimes { get; set; } = [];
+    public ObservableRangeCollection<Media> LastUpdatedAnimes { get; set; } = [];
 
     [ObservableProperty]
     private int _selectedViewModelIndex;
 
     public ProfileViewModel ProfileViewModel { get; set; }
 
-    public ObservableRangeCollection<AnimeHomeRange> Ranges { get; set; } = new();
+    public ObservableRangeCollection<AnimeHomeRange> Ranges { get; set; } = [];
 
     [ObservableProperty]
     AnimeHomeRange _selectedRange;

@@ -8,7 +8,7 @@ namespace Anikin.Services;
 
 public class PlayerSettings : SettingsBase
 {
-    public Dictionary<string, WatchedEpisode> WatchedEpisodes { get; set; } = new();
+    public Dictionary<string, WatchedEpisode> WatchedEpisodes { get; set; } = [];
 
     public bool AlwaysInLandscapeMode { get; set; } = true;
 
