@@ -31,7 +31,7 @@
 
     <Grid>
         <Grid
-            HeightRequest="50"
+            HeightRequest="40"
             VerticalOptions="Start"
             ZIndex="1">
             <Grid.Background>
@@ -136,6 +136,7 @@
                             <Label
                                 FontAttributes="Bold"
                                 Text="{Binding Entity.MeanScore, Converter={StaticResource RatingConverter}}"
+                                TextColor="White"
                                 VerticalOptions="Center" />
                             <Label
                                 FontFamily="Material"
@@ -186,7 +187,7 @@
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,0.2">
                             <GradientStop Offset="0" Color="Transparent" />
                             <GradientStop Offset="0.16" Color="#5E000000" />
-                            <GradientStop Offset="1" Color="Black" />
+                            <GradientStop Offset="1" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" />
                         </LinearGradientBrush>
                     </VerticalStackLayout.Background>
 
@@ -202,70 +203,71 @@
                             LineBreakMode="TailTruncation"
                             MaxLines="1"
                             Text="{Binding Entity.Title.PreferredTitle}"
+                            TextColor="White"
                             VerticalOptions="Center">
                             <Label.Behaviors>
                                 <berry:TouchBehavior LongPressCommand="{Binding BindingContext.CopyTitleCommand, Source={x:Reference this}}" />
                             </Label.Behaviors>
                         </Label>
 
-                        <ImageButton
-                            x:Name="favouriteBtn"
-                            Grid.Column="2"
-                            Margin="0"
-                            Padding="5"
-                            BackgroundColor="Transparent"
-                            Clicked="FavouriteButton_OnClick"
-                            HeightRequest="50">
-                            <ImageButton.Triggers>
-                                <DataTrigger
-                                    Binding="{Binding IsFavorite}"
-                                    TargetType="ImageButton"
-                                    Value="True">
-                                    <Setter Property="Source">
-                                        <Setter.Value>
-                                            <FontImageSource
-                                                FontFamily="Material"
-                                                Glyph="{x:Static materialDesign:MaterialDesignIcons.Favorite}"
-                                                Size="30"
-                                                Color="{AppThemeBinding Light={StaticResource Black},
-                                                                        Dark=Red}" />
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                                <DataTrigger
-                                    Binding="{Binding IsFavorite}"
-                                    TargetType="ImageButton"
-                                    Value="False">
-                                    <Setter Property="Source">
-                                        <Setter.Value>
-                                            <FontImageSource
-                                                FontFamily="Material"
-                                                Glyph="{x:Static materialDesign:MaterialDesignIcons.FavoriteOutline}"
-                                                Size="30"
-                                                Color="{AppThemeBinding Light={StaticResource Black},
-                                                                        Dark={StaticResource White}}" />
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                            </ImageButton.Triggers>
-                        </ImageButton>
+                        <Grid Grid.Column="2">
+                            <ImageButton
+                                x:Name="favouriteBtn"
+                                Margin="0"
+                                Padding="2"
+                                BackgroundColor="Transparent"
+                                Clicked="FavouriteButton_OnClick"
+                                HeightRequest="50">
+                                <ImageButton.Triggers>
+                                    <DataTrigger
+                                        Binding="{Binding IsFavorite}"
+                                        TargetType="ImageButton"
+                                        Value="True">
+                                        <Setter Property="Source">
+                                            <Setter.Value>
+                                                <FontImageSource
+                                                    FontFamily="Material"
+                                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.Favorite}"
+                                                    Size="30"
+                                                    Color="Red" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                    <DataTrigger
+                                        Binding="{Binding IsFavorite}"
+                                        TargetType="ImageButton"
+                                        Value="False">
+                                        <Setter Property="Source">
+                                            <Setter.Value>
+                                                <FontImageSource
+                                                    FontFamily="Material"
+                                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.FavoriteOutline}"
+                                                    Size="30"
+                                                    Color="White" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                </ImageButton.Triggers>
+                            </ImageButton>
+                        </Grid>
 
-                        <Button
-                            Grid.Column="3"
-                            Margin="0"
-                            Padding="0"
-                            BackgroundColor="Transparent"
-                            Command="{Binding ShareUriCommand}"
-                            HeightRequest="50">
-                            <Button.ImageSource>
-                                <FontImageSource
-                                    FontFamily="Material"
-                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.Share}"
-                                    Size="30"
-                                    Color="{AppThemeBinding Light={StaticResource Black},
-                                                            Dark={StaticResource White}}" />
-                            </Button.ImageSource>
-                        </Button>
+                        <Grid Grid.Column="3">
+                            <ImageButton
+                                Grid.Column="3"
+                                Margin="0"
+                                Padding="3"
+                                BackgroundColor="Transparent"
+                                Command="{Binding ShareUriCommand}"
+                                HeightRequest="50">
+                                <ImageButton.Source>
+                                    <FontImageSource
+                                        FontFamily="Material"
+                                        Glyph="{x:Static materialDesign:MaterialDesignIcons.Share}"
+                                        Size="30"
+                                        Color="White" />
+                                </ImageButton.Source>
+                            </ImageButton>
+                        </Grid>
                     </Grid>
 
                     <!--<FlexLayout

@@ -8,6 +8,7 @@
     xmlns:local="clr-namespace:Anikin"
     xmlns:materialDesign="clr-namespace:MaterialDesign"
     xmlns:models="clr-namespace:Jita.AniList.Models;assembly=Jita.AniList"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:viewModels="clr-namespace:Anikin.ViewModels"
     x:Name="this"
     x:DataType="viewModels:ProfileViewModel">
@@ -93,6 +94,39 @@
                     Grid.Column="0"
                     Text="Enabling Developer Mode allows you to see exceptions when thrown" />
                 <Switch Grid.ColumnSpan="2" IsToggled="{Binding Settings.EnableDeveloperMode}" />
+            </Grid>
+
+            <!--  Theme  -->
+            <Grid
+                Margin="0,5,0,0"
+                Padding="20,0"
+                ColumnDefinitions="auto,*">
+                <Label
+                    Margin="0,0,5,0"
+                    FontAttributes="Bold"
+                    FontSize="15"
+                    Text="Theme:"
+                    VerticalOptions="Center" />
+                <Picker
+                    x:Name="ThemePicker"
+                    Title="Themes"
+                    Grid.Column="1"
+                    FontSize="16"
+                    SelectedIndex="{Binding Settings.AppTheme}">
+                    <Picker.ItemsSource>
+                        <x:Array Type="{x:Type x:String}">
+                            <x:String>Default</x:String>
+                            <x:String>Light</x:String>
+                            <x:String>Dark</x:String>
+                        </x:Array>
+                    </Picker.ItemsSource>
+                    <Picker.Behaviors>
+                        <toolkit:EventToCommandBehavior
+                            Command="{Binding ThemeSelectedCommand}"
+                            CommandParameter="{Binding Source={x:Reference ThemePicker}, Path=SelectedIndex}"
+                            EventName="SelectedIndexChanged" />
+                    </Picker.Behaviors>
+                </Picker>
             </Grid>
         </VerticalStackLayout>
 

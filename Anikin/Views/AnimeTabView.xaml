@@ -42,7 +42,7 @@
         IsRefreshing="{Binding IsRefreshing}"
         ZIndex="-1">
         <ScrollView>
-            <Grid x:Name="MainGrid" RowDefinitions="auto,*">
+            <Grid Padding="0,-2,0,0" x:Name="MainGrid" RowDefinitions="auto,*">
                 <!--<skl:SKLottieView
                     Grid.Column="1"
                     BackgroundColor="Transparent"
@@ -166,16 +166,9 @@
                                     <Span
                                         FontAttributes="Bold"
                                         FontSize="Body"
-                                        Text="Top "
-                                        TextColor="#D9FFFFFF" />
-                                    <Span
-                                        FontSize="Body"
-                                        Text="Airing "
-                                        TextColor="#D9FFFFFF" />
-                                    <Span
-                                        FontSize="Body"
-                                        Text="Anime"
-                                        TextColor="#D9FFFFFF" />
+                                        Text="Top " />
+                                    <Span FontSize="Body" Text="Airing " />
+                                    <Span FontSize="Body" Text="Anime" />
                                 </FormattedString>
                             </Label.FormattedText>
                         </Label>
@@ -184,8 +177,7 @@
                             FontAttributes="Bold"
                             FontSize="11"
                             HorizontalOptions="End"
-                            Text="See all &gt;"
-                            TextColor="#D9FFFFFF" />
+                            Text="See all &gt;" />
                     </Grid>
 
                     <CollectionView
@@ -247,12 +239,8 @@
                                     <Span
                                         FontAttributes="Bold"
                                         FontSize="Body"
-                                        Text="Recently "
-                                        TextColor="#D9FFFFFF" />
-                                    <Span
-                                        FontSize="Body"
-                                        Text="Updated "
-                                        TextColor="#D9FFFFFF" />
+                                        Text="Recently " />
+                                    <Span FontSize="Body" Text="Updated " />
                                 </FormattedString>
                             </Label.FormattedText>
                         </Label>
@@ -261,8 +249,7 @@
                             FontAttributes="Bold"
                             FontSize="11"
                             HorizontalOptions="End"
-                            Text="See all &gt;"
-                            TextColor="#D9FFFFFF" />
+                            Text="See all &gt;" />
                     </Grid>
 
                     <CollectionView
@@ -337,7 +324,7 @@
                         </CollectionView.EmptyView>
                     </CollectionView>
 
-                    <Grid>
+                    <Grid MinimumHeightRequest="200">
                         <Grid
                             HorizontalOptions="CenterAndExpand"
                             IsVisible="{Binding SelectedRange.IsLoading}"

@@ -66,7 +66,8 @@
                 <Switch
                     IsToggled="{Binding IsDubSelected}"
                     OnColor="{StaticResource Primary}"
-                    ThumbColor="{StaticResource Secondary}"
+                    ThumbColor="{AppThemeBinding Light=Black,
+                                                 Dark={StaticResource Secondary}}"
                     VerticalOptions="Center" />
                 <Label
                     FontAttributes="Bold"
@@ -102,7 +103,7 @@
                         FontFamily="SoraBold"
                         FontSize="16"
                         Text="Wrong Title?"
-                        TextColor="{StaticResource Secondary}"
+                        TextColor="#9575ff"
                         TextDecorations="Underline" />
                 </Grid>
             </Border>

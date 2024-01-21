@@ -56,7 +56,7 @@
                 <!--  StartPoint defaults to (0,0)  -->
                 <LinearGradientBrush EndPoint="0,0.98">
                     <GradientStop Offset="0.4" Color="Transparent" />
-                    <GradientStop Offset="1.0" Color="Black" />
+                    <GradientStop Offset="1.0" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" />
                 </LinearGradientBrush>
             </Grid.Background>
         </Grid>
@@ -111,6 +111,7 @@
                         LineBreakMode="TailTruncation"
                         MaxLines="5"
                         Text="{Binding Title.PreferredTitle}"
+                        TextColor="White"
                         VerticalOptions="Center" />
 
                     <Label

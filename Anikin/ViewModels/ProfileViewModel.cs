@@ -1,13 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Anikin.Services;
 using Anikin.ViewModels.Framework;
 using Anikin.Views;
 using Anikin.Views.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Maui;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 
@@ -29,6 +26,27 @@ public partial class ProfileViewModel : BaseViewModel
 
             App.IsInDeveloperMode = Settings.EnableDeveloperMode;
         };
+    }
+
+    [RelayCommand]
+    private void ThemeSelected(int index)
+    {
+        var selectedTheme = (AppTheme)index;
+
+        if (Settings.AppTheme == selectedTheme)
+        {
+            // For some reason, EventToCommandBehavior does not get removed
+            // when calling `new AppShell()`
+            return;
+        }
+
+        Settings.AppTheme = selectedTheme;
+        Settings.Save();
+
+        App.ApplyTheme();
+
+        if (Application.Current is not null)
+            Application.Current.MainPage = new AppShell();
     }
 
     [RelayCommand]
@@ -62,11 +80,9 @@ public partial class ProfileViewModel : BaseViewModel
 
         var clientID = "14733";
 
-        var result = await Browser
-            .Default
-            .OpenAsync(
-                $"https://anilist.co/api/v2/oauth/authorize?client_id={clientID}&response_type=token"
-            );
+        var result = await Browser.Default.OpenAsync(
+            $"https://anilist.co/api/v2/oauth/authorize?client_id={clientID}&response_type=token"
+        );
     }
 
     [RelayCommand]

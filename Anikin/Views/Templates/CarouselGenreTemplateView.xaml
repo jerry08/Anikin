@@ -27,6 +27,7 @@
                 HorizontalOptions="Center"
                 HorizontalTextAlignment="Center"
                 Text="{Binding}"
+                TextColor="White"
                 VerticalTextAlignment="Center" />
         </Border>
     </Grid>

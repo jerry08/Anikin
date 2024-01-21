@@ -42,7 +42,6 @@
         <Image
             Aspect="AspectFill"
             BackgroundColor="Transparent"
-            Opacity="0.8"
             Source="{Binding Image}" />
 
         <!--  Display Progress  -->
