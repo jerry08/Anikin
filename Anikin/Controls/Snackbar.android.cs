@@ -47,10 +47,10 @@ public partial class Snackbar
 
     static View GetParentView()
     {
-        var parentView = Microsoft
-            .Maui.ApplicationModel.Platform.CurrentActivity?.Window
-            ?.DecorView
-            .FindViewById(Android.Resource.Id.Content);
+        var parentView =
+            Microsoft.Maui.ApplicationModel.Platform.CurrentActivity?.Window?.DecorView.FindViewById(
+                Android.Resource.Id.Content
+            );
 
         if (IsModalPageActive())
         {
