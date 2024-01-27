@@ -60,7 +60,7 @@
     <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.6" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.6" />
 
-		<PackageReference Include="Berry.Maui" Version="1.1.3" />
+		<PackageReference Include="Berry.Maui" Version="1.1.4" />
 		<PackageReference Include="Berry.Maui.MediaElement" Version="1.1.3" />
 		<PackageReference Include="Cogwheel" Version="2.0.4" />
 		<PackageReference Include="CommunityToolkit.Maui" Version="7.0.1" />
