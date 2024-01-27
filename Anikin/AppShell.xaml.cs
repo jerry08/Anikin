@@ -1,5 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Anikin.Models;
+using Anikin.Services;
 using Anikin.ViewModels.Framework;
 using Anikin.Views;
 using Anikin.Views.Settings;
@@ -12,6 +15,8 @@ namespace Anikin;
 public partial class AppShell : Shell
 {
     private bool DoubleBackToExitPressedOnce { get; set; }
+
+    public static event EventHandler<BackPressedEventArgs>? BackButtonPressed;
 
     public AppShell()
     {
@@ -48,10 +53,22 @@ public partial class AppShell : Shell
         //        viewModel.OnDisappearing();
         //    }
         //};
+
+        Loaded += async (_, _) =>
+        {
+            var updateService = new UpdateService();
+            await updateService.CheckAsync();
+        };
     }
 
     protected override bool OnBackButtonPressed()
     {
+        var @event = new BackPressedEventArgs();
+        BackButtonPressed?.Invoke(this, @event);
+
+        if (@event.Cancelled)
+            return true;
+
         if (
             Current.CurrentPage.BindingContext is CollectionViewModelBase viewModel
             && viewModel.SelectionMode != SelectionMode.None

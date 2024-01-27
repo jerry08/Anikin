@@ -1,4 +1,5 @@
-﻿using Berry.Maui.Controls;
+﻿using Anikin.Models;
+using Berry.Maui.Controls;
 using Microsoft.Maui.Controls;
 
 namespace Anikin.Views.BottomSheets;
@@ -9,8 +10,28 @@ public class BaseBottomSheetView : BottomSheet
 
     public BaseBottomSheetView()
     {
-        Shown += (_, _) => Shell.Current.Navigating += OnShellNavigating;
-        Dismissed += (_, _) => Shell.Current.Navigating -= OnShellNavigating;
+        Shown += (_, _) =>
+        {
+            AppShell.BackButtonPressed += AppShell_BackButtonPressed;
+            //Shell.Current.Navigating += OnShellNavigating;
+        };
+
+        Dismissed += (_, _) =>
+        {
+            AppShell.BackButtonPressed -= AppShell_BackButtonPressed;
+            //Shell.Current.Navigating -= OnShellNavigating;
+        };
+    }
+
+    private void AppShell_BackButtonPressed(object? sender, BackPressedEventArgs e)
+    {
+        if (BackPressedOnced)
+            return;
+
+        BackPressedOnced = true;
+
+        DismissAsync();
+        e.Cancel();
     }
 
     private void OnShellNavigating(object? sender, ShellNavigatingEventArgs e)
