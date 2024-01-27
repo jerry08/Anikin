@@ -91,7 +91,7 @@
                         FontFamily="Material"
                         Glyph="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
                         Size="25"
-                        Color="{AppThemeBinding Light={StaticResource Black},
+                        Color="{AppThemeBinding Light={StaticResource Gray500},
                                                 Dark={StaticResource Gray600}}" />
                 </Button.ImageSource>
             </Button>
@@ -106,7 +106,7 @@
                         FontFamily="Material"
                         Glyph="{x:Static materialDesign:MaterialDesignIcons.GridView}"
                         Size="25"
-                        Color="{AppThemeBinding Light={StaticResource Black},
+                        Color="{AppThemeBinding Light={StaticResource Gray500},
                                                 Dark={StaticResource White}}" />
                 </Button.ImageSource>
             </Button>
@@ -121,7 +121,7 @@
                         FontFamily="Material"
                         Glyph="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
                         Size="25"
-                        Color="{AppThemeBinding Light={StaticResource Black},
+                        Color="{AppThemeBinding Light={StaticResource Gray500},
                                                 Dark={StaticResource Gray600}}" />
                 </Button.ImageSource>
             </Button>

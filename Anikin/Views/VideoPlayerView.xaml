@@ -16,7 +16,7 @@
     </ContentPage.Resources>
     <Grid HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
         <Grid
-            BackgroundColor="#6A000000"
+            BackgroundColor="{StaticResource Black}"
             HorizontalOptions="FillAndExpand"
             IsVisible="{Binding StartedPlaying, Converter={StaticResource InvertedBoolConverter}}"
             VerticalOptions="FillAndExpand"
@@ -28,7 +28,8 @@
                 IsRunning="{Binding StartedPlaying, Converter={StaticResource InvertedBoolConverter}}"
                 VerticalOptions="CenterAndExpand"
                 WidthRequest="{OnPlatform Default=60,
-                                          WinUI=100}" />
+                                          WinUI=100}"
+                Color="White" />
         </Grid>
 
         <berry:MediaElement

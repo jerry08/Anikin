@@ -61,7 +61,8 @@
                     LineBreakMode="TailTruncation"
                     MaxLines="2"
                     Text="{Binding Title}"
-                    TextColor="#E9FFFFFF" />
+                    TextColor="{AppThemeBinding Light={StaticResource Gray900},
+                                                Dark=#E9FFFFFF}" />
             </Grid>
         </Grid>
     </Border>
