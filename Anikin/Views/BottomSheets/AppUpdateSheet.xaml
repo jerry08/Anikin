@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<local:BaseBottomSheetView
+    x:Class="Anikin.Views.BottomSheets.AppUpdateSheet"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:local="clr-namespace:Anikin.Views.BottomSheets"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels"
+    xmlns:views="clr-namespace:Anikin.Views"
+    x:Name="this"
+    Margin="0"
+    x:DataType="viewModels:AppUpdateViewModel"
+    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100},
+                                      Dark={StaticResource Gray900}}"
+    HasBackdrop="True"
+    HasHandle="True"
+    UseNavigationBarArea="False">
+    <berry:BottomSheet.Detents>
+        <berry:DetentsCollection>
+            <berry:ContentDetent IsDefault="True" />
+            <berry:RatioDetent Ratio="0.60" />
+        </berry:DetentsCollection>
+    </berry:BottomSheet.Detents>
+
+    <ScrollView>
+        <VerticalStackLayout x:Name="MainGrid">
+            <Label
+                Margin="20,0,20,15"
+                FontAttributes="Bold"
+                FontSize="23"
+                HorizontalOptions="Center"
+                HorizontalTextAlignment="Center"
+                Text="Update Available"
+                VerticalTextAlignment="Center" />
+
+            <Label
+                Margin="20,0"
+                FontSize="15"
+                Text="{Binding HtmlContent}"
+                TextType="Html" />
+
+            <Grid
+                Margin="20,10,20,0"
+                ColumnDefinitions="*,*"
+                ColumnSpacing="10">
+                <Button
+                    Grid.Column="0"
+                    BackgroundColor="Transparent"
+                    BorderColor="{AppThemeBinding Light={StaticResource Black},
+                                                  Dark={StaticResource White}}"
+                    BorderWidth="1"
+                    FontAttributes="Bold"
+                    FontFamily="SoraBold"
+                    FontSize="16"
+                    Text="Cope"
+                    TextColor="{AppThemeBinding Light={StaticResource Black},
+                                                Dark={StaticResource White}}" />
+
+                <Button
+                    Grid.Column="1"
+                    BackgroundColor="Transparent"
+                    BorderColor="{AppThemeBinding Light={StaticResource Black},
+                                                  Dark={StaticResource White}}"
+                    BorderWidth="1"
+                    Command="{Binding DownloadCommand}"
+                    FontAttributes="Bold"
+                    FontFamily="SoraBold"
+                    FontSize="16"
+                    Text="Download"
+                    TextColor="{AppThemeBinding Light={StaticResource Black},
+                                                Dark={StaticResource White}}" />
+            </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
+</local:BaseBottomSheetView>

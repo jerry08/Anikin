@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Anikin.ViewModels;
+using Anikin.Views.BottomSheets;
 using Microsoft.Maui.ApplicationModel;
 using Octokit;
 
@@ -14,6 +16,10 @@ public class UpdateService
     private readonly string _repositoryOwner = "jerry08";
     private readonly string _repostoryName = "Anikin";
 
+    public Release? Release { get; set; }
+
+    public string? RenderedMarkdown { get; set; }
+
     public UpdateService()
     {
         _github = new GitHubClient(new ProductHeaderValue(_repostoryName + "-UpdateCheck"));
@@ -24,28 +30,35 @@ public class UpdateService
     {
         try
         {
-            var release = await GetReleaseAsync();
-            if (release is null)
+            Release = await GetReleaseAsync();
+            if (Release is null)
                 return false;
 
-            var latestVersionName = new Version(release.Name);
+            var latestVersionName = new Version(Release.Name);
             var currentVersionName = AppInfo.Current.Version;
 
             if (currentVersionName < latestVersionName)
             {
-                var update = await App.AlertService.ShowConfirmationAsync(
-                    "Update available",
-                    "",
-                    "DOWNLOAD",
-                    "DISMISS"
-                );
+                RenderedMarkdown = await _github.Markdown.RenderRawMarkdown(Release.Body);
 
-                if (update)
-                {
-                    var asset = release.Assets[0];
+                var viewModel = new AppUpdateViewModel(this);
+                var sheet = new AppUpdateSheet() { BindingContext = viewModel };
 
-                    await DownloadCenter.Current.EnqueueAsync(asset.Name, asset.BrowserDownloadUrl);
-                }
+                await sheet.ShowAsync();
+
+                //var update = await App.AlertService.ShowConfirmationAsync(
+                //    "Update available",
+                //    "",
+                //    "DOWNLOAD",
+                //    "DISMISS"
+                //);
+                //
+                //if (update)
+                //{
+                //    var asset = Release.Assets[0];
+                //
+                //    await DownloadCenter.Current.EnqueueAsync(asset.Name, asset.BrowserDownloadUrl);
+                //}
 
                 return true;
             }
@@ -66,8 +79,8 @@ public class UpdateService
 
     //public async Task<string> RenderReleaseNotes()
     //{
-    //    return LatestRelease is null
+    //    return Release is null
     //        ? throw new InvalidOperationException()
-    //        : await _github.Markdown.RenderRawMarkdown(LatestRelease.Body);
+    //        : await _github.Markdown.RenderRawMarkdown(Release.Body);
     //}
 }
