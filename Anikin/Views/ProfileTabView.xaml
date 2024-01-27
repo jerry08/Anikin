@@ -18,7 +18,7 @@
         RowSpacing="5"
         VerticalOptions="Center">
         <VerticalStackLayout>
-            <Border>
+            <Border Stroke="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="15" />
                 </Border.StrokeShape>
@@ -34,7 +34,8 @@
                         FontAttributes="Bold"
                         FontSize="16"
                         Text="Anilist Login"
-                        TextColor="White"
+                        TextColor="{AppThemeBinding Light={StaticResource Black},
+                                                    Dark={StaticResource White}}"
                         VerticalOptions="Center" />
                 </Grid>
             </Border>
