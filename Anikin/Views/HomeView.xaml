@@ -38,147 +38,130 @@
         </berry:ViewSwitcher>
 
         <Grid WidthRequest="225">
-            <!--
-                Setting the WidthRequest on AcrylicView hides content (probably only in Debug mode)
-                so set WidthRequest in a Parent control with AcrylicView inside it.
-            -->
-            <berry:AcrylicView
+            <berry:TabHostView
                 x:Name="ViewContent"
-                Margin="{OnPlatform WinUI='0,0,0,30'}"
-                Padding="0"
+                Padding="15,0"
+                BackgroundColor="{AppThemeBinding Light=#E9EDEDED,
+                                                  Dark=#E9222222}"
                 CornerRadius="30"
                 HeightRequest="60"
-                TintColor="{StaticResource Gray900}"
-                TintOpacity=".50"
-                VerticalOptions="End">
-                <!--  WidthRequest="225"  -->
-                <!--<ui:AcrylicView.Background>
-                    <LinearGradientBrush EndPoint="0,0.98">
-                        <GradientStop Offset="0.1" Color="Transparent" />
-                        <GradientStop Offset="1.0" Color="Black" />
-                    </LinearGradientBrush>
-                </ui:AcrylicView.Background>-->
-
-                <berry:TabHostView
-                    x:Name="tabHostView"
-                    Padding="15,0"
-                    BackgroundColor="Transparent"
-                    CornerRadius="30"
-                    HeightRequest="60"
-                    HorizontalOptions="Center"
-                    IsSegmented="True"
-                    Orientation="Horizontal"
-                    SegmentedOutlineColor="Transparent"
-                    SelectedIndex="{Binding SelectedViewModelIndex, Mode=TwoWay}"
-                    TabType="Fixed"
-                    WidthRequest="250">
-                    <!--<berry:TabHostView.Shadow>
-                        <Shadow
-                            Opacity="0.7"
-                            Radius="30"
-                            Offset="0,10" />
-                    </berry:TabHostView.Shadow>-->
-                    <berry:MaterialUnderlinedTabItem
-                        IconOptions="IconOnly"
-                        IconSize="30"
-                        SelectedTabColor="#9575ff"
-                        UnderlineHeight="0"
-                        UnselectedLabelColor="{StaticResource Gray400}">
-                        <Label
+                HorizontalOptions="Center"
+                IsSegmented="True"
+                Orientation="Horizontal"
+                SegmentedOutlineColor="Transparent"
+                SelectedIndex="{Binding SelectedViewModelIndex, Mode=TwoWay}"
+                TabType="Fixed"
+                VerticalOptions="End"
+                WidthRequest="250">
+                <!--<berry:TabHostView.Shadow>
+                    <Shadow
+                        Opacity="0.7"
+                        Radius="30"
+                        Offset="0,10" />
+                </berry:TabHostView.Shadow>-->
+                <berry:MaterialUnderlinedTabItem
+                    IconOptions="IconOnly"
+                    IconSize="30"
+                    SelectedTabColor="#9575ff"
+                    UnderlineHeight="0"
+                    UnselectedLabelColor="{AppThemeBinding Light={StaticResource Gray600},
+                                                           Dark={StaticResource Gray400}}">
+                    <Label
+                        FontFamily="Material"
+                        FontSize="28"
+                        HorizontalOptions="Center"
+                        HorizontalTextAlignment="Center"
+                        Text="{x:Static materialDesign:MaterialDesignIcons.Movie}"
+                        TextColor="{AppThemeBinding Light={StaticResource Gray600},
+                                                    Dark={StaticResource White}}"
+                        VerticalOptions="Center"
+                        VerticalTextAlignment="Center">
+                        <Label.Triggers>
+                            <DataTrigger
+                                Binding="{Binding IsSelected, Source={x:RelativeSource AncestorType={x:Type berry:MaterialUnderlinedTabItem}}}"
+                                TargetType="Label"
+                                Value="True">
+                                <Setter Property="TextColor" Value="#9575ff" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <!--<berry:MaterialUnderlinedTabItem.IconImageSource>
+                        <FontImageSource
                             FontFamily="Material"
-                            FontSize="28"
-                            HorizontalOptions="Center"
-                            HorizontalTextAlignment="Center"
-                            Text="{x:Static materialDesign:MaterialDesignIcons.Movie}"
-                            TextColor="{AppThemeBinding Light={StaticResource Gray400},
-                                                        Dark={StaticResource White}}"
-                            VerticalOptions="Center"
-                            VerticalTextAlignment="Center">
-                            <Label.Triggers>
-                                <DataTrigger
-                                    Binding="{Binding IsSelected, Source={x:RelativeSource AncestorType={x:Type berry:MaterialUnderlinedTabItem}}}"
-                                    TargetType="Label"
-                                    Value="True">
-                                    <Setter Property="TextColor" Value="#9575ff" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                        <!--<berry:MaterialUnderlinedTabItem.IconImageSource>
-                            <FontImageSource
-                                FontFamily="Material"
-                                Glyph="{x:Static materialDesign:MaterialDesignIcons.Movie}"
-                                Color="{AppThemeBinding Light={StaticResource Gray400},
-                                                        Dark={StaticResource White}}" />
-                        </berry:MaterialUnderlinedTabItem.IconImageSource>-->
-                    </berry:MaterialUnderlinedTabItem>
-                    <berry:MaterialUnderlinedTabItem
-                        IconOptions="IconOnly"
-                        IconSize="30"
-                        SelectedTabColor="#9575ff"
-                        UnderlineHeight="0"
-                        UnselectedLabelColor="{StaticResource Gray400}">
-                        <!--<berry:MaterialUnderlinedTabItem.IconImageSource>
-                            <FontImageSource
-                                FontFamily="Material"
-                                Glyph="{x:Static materialDesign:MaterialDesignIcons.Person}"
-                                Color="{AppThemeBinding Light={StaticResource Gray400},
-                                                        Dark={StaticResource White}}" />
-                        </berry:MaterialUnderlinedTabItem.IconImageSource>-->
-                        <Label
+                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Movie}"
+                            Color="{AppThemeBinding Light={StaticResource Gray600},
+                                                    Dark={StaticResource White}}" />
+                    </berry:MaterialUnderlinedTabItem.IconImageSource>-->
+                </berry:MaterialUnderlinedTabItem>
+                <berry:MaterialUnderlinedTabItem
+                    IconOptions="IconOnly"
+                    IconSize="30"
+                    SelectedTabColor="#9575ff"
+                    UnderlineHeight="0"
+                    UnselectedLabelColor="{AppThemeBinding Light={StaticResource Gray600},
+                                                           Dark={StaticResource Gray400}}">
+                    <!--<berry:MaterialUnderlinedTabItem.IconImageSource>
+                        <FontImageSource
                             FontFamily="Material"
-                            FontSize="28"
-                            HorizontalOptions="Center"
-                            HorizontalTextAlignment="Center"
-                            Text="{x:Static materialDesign:MaterialDesignIcons.Person}"
-                            TextColor="{AppThemeBinding Light={StaticResource Gray400},
-                                                        Dark={StaticResource White}}"
-                            VerticalOptions="Center"
-                            VerticalTextAlignment="Center">
-                            <Label.Triggers>
-                                <DataTrigger
-                                    Binding="{Binding IsSelected, Source={x:RelativeSource AncestorType={x:Type berry:MaterialUnderlinedTabItem}}}"
-                                    TargetType="Label"
-                                    Value="True">
-                                    <Setter Property="TextColor" Value="#9575ff" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                    </berry:MaterialUnderlinedTabItem>
-                    <berry:MaterialUnderlinedTabItem
-                        IconOptions="IconOnly"
-                        IconSize="30"
-                        SelectedTabColor="#9575ff"
-                        UnderlineHeight="0"
-                        UnselectedLabelColor="{StaticResource Gray400}">
-                        <!--<berry:MaterialUnderlinedTabItem.IconImageSource>
-                            <FontImageSource
-                                FontFamily="Material"
-                                Glyph="{x:Static materialDesign:MaterialDesignIcons.Book}"
-                                Color="{AppThemeBinding Light={StaticResource Gray400},
-                                                        Dark={StaticResource White}}" />
-                        </berry:MaterialUnderlinedTabItem.IconImageSource>-->
-                        <Label
+                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Person}"
+                            Color="{AppThemeBinding Light={StaticResource Gray600},
+                                                    Dark={StaticResource White}}" />
+                    </berry:MaterialUnderlinedTabItem.IconImageSource>-->
+                    <Label
+                        FontFamily="Material"
+                        FontSize="28"
+                        HorizontalOptions="Center"
+                        HorizontalTextAlignment="Center"
+                        Text="{x:Static materialDesign:MaterialDesignIcons.Person}"
+                        TextColor="{AppThemeBinding Light={StaticResource Gray600},
+                                                    Dark={StaticResource White}}"
+                        VerticalOptions="Center"
+                        VerticalTextAlignment="Center">
+                        <Label.Triggers>
+                            <DataTrigger
+                                Binding="{Binding IsSelected, Source={x:RelativeSource AncestorType={x:Type berry:MaterialUnderlinedTabItem}}}"
+                                TargetType="Label"
+                                Value="True">
+                                <Setter Property="TextColor" Value="#9575ff" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </berry:MaterialUnderlinedTabItem>
+                <berry:MaterialUnderlinedTabItem
+                    IconOptions="IconOnly"
+                    IconSize="30"
+                    SelectedTabColor="#9575ff"
+                    UnderlineHeight="0"
+                    UnselectedLabelColor="{AppThemeBinding Light={StaticResource Gray600},
+                                                           Dark={StaticResource Gray400}}">
+                    <!--<berry:MaterialUnderlinedTabItem.IconImageSource>
+                        <FontImageSource
                             FontFamily="Material"
-                            FontSize="28"
-                            HorizontalOptions="Center"
-                            HorizontalTextAlignment="Center"
-                            Text="{x:Static materialDesign:MaterialDesignIcons.Book}"
-                            TextColor="{AppThemeBinding Light={StaticResource Gray400},
-                                                        Dark={StaticResource White}}"
-                            VerticalOptions="Center"
-                            VerticalTextAlignment="Center">
-                            <Label.Triggers>
-                                <DataTrigger
-                                    Binding="{Binding IsSelected, Source={x:RelativeSource AncestorType={x:Type berry:MaterialUnderlinedTabItem}}}"
-                                    TargetType="Label"
-                                    Value="True">
-                                    <Setter Property="TextColor" Value="#9575ff" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                    </berry:MaterialUnderlinedTabItem>
-                </berry:TabHostView>
-            </berry:AcrylicView>
+                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Book}"
+                            Color="{AppThemeBinding Light={StaticResource Gray600},
+                                                    Dark={StaticResource White}}" />
+                    </berry:MaterialUnderlinedTabItem.IconImageSource>-->
+                    <Label
+                        FontFamily="Material"
+                        FontSize="28"
+                        HorizontalOptions="Center"
+                        HorizontalTextAlignment="Center"
+                        Text="{x:Static materialDesign:MaterialDesignIcons.Book}"
+                        TextColor="{AppThemeBinding Light={StaticResource Gray600},
+                                                    Dark={StaticResource White}}"
+                        VerticalOptions="Center"
+                        VerticalTextAlignment="Center">
+                        <Label.Triggers>
+                            <DataTrigger
+                                Binding="{Binding IsSelected, Source={x:RelativeSource AncestorType={x:Type berry:MaterialUnderlinedTabItem}}}"
+                                TargetType="Label"
+                                Value="True">
+                                <Setter Property="TextColor" Value="#9575ff" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </berry:MaterialUnderlinedTabItem>
+            </berry:TabHostView>
         </Grid>
     </Grid>
 </ContentPage>
