@@ -443,7 +443,8 @@
         <Setter Property="Padding" Value="0" />
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" />
         <Setter Property="berry:Insets.EdgeToEdge" Value="True" />
-        <Setter Property="berry:Insets.StatusBarStyle" Value="LightContent" />
+        <Setter Property="berry:Insets.StatusBarStyle" Value="{AppThemeBinding Light={x:Static berry:StatusBarStyle.DarkContent}, Dark={x:Static berry:StatusBarStyle.LightContent}}" />
+        <Setter Property="berry:Insets.NavigationBarStyle" Value="{AppThemeBinding Light={x:Static berry:NavigationBarStyle.DarkContent}, Dark={x:Static berry:NavigationBarStyle.LightContent}}" />
     </Style>
 
     <Style ApplyToDerivedTypes="True" TargetType="Shell">
