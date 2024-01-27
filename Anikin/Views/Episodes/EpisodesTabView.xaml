@@ -184,14 +184,14 @@
                 FontFamily="Material"
                 FontSize="25"
                 Text="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
-                TextColor="{AppThemeBinding Light={StaticResource Black},
+                TextColor="{AppThemeBinding Light={StaticResource Gray500},
                                             Dark={StaticResource Gray800}}">
                 <Button.Triggers>
                     <DataTrigger
                         Binding="{Binding GridLayoutMode}"
                         TargetType="Button"
                         Value="{x:Static components:GridLayoutMode.Full}">
-                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
                     </DataTrigger>
                 </Button.Triggers>
             </Button>
@@ -206,14 +206,14 @@
                 FontFamily="Material"
                 FontSize="25"
                 Text="{x:Static materialDesign:MaterialDesignIcons.GridView}"
-                TextColor="{AppThemeBinding Light={StaticResource Black},
+                TextColor="{AppThemeBinding Light={StaticResource Gray500},
                                             Dark={StaticResource Gray800}}">
                 <Button.Triggers>
                     <DataTrigger
                         Binding="{Binding GridLayoutMode}"
                         TargetType="Button"
                         Value="{x:Static components:GridLayoutMode.Semi}">
-                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
                     </DataTrigger>
                 </Button.Triggers>
             </Button>
@@ -228,14 +228,14 @@
                 FontFamily="Material"
                 FontSize="25"
                 Text="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
-                TextColor="{AppThemeBinding Light={StaticResource Black},
+                TextColor="{AppThemeBinding Light={StaticResource Gray500},
                                             Dark={StaticResource Gray800}}">
                 <Button.Triggers>
                     <DataTrigger
                         Binding="{Binding GridLayoutMode}"
                         TargetType="Button"
                         Value="{x:Static components:GridLayoutMode.Compact}">
-                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
                     </DataTrigger>
                 </Button.Triggers>
             </Button>

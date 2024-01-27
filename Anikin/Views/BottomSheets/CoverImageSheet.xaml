@@ -12,7 +12,8 @@
     x:Name="this"
     Margin="0"
     x:DataType="viewModels:EpisodeViewModel"
-    BackgroundColor="{StaticResource Gray900}"
+    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100},
+                                      Dark={StaticResource Gray900}}"
     HasBackdrop="True"
     HasHandle="True"
     UseNavigationBarArea="False">
@@ -48,20 +49,24 @@
                 <Button
                     Grid.Column="0"
                     BackgroundColor="Transparent"
-                    BorderColor="White"
+                    BorderColor="{AppThemeBinding Light={StaticResource Black},
+                                                  Dark={StaticResource White}}"
                     BorderWidth="1"
                     FontSize="16"
                     Text="Download"
-                    TextColor="White" />
+                    TextColor="{AppThemeBinding Light={StaticResource Black},
+                                                Dark={StaticResource White}}" />
 
                 <Button
                     Grid.Column="1"
                     BackgroundColor="Transparent"
-                    BorderColor="White"
+                    BorderColor="{AppThemeBinding Light={StaticResource Black},
+                                                  Dark={StaticResource White}}"
                     BorderWidth="1"
                     FontSize="16"
                     Text="Share"
-                    TextColor="White" />
+                    TextColor="{AppThemeBinding Light={StaticResource Black},
+                                                Dark={StaticResource White}}" />
             </Grid>
         </VerticalStackLayout>
     </ScrollView>

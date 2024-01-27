@@ -88,8 +88,13 @@
                                 <RoundRectangle CornerRadius="20,0,20,20" />
                             </Border.StrokeShape>
                             <HorizontalStackLayout Margin="10,5,5,0" Padding="0,0,0,15">
-                                <Label FontAttributes="Bold" Text="{Binding MeanScore, Converter={StaticResource RatingConverter}}" />
-                                <Image>
+                                <Label
+                                    FontAttributes="Bold"
+                                    FontSize="13"
+                                    Text="{Binding MeanScore, Converter={StaticResource RatingConverter}}"
+                                    TextColor="White"
+                                    VerticalTextAlignment="Center" />
+                                <Image VerticalOptions="Center">
                                     <Image.Source>
                                         <FontImageSource
                                             FontFamily="Material"

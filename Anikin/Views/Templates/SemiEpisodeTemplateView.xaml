@@ -42,16 +42,23 @@
         <Image
             Aspect="AspectFill"
             BackgroundColor="Transparent"
-            Source="{Binding Image}" />
+            Source="{Binding Image}"
+            ZIndex="0" />
+
+        <Grid
+            BackgroundColor="Black"
+            HorizontalOptions="FillAndExpand"
+            Opacity="0.4"
+            VerticalOptions="FillAndExpand"
+            ZIndex="1" />
 
         <!--  Display Progress  -->
-        <Grid IsVisible="{Binding Progress, Converter={StaticResource IsWatchedEpisodeProgressVisibleConverter}}">
+        <Grid IsVisible="{Binding Progress, Converter={StaticResource IsWatchedEpisodeProgressVisibleConverter}}" ZIndex="2">
             <ProgressBar
-                HeightRequest="5"
+                HeightRequest="4"
                 Progress="{Binding Progress, Converter={StaticResource WatchedEpisodeProgressConverter}}"
                 ProgressColor="{StaticResource Primary}"
-                VerticalOptions="End"
-                ZIndex="2" />
+                VerticalOptions="End" />
             <Grid
                 BackgroundColor="White"
                 HeightRequest="5"
@@ -68,7 +75,8 @@
             Opacity="0.9"
             Text="{Binding Name}"
             TextColor="#E9FFFFFF"
-            VerticalTextAlignment="Start" />
+            VerticalTextAlignment="Start"
+            ZIndex="2" />
         <Label
             Padding="8,5"
             FontAttributes="Bold"
@@ -79,6 +87,7 @@
             Opacity="0.7"
             Text="{Binding Number}"
             TextColor="#E9FFFFFF"
-            VerticalTextAlignment="End" />
+            VerticalTextAlignment="End"
+            ZIndex="2" />
     </Grid>
 </Border>

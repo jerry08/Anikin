@@ -23,7 +23,8 @@
     <Grid BackgroundColor="Transparent">
         <Border
             Grid.Column="0"
-            BackgroundColor="{StaticResource Gray900}"
+            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200},
+                                              Dark={StaticResource Gray900}}"
             HorizontalOptions="FillAndExpand"
             Stroke="White"
             StrokeThickness="0"

@@ -13,7 +13,8 @@
     x:Name="this"
     Margin="0"
     x:DataType="viewModels:VideoSourceViewModel"
-    BackgroundColor="{StaticResource Gray900}"
+    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100},
+                                      Dark={StaticResource Gray900}}"
     HandleColor="{StaticResource Gray800}"
     HasBackdrop="True"
     HasHandle="True"
@@ -85,7 +86,8 @@
                     <DataTemplate x:DataType="{x:Type vmodels:VideoSource}">
                         <Border
                             Margin="0,4"
-                            BackgroundColor="{StaticResource Gray800}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray300},
+                                                              Dark={StaticResource Gray800}}"
                             StrokeThickness="0">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="18" />
@@ -121,7 +123,7 @@
                                             FontFamily="Material"
                                             Glyph="{x:Static materialDesign:MaterialDesignIcons.Download}"
                                             Size="25"
-                                            Color="{AppThemeBinding Light={StaticResource Black},
+                                            Color="{AppThemeBinding Light={StaticResource Primary},
                                                                     Dark={StaticResource White}}" />
                                     </Button.ImageSource>
                                 </Button>

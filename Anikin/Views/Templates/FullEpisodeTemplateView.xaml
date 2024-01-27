@@ -12,7 +12,7 @@
     Padding="0"
     x:DataType="models:Episode"
     BackgroundColor="Transparent"
-    HeightRequest="125">
+    HeightRequest="122">
     <Border.Resources>
         <ResourceDictionary>
             <converters:WatchedEpisodeProgressConverter x:Key="WatchedEpisodeProgressConverter" />
@@ -20,9 +20,9 @@
         </ResourceDictionary>
     </Border.Resources>
     <Border.StrokeShape>
-        <RoundRectangle CornerRadius="10" />
+        <RoundRectangle CornerRadius="20" />
     </Border.StrokeShape>
-    <Grid BackgroundColor="{StaticResource Gray900}" ColumnDefinitions="auto,*">
+    <Grid BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}" ColumnDefinitions="auto,*">
         <Grid.Behaviors>
             <berry:TouchBehavior
                 Command="{Binding Parent.BindingContext.ItemClickCommand, Source={x:Reference this}}"
@@ -33,24 +33,22 @@
         </Grid.Behaviors>
         <Border StrokeThickness="0">
             <Border.StrokeShape>
-                <RoundRectangle CornerRadius="10" />
+                <RoundRectangle CornerRadius="20" />
             </Border.StrokeShape>
             <Image
                 Aspect="AspectFill"
                 BackgroundColor="Transparent"
-                Opacity="0.8"
                 Source="{Binding Image}"
                 WidthRequest="200" />
         </Border>
 
         <!--  Display Progress  -->
-        <Grid IsVisible="{Binding Progress, Converter={StaticResource IsWatchedEpisodeProgressVisibleConverter}}">
+        <Grid IsVisible="{Binding Progress, Converter={StaticResource IsWatchedEpisodeProgressVisibleConverter}}" ZIndex="2">
             <ProgressBar
-                HeightRequest="5"
+                HeightRequest="4"
                 Progress="{Binding Progress, Converter={StaticResource WatchedEpisodeProgressConverter}}"
                 ProgressColor="{StaticResource Primary}"
-                VerticalOptions="End"
-                ZIndex="2" />
+                VerticalOptions="End" />
             <Grid
                 BackgroundColor="White"
                 HeightRequest="5"
@@ -77,12 +75,13 @@
             <Label
                 Padding="15,8,10,6"
                 FontAttributes="Bold"
+                FontFamily="SoraBold"
                 FontSize="20"
                 HorizontalTextAlignment="Start"
                 LineBreakMode="TailTruncation"
-                Opacity="0.9"
+                Opacity="0.92"
                 Text="{Binding Number}"
-                TextColor="#E9FFFFFF"
+                TextColor="White"
                 VerticalTextAlignment="Start" />
         </Border>
 
@@ -97,7 +96,8 @@
             LineBreakMode="TailTruncation"
             Opacity="0.7"
             Text="{Binding Name}"
-            TextColor="#E9FFFFFF"
+            TextColor="{AppThemeBinding Light={StaticResource Black},
+                                        Dark={StaticResource White}}"
             VerticalOptions="Center"
             VerticalTextAlignment="End" />
     </Grid>

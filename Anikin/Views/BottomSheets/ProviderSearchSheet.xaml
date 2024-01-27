@@ -13,7 +13,8 @@
     x:Name="this"
     Margin="0"
     x:DataType="viewModels:ProviderSearchViewModel"
-    BackgroundColor="{StaticResource Gray900}"
+    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100},
+                                      Dark={StaticResource Gray900}}"
     HasBackdrop="True"
     HasHandle="True"
     UseNavigationBarArea="False">
