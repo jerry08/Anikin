@@ -14,6 +14,9 @@ public partial class BaseViewModel : ObservableObject
     private bool _isBusy;
 
     [ObservableProperty]
+    private bool _isLoaded;
+
+    [ObservableProperty]
     private bool _isRefreshing;
 
     [ObservableProperty]
@@ -38,6 +41,8 @@ public partial class BaseViewModel : ObservableObject
         await Task.Delay(1);
 
         await LoadCore();
+
+        IsLoaded = true;
     }
 
     protected virtual Task LoadCore() => default!;

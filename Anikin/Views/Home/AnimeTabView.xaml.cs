@@ -1,5 +1,5 @@
 ﻿using System;
-using Anikin.ViewModels;
+using Anikin.ViewModels.Home;
 using Anikin.Views.Templates;
 using Berry.Maui;
 using CommunityToolkit.Maui.Markup;
@@ -8,7 +8,7 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Dispatching;
 
-namespace Anikin.Views;
+namespace Anikin.Views.Home;
 
 public partial class AnimeTabView
 {
@@ -59,7 +59,7 @@ public partial class AnimeTabView
 
     /*public void SetupView()
     {
-        //if (BindingContext is not HomeViewModel viewModel)
+        //if (BindingContext is not AnimeHomeViewModel viewModel)
         //    return;
 
         var view = new CarouselView()
@@ -68,7 +68,7 @@ public partial class AnimeTabView
             {
                 DataTemplate = new DataTemplate(() => new AnimeCarouselTemplateView())
             },
-            //ItemsSource = viewModel.CurrentSeasonAnimes,
+            //ItemsSource = viewModel.CurrentSeasonMedias,
             IsBounceEnabled = false,
             IsScrollAnimated = false,
             IsSwipeEnabled = true,
@@ -82,7 +82,7 @@ public partial class AnimeTabView
             }
         };
 
-        view.SetBinding(ItemsView.ItemsSourceProperty, nameof(HomeViewModel.CurrentSeasonAnimes));
+        view.SetBinding(ItemsView.ItemsSourceProperty, nameof(AnimeHomeViewModel.CurrentSeasonMedias));
 
         test2.Content = view;
     }*/
@@ -95,7 +95,7 @@ public partial class AnimeTabView
             {
                 DataTemplate = new DataTemplate(() => new AnimeCarouselTemplateView())
             },
-            //ItemsSource = viewModel.CurrentSeasonAnimes,
+            //ItemsSource = viewModel.CurrentSeasonMedias,
             IsBounceEnabled = false,
             IsScrollAnimated = false,
             IsSwipeEnabled = true,
@@ -108,8 +108,8 @@ public partial class AnimeTabView
                 SnapPointsType = SnapPointsType.MandatorySingle
             }
         }
-        //.Bind(ItemsView.ItemsSourceProperty, nameof(HomeViewModel.CurrentSeasonAnimes));
-        .Bind(ItemsView.ItemsSourceProperty, (HomeViewModel vm) => vm.CurrentSeasonAnimes);
+        //.Bind(ItemsView.ItemsSourceProperty, nameof(AnimeHomeViewModel.CurrentSeasonMedias));
+        .Bind(ItemsView.ItemsSourceProperty, (AnimeHomeViewModel vm) => vm.CurrentSeasonMedias);
 
         IDispatcherTimer? timer = null;
 
@@ -124,15 +124,15 @@ public partial class AnimeTabView
             timer.Interval = TimeSpan.FromMilliseconds(4200);
             timer.Tick += (s, e) =>
             {
-                if (BindingContext is HomeViewModel vm)
+                if (BindingContext is AnimeHomeViewModel vm)
                 {
                     if (!App.IsOnline(false))
                         return;
 
                     try
                     {
-                        //view.Position = (view.Position + 1) % vm.CurrentSeasonAnimes.Count;
-                        view?.ScrollTo((view.Position + 1) % vm.CurrentSeasonAnimes.Count);
+                        //view.Position = (view.Position + 1) % vm.CurrentSeasonMedias.Count;
+                        view?.ScrollTo((view.Position + 1) % vm.CurrentSeasonMedias.Count);
                         //view.ScrollTo();
                     }
                     catch

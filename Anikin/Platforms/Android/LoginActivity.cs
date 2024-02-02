@@ -9,12 +9,12 @@ using Anikin.Services;
 namespace Anikin;
 
 [IntentFilter(
-    actions: new[] { Intent.ActionView },
+    actions: [Intent.ActionView],
     Label = "Anilist Login for Anikin",
-    Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable },
-    DataSchemes = new[] { "anistream" },
+    Categories = [Intent.CategoryDefault, Intent.CategoryBrowsable],
+    DataSchemes = ["anistream"],
     //DataScheme = "anistream",
-    DataHosts = new[] { "anilist" }
+    DataHosts = ["anilist"]
 //DataHost = "anilist"
 //DataPathPatterns = new[] { "/.*/.*" },
 //DataPathPrefix = "/anime/"

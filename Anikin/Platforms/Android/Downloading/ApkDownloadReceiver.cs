@@ -5,7 +5,7 @@ using Microsoft.Maui.ApplicationModel;
 
 namespace Anikin.Utils.Downloading;
 
-[IntentFilter(new[] { DownloadManager.ActionDownloadComplete })]
+[IntentFilter([DownloadManager.ActionDownloadComplete])]
 public class ApkDownloadReceiver : BroadcastReceiver
 {
     public const int InstalledApk = 1007;

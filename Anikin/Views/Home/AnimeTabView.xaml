@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <berry:DelayedView
-    x:Class="Anikin.Views.AnimeTabView"
+    x:Class="Anikin.Views.Home.AnimeTabView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
@@ -8,11 +8,11 @@
     xmlns:skl="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
     xmlns:templates="clr-namespace:Anikin.Views.Templates"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-    xmlns:viewModels="clr-namespace:Anikin.ViewModels"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels.Home"
     xmlns:viewTemplates="clr-namespace:Anikin.Views.Templates"
     xmlns:views="clr-namespace:Anikin.Views"
     x:Name="this"
-    x:DataType="viewModels:HomeViewModel">
+    x:DataType="viewModels:AnimeHomeViewModel">
     <ContentView.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -42,7 +42,10 @@
         IsRefreshing="{Binding IsRefreshing}"
         ZIndex="-1">
         <ScrollView>
-            <Grid Padding="0,-2,0,0" x:Name="MainGrid" RowDefinitions="auto,*">
+            <Grid
+                x:Name="MainGrid"
+                Padding="0,-2,0,0"
+                RowDefinitions="auto,*">
                 <!--<skl:SKLottieView
                     Grid.Column="1"
                     BackgroundColor="Transparent"
@@ -71,7 +74,7 @@
                         IsScrollAnimated="False"
                         IsSwipeEnabled="True"
                         ItemTemplate="{StaticResource AnimeCarouselDataTemplateSelector}"
-                        ItemsSource="{Binding CurrentSeasonAnimes}"
+                        ItemsSource="{Binding CurrentSeasonMedias}"
                         ItemsUpdatingScrollMode="KeepItemsInView"
                         PeekAreaInsets="0">
                         <CarouselView.ItemsLayout>
@@ -87,7 +90,7 @@
                 <!--<CollectionView
                     HorizontalOptions="FillAndExpand"
                     ItemTemplate="{StaticResource AnimeCarouselDataTemplateSelector}"
-                    ItemsSource="{Binding CurrentSeasonAnimes}"
+                    ItemsSource="{Binding CurrentSeasonMedias}"
                     VerticalOptions="FillAndExpand">
                     <CollectionView.ItemsLayout>
                         <LinearItemsLayout
@@ -168,7 +171,6 @@
                                         FontSize="Body"
                                         Text="Top " />
                                     <Span FontSize="Body" Text="Airing " />
-                                    <Span FontSize="Body" Text="Anime" />
                                 </FormattedString>
                             </Label.FormattedText>
                         </Label>
@@ -184,7 +186,7 @@
                         HorizontalOptions="Center"
                         IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                         ItemTemplate="{StaticResource MainDataTemplateSelector}"
-                        ItemsSource="{Binding PopularAnimes}"
+                        ItemsSource="{Binding PopularMedias}"
                         RemainingItemsThreshold="1">
                         <CollectionView.ItemsLayout>
                             <!--<GridItemsLayout
@@ -256,7 +258,7 @@
                         HorizontalOptions="Center"
                         IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                         ItemTemplate="{StaticResource MainDataTemplateSelector}"
-                        ItemsSource="{Binding LastUpdatedAnimes}"
+                        ItemsSource="{Binding LastUpdatedMedias}"
                         RemainingItemsThreshold="1">
                         <CollectionView.ItemsLayout>
                             <!--

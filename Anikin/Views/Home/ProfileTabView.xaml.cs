@@ -3,7 +3,7 @@ using Microsoft.Maui.Devices;
 using Microsoft.Maui.Layouts;
 using Microsoft.Maui.Platform;
 
-namespace Anikin.Views;
+namespace Anikin.Views.Home;
 
 public partial class ProfileTabView
 {

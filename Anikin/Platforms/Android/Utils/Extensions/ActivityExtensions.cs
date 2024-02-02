@@ -147,8 +147,8 @@ public static class ActivityExtensions
             {
                 MediaScannerConnection.ScanFile(
                     context,
-                    new[] { newFilePath },
-                    new[] { mimeType },
+                    [newFilePath],
+                    [mimeType],
                     null
                 );
             }
@@ -213,7 +213,7 @@ public static class ActivityExtensions
                 await input.CopyToAsync(output, defaultBufferSize, cancellationToken);
         }
 
-        MediaScannerConnection.ScanFile(context, new[] { newFilePath }, new[] { mimeType }, null);
+        MediaScannerConnection.ScanFile(context, [newFilePath], [mimeType], null);
     }
 
     public static async void InstallApk(this Activity activity, Android.Net.Uri uri)

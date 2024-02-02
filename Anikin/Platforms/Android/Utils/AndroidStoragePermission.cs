@@ -75,11 +75,10 @@ public class AndroidStoragePermission
 
             // handled by callback 'OnRequestPermissionsResult'
             _activity.RequestPermissions(
-                new string[]
-                {
+                [
                     Manifest.Permission.ReadExternalStorage,
                     Manifest.Permission.WriteExternalStorage
-                },
+                ],
                 RequestReadWriteExternalStorage
             );
 

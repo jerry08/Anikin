@@ -66,7 +66,7 @@ public partial class SearchView
 
             //SearchCollectionView.ItemsLayout = new GridItemsLayout(columns, ItemsLayoutOrientation.Vertical);
 
-            //viewModel.PopularAnimes.Clear();
+            //viewModel.PopularMedias.Clear();
             //
             //viewModel.Load();*/
 
