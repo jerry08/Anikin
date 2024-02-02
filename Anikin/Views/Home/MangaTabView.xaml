@@ -1,0 +1,270 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<berry:DelayedView
+    x:Class="Anikin.Views.Home.MangaTabView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:templates="clr-namespace:Anikin.Views.Templates"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels.Home"
+    xmlns:viewTemplates="clr-namespace:Anikin.Views.Templates"
+    xmlns:views="clr-namespace:Anikin.Views"
+    x:Name="this"
+    x:DataType="viewModels:MangaHomeViewModel">
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <toolkit:IsListNotNullOrEmptyConverter x:Key="IsListNotNullOrEmptyConverter" />
+
+            <DataTemplate x:Key="MangaInfoDataTemplate">
+                <views:MangaItemView />
+            </DataTemplate>
+
+            <DataTemplate x:Key="MangaCarouselDataTemplate">
+                <templates:MangaCarouselTemplateView />
+            </DataTemplate>
+
+            <DataTemplate x:Key="RangeTemplate">
+                <viewTemplates:MangaTypeRangeTemplateView />
+            </DataTemplate>
+
+            <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource MangaInfoDataTemplate}" />
+            <views:MainDataTemplateSelector x:Key="MangaCarouselDataTemplateSelector" DataTemplate="{StaticResource MangaCarouselDataTemplate}" />
+            <views:MainDataTemplateSelector x:Key="RangeTemplateSelector" DataTemplate="{StaticResource RangeTemplate}" />
+        </ResourceDictionary>
+    </ContentView.Resources>
+
+    <RefreshView
+        Margin="0,0,0,0"
+        Command="{Binding RefreshCommand}"
+        IsRefreshing="{Binding IsRefreshing}"
+        ZIndex="-1">
+        <ScrollView>
+            <Grid
+                x:Name="MainGrid"
+                Padding="0,-2,0,0"
+                RowDefinitions="auto,*">
+                <ContentView x:Name="CarouselContent" />
+
+                <Grid x:Name="NavGrid" Grid.Row="0">
+                    <ImageButton
+                        HeightRequest="35"
+                        HorizontalOptions="Start"
+                        Source="logo.svg"
+                        VerticalOptions="Start"
+                        WidthRequest="35">
+                        <ImageButton.Behaviors>
+                            <toolkit:IconTintColorBehavior TintColor="#A9FFFFFF" />
+                        </ImageButton.Behaviors>
+                    </ImageButton>
+
+                    <Grid HorizontalOptions="End" VerticalOptions="Start">
+                        <Grid.Behaviors>
+                            <berry:TouchBehavior Command="{Binding BindingContext.GoToSearchCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                        </Grid.Behaviors>
+                        <Label
+                            FontFamily="Material"
+                            FontSize="28"
+                            HorizontalOptions="End"
+                            Opacity="0.9"
+                            Text="{x:Static materialDesign:MaterialDesignIcons.Search}"
+                            TextColor="{AppThemeBinding Light={StaticResource Gray400},
+                                                        Dark={StaticResource White}}"
+                            VerticalOptions="Start" />
+                    </Grid>
+                </Grid>
+
+                <VerticalStackLayout Grid.Row="1">
+                    <Grid
+                        Grid.Row="0"
+                        Margin="10,15,10,0"
+                        ColumnDefinitions="auto,*">
+                        <Label Grid.Column="0">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span
+                                        FontAttributes="Bold"
+                                        FontSize="Body"
+                                        Text="Top " />
+                                    <Span FontSize="Body" Text="Airing " />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                        <Label
+                            Grid.Column="1"
+                            FontAttributes="Bold"
+                            FontSize="11"
+                            HorizontalOptions="End"
+                            Text="See all &gt;" />
+                    </Grid>
+
+                    <CollectionView
+                        HorizontalOptions="Center"
+                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                        ItemTemplate="{StaticResource MainDataTemplateSelector}"
+                        ItemsSource="{Binding PopularMedias}"
+                        RemainingItemsThreshold="1">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.EmptyView>
+                            <Grid
+                                HorizontalOptions="FillAndExpand"
+                                IsVisible="False"
+                                VerticalOptions="FillAndExpand">
+                                <Grid.Triggers>
+                                    <DataTrigger
+                                        Binding="{Binding IsBusy}"
+                                        TargetType="Grid"
+                                        Value="False">
+                                        <Setter Property="IsVisible" Value="True" />
+                                    </DataTrigger>
+                                </Grid.Triggers>
+                                <Label
+                                    FontSize="16"
+                                    HorizontalOptions="Center"
+                                    Text="Empty"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+
+                    <Grid
+                        Grid.Row="0"
+                        Margin="10,5,10,0"
+                        ColumnDefinitions="auto,*">
+                        <Label Grid.Column="0">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span
+                                        FontAttributes="Bold"
+                                        FontSize="Body"
+                                        Text="Recently " />
+                                    <Span FontSize="Body" Text="Updated " />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                        <Label
+                            Grid.Column="1"
+                            FontAttributes="Bold"
+                            FontSize="11"
+                            HorizontalOptions="End"
+                            Text="See all &gt;" />
+                    </Grid>
+
+                    <CollectionView
+                        HorizontalOptions="Center"
+                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                        ItemTemplate="{StaticResource MainDataTemplateSelector}"
+                        ItemsSource="{Binding LastUpdatedMedias}"
+                        RemainingItemsThreshold="1">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.EmptyView>
+                            <Grid
+                                HorizontalOptions="FillAndExpand"
+                                IsVisible="False"
+                                VerticalOptions="FillAndExpand">
+                                <Grid.Triggers>
+                                    <DataTrigger
+                                        Binding="{Binding IsBusy}"
+                                        TargetType="Grid"
+                                        Value="False">
+                                        <Setter Property="IsVisible" Value="True" />
+                                    </DataTrigger>
+                                </Grid.Triggers>
+                                <Label
+                                    FontSize="16"
+                                    HorizontalOptions="Center"
+                                    Text="Empty"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+
+                    <CollectionView
+                        Margin="0,15,0,8"
+                        HorizontalOptions="Center"
+                        IsVisible="{Binding Ranges, Converter={StaticResource IsListNotNullOrEmptyConverter}}"
+                        ItemTemplate="{StaticResource RangeTemplateSelector}"
+                        ItemsSource="{Binding Ranges}"
+                        RemainingItemsThreshold="1">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.EmptyView>
+                            <Grid
+                                HorizontalOptions="FillAndExpand"
+                                IsVisible="False"
+                                VerticalOptions="FillAndExpand">
+                                <Grid.Triggers>
+                                    <DataTrigger
+                                        Binding="{Binding IsBusy}"
+                                        TargetType="Grid"
+                                        Value="False">
+                                        <Setter Property="IsVisible" Value="True" />
+                                    </DataTrigger>
+                                </Grid.Triggers>
+                                <Label
+                                    FontSize="16"
+                                    HorizontalOptions="Center"
+                                    Text="Empty"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+
+                    <Grid MinimumHeightRequest="200">
+                        <Grid
+                            HorizontalOptions="CenterAndExpand"
+                            IsVisible="{Binding SelectedRange.IsLoading}"
+                            VerticalOptions="CenterAndExpand"
+                            ZIndex="1000">
+                            <ActivityIndicator
+                                HeightRequest="{OnPlatform Default=50,
+                                                           WinUI=100}"
+                                HorizontalOptions="CenterAndExpand"
+                                IsRunning="True"
+                                VerticalOptions="CenterAndExpand"
+                                WidthRequest="{OnPlatform Default=50,
+                                                          WinUI=100}" />
+                        </Grid>
+
+                        <CollectionView
+                            HorizontalOptions="Center"
+                            IsVisible="{Binding SelectedRange.IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                            ItemTemplate="{StaticResource MainDataTemplateSelector}"
+                            ItemsSource="{Binding SelectedRange.Medias}"
+                            RemainingItemsThreshold="1">
+                            <CollectionView.ItemsLayout>
+                                <LinearItemsLayout Orientation="Horizontal" />
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.EmptyView>
+                                <Grid
+                                    HorizontalOptions="FillAndExpand"
+                                    IsVisible="False"
+                                    VerticalOptions="FillAndExpand">
+                                    <Grid.Triggers>
+                                        <DataTrigger
+                                            Binding="{Binding SelectedRange.IsLoading}"
+                                            TargetType="Grid"
+                                            Value="False">
+                                            <Setter Property="IsVisible" Value="True" />
+                                        </DataTrigger>
+                                    </Grid.Triggers>
+                                    <Label
+                                        FontSize="16"
+                                        HorizontalOptions="Center"
+                                        Text="Empty"
+                                        VerticalOptions="Center" />
+                                </Grid>
+                            </CollectionView.EmptyView>
+                        </CollectionView>
+                    </Grid>
+                </VerticalStackLayout>
+            </Grid>
+        </ScrollView>
+    </RefreshView>
+</berry:DelayedView>

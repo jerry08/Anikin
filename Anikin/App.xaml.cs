@@ -31,9 +31,9 @@ public partial class App : Application
 
         Services = provider;
 
-        AlertService = Services.GetService<IAlertService>()!;
+        AlertService = Services.GetRequiredService<IAlertService>();
 
-        var settingsService = Services.GetService<SettingsService>()!;
+        var settingsService = Services.GetRequiredService<SettingsService>();
         settingsService.Load();
 
         IsInDeveloperMode = settingsService.EnableDeveloperMode;
@@ -112,7 +112,7 @@ public partial class App : Application
         if (Current is null)
             return;
 
-        var settingsService = Services.GetService<SettingsService>()!;
+        var settingsService = Services.GetRequiredService<SettingsService>();
         settingsService.Load();
 
         if (force)
@@ -121,6 +121,15 @@ public partial class App : Application
         }
 
         Current.UserAppTheme = settingsService.AppTheme;
+
+        //if (Shell.Current.CurrentPage is not null)
+        //{
+        //    Berry.Maui.Controls.Insets.SetEdgeToEdge(Shell.Current.CurrentPage, true);
+        //    Berry.Maui.Controls.Insets.SetStatusBarStyle(
+        //        Shell.Current.CurrentPage,
+        //        Berry.Maui.Controls.StatusBarStyle.DarkContent
+        //    );
+        //}
     }
 
     protected override void OnAppLinkRequestReceived(Uri uri)

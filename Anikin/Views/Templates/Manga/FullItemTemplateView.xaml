@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Border
+    x:Class="Anikin.Views.Templates.Manga.FullItemTemplateView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:converters="clr-namespace:Anikin.Converters"
+    xmlns:local="clr-namespace:Anikin"
+    xmlns:models="clr-namespace:Juro.Core.Models.Manga;assembly=Juro.Core"
+    x:Name="this"
+    Margin="20,5"
+    Padding="0"
+    x:DataType="models:IMangaChapter"
+    BackgroundColor="Transparent"
+    HeightRequest="122">
+    <Border.StrokeShape>
+        <RoundRectangle CornerRadius="20" />
+    </Border.StrokeShape>
+    <Grid BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}" ColumnDefinitions="auto,*">
+        <Grid.Behaviors>
+            <berry:TouchBehavior
+                Command="{Binding Parent.BindingContext.ItemClickCommand, Source={x:Reference this}}"
+                CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
+                NativeAnimation="True" />
+        </Grid.Behaviors>
+
+        <Label
+            Grid.Column="1"
+            Padding="8,5"
+            FontAttributes="Bold"
+            FontFamily="SoraBold"
+            FontSize="20"
+            HorizontalOptions="Center"
+            HorizontalTextAlignment="End"
+            LineBreakMode="TailTruncation"
+            Opacity="0.7"
+            Text="{Binding Title}"
+            TextColor="{AppThemeBinding Light={StaticResource Black},
+                                        Dark={StaticResource White}}"
+            VerticalOptions="Center"
+            VerticalTextAlignment="End" />
+    </Grid>
+</Border>

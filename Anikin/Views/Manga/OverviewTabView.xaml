@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentView
-    x:Class="Anikin.Views.OverviewTabView"
+    x:Class="Anikin.Views.Manga.OverviewTabView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
@@ -8,11 +8,11 @@
     xmlns:local="clr-namespace:Anikin"
     xmlns:materialDesign="clr-namespace:MaterialDesign"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-    xmlns:viewModels="clr-namespace:Anikin.ViewModels"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels.Manga"
     xmlns:viewTemplates="clr-namespace:Anikin.Views.Templates"
     xmlns:views="clr-namespace:Anikin.Views"
     x:Name="this"
-    x:DataType="viewModels:EpisodeViewModel">
+    x:DataType="viewModels:MangaItemViewModel">
     <VerticalStackLayout Spacing="4">
         <Label
             Margin="10,5"
@@ -26,7 +26,7 @@
         <Label
             Margin="10,5"
             HorizontalTextAlignment="Start"
-            Text="{Binding Entity.Description}"
+            Text="{Binding Media.Description}"
             VerticalOptions="Start" />
     </VerticalStackLayout>
 </ContentView>

@@ -1,20 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<views:BasePage
-    x:Class="Anikin.Views.EpisodePage"
+<local:BasePage
+    x:Class="Anikin.Views.Manga.MangaPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
     xmlns:converters="clr-namespace:Anikin.Converters"
-    xmlns:local="clr-namespace:Anikin"
+    xmlns:local="clr-namespace:Anikin.Views"
     xmlns:materialDesign="clr-namespace:MaterialDesign"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-    xmlns:viewModels="clr-namespace:Anikin.ViewModels"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels.Manga"
     xmlns:viewTemplates="clr-namespace:Anikin.Views.Templates"
-    xmlns:views="clr-namespace:Anikin.Views"
+    xmlns:views="clr-namespace:Anikin.Views.Manga"
     x:Name="this"
     berry:Insets.EdgeToEdge="True"
     berry:Insets.StatusBarStyle="LightContent"
-    x:DataType="viewModels:EpisodeViewModel">
+    x:DataType="viewModels:MangaItemViewModel">
     <ContentPage.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
@@ -24,7 +24,7 @@
                 <viewTemplates:GenreTemplateView />
             </DataTemplate>
 
-            <views:MainDataTemplateSelector x:Key="GenreTemplateSelector" DataTemplate="{StaticResource GenreTemplate}" />
+            <local:MainDataTemplateSelector x:Key="GenreTemplateSelector" DataTemplate="{StaticResource GenreTemplate}" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -44,22 +44,11 @@
         <ScrollView>
             <VerticalStackLayout Margin="0,0,0,50">
                 <Grid>
-
-                    <!--<Image
-                        x:Name="testImg"
-                        Margin="0,0,0,-100"
-                        Aspect="AspectFill"
-                        HeightRequest="400"
-                        Source="{Binding Entity.Image}"
-                        TranslationY="-100"
-                        VerticalOptions="Start" />-->
-
                     <Image
-                        x:Name="testImg"
                         Margin="0,0,0,-260"
                         Aspect="AspectFill"
                         HeightRequest="620"
-                        Source="{Binding Entity.Cover.ExtraLargeImageUrl}"
+                        Source="{Binding Media.Cover.ExtraLargeImageUrl}"
                         VerticalOptions="Start">
                         <Image.GestureRecognizers>
                             <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="CoverImage_OnDoubleTap" />
@@ -134,7 +123,7 @@
                         <HorizontalStackLayout Margin="10,5,5,5">
                             <Label
                                 FontAttributes="Bold"
-                                Text="{Binding Entity.MeanScore, Converter={StaticResource RatingConverter}}"
+                                Text="{Binding Media.MeanScore, Converter={StaticResource RatingConverter}}"
                                 TextColor="White"
                                 VerticalOptions="Center" />
                             <Label
@@ -146,39 +135,6 @@
                                 VerticalTextAlignment="Center" />
                         </HorizontalStackLayout>
                     </Border>
-
-                    <!--<Border
-                        Grid.Column="0"
-                        Margin="2"
-                        Padding="4"
-                        BackgroundColor="#BE000000"
-                        HorizontalOptions="End"
-                        StrokeThickness="0"
-                        VerticalOptions="End">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="18" />
-                        </Border.StrokeShape>
-                        <HorizontalStackLayout HorizontalOptions="End" VerticalOptions="End">
-                            <Image
-                                Margin="0"
-                                BackgroundColor="Transparent"
-                                VerticalOptions="Center">
-                                <Image.Source>
-                                    <FontImageSource
-                                        FontFamily="Material"
-                                        Glyph="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
-                                        Size="18"
-                                        Color="#AD3AFF" />
-                                </Image.Source>
-                            </Image>
-                            <Label
-                                Margin="0,0,5,0"
-                                FontAttributes="Bold"
-                                FontSize="12"
-                                Text="{Binding Entity.MeanScore, Converter={StaticResource RatingConverter}}"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </Border>-->
                 </Grid>
 
                 <VerticalStackLayout>
@@ -201,7 +157,7 @@
                             HorizontalTextAlignment="Start"
                             LineBreakMode="TailTruncation"
                             MaxLines="1"
-                            Text="{Binding Entity.Title.PreferredTitle}"
+                            Text="{Binding Media.Title.PreferredTitle}"
                             TextColor="White"
                             VerticalOptions="Center">
                             <Label.Behaviors>
@@ -272,7 +228,7 @@
                     <!--<FlexLayout
                         Margin="0,0,0,10"
                         BindableLayout.ItemTemplateSelector="{StaticResource GenreTemplateSelector}"
-                        BindableLayout.ItemsSource="{Binding Entity.Genres}"
+                        BindableLayout.ItemsSource="{Binding Media.Genres}"
                         JustifyContent="Center"
                         Wrap="Wrap" />-->
 
@@ -280,7 +236,7 @@
                         Margin="0,0,0,10"
                         HorizontalOptions="Center"
                         ItemTemplate="{StaticResource GenreTemplateSelector}"
-                        ItemsSource="{Binding Entity.Genres}"
+                        ItemsSource="{Binding Media.Genres}"
                         RemainingItemsThreshold="1">
                         <CollectionView.ItemsLayout>
                             <LinearItemsLayout Orientation="Horizontal" />
@@ -342,7 +298,7 @@
                             BindingContext="{Binding}"
                             UseActivityIndicator="True" />
                         <berry:LazyView
-                            x:TypeArguments="views:EpisodesTabView"
+                            x:TypeArguments="views:MangaTabView"
                             AccentColor="{StaticResource Primary}"
                             Animate="True"
                             UseActivityIndicator="True" />
@@ -351,4 +307,4 @@
             </VerticalStackLayout>
         </ScrollView>
     </Grid>
-</views:BasePage>
+</local:BasePage>

@@ -21,9 +21,15 @@ public partial class SettingsService : SettingsBase, INotifyPropertyChanged
 
     public GridLayoutMode EpisodesGridLayoutMode { get; set; } = GridLayoutMode.Semi;
 
+    public GridLayoutMode MangaItemsGridLayoutMode { get; set; } = GridLayoutMode.Full;
+
     public bool EpisodesDescending { get; set; } = true;
 
+    public bool MangaChaptersDescending { get; set; } = true;
+
     public bool ShowNonJapaneseAnime { get; set; }
+
+    public bool ShowNonJapaneseManga { get; set; }
 
     public bool EnableDeveloperMode { get; set; }
 

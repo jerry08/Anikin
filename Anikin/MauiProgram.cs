@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using Anikin.Services;
 using Anikin.Services.AlertDialog;
 using Anikin.ViewModels;
+using Anikin.ViewModels.Home;
 using Anikin.Views;
 using Anikin.Views.Settings;
 using Berry.Maui;
@@ -15,6 +16,12 @@ using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using Microsoft.Maui.LifecycleEvents;
 using Woka;
+using Anikin.Views.Home;
+using Anikin.ViewModels.Manga;
+using Anikin.Views.Manga;
+
+
+
 #if ANDROID
 using Microsoft.Maui.Controls.Compatibility.Platform.Android;
 #endif
@@ -108,19 +115,27 @@ public static class MauiProgram
 
         // Views
         builder.Services.AddTransient<HomeView>();
-        builder.Services.AddTransient<AnimeTabView>();
-        builder.Services.AddTransient<ProfileTabView>();
         builder.Services.AddTransient<SearchView>();
-        builder.Services.AddTransient<ExtensionsView>();
+        builder.Services.AddTransient<MangaSearchView>();
+        builder.Services.AddTransient<AnimeTabView>();
         builder.Services.AddTransient<EpisodePage>();
+        builder.Services.AddTransient<MangaPage>();
+        builder.Services.AddTransient<MangaReaderPage>();
+        builder.Services.AddTransient<ProfileTabView>();
+        builder.Services.AddTransient<ExtensionsView>();
         builder.Services.AddTransient<AnilistLoginView>();
 
         // ViewModels
         builder.Services.AddTransient<HomeViewModel>();
-        builder.Services.AddTransient<ProfileViewModel>();
         builder.Services.AddTransient<SearchViewModel>();
-        builder.Services.AddTransient<ExtensionsViewModel>();
+        builder.Services.AddTransient<MangaSearchViewModel>();
+        builder.Services.AddTransient<AnimeHomeViewModel>();
         builder.Services.AddTransient<EpisodeViewModel>();
+        builder.Services.AddTransient<MangaHomeViewModel>();
+        builder.Services.AddTransient<MangaItemViewModel>();
+        builder.Services.AddTransient<MangaReaderViewModel>();
+        builder.Services.AddTransient<ProfileViewModel>();
+        builder.Services.AddTransient<ExtensionsViewModel>();
 
         // Services
         builder.Services.AddTransient(x => AniClientFactory());

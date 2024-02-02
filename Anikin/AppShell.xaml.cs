@@ -5,6 +5,7 @@ using Anikin.Models;
 using Anikin.Services;
 using Anikin.ViewModels.Framework;
 using Anikin.Views;
+using Anikin.Views.Manga;
 using Anikin.Views.Settings;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
@@ -23,7 +24,10 @@ public partial class AppShell : Shell
         InitializeComponent();
 
         Routing.RegisterRoute(nameof(SearchView), typeof(SearchView));
+        Routing.RegisterRoute(nameof(MangaSearchView), typeof(MangaSearchView));
         Routing.RegisterRoute(nameof(EpisodePage), typeof(EpisodePage));
+        Routing.RegisterRoute(nameof(MangaPage), typeof(MangaPage));
+        Routing.RegisterRoute(nameof(MangaReaderPage), typeof(MangaReaderPage));
         Routing.RegisterRoute(nameof(AnilistLoginView), typeof(AnilistLoginView));
         Routing.RegisterRoute(nameof(ExtensionsView), typeof(ExtensionsView));
 

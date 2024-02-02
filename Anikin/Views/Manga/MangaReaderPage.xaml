@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<local:BasePage
+    x:Class="Anikin.Views.Manga.MangaReaderPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:controls="clr-namespace:Anikin.Controls"
+    xmlns:converters="clr-namespace:Anikin.Converters"
+    xmlns:local="clr-namespace:Anikin.Views"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:models="clr-namespace:Juro.Core.Models.Manga;assembly=Juro.Core"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels.Manga"
+    xmlns:viewTemplates="clr-namespace:Anikin.Views.Templates"
+    xmlns:views="clr-namespace:Anikin.Views.Manga"
+    x:Name="this"
+    berry:Insets.EdgeToEdge="True"
+    berry:Insets.StatusBarStyle="LightContent"
+    x:DataType="viewModels:MangaReaderViewModel">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <toolkit:IsListNullOrEmptyConverter x:Key="IsListNullOrEmptyConverter" />
+            <toolkit:IsListNotNullOrEmptyConverter x:Key="IsListNotNullOrEmptyConverter" />
+
+            <DataTemplate x:Key="ImageTemplate" x:DataType="models:IMangaChapterPage">
+                <Grid>
+                    <Image
+                        Aspect="AspectFill"
+                        HorizontalOptions="CenterAndExpand"
+                        Source="{Binding Image}"
+                        VerticalOptions="CenterAndExpand" />
+                </Grid>
+            </DataTemplate>
+
+            <local:MainDataTemplateSelector x:Key="ImageTemplateSelector" DataTemplate="{StaticResource ImageTemplate}" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <Grid RowDefinitions="auto,*">
+            <Grid
+                Grid.Row="2"
+                HorizontalOptions="CenterAndExpand"
+                IsVisible="{Binding IsBusy}"
+                VerticalOptions="CenterAndExpand"
+                ZIndex="1000">
+                <ActivityIndicator
+                    HeightRequest="{OnPlatform Default=60,
+                                               WinUI=100}"
+                    HorizontalOptions="CenterAndExpand"
+                    IsRunning="True"
+                    VerticalOptions="CenterAndExpand"
+                    WidthRequest="{OnPlatform Default=60,
+                                              WinUI=100}">
+                    <ActivityIndicator.Triggers>
+                        <DataTrigger
+                            Binding="{Binding IsLoading}"
+                            TargetType="ActivityIndicator"
+                            Value="True">
+                            <Setter Property="IsRunning" Value="False" />
+                            <Setter Property="BackgroundColor" Value="Transparent" />
+                        </DataTrigger>
+                    </ActivityIndicator.Triggers>
+                </ActivityIndicator>
+            </Grid>
+
+            <Grid
+                Grid.Row="2"
+                HorizontalOptions="FillAndExpand"
+                IsVisible="False"
+                VerticalOptions="FillAndExpand">
+                <Grid.Triggers>
+                    <MultiTrigger TargetType="Grid">
+                        <MultiTrigger.Conditions>
+                            <BindingCondition Binding="{Binding IsBusy}" Value="False" />
+                            <BindingCondition Binding="{Binding IsVisible, Source={x:Reference PagesCollectionView}}" Value="True" />
+                            <BindingCondition Binding="{Binding Entities, Converter={StaticResource IsListNullOrEmptyConverter}}" Value="True" />
+                        </MultiTrigger.Conditions>
+                        <MultiTrigger.Setters>
+                            <Setter Property="IsVisible" Value="True" />
+                        </MultiTrigger.Setters>
+                    </MultiTrigger>
+                </Grid.Triggers>
+                <Label
+                    FontSize="16"
+                    HorizontalOptions="Center"
+                    Text="Failed to load images"
+                    VerticalOptions="Center" />
+            </Grid>
+
+            <Grid
+                x:Name="PagesCollectionView"
+                Grid.Row="2"
+                Margin="0,0,0,10"
+                IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
+                <controls:PinchZoom>
+                    <Grid>
+                        <VerticalStackLayout
+                            BindableLayout.ItemTemplateSelector="{StaticResource ImageTemplateSelector}"
+                            BindableLayout.ItemsSource="{Binding Entities}"
+                            HorizontalOptions="Center" />
+                    </Grid>
+                </controls:PinchZoom>
+            </Grid>
+        </Grid>
+    </ScrollView>
+</local:BasePage>

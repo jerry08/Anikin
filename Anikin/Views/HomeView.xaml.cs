@@ -1,4 +1,4 @@
-﻿using Anikin.ViewModels;
+﻿using Anikin.ViewModels.Home;
 using Berry.Maui;
 using Microsoft.Maui;
 using Microsoft.Maui.Devices;

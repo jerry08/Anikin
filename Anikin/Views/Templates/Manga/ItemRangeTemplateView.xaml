@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Border
-    x:Class="Anikin.Views.Templates.EpisodeRangeTemplateView"
+    x:Class="Anikin.Views.Templates.Manga.ItemRangeTemplateView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
     xmlns:local="clr-namespace:Anikin"
-    xmlns:models="clr-namespace:Anikin.Models"
+    xmlns:models="clr-namespace:Anikin.Models.Manga"
     x:Name="this"
     Margin="0"
     Padding="5,0,0,0"
-    x:DataType="models:EpisodeRange"
+    x:DataType="models:MangaChapterRange"
     BackgroundColor="Transparent">
     <Grid BackgroundColor="Transparent">
         <Border

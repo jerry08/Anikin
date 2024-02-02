@@ -8,8 +8,8 @@
     xmlns:skl="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
     xmlns:templates="clr-namespace:Anikin.Views.Templates"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-    xmlns:viewModels="clr-namespace:Anikin.ViewModels"
-    xmlns:views="clr-namespace:Anikin.Views"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels.Home"
+    xmlns:views="clr-namespace:Anikin.Views.Home"
     x:Name="this"
     x:DataType="viewModels:HomeViewModel">
     <Grid>
@@ -17,7 +17,7 @@
             x:Name="Switcher"
             Margin="0"
             Animate="True"
-            SelectedIndex="{Binding SelectedViewModelIndex, Mode=TwoWay}">
+            SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
             <!--<berry:DelayedView
                 x:TypeArguments="views:AnimeTabView"
                 AccentColor="{StaticResource Primary}"
@@ -27,7 +27,7 @@
             <views:AnimeTabView
                 AccentColor="{StaticResource Primary}"
                 Animate="True"
-                BindingContext="{Binding}"
+                BindingContext="{Binding AnimeHomeViewModel}"
                 UseActivityIndicator="False" />
             <berry:LazyView
                 x:TypeArguments="views:ProfileTabView"
@@ -35,6 +35,11 @@
                 Animate="True"
                 BindingContext="{Binding ProfileViewModel}"
                 UseActivityIndicator="True" />
+            <views:MangaTabView
+                AccentColor="{StaticResource Primary}"
+                Animate="True"
+                BindingContext="{Binding MangaHomeViewModel}"
+                UseActivityIndicator="False" />
         </berry:ViewSwitcher>
 
         <Grid WidthRequest="225">
@@ -49,7 +54,7 @@
                 IsSegmented="True"
                 Orientation="Horizontal"
                 SegmentedOutlineColor="Transparent"
-                SelectedIndex="{Binding SelectedViewModelIndex, Mode=TwoWay}"
+                SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}"
                 TabType="Fixed"
                 VerticalOptions="End"
                 WidthRequest="250">
