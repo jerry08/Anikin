@@ -37,72 +37,64 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <ScrollView>
-        <Grid RowDefinitions="auto,*">
-            <Grid
-                Grid.Row="2"
+    <Grid RowDefinitions="auto,*">
+        <Grid
+            Grid.Row="2"
+            HorizontalOptions="CenterAndExpand"
+            IsVisible="{Binding IsBusy}"
+            VerticalOptions="CenterAndExpand"
+            ZIndex="1000">
+            <ActivityIndicator
+                HeightRequest="{OnPlatform Default=60,
+                                           WinUI=100}"
                 HorizontalOptions="CenterAndExpand"
-                IsVisible="{Binding IsBusy}"
+                IsRunning="True"
                 VerticalOptions="CenterAndExpand"
-                ZIndex="1000">
-                <ActivityIndicator
-                    HeightRequest="{OnPlatform Default=60,
-                                               WinUI=100}"
-                    HorizontalOptions="CenterAndExpand"
-                    IsRunning="True"
-                    VerticalOptions="CenterAndExpand"
-                    WidthRequest="{OnPlatform Default=60,
-                                              WinUI=100}">
-                    <ActivityIndicator.Triggers>
-                        <DataTrigger
-                            Binding="{Binding IsLoading}"
-                            TargetType="ActivityIndicator"
-                            Value="True">
-                            <Setter Property="IsRunning" Value="False" />
-                            <Setter Property="BackgroundColor" Value="Transparent" />
-                        </DataTrigger>
-                    </ActivityIndicator.Triggers>
-                </ActivityIndicator>
-            </Grid>
-
-            <Grid
-                Grid.Row="2"
-                HorizontalOptions="FillAndExpand"
-                IsVisible="False"
-                VerticalOptions="FillAndExpand">
-                <Grid.Triggers>
-                    <MultiTrigger TargetType="Grid">
-                        <MultiTrigger.Conditions>
-                            <BindingCondition Binding="{Binding IsBusy}" Value="False" />
-                            <BindingCondition Binding="{Binding IsVisible, Source={x:Reference PagesCollectionView}}" Value="True" />
-                            <BindingCondition Binding="{Binding Entities, Converter={StaticResource IsListNullOrEmptyConverter}}" Value="True" />
-                        </MultiTrigger.Conditions>
-                        <MultiTrigger.Setters>
-                            <Setter Property="IsVisible" Value="True" />
-                        </MultiTrigger.Setters>
-                    </MultiTrigger>
-                </Grid.Triggers>
-                <Label
-                    FontSize="16"
-                    HorizontalOptions="Center"
-                    Text="Failed to load images"
-                    VerticalOptions="Center" />
-            </Grid>
-
-            <Grid
-                x:Name="PagesCollectionView"
-                Grid.Row="2"
-                Margin="0,0,0,10"
-                IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
-                <controls:PinchZoom>
-                    <Grid>
-                        <VerticalStackLayout
-                            BindableLayout.ItemTemplateSelector="{StaticResource ImageTemplateSelector}"
-                            BindableLayout.ItemsSource="{Binding Entities}"
-                            HorizontalOptions="Center" />
-                    </Grid>
-                </controls:PinchZoom>
-            </Grid>
+                WidthRequest="{OnPlatform Default=60,
+                                          WinUI=100}">
+                <ActivityIndicator.Triggers>
+                    <DataTrigger
+                        Binding="{Binding IsLoading}"
+                        TargetType="ActivityIndicator"
+                        Value="True">
+                        <Setter Property="IsRunning" Value="False" />
+                        <Setter Property="BackgroundColor" Value="Transparent" />
+                    </DataTrigger>
+                </ActivityIndicator.Triggers>
+            </ActivityIndicator>
         </Grid>
-    </ScrollView>
+
+        <Grid
+            Grid.Row="2"
+            HorizontalOptions="FillAndExpand"
+            IsVisible="False"
+            VerticalOptions="FillAndExpand">
+            <Grid.Triggers>
+                <MultiTrigger TargetType="Grid">
+                    <MultiTrigger.Conditions>
+                        <BindingCondition Binding="{Binding IsBusy}" Value="False" />
+                        <BindingCondition Binding="{Binding IsVisible, Source={x:Reference PagesCollectionView}}" Value="True" />
+                        <BindingCondition Binding="{Binding Entities, Converter={StaticResource IsListNullOrEmptyConverter}}" Value="True" />
+                    </MultiTrigger.Conditions>
+                    <MultiTrigger.Setters>
+                        <Setter Property="IsVisible" Value="True" />
+                    </MultiTrigger.Setters>
+                </MultiTrigger>
+            </Grid.Triggers>
+            <Label
+                FontSize="16"
+                HorizontalOptions="Center"
+                Text="Failed to load images"
+                VerticalOptions="Center" />
+        </Grid>
+
+        <CollectionView
+            x:Name="PagesCollectionView"
+            Grid.Row="2"
+            Margin="0,0,0,10"
+            HorizontalOptions="Center"
+            IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+            ItemTemplate="{StaticResource ImageTemplateSelector}"
+            ItemsSource="{Binding Entities}" />
+    </Grid>
 </local:BasePage>
