@@ -547,7 +547,7 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
 
         IsProviderSearchSheetShowing = true;
 
-        var sheet = new ProviderSearchSheet();
+        var sheet = new MangaProviderSearchSheet();
         sheet.BindingContext = new MangaProviderSearchViewModel(
             this,
             sheet,
