@@ -8,11 +8,11 @@
     xmlns:local="clr-namespace:Anikin"
     xmlns:models="clr-namespace:Juro.Core.Models.Manga;assembly=Juro.Core"
     x:Name="this"
-    Margin="20,5"
+    Margin="14,5"
     Padding="0"
     x:DataType="models:IMangaChapter"
     BackgroundColor="Transparent"
-    HeightRequest="122">
+    HeightRequest="80">
     <Border.StrokeShape>
         <RoundRectangle CornerRadius="20" />
     </Border.StrokeShape>

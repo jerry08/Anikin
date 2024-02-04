@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Anikin.Services;
 using Anikin.ViewModels.Framework;
-using Anikin.Views;
+using Anikin.Views.Manga;
 using CommunityToolkit.Mvvm.Input;
 using Jita.AniList;
 using Jita.AniList.Parameters;
@@ -71,7 +71,7 @@ public partial class MangaSearchViewModel : CollectionViewModel<Jita.AniList.Mod
                     Query = Query,
                     IsAdult = false,
                     Sort = Jita.AniList.Models.MediaSort.Popularity,
-                    Type = Jita.AniList.Models.MediaType.Anime
+                    Type = Jita.AniList.Models.MediaType.Manga
                 },
                 new AniPaginationOptions(PageIndex, PageSize),
                 CancellationTokenSource.Token
@@ -86,7 +86,7 @@ public partial class MangaSearchViewModel : CollectionViewModel<Jita.AniList.Mod
             PageIndex++;
 
             var data = result
-                .Data.Where(x => _settingsService.ShowNonJapaneseAnime || x.CountryOfOrigin == "JP")
+                .Data.Where(x => _settingsService.ShowNonJapaneseManga || x.CountryOfOrigin == "JP")
                 .ToList();
 
             Push(data);
@@ -112,8 +112,8 @@ public partial class MangaSearchViewModel : CollectionViewModel<Jita.AniList.Mod
     [RelayCommand]
     async Task ItemSelected(Jita.AniList.Models.Media item)
     {
-        var navigationParameter = new Dictionary<string, object> { { "SourceItem", item } };
+        var navigationParameter = new Dictionary<string, object> { { "Media", item } };
 
-        await Shell.Current.GoToAsync(nameof(EpisodePage), navigationParameter);
+        await Shell.Current.GoToAsync(nameof(MangaPage), navigationParameter);
     }
 }

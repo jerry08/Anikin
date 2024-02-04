@@ -114,8 +114,6 @@ public partial class MangaReaderViewModel
 
             await DownloadPagesAsync(pages);
 
-            await App.AlertService.ShowAlertAsync("test", $"{pages.FirstOrDefault()?.Image}");
-
             Entities.Push(pages);
             OnPropertyChanged(nameof(Entities));
         }
