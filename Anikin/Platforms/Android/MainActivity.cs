@@ -16,10 +16,7 @@ using static Android.Views.ViewGroup;
 
 namespace Anikin;
 
-[IntentFilter(
-    actions: [Intent.ActionMain],
-    Categories = [Intent.CategoryLeanbackLauncher]
-)]
+[IntentFilter(actions: [Intent.ActionMain], Categories = [Intent.CategoryLeanbackLauncher])]
 [Activity(
     Theme = "@style/Maui.SplashTheme",
     MainLauncher = true,

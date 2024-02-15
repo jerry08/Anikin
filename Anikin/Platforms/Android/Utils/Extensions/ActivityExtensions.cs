@@ -145,12 +145,7 @@ public static class ActivityExtensions
 
             if (!string.IsNullOrEmpty(mimeType))
             {
-                MediaScannerConnection.ScanFile(
-                    context,
-                    [newFilePath],
-                    [mimeType],
-                    null
-                );
+                MediaScannerConnection.ScanFile(context, [newFilePath], [mimeType], null);
             }
         }
     }
