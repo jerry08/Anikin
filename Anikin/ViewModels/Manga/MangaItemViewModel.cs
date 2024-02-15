@@ -72,7 +72,7 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
 
     public CancellationToken CancellationToken => _cancellationTokenSource.Token;
 
-    private ChangeSourceSheet? ChangeSourceSheet { get; set; }
+    private ChangeMangaSourceSheet? ChangeSourceSheet { get; set; }
 
     public MangaItemViewModel(AniClient aniClient)
     {
@@ -128,8 +128,7 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
     [RelayCommand]
     private async Task ShowProviderSourcesSheet()
     {
-        ChangeSourceSheet = new ChangeSourceSheet() { BindingContext = this };
-
+        ChangeSourceSheet = new() { BindingContext = this };
         await ChangeSourceSheet.ShowAsync();
     }
 
@@ -417,7 +416,7 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
     [RelayCommand]
     private async Task ShowCoverImage()
     {
-        var sheet = new CoverImageSheet() { BindingContext = this };
+        var sheet = new MangaCoverImageSheet() { BindingContext = this };
 
         await sheet.ShowAsync();
     }

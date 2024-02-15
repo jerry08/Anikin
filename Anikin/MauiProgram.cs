@@ -19,6 +19,10 @@ using Woka;
 using Anikin.Views.Home;
 using Anikin.ViewModels.Manga;
 using Anikin.Views.Manga;
+using Microsoft.Maui.Controls;
+using Berry.Maui.Handlers.Slider;
+
+
 
 
 
@@ -46,6 +50,9 @@ public static class MauiProgram
 #if WINDOWS
                 //handlers.AddHandler<CollectionView, Handlers.CollectionViewHandler>();
 #endif
+
+                //handlers.AddHandler<Slider, MaterialSliderHandler>();
+                handlers.AddHandler<Slider, BerrySliderHandler>();
 
                 //handlers.AddHandler<Entry, MaterialEntryHandler>();
                 //handlers.AddHandler<MaterialEntry, MaterialEntryHandler>();

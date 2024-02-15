@@ -17,6 +17,7 @@ using Jita.AniList;
 using Jita.AniList.Models;
 using Juro.Core.Models.Manga;
 using Juro.Core.Providers;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
@@ -41,9 +42,13 @@ public partial class MangaReaderViewModel
     [ObservableProperty]
     private Media? _media;
 
+    [ObservableProperty]
+    private string? _providerName;
+
     //private IMangaInfo Manga { get; set; } = default!;
 
-    private IMangaChapter MangaChapter { get; set; } = default!;
+    [ObservableProperty]
+    IMangaChapter _mangaChapter = default!;
 
     private readonly CancellationTokenSource _cancellationTokenSource = new();
 
@@ -67,6 +72,9 @@ public partial class MangaReaderViewModel
 
         Media.Description = Html.ConvertToPlainText(Media.Description);
 
+        Title = $"Chapter {MangaChapter.Number}";
+        ProviderName = _provider?.Name;
+
         OnPropertyChanged(nameof(Media));
     }
 
@@ -87,6 +95,10 @@ public partial class MangaReaderViewModel
                 }
                 catch { }
             }
+
+#if ANDROID
+            Platform.CurrentActivity.ShowSystemBars();
+#endif
         }
     }
 
@@ -99,6 +111,10 @@ public partial class MangaReaderViewModel
             await Toast.Make("No providers installed").Show();
             return;
         }
+
+#if ANDROID
+        Platform.CurrentActivity.HideSystemBars();
+#endif
 
         IsBusy = true;
         IsRefreshing = true;

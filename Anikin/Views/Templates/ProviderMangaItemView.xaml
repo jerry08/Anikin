@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
+    xmlns:controls="clr-namespace:Anikin.Controls"
     xmlns:converters="clr-namespace:Anikin.Converters"
     xmlns:local="clr-namespace:Anikin"
     xmlns:materialDesign="clr-namespace:MaterialDesign"
@@ -11,7 +12,7 @@
     x:Name="this"
     Margin="0"
     Padding="0"
-    x:DataType="models:IMangaInfo"
+    x:DataType="models:IMangaResult"
     BackgroundColor="Transparent">
     <Border.Resources>
         <ResourceDictionary>
@@ -46,10 +47,11 @@
                         <RoundRectangle CornerRadius="10" />
                     </Border.StrokeShape>
                     <Grid>
-                        <Image
-                            Aspect="AspectFill"
-                            BackgroundColor="{StaticResource Gray800}"
-                            Source="{Binding Image}" />
+                        <Image Aspect="AspectFill" BackgroundColor="{StaticResource Gray800}">
+                            <Image.Source>
+                                <controls:BerryUriImageSource Headers="{Binding Headers}" Uri="{Binding Image}" />
+                            </Image.Source>
+                        </Image>
                     </Grid>
                 </Border>
                 <Label

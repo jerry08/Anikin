@@ -28,6 +28,7 @@
                     <Image
                         Aspect="AspectFill"
                         HorizontalOptions="CenterAndExpand"
+                        MaximumWidthRequest="600"
                         Source="{Binding Image}"
                         VerticalOptions="CenterAndExpand" />
                 </Grid>
@@ -37,9 +38,64 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="auto,*">
+    <Grid RowDefinitions="*">
         <Grid
-            Grid.Row="2"
+            x:Name="TitleGrid"
+            Margin="10,60"
+            HorizontalOptions="Fill"
+            VerticalOptions="Start"
+            ZIndex="1">
+            <Border BackgroundColor="#80000000" StrokeThickness="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+                <Grid Margin="6,10" ColumnDefinitions="auto,*">
+                    <Border Grid.Column="0" StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18" />
+                        </Border.StrokeShape>
+                        <Grid>
+                            <Grid.Behaviors>
+                                <berry:TouchBehavior
+                                    Command="{Binding BindingContext.GoBackCommand, Source={x:Reference this}}"
+                                    NativeAnimation="True"
+                                    NativeAnimationColor="#40FFFFFF" />
+                            </Grid.Behaviors>
+                            <Label
+                                Padding="12"
+                                FontFamily="Material"
+                                FontSize="26"
+                                Text="{x:Static materialDesign:MaterialDesignIcons.ArrowBackIos}"
+                                TextColor="White" />
+                        </Grid>
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" Spacing="10">
+                        <Grid Grid.Row="0">
+                            <Label
+                                Grid.Column="0"
+                                Margin="0,0,20,0"
+                                FontAttributes="Bold"
+                                FontSize="19"
+                                Text="{Binding Title}" />
+                        </Grid>
+                        <Grid Grid.Row="1" ColumnDefinitions="*,auto">
+                            <Label
+                                Grid.Column="0"
+                                Margin="0,0,20,0"
+                                FontSize="15"
+                                LineBreakMode="TailTruncation"
+                                Text="{Binding Media.Title.PreferredTitle}" />
+                            <Label
+                                Grid.Column="1"
+                                FontSize="15"
+                                Text="{Binding ProviderName, StringFormat='({0})'}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid
             HorizontalOptions="CenterAndExpand"
             IsVisible="{Binding IsBusy}"
             VerticalOptions="CenterAndExpand"
@@ -65,7 +121,6 @@
         </Grid>
 
         <Grid
-            Grid.Row="2"
             HorizontalOptions="FillAndExpand"
             IsVisible="False"
             VerticalOptions="FillAndExpand">
@@ -73,7 +128,7 @@
                 <MultiTrigger TargetType="Grid">
                     <MultiTrigger.Conditions>
                         <BindingCondition Binding="{Binding IsBusy}" Value="False" />
-                        <BindingCondition Binding="{Binding IsVisible, Source={x:Reference PagesCollectionView}}" Value="True" />
+                        <BindingCondition Binding="{Binding IsVisible, Source={x:Reference PagesScrollView}}" Value="True" />
                         <BindingCondition Binding="{Binding Entities, Converter={StaticResource IsListNullOrEmptyConverter}}" Value="True" />
                     </MultiTrigger.Conditions>
                     <MultiTrigger.Setters>
@@ -88,13 +143,66 @@
                 VerticalOptions="Center" />
         </Grid>
 
-        <CollectionView
+        <!--<CollectionView
             x:Name="PagesCollectionView"
-            Grid.Row="2"
-            Margin="0,0,0,10"
             HorizontalOptions="Center"
             IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
             ItemTemplate="{StaticResource ImageTemplateSelector}"
-            ItemsSource="{Binding Entities}" />
+            ItemsSource="{Binding Entities}">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" />
+            </CollectionView.ItemsLayout>
+        </CollectionView>-->
+
+        <ScrollView
+            x:Name="PagesScrollView"
+            HorizontalOptions="Center"
+            IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+            Scrolled="PagesScrollView_Scrolled">
+            <VerticalStackLayout
+                x:Name="MainContent"
+                BindableLayout.ItemTemplateSelector="{StaticResource ImageTemplateSelector}"
+                BindableLayout.ItemsSource="{Binding Entities}" />
+            <!--<CollectionView
+                x:Name="PagesCollectionView2"
+                HorizontalOptions="Center"
+                ItemTemplate="{StaticResource ImageTemplateSelector}"
+                ItemsSource="{Binding Entities}">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" />
+                </CollectionView.ItemsLayout>
+            </CollectionView>-->
+        </ScrollView>
+
+        <Grid
+            x:Name="SliderView"
+            Margin="15,0,15,50"
+            IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+            VerticalOptions="End">
+            <Border
+                BackgroundColor="#B0000000"
+                StrokeThickness="0"
+                VerticalOptions="End">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="30" />
+                </Border.StrokeShape>
+                <Slider
+                    x:Name="slider"
+                    Margin="15,6"
+                    HeightRequest="60"
+                    Maximum="{Binding Entities.Count}"
+                    MaximumTrackColor="White"
+                    Minimum="1"
+                    MinimumTrackColor="{StaticResource Tertiary}"
+                    ThumbColor="{StaticResource Tertiary}"
+                    ValueChanged="Slider_ValueChanged"
+                    VerticalOptions="Center" />
+
+                <!--<controls:RangeSlider
+                    MaximumValue="8"
+                    MinimumValue="0"
+                    StepValue="1" />-->
+            </Border>
+        </Grid>
     </Grid>
 </local:BasePage>

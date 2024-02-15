@@ -12,6 +12,9 @@
     xmlns:views="clr-namespace:Anikin.Views.Home"
     x:Name="this"
     x:DataType="viewModels:HomeViewModel">
+    <!--<Grid VerticalOptions="Center">
+        <Slider ThumbColor="Green" MaximumTrackColor="Yellow" MinimumTrackColor="Red" />
+    </Grid>-->
     <Grid>
         <berry:ViewSwitcher
             x:Name="Switcher"

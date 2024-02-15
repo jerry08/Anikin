@@ -23,7 +23,7 @@
                     Binding="{Binding IsSelected}"
                     TargetType="Border"
                     Value="True">
-                    <Setter Property="BackgroundColor" Value="#4287f5" />
+                    <Setter Property="BackgroundColor" Value="{StaticResource Tertiary}" />
                 </DataTrigger>
             </Border.Triggers>
             <Border.StrokeShape>
