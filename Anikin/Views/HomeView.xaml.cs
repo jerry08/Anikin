@@ -47,6 +47,9 @@ public partial class HomeView
             ApplicationEx.GetNavigationBarHeight() / DeviceDisplay.MainDisplayInfo.Density
         );
 
+        if (navigationBarHeight == 0)
+            navigationBarHeight = 10;
+
         if (navigationBarHeight > 0)
             ViewContent.Margin = new Thickness(0, 0, 0, navigationBarHeight + 10);
     }
