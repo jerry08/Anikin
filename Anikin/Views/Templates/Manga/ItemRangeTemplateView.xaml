@@ -38,6 +38,14 @@
                 FontSize="15"
                 HorizontalTextAlignment="Center"
                 Text="{Binding Name}">
+                <Label.Triggers>
+                    <DataTrigger
+                        Binding="{Binding IsSelected}"
+                        TargetType="Label"
+                        Value="True">
+                        <Setter Property="TextColor" Value="White" />
+                    </DataTrigger>
+                </Label.Triggers>
                 <Label.Behaviors>
                     <berry:TouchBehavior
                         Command="{Binding Parent.BindingContext.RangeSelectedCommand, Source={x:Reference this}}"

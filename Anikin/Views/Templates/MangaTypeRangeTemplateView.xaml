@@ -14,7 +14,8 @@
     <Grid BackgroundColor="Transparent">
         <Border
             Grid.Column="0"
-            BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray830}}"
+            BackgroundColor="{AppThemeBinding Light={StaticResource Gray300},
+                                              Dark={StaticResource Gray830}}"
             HorizontalOptions="FillAndExpand"
             StrokeThickness="0"
             VerticalOptions="FillAndExpand">
@@ -37,6 +38,14 @@
                 FontSize="15"
                 HorizontalTextAlignment="Center"
                 Text="{Binding Name}">
+                <Label.Triggers>
+                    <DataTrigger
+                        Binding="{Binding IsSelected}"
+                        TargetType="Label"
+                        Value="True">
+                        <Setter Property="TextColor" Value="White" />
+                    </DataTrigger>
+                </Label.Triggers>
                 <Label.Behaviors>
                     <berry:TouchBehavior
                         Command="{Binding Parent.BindingContext.RangeSelectedCommand, Source={x:Reference this}}"
