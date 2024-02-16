@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Anikin.Models;
@@ -42,7 +41,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     public ObservableRangeCollection<ListGroup<ProviderModel>> ProviderGroups { get; set; } = [];
 
     [ObservableProperty]
-    private Media? _entity;
+    private Media _entity = default!;
 
     private IAnimeInfo? Anime { get; set; }
 
@@ -141,9 +140,28 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     [RelayCommand]
     private async Task ShowProviderSourcesSheet()
     {
-        ChangeSourceSheet = new ChangeSourceSheet() { BindingContext = this };
+#if ANDROID || IOS
+        ChangeSourceSheet = new() { BindingContext = this };
+        await ChangeSourceSheet.ShowAsync();        
+#else
+        var providers = ProviderGroups.SelectMany(x => x).ToList();
+        var providersName = providers.Select(x => x.Name).ToList();
 
-        await ChangeSourceSheet.ShowAsync();
+        var result = await Shell.Current.DisplayActionSheet(
+            $"Select Provider ({_provider?.Name ?? "??"})",
+            "Cancel",
+            "Ok",
+            providersName.ToArray()
+        );
+        if (string.IsNullOrWhiteSpace(result))
+            return;
+
+        var index = providersName.IndexOf(result);
+        if (index <= 0)
+            return;
+
+        await SelectedProviderKeyChanged(providers[index].Key);
+#endif
     }
 
     [RelayCommand]

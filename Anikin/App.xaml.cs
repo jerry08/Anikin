@@ -9,9 +9,6 @@ using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Networking;
-#if ANDROID
-using Snackbar = Anikin.Controls.Snackbar;
-#endif
 
 namespace Anikin;
 
@@ -71,6 +68,9 @@ public partial class App : Application
         {
             if (showSnackbar)
             {
+#if WINDOWS
+                Snackbar.Make("No interent").Show();
+#else
                 Snackbar
                     .Make(
                         "No interent",
@@ -82,6 +82,7 @@ public partial class App : Application
                         }
                     )
                     .Show();
+#endif
             }
 
             return false;
@@ -90,6 +91,9 @@ public partial class App : Application
         {
             if (showSnackbar)
             {
+#if WINDOWS
+                Snackbar.Make("No interent").Show();
+#else
                 Snackbar
                     .Make(
                         "You're back online",
@@ -101,6 +105,7 @@ public partial class App : Application
                         }
                     )
                     .Show();
+#endif
             }
 
             return true;

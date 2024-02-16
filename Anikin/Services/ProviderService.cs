@@ -11,9 +11,6 @@ using Juro.Utils;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
 using Octokit;
-#if WINDOWS
-using Snackbar = CommunityToolkit.Maui.Alerts.Toast;
-#endif
 
 namespace Anikin.Services;
 
