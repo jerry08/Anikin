@@ -29,7 +29,7 @@ public partial class SettingsService : SettingsBase, INotifyPropertyChanged
 
     public bool ShowNonJapaneseAnime { get; set; }
 
-    public bool ShowNonJapaneseManga { get; set; }
+    public bool ShowNonJapaneseManga { get; set; } = true;
 
     public bool EnableDeveloperMode { get; set; }
 
