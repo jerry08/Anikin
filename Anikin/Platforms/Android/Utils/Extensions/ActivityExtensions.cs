@@ -12,8 +12,8 @@ using Android.Webkit;
 using Android.Widget;
 using AndroidX.Core.Content;
 using AndroidX.Core.View;
-using Google.Android.Material.Snackbar;
 using Microsoft.Maui.ApplicationModel;
+using GSnackbar = Google.Android.Material.Snackbar.Snackbar;
 using Path = System.IO.Path;
 
 namespace Anikin.Utils.Extensions;
@@ -47,10 +47,10 @@ public static class ActivityExtensions
 
         activity.RunOnUiThread(() =>
         {
-            var snackBar = Snackbar.Make(
+            var snackBar = GSnackbar.Make(
                 activity.Window!.DecorView!.FindViewById(Android.Resource.Id.Content)!,
                 text,
-                Snackbar.LengthLong
+                GSnackbar.LengthLong
             );
             snackBar.View.LayoutParameters = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WrapContent,
