@@ -4,7 +4,10 @@ using Anikin.Services;
 using Anikin.Services.AlertDialog;
 using Anikin.ViewModels;
 using Anikin.ViewModels.Home;
+using Anikin.ViewModels.Manga;
 using Anikin.Views;
+using Anikin.Views.Home;
+using Anikin.Views.Manga;
 using Anikin.Views.Settings;
 using Berry.Maui;
 using CommunityToolkit.Maui;
@@ -12,19 +15,11 @@ using CommunityToolkit.Maui.Markup;
 using Jita.AniList;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using Microsoft.Maui.LifecycleEvents;
 using Woka;
-using Anikin.Views.Home;
-using Anikin.ViewModels.Manga;
-using Anikin.Views.Manga;
-using Microsoft.Maui.Controls;
-using Berry.Maui.Handlers.Slider;
-
-
-
-
 
 #if ANDROID
 using Microsoft.Maui.Controls.Compatibility.Platform.Android;
@@ -51,8 +46,10 @@ public static class MauiProgram
                 //handlers.AddHandler<CollectionView, Handlers.CollectionViewHandler>();
 #endif
 
+#if ANDROID
                 //handlers.AddHandler<Slider, MaterialSliderHandler>();
-                handlers.AddHandler<Slider, BerrySliderHandler>();
+                handlers.AddHandler<Slider, Berry.Maui.Handlers.Slider.BerrySliderHandler>();
+#endif
 
                 //handlers.AddHandler<Entry, MaterialEntryHandler>();
                 //handlers.AddHandler<MaterialEntry, MaterialEntryHandler>();

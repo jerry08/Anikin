@@ -1,5 +1,4 @@
 ﻿using System.Timers;
-using Android.Widget;
 using Anikin.ViewModels.Manga;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
@@ -160,6 +159,20 @@ public partial class MangaReaderPage
         {
             HideControls();
         }
+
+        //var totalHeight = PagesScrollView
+        //    .ComputeDesiredSize(double.PositiveInfinity, double.PositiveInfinity)
+        //    .Height;
+        //
+        //var val = ((totalHeight / slider.Maximum) / e.ScrollY) - 1;
+        //
+        //if (val < slider.Minimum)
+        //    val = slider.Minimum;
+        //
+        //if (val > slider.Maximum)
+        //    val = slider.Maximum;
+        //
+        //slider.Value = (int)val;
     }
 
     //private void Slider_ValueChanged(object sender, ValueChangedEventArgs e)
@@ -212,7 +225,7 @@ public partial class MangaReaderPage
             .ComputeDesiredSize(double.PositiveInfinity, double.PositiveInfinity)
             .Height;
 
-        var val = (e.NewValue - 1) * (totalHeight / slider.Maximum);
+        var val = (totalHeight / slider.Maximum) * (e.NewValue - 1);
 
         await PagesScrollView.ScrollToAsync(PagesScrollView.X, val, false);
 

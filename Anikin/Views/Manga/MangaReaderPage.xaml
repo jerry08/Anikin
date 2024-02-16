@@ -41,7 +41,8 @@
     <Grid RowDefinitions="*">
         <Grid
             x:Name="TitleGrid"
-            Margin="10,60"
+            Margin="{OnPlatform Android='10,60',
+                                Default='10,20'}"
             HorizontalOptions="Fill"
             VerticalOptions="Start"
             ZIndex="1">
@@ -76,7 +77,8 @@
                                 Margin="0,0,20,0"
                                 FontAttributes="Bold"
                                 FontSize="19"
-                                Text="{Binding Title}" />
+                                Text="{Binding Title}"
+                                TextColor="White" />
                         </Grid>
                         <Grid Grid.Row="1" ColumnDefinitions="*,auto">
                             <Label
@@ -84,11 +86,13 @@
                                 Margin="0,0,20,0"
                                 FontSize="15"
                                 LineBreakMode="TailTruncation"
-                                Text="{Binding Media.Title.PreferredTitle}" />
+                                Text="{Binding Media.Title.PreferredTitle}"
+                                TextColor="White" />
                             <Label
                                 Grid.Column="1"
                                 FontSize="15"
-                                Text="{Binding ProviderName, StringFormat='({0})'}" />
+                                Text="{Binding ProviderName, StringFormat='({0})'}"
+                                TextColor="White" />
                         </Grid>
                     </VerticalStackLayout>
                 </Grid>
@@ -176,32 +180,33 @@
 
         <Grid
             x:Name="SliderView"
-            Margin="15,0,15,50"
+            Margin="{OnPlatform Android='15,0,15,50',
+                                Default='15,0,15,20'}"
             IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
             VerticalOptions="End">
             <Border
+                Padding="15,6"
                 BackgroundColor="#B0000000"
-                StrokeThickness="0"
-                VerticalOptions="End">
+                HeightRequest="60"
+                StrokeThickness="0">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="30" />
                 </Border.StrokeShape>
-                <Slider
-                    x:Name="slider"
-                    Margin="15,6"
-                    HeightRequest="60"
-                    Maximum="{Binding Entities.Count}"
-                    MaximumTrackColor="White"
-                    Minimum="1"
-                    MinimumTrackColor="{StaticResource Tertiary}"
-                    ThumbColor="{StaticResource Tertiary}"
-                    ValueChanged="Slider_ValueChanged"
-                    VerticalOptions="Center" />
+                <Grid VerticalOptions="Center">
+                    <Slider
+                        x:Name="slider"
+                        Maximum="{Binding Entities.Count}"
+                        MaximumTrackColor="White"
+                        Minimum="1"
+                        MinimumTrackColor="{StaticResource Tertiary}"
+                        ThumbColor="{StaticResource Tertiary}"
+                        ValueChanged="Slider_ValueChanged" />
 
-                <!--<controls:RangeSlider
-                    MaximumValue="8"
-                    MinimumValue="0"
-                    StepValue="1" />-->
+                    <!--<controls:RangeSlider
+                        MaximumValue="8"
+                        MinimumValue="0"
+                        StepValue="1" />-->
+                </Grid>
             </Border>
         </Grid>
     </Grid>
