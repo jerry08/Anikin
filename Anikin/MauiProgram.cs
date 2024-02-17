@@ -20,6 +20,8 @@ using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using Microsoft.Maui.LifecycleEvents;
 using Woka;
+using FFImageLoading.Maui;
+
 
 #if ANDROID
 using Microsoft.Maui.Controls.Compatibility.Platform.Android;
@@ -39,6 +41,7 @@ public static class MauiProgram
             .UseBerry()
             .UseBerryMediaElement()
             .ConfigureWorkarounds()
+            .UseFFImageLoading()
             .ConfigureEffects(e => { })
             .ConfigureMauiHandlers(handlers =>
             {

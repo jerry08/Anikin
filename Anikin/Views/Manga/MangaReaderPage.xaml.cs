@@ -1,4 +1,5 @@
-﻿using System.Timers;
+﻿using System;
+using System.Timers;
 using Anikin.ViewModels.Manga;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
@@ -10,24 +11,32 @@ public partial class MangaReaderPage
 {
     private Timer Timer = new();
 
+    public bool IsManuallyScrolling { get; private set; }
+
+    public int FirstVisibleItemIndex { get; private set; } = 1;
+
+    public bool IsSliderDragging { get; private set; }
+
     public MangaReaderPage(MangaReaderViewModel viewModel)
     {
         InitializeComponent();
 
         BindingContext = viewModel;
 
-        var tapGesture = new TapGestureRecognizer();
-        tapGesture.Tapped += OnTapped;
-        MainContent.GestureRecognizers.Add(tapGesture);
+        //var tapGesture = new TapGestureRecognizer();
+        //tapGesture.Tapped += OnTapped;
+        //MainContent.GestureRecognizers.Add(tapGesture);
 
         slider.DragStarted += (s, e) =>
         {
+            IsSliderDragging = true;
             StopInteraction();
         };
 
         slider.DragCompleted += (s, e) =>
         {
             StartInteraction();
+            IsSliderDragging = false;
         };
 
         //SizeChanged += (s, e) =>
@@ -74,6 +83,18 @@ public partial class MangaReaderPage
                 StartInteraction();
             }
         };
+
+        MainContent.Scrolled += CollectionView_Scrolled;
+
+        //MainContent.ScrollToRequested += (s, e) =>
+        //{
+        //    var gg = "";
+        //};
+        //
+        //MainContent.Scrolled += (s, e) =>
+        //{
+        //    var gg = "";
+        //};
     }
 
     void StartInteraction()
@@ -153,9 +174,26 @@ public partial class MangaReaderPage
         });
     }
 
+    private void CollectionView_Scrolled(object? sender, ItemsViewScrolledEventArgs e)
+    {
+        if (e.FirstVisibleItemIndex is -1 or 0)
+            return;
+
+        FirstVisibleItemIndex = e.FirstVisibleItemIndex;
+
+        if (!IsSliderDragging)
+        {
+            HideControls();
+
+            IsManuallyScrolling = true;
+            slider.Value = FirstVisibleItemIndex;
+            IsManuallyScrolling = false;
+        }
+    }
+
     private void PagesScrollView_Scrolled(object? sender, ScrolledEventArgs e)
     {
-        if (!IsValueChangedFromSlider)
+        if (!IsSliderDragging)
         {
             HideControls();
         }
@@ -215,21 +253,40 @@ public partial class MangaReaderPage
     //    }
     //}
 
-    public bool IsValueChangedFromSlider { get; set; }
+    //private async void Slider_ValueChanged(object? sender, ValueChangedEventArgs e)
+    //{
+    //    IsSliderDragging = true;
+    //
+    //    var totalHeight = PagesScrollView
+    //        .ComputeDesiredSize(double.PositiveInfinity, double.PositiveInfinity)
+    //        .Height;
+    //
+    //    var val = (totalHeight / slider.Maximum) * (e.NewValue - 1);
+    //
+    //    await PagesScrollView.ScrollToAsync(PagesScrollView.X, val, false);
+    //
+    //    IsSliderDragging = false;
+    //}
 
-    private async void Slider_ValueChanged(object? sender, ValueChangedEventArgs e)
+    private void Slider_ValueChanged(object? sender, ValueChangedEventArgs e)
     {
-        IsValueChangedFromSlider = true;
+        if (IsManuallyScrolling)
+            return;
 
-        var totalHeight = PagesScrollView
-            .ComputeDesiredSize(double.PositiveInfinity, double.PositiveInfinity)
-            .Height;
+        // SliderView becomes visible only after pages are completely loaded.
+        // If attempting to scroll while `Entities.Push(pages)`
+        if (!SliderView.IsVisible)
+            return;
 
-        var val = (totalHeight / slider.Maximum) * (e.NewValue - 1);
+        if (e.NewValue <= 0 || e.NewValue == e.OldValue)
+            return;
 
-        await PagesScrollView.ScrollToAsync(PagesScrollView.X, val, false);
+        //IsSliderDragging = true;
 
-        IsValueChangedFromSlider = false;
+        // Ensure value is `int` only so that an `object` is not passed.
+        MainContent.ScrollTo((int)e.NewValue);
+
+        //IsSliderDragging = false;
     }
 
     //private void Slider_ValueChanged(object sender, ValueChangedEventArgs e)

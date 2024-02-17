@@ -142,7 +142,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     {
 #if ANDROID || IOS
         ChangeSourceSheet = new() { BindingContext = this };
-        await ChangeSourceSheet.ShowAsync();        
+        await ChangeSourceSheet.ShowAsync();
 #else
         var providers = ProviderGroups.SelectMany(x => x).ToList();
         var providersName = providers.Select(x => x.Name).ToList();

@@ -6,6 +6,7 @@
     xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
     xmlns:controls="clr-namespace:Anikin.Controls"
     xmlns:converters="clr-namespace:Anikin.Converters"
+    xmlns:ff="clr-namespace:FFImageLoading.Maui;assembly=FFImageLoading.Compat.Maui"
     xmlns:local="clr-namespace:Anikin.Views"
     xmlns:materialDesign="clr-namespace:MaterialDesign"
     xmlns:models="clr-namespace:Juro.Core.Models.Manga;assembly=Juro.Core"
@@ -25,12 +26,28 @@
 
             <DataTemplate x:Key="ImageTemplate" x:DataType="models:IMangaChapterPage">
                 <Grid>
-                    <Image
+                    <!--<Image
                         Aspect="AspectFill"
                         HorizontalOptions="CenterAndExpand"
                         MaximumWidthRequest="600"
                         Source="{Binding Image}"
-                        VerticalOptions="CenterAndExpand" />
+                        VerticalOptions="CenterAndExpand">
+                        <Image.GestureRecognizers>
+                            <TapGestureRecognizer NumberOfTapsRequired="1" Tapped="OnTapped" />
+                        </Image.GestureRecognizers>
+                    </Image>-->
+                    <ff:CachedImage
+                        Aspect="AspectFill"
+                        HorizontalOptions="CenterAndExpand"
+                        VerticalOptions="CenterAndExpand">
+
+                        <ff:CachedImage.Source>
+                            <controls:BerryUriImageSource Headers="{Binding Headers}" Uri="{Binding Image}" />
+                        </ff:CachedImage.Source>
+                        <ff:CachedImage.GestureRecognizers>
+                            <TapGestureRecognizer NumberOfTapsRequired="1" Tapped="OnTapped" />
+                        </ff:CachedImage.GestureRecognizers>
+                    </ff:CachedImage>
                 </Grid>
             </DataTemplate>
 
@@ -132,7 +149,7 @@
                 <MultiTrigger TargetType="Grid">
                     <MultiTrigger.Conditions>
                         <BindingCondition Binding="{Binding IsBusy}" Value="False" />
-                        <BindingCondition Binding="{Binding IsVisible, Source={x:Reference PagesScrollView}}" Value="True" />
+                        <!--<BindingCondition Binding="{Binding IsVisible, Source={x:Reference PagesScrollView}}" Value="True" />-->
                         <BindingCondition Binding="{Binding Entities, Converter={StaticResource IsListNullOrEmptyConverter}}" Value="True" />
                     </MultiTrigger.Conditions>
                     <MultiTrigger.Setters>
@@ -158,7 +175,7 @@
             </CollectionView.ItemsLayout>
         </CollectionView>-->
 
-        <ScrollView
+        <!--<ScrollView
             x:Name="PagesScrollView"
             HorizontalOptions="Center"
             IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
@@ -167,16 +184,17 @@
                 x:Name="MainContent"
                 BindableLayout.ItemTemplateSelector="{StaticResource ImageTemplateSelector}"
                 BindableLayout.ItemsSource="{Binding Entities}" />
-            <!--<CollectionView
-                x:Name="PagesCollectionView2"
-                HorizontalOptions="Center"
-                ItemTemplate="{StaticResource ImageTemplateSelector}"
-                ItemsSource="{Binding Entities}">
-                <CollectionView.ItemsLayout>
-                    <LinearItemsLayout Orientation="Vertical" />
-                </CollectionView.ItemsLayout>
-            </CollectionView>-->
-        </ScrollView>
+        </ScrollView>-->
+
+        <CollectionView
+            x:Name="MainContent"
+            HorizontalOptions="Center"
+            ItemTemplate="{StaticResource ImageTemplateSelector}"
+            ItemsSource="{Binding Entities}">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" />
+            </CollectionView.ItemsLayout>
+        </CollectionView>
 
         <Grid
             x:Name="SliderView"
