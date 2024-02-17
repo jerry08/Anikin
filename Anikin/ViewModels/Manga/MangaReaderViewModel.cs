@@ -128,7 +128,7 @@ public partial class MangaReaderViewModel
                 return;
             }
 
-            //await DownloadPagesAsync(pages);
+            await DownloadPagesAsync(pages);
 
             Entities.Push(pages);
             OnPropertyChanged(nameof(Entities));

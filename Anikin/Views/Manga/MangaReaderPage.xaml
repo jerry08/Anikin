@@ -39,11 +39,11 @@
                     <ff:CachedImage
                         Aspect="AspectFill"
                         HorizontalOptions="CenterAndExpand"
+                        Source="{Binding Image}"
                         VerticalOptions="CenterAndExpand">
-
-                        <ff:CachedImage.Source>
+                        <!--<ff:CachedImage.Source>
                             <controls:BerryUriImageSource Headers="{Binding Headers}" Uri="{Binding Image}" />
-                        </ff:CachedImage.Source>
+                        </ff:CachedImage.Source>-->
                         <ff:CachedImage.GestureRecognizers>
                             <TapGestureRecognizer NumberOfTapsRequired="1" Tapped="OnTapped" />
                         </ff:CachedImage.GestureRecognizers>
