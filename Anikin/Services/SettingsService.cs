@@ -2,14 +2,14 @@
 using System.IO;
 using Anikin.ViewModels.Components;
 using Cogwheel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
-using PropertyChanged;
 
 namespace Anikin.Services;
 
-[AddINotifyPropertyChangedInterface]
-public partial class SettingsService : SettingsBase, INotifyPropertyChanged
+[INotifyPropertyChanged]
+public partial class SettingsService : SettingsBase
 {
     public AppTheme AppTheme { get; set; } = AppTheme.Dark;
 
