@@ -5,6 +5,8 @@ using Anikin.Views;
 using Anikin.Views.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Jita.AniList;
+using Jita.AniList.Models;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 
@@ -12,11 +14,24 @@ namespace Anikin.ViewModels;
 
 public partial class ProfileViewModel : BaseViewModel
 {
+    private readonly AniClient _aniClient;
+
     [ObservableProperty]
     private SettingsService _settings = default!;
 
-    public ProfileViewModel(SettingsService settingsService)
+    [ObservableProperty]
+    string? _homeAnimeListImage;
+
+    [ObservableProperty]
+    string? _homeMangaListImage;
+
+    [ObservableProperty]
+    User? _user;
+
+    public ProfileViewModel(AniClient aniClient, SettingsService settingsService)
     {
+        _aniClient = aniClient;
+
         Settings = settingsService;
         Settings.Load();
 
@@ -26,6 +41,57 @@ public partial class ProfileViewModel : BaseViewModel
 
             App.IsInDeveloperMode = Settings.EnableDeveloperMode;
         };
+
+        HomeAnimeListImage ??= "https://bit.ly/31bsIHq";
+        HomeMangaListImage ??= "https://bit.ly/2ZGfcuG";
+
+        Load();
+    }
+
+    protected override async Task LoadCore()
+    {
+        //return base.LoadCore();
+
+        if (string.IsNullOrWhiteSpace(Settings.AnilistAccessToken))
+            return;
+
+        try
+        {
+            User = await _aniClient.GetAuthenticatedUserAsync();
+            if (User is null)
+                return;
+
+            var result = await _aniClient.GetUserEntriesAsync(
+                User.Id,
+                new()
+                {
+                    Type = MediaType.Anime,
+                    Sort = MediaEntrySort.Score,
+                    SortDescending = true
+                }
+            );
+
+            if (result.Data.Length > 0)
+            {
+                HomeAnimeListImage = result.Data[0].Media?.BannerImageUrl?.ToString();
+            }
+
+            result = await _aniClient.GetUserEntriesAsync(
+                User.Id,
+                new()
+                {
+                    Type = MediaType.Manga,
+                    Sort = MediaEntrySort.Score,
+                    SortDescending = true
+                }
+            );
+
+            if (result.Data.Length > 0)
+            {
+                HomeMangaListImage = result.Data[0].Media?.BannerImageUrl?.ToString();
+            }
+        }
+        catch { }
     }
 
     [RelayCommand]
@@ -75,14 +141,16 @@ public partial class ProfileViewModel : BaseViewModel
         //
         //return;
 
-        await Shell.Current.GoToAsync(nameof(AnilistLoginView));
-        return;
-
         var clientID = "14733";
+        var url =
+            $"https://anilist.co/api/v2/oauth/authorize?client_id={clientID}&response_type=token";
 
-        var result = await Browser.Default.OpenAsync(
-            $"https://anilist.co/api/v2/oauth/authorize?client_id={clientID}&response_type=token"
-        );
+#if WINDOWS
+        //await Windows.System.Launcher.LaunchUriAsync(new(url));
+        await Browser.Default.OpenAsync(url);
+#else
+        await Shell.Current.GoToAsync(nameof(AnilistLoginView));
+#endif
     }
 
     [RelayCommand]

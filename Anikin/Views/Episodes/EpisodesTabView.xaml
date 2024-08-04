@@ -63,12 +63,7 @@
 
         <Grid Margin="20,0,10,0" ColumnDefinitions="auto,*">
             <HorizontalStackLayout Grid.Column="0" Spacing="10">
-                <Switch
-                    IsToggled="{Binding IsDubSelected}"
-                    OnColor="{StaticResource Primary}"
-                    ThumbColor="{AppThemeBinding Light=Black,
-                                                 Dark={StaticResource Secondary}}"
-                    VerticalOptions="Center" />
+                <Switch IsToggled="{Binding IsDubSelected}" VerticalOptions="Center" />
                 <Label
                     FontAttributes="Bold"
                     FontFamily="SoraBold"

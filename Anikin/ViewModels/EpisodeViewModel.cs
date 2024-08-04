@@ -47,7 +47,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
     public ObservableRangeCollection<EpisodeRange> Ranges { get; set; } = [];
 
-    public List<Episode[]> EpisodeChunks { get; set; } = [];
+    private List<Episode[]> EpisodeChunks { get; set; } = [];
 
     [ObservableProperty]
     private string? _searchingText;
@@ -353,6 +353,19 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         range.IsSelected = true;
 
         Entities.ReplaceRange(range.Episodes);
+    }
+
+    [RelayCommand]
+    private void Sort()
+    {
+        for (var i = 0; i < Ranges.Count; i++)
+        {
+            Ranges[i].IsSelected = false;
+        }
+
+        //range.IsSelected = true;
+        //
+        //Entities.ReplaceRange(range.Episodes);
     }
 
     private void RefreshEpisodesProgress()

@@ -18,8 +18,7 @@ internal class StreamWrapper : Stream
 
     public StreamWrapper(Stream wrapped, IDisposable? additionalDisposable)
     {
-        if (wrapped == null)
-            throw new ArgumentNullException("wrapped");
+        ArgumentNullException.ThrowIfNull(wrapped);
 
         _wrapped = wrapped;
         _additionalDisposable = additionalDisposable;
