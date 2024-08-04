@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using Anikin.Services;
 using Berry.Maui;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
 
@@ -25,9 +26,15 @@ public partial class AnilistLoginView
         base.OnAppearing();
 
         var clientID = "14733";
-
-        webView.Source =
+        var url =
             $"https://anilist.co/api/v2/oauth/authorize?client_id={clientID}&response_type=token";
+
+        ////await Windows.System.Launcher.LaunchUriAsync(new(url));
+        //await Browser.Default.OpenAsync(url);
+        //
+        //return;
+
+        webView.Source = url;
 
         webView.Navigated += (s, e) =>
         {

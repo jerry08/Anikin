@@ -12,148 +12,283 @@
     xmlns:viewModels="clr-namespace:Anikin.ViewModels"
     x:Name="this"
     x:DataType="viewModels:ProfileViewModel">
-    <Grid
-        Margin="16,60"
-        RowDefinitions="auto,*"
-        RowSpacing="5"
-        VerticalOptions="Center">
-        <VerticalStackLayout>
-            <Border Stroke="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="15" />
-                </Border.StrokeShape>
-                <Grid>
-                    <Grid.Behaviors>
-                        <berry:TouchBehavior Command="{Binding BindingContext.LoginWithAnilistCommand, Source={x:Reference this}}" NativeAnimation="True" />
-                    </Grid.Behaviors>
-                    <Button
-                        Margin="0,5"
-                        BackgroundColor="Transparent"
-                        BorderColor="White"
-                        BorderWidth="0"
-                        FontAttributes="Bold"
-                        FontSize="16"
-                        Text="Anilist Login"
-                        TextColor="{AppThemeBinding Light={StaticResource Black},
-                                                    Dark={StaticResource White}}"
-                        VerticalOptions="Center" />
+    <ScrollView>
+        <Grid
+            Margin="30,60"
+            RowDefinitions="auto,*"
+            RowSpacing="5"
+            VerticalOptions="Center">
+            <VerticalStackLayout Spacing="10">
+                <Grid ColumnDefinitions="*,auto">
+                    <VerticalStackLayout Grid.Column="0">
+                        <Label
+                            FontAttributes="Bold"
+                            FontFamily="SoraBold"
+                            Text="{Binding User.Name}" />
+                        <Label FontAttributes="Bold">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Episodes Watched:" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                        <Label FontAttributes="Bold">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Chapters Read:" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                    </VerticalStackLayout>
+
+                    <Border
+                        Grid.Column="1"
+                        Stroke="{AppThemeBinding Light={StaticResource Tertiary},
+                                                 Dark={StaticResource White}}"
+                        StrokeThickness="0.3">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="30" />
+                        </Border.StrokeShape>
+                        <Border StrokeThickness="0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="15" />
+                            </Border.StrokeShape>
+                            <Grid>
+                                <Image
+                                    Aspect="Center"
+                                    HeightRequest="60"
+                                    Source="{Binding User.Avatar.LargeImageUrl}"
+                                    WidthRequest="60" />
+                            </Grid>
+                        </Border>
+                    </Border>
                 </Grid>
-            </Border>
 
-            <!--<Border>
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="15" />
-                </Border.StrokeShape>
-                <Grid>
-                    <Grid.Behaviors>
-                        <berry:TouchBehavior Command="{Binding BindingContext.GoToExtensionsSettingsCommand, Source={x:Reference this}}" NativeAnimation="True" />
-                    </Grid.Behaviors>
-                    <Button
-                        Margin="0,5"
-                        BackgroundColor="Transparent"
-                        BorderColor="White"
-                        BorderWidth="0"
-                        FontAttributes="Bold"
-                        FontSize="16"
-                        Text="Extensions"
-                        TextColor="White"
-                        VerticalOptions="Center" />
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Grid Grid.Column="0">
+                        <Grid.Behaviors>
+                            <berry:TouchBehavior Command="{Binding BindingContext.LoginWithAnilistCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                        </Grid.Behaviors>
+                        <Border
+                            Opacity="0.5"
+                            Stroke="{AppThemeBinding Light={StaticResource Tertiary},
+                                                     Dark={StaticResource White}}"
+                            StrokeThickness="1.2">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="15" />
+                            </Border.StrokeShape>
+                            <Border StrokeThickness="0">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15" />
+                                </Border.StrokeShape>
+                                <Grid>
+                                    <Image
+                                        Aspect="AspectFill"
+                                        HeightRequest="70"
+                                        Source="{Binding HomeAnimeListImage}" />
+                                </Grid>
+                            </Border>
+                        </Border>
+
+                        <VerticalStackLayout
+                            HorizontalOptions="Center"
+                            Spacing="4"
+                            VerticalOptions="Center">
+                            <Label
+                                FontAttributes="Bold"
+                                FontFamily="SoraBold"
+                                FontSize="15"
+                                Text="Anime List"
+                                TextTransform="Uppercase" />
+
+                            <BoxView
+                                HeightRequest="1.8"
+                                WidthRequest="60"
+                                Color="{StaticResource Tertiary}" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <Grid Grid.Column="1">
+                        <Grid.Behaviors>
+                            <berry:TouchBehavior Command="{Binding BindingContext.LoginWithAnilistCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                        </Grid.Behaviors>
+                        <Border
+                            Opacity="0.5"
+                            Stroke="{AppThemeBinding Light={StaticResource Tertiary},
+                                                     Dark={StaticResource White}}"
+                            StrokeThickness="1.2">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="15" />
+                            </Border.StrokeShape>
+                            <Border StrokeThickness="0">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15" />
+                                </Border.StrokeShape>
+                                <Grid>
+                                    <Image
+                                        Aspect="AspectFill"
+                                        HeightRequest="70"
+                                        Source="{Binding HomeMangaListImage}" />
+                                </Grid>
+                            </Border>
+                        </Border>
+
+                        <VerticalStackLayout
+                            HorizontalOptions="Center"
+                            Spacing="4"
+                            VerticalOptions="Center">
+                            <Label
+                                FontAttributes="Bold"
+                                FontFamily="SoraBold"
+                                FontSize="15"
+                                Text="Manga List"
+                                TextTransform="Uppercase" />
+
+                            <BoxView
+                                HeightRequest="1.8"
+                                WidthRequest="60"
+                                Color="{StaticResource Tertiary}" />
+                        </VerticalStackLayout>
+                    </Grid>
                 </Grid>
-            </Border>-->
 
-            <!--  Show non-japanese anime  -->
-            <Grid
-                Padding="0,5"
-                ColumnDefinitions="*,auto"
-                RowDefinitions="*,*">
-                <Label
-                    Margin="0,0,5,0"
-                    FontAttributes="Bold"
-                    FontSize="15"
-                    Text="Show non-japanese anime:"
-                    VerticalOptions="Center" />
-                <Label
-                    Grid.Row="1"
-                    Grid.Column="0"
-                    Text="Disables Japanese-only filter. Shows Japanese anime, Korean anime, Chinese anime, etc." />
-                <Switch Grid.ColumnSpan="2" IsToggled="{Binding Settings.ShowNonJapaneseAnime}" />
-            </Grid>
+                <Border Stroke="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="15" />
+                    </Border.StrokeShape>
+                    <Grid>
+                        <Grid.Behaviors>
+                            <berry:TouchBehavior Command="{Binding BindingContext.LoginWithAnilistCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                        </Grid.Behaviors>
+                        <Button
+                            Margin="0,5"
+                            BackgroundColor="Transparent"
+                            BorderColor="White"
+                            BorderWidth="0"
+                            FontAttributes="Bold"
+                            FontSize="16"
+                            Text="Anilist Login"
+                            TextColor="{AppThemeBinding Light={StaticResource Black},
+                                                        Dark={StaticResource White}}"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </Border>
 
-            <!--  Show non-japanese manga  -->
-            <Grid
-                Padding="0,5"
-                ColumnDefinitions="*,auto"
-                RowDefinitions="*,*">
-                <Label
-                    Margin="0,0,5,0"
-                    FontAttributes="Bold"
-                    FontSize="15"
-                    Text="Show non-japanese manga:"
-                    VerticalOptions="Center" />
-                <Label
-                    Grid.Row="1"
-                    Grid.Column="0"
-                    Text="Disables Japanese-only filter. Shows Japanese manga, Korean manga, Chinese manga, etc." />
-                <Switch Grid.ColumnSpan="2" IsToggled="{Binding Settings.ShowNonJapaneseManga}" />
-            </Grid>
+                <!--<Border>
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="15" />
+                    </Border.StrokeShape>
+                    <Grid>
+                        <Grid.Behaviors>
+                            <berry:TouchBehavior Command="{Binding BindingContext.GoToExtensionsSettingsCommand, Source={x:Reference this}}" NativeAnimation="True" />
+                        </Grid.Behaviors>
+                        <Button
+                            Margin="0,5"
+                            BackgroundColor="Transparent"
+                            BorderColor="White"
+                            BorderWidth="0"
+                            FontAttributes="Bold"
+                            FontSize="16"
+                            Text="Extensions"
+                            TextColor="White"
+                            VerticalOptions="Center" />
+                    </Grid>
+                </Border>-->
 
-            <!--  Developers Mode  -->
-            <Grid
-                Padding="0,5"
-                ColumnDefinitions="*,auto"
-                RowDefinitions="*,*">
-                <Label
-                    Margin="0,0,5,0"
-                    FontAttributes="Bold"
-                    FontSize="15"
-                    Text="Developer Mode:"
-                    VerticalOptions="Center" />
-                <Label
-                    Grid.Row="1"
-                    Grid.Column="0"
-                    Text="Enabling Developer Mode allows you to see exceptions when thrown" />
-                <Switch Grid.ColumnSpan="2" IsToggled="{Binding Settings.EnableDeveloperMode}" />
-            </Grid>
+                <!--  Show non-japanese anime  -->
+                <Grid
+                    Padding="0,5"
+                    ColumnDefinitions="*,auto"
+                    RowDefinitions="*,*">
+                    <Label
+                        Margin="0,0,5,0"
+                        FontAttributes="Bold"
+                        FontSize="15"
+                        Text="Show non-japanese anime:"
+                        VerticalOptions="Center" />
+                    <Label
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Text="Disables Japanese-only filter. Shows Japanese anime, Korean anime, Chinese anime, etc." />
+                    <Switch Grid.ColumnSpan="2" IsToggled="{Binding Settings.ShowNonJapaneseAnime}" />
+                </Grid>
 
-            <!--  Theme  -->
-            <Grid
-                Margin="0,5,0,0"
-                Padding="20,0"
-                ColumnDefinitions="auto,*">
-                <Label
-                    Margin="0,0,5,0"
-                    FontAttributes="Bold"
-                    FontSize="15"
-                    Text="Theme:"
-                    VerticalOptions="Center" />
-                <Picker
-                    x:Name="ThemePicker"
-                    Title="Themes"
-                    Grid.Column="1"
-                    FontSize="16"
-                    SelectedIndex="{Binding Settings.AppTheme}">
-                    <Picker.ItemsSource>
-                        <x:Array Type="{x:Type x:String}">
-                            <x:String>Default</x:String>
-                            <x:String>Light</x:String>
-                            <x:String>Dark</x:String>
-                        </x:Array>
-                    </Picker.ItemsSource>
-                    <Picker.Behaviors>
-                        <toolkit:EventToCommandBehavior
-                            Command="{Binding ThemeSelectedCommand}"
-                            CommandParameter="{Binding Source={x:Reference ThemePicker}, Path=SelectedIndex}"
-                            EventName="SelectedIndexChanged" />
-                    </Picker.Behaviors>
-                </Picker>
-            </Grid>
-        </VerticalStackLayout>
+                <!--  Show non-japanese manga  -->
+                <Grid
+                    Padding="0,5"
+                    ColumnDefinitions="*,auto"
+                    RowDefinitions="*,*">
+                    <Label
+                        Margin="0,0,5,0"
+                        FontAttributes="Bold"
+                        FontSize="15"
+                        Text="Show non-japanese manga:"
+                        VerticalOptions="Center" />
+                    <Label
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Text="Disables Japanese-only filter. Shows Japanese manga, Korean manga, Chinese manga, etc." />
+                    <Switch Grid.ColumnSpan="2" IsToggled="{Binding Settings.ShowNonJapaneseManga}" />
+                </Grid>
 
-        <!--  Webview causing other views when navigating to lose touch effect color  -->
-        <!--<WebView
-            x:Name="webView"
-            Grid.Row="1"
-            HorizontalOptions="FillAndExpand"
-            VerticalOptions="FillAndExpand" />-->
-    </Grid>
+                <!--  Developers Mode  -->
+                <Grid
+                    Padding="0,5"
+                    ColumnDefinitions="*,auto"
+                    RowDefinitions="*,*">
+                    <Label
+                        Margin="0,0,5,0"
+                        FontAttributes="Bold"
+                        FontSize="15"
+                        Text="Developer Mode:"
+                        VerticalOptions="Center" />
+                    <Label
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Text="Enabling Developer Mode allows you to see exceptions when thrown" />
+                    <Switch Grid.ColumnSpan="2" IsToggled="{Binding Settings.EnableDeveloperMode}" />
+                </Grid>
+
+                <!--  Theme  -->
+                <Grid
+                    Margin="0,5,0,0"
+                    Padding="20,0"
+                    ColumnDefinitions="auto,*">
+                    <Label
+                        Margin="0,0,5,0"
+                        FontAttributes="Bold"
+                        FontSize="15"
+                        Text="Theme:"
+                        VerticalOptions="Center" />
+                    <Picker
+                        x:Name="ThemePicker"
+                        Title="Themes"
+                        Grid.Column="1"
+                        FontSize="16"
+                        SelectedIndex="{Binding Settings.AppTheme}">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>Default</x:String>
+                                <x:String>Light</x:String>
+                                <x:String>Dark</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                        <Picker.Behaviors>
+                            <toolkit:EventToCommandBehavior
+                                Command="{Binding ThemeSelectedCommand}"
+                                CommandParameter="{Binding Source={x:Reference ThemePicker}, Path=SelectedIndex}"
+                                EventName="SelectedIndexChanged" />
+                        </Picker.Behaviors>
+                    </Picker>
+                </Grid>
+            </VerticalStackLayout>
+
+            <!--  Webview causing other views when navigating to lose touch effect color  -->
+            <!--<WebView
+                x:Name="webView"
+                Grid.Row="1"
+                HorizontalOptions="FillAndExpand"
+                VerticalOptions="FillAndExpand" />-->
+        </Grid>
+    </ScrollView>
 </ContentView>
