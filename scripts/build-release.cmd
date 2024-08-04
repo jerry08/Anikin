@@ -1,2 +1,2 @@
-dotnet publish .. -c Release -f:net7.0-android
+dotnet publish .. -c Release -f:net8.0-android
 pause
