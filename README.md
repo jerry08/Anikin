@@ -50,7 +50,7 @@ Anikin parses website data and filter required info, thus It removes the ads for
 ### Official Discord Server
 
 <p align="center">
- <a href="https://discord.com/invite/nZj46N5a">
+ <a href="https://discord.com/invite/U7XweVubJN">
   <img src="https://invidget.switchblade.xyz/mhxsSMy2Nf">
  </a>
 </p>
