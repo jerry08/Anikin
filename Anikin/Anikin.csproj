@@ -72,7 +72,7 @@
     <PackageReference Include="CommunityToolkit.Maui" Version="9.0.1" />
     <PackageReference Include="CommunityToolkit.Maui.Markup" Version="4.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-    <PackageReference Include="CSharpier.MsBuild" Version="0.28.2" PrivateAssets="all" />
+    <PackageReference Include="CSharpier.MsBuild" Version="0.29.0" PrivateAssets="all" />
     <PackageReference Include="FFImageLoadingCompat.Maui" Version="0.1.1" />
     <PackageReference Include="Httpz" Version="1.1.6" />
     <PackageReference Include="Jita.AniList" Version="0.0.4" />
@@ -80,8 +80,8 @@
     <PackageReference Include="Juro" Version="1.4.2" />
     <PackageReference Include="Juro.Providers" Version="1.4.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.71" />
-    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.71" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.80" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.80" />
     <PackageReference Include="Octokit" Version="13.0.1" />
     <PackageReference Include="Plugin.ContextMenuContainer" Version="1.0.7" />
     <PackageReference Include="SkiaSharp.Extended.UI.Maui" Version="2.0.0" />
