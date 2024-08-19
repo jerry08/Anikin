@@ -26,16 +26,6 @@
 
             <DataTemplate x:Key="ImageTemplate" x:DataType="models:IMangaChapterPage">
                 <Grid>
-                    <!--<Image
-                        Aspect="AspectFill"
-                        HorizontalOptions="CenterAndExpand"
-                        MaximumWidthRequest="600"
-                        Source="{Binding Image}"
-                        VerticalOptions="CenterAndExpand">
-                        <Image.GestureRecognizers>
-                            <TapGestureRecognizer NumberOfTapsRequired="1" Tapped="OnTapped" />
-                        </Image.GestureRecognizers>
-                    </Image>-->
                     <ff:CachedImage
                         Aspect="AspectFill"
                         HorizontalOptions="CenterAndExpand"
@@ -51,7 +41,25 @@
                 </Grid>
             </DataTemplate>
 
-            <local:MainDataTemplateSelector x:Key="ImageTemplateSelector" DataTemplate="{StaticResource ImageTemplate}" />
+            <DataTemplate x:Key="WindowsImageTemplate" x:DataType="models:IMangaChapterPage">
+                <Grid>
+                    <Image
+                        Aspect="AspectFill"
+                        HorizontalOptions="CenterAndExpand"
+                        MaximumWidthRequest="600"
+                        Source="{Binding Image}"
+                        VerticalOptions="CenterAndExpand">
+                        <Image.GestureRecognizers>
+                            <TapGestureRecognizer NumberOfTapsRequired="1" Tapped="OnTapped" />
+                        </Image.GestureRecognizers>
+                    </Image>
+                </Grid>
+            </DataTemplate>
+
+            <local:MainDataTemplateSelector
+                x:Key="ImageTemplateSelector"
+                DataTemplate="{StaticResource ImageTemplate}"
+                WindowsDataTemplate="{StaticResource WindowsImageTemplate}" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
