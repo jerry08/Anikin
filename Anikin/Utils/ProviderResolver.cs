@@ -79,7 +79,14 @@ internal static class ProviderResolver
 
     public static List<IMangaProvider> GetMangaProviders()
     {
-        return [new MangaPill(), new MangaKakalot(), new MangaKatana(), new Mangadex()];
+        return
+        [
+            new MangaPill(),
+            new MangaKakalot(),
+            new MangaKatana(),
+            new Mangadex(),
+            new AsuraScans()
+        ];
 
         try
         {
