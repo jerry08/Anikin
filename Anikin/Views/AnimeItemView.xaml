@@ -74,6 +74,7 @@
                             </HorizontalStackLayout>
                         </Border>-->
                         <Border
+                            HeightRequest="40"
                             HorizontalOptions="End"
                             StrokeThickness="0"
                             TranslationY="10"
@@ -99,7 +100,7 @@
                                         <FontImageSource
                                             FontFamily="Material"
                                             Glyph="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
-                                            Size="17"
+                                            Size="40"
                                             Color="Gold" />
                                     </Image.Source>
                                 </Image>
