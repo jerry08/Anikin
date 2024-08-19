@@ -282,6 +282,12 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
 
             RefreshProgress();
 
+#if WINDOWS
+            // MAUI issue on Windows where list is reversed in view although it's the
+            // correct order here in the ViewModel, so reverse the list to display correct order.
+            ranges.Reverse();
+#endif
+
             Ranges.Push(ranges);
             OnPropertyChanged(nameof(Ranges));
 
