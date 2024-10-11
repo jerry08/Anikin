@@ -12,7 +12,7 @@ env:
 jobs:
   # MAUI Android Build
   build-android:
-    runs-on: windows-latest
+    #runs-on: windows-latest
 
     env:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -20,21 +20,44 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: true
 
     name: Android Build
+    strategy:
+      matrix:
+        rid:
+          - android
+          - android-arm
+          - android-arm64
+          - android-x86
+          - android-x64
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Cook KeyStore
+      - name: Create keystore file
         run:  echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.keystore
         shell: bash
 
       - name: Install .NET
-        uses: actions/setup-dotnet@v2
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
       - name: Install MAUI Workload
-        run: dotnet workload install maui --ignore-failed-sources
+        #run: dotnet workload install maui --ignore-failed-sources
+        run: dotnet workload install maui-android
+
+      # Setup JDK and Android SDK on Linux
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 22
+          distribution: adopt
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Restore Dependencies
         run: dotnet restore Anikin/
@@ -50,29 +73,38 @@ jobs:
             -p:AndroidSigningKeyAlias="DrMedia"
             -p:AndroidSigningKeyPass="${{ secrets.PASSWORD }}"
             -p:CSharpier_Bypass=true
+            ${{ startsWith(matrix.rid, 'android-') && format('{0} {1}', '--runtime', matrix.rid) || '' }}
 
       - name: Rename file
         run: |
           set -e
 
-          mv Anikin/bin/Release/net8.0-android/com.oneb.anikin-Signed.apk Anikin.apk
+          mv Anikin/bin/Release/net8.0-android${{ startsWith(matrix.rid, 'android-') && format('{0}{1}', '/', matrix.rid) || '' }}/*.apk Anikin-${{ matrix.rid }}.apk
         shell: bash
         
-      - name: Upload Android Artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload artifactss
+        uses: actions/upload-artifact@v4
         with:
-          name: android-build
-          path: Anikin.apk
+          name: Anikin-${{ matrix.rid }}
+          path: Anikin-${{ matrix.rid }}.apk
 
   build-windows:
     runs-on: windows-latest
     name: Windows Build
+
+    strategy:
+      matrix:
+        rid:
+          - win10-arm64
+          - win10-x86
+          - win10-x64
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install .NET
-        uses: actions/setup-dotnet@v2
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
@@ -82,20 +114,20 @@ jobs:
       - name: Restore Dependencies
         run: dotnet restore Anikin/
 
-      - name: Publish MAUI Windows (x64)
+      - name: Publish MAUI Windows
         run: >
             dotnet publish Anikin/
             -c Release
             -f net8.0-windows10.0.19041.0
-            -p:RuntimeIdentifierOverride=win10-x64
+            -p:RuntimeIdentifierOverride=${{ matrix.rid }}
             -p:WindowsPackageType=None
             -o build/windows
-            /p:CSharpier_Bypass=true
+            -p:CSharpier_Bypass=true
 
-      - name: Upload Windows Artifact
-        uses: actions/upload-artifact@v2.3.1
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: windows-ci-build
+          name: Anikin-${{ matrix.rid }}
           path: build/windows/
 
   deploy:
@@ -111,7 +143,7 @@ jobs:
     steps:
       # Checkout required for running git commands, etc.
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set variables
         run: |
@@ -129,13 +161,13 @@ jobs:
           echo "Prerelease_Param=$Prerelease_Param" >> $GITHUB_ENV
 
       - name: Download Android artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: android-build
           path: Anikin/Android/
 
       - name: Download Windows artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: windows-ci-build
           path: build/windows/
@@ -190,7 +222,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set variables
         run: |
