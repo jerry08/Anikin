@@ -1,9 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Anikin.Services;
 using Anikin.Utils;
+using Anikin.Utils.Subtitles;
 using Anikin.ViewModels.Framework;
 using Anikin.Views.BottomSheets;
 using Berry.Maui;
@@ -13,6 +19,9 @@ using Berry.Maui.Views;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Httpz.Utils.Extensions;
+using Juro.Clients;
+using Juro.Core.Models;
 using Juro.Core.Models.Anime;
 using Juro.Core.Models.Videos;
 using Juro.Core.Providers;
@@ -24,16 +33,21 @@ namespace Anikin.ViewModels;
 
 public partial class VideoPlayerViewModel : BaseViewModel
 {
+    private readonly SettingsService _settingsService = new();
     private readonly PlayerSettings _playerSettings = new();
     private readonly DisplayOrientation _initialOrientation;
 
-    private readonly IAnimeProvider? _provider = ProviderResolver.GetAnimeProvider();
+    private readonly AnimeApiClient _apiClient = new(Constants.ApiEndpoint);
 
     private bool IsDisposed { get; set; }
 
     public Media Media { get; private set; }
     public IAnimeInfo Anime { get; private set; }
     public VideoSource? Video { get; set; }
+    public List<SubtitleItem> SubtitleItems { get; set; } = [];
+
+    [ObservableProperty]
+    string? _currentSubtitle;
 
     public Episode Episode { get; private set; }
 
@@ -67,6 +81,10 @@ public partial class VideoPlayerViewModel : BaseViewModel
         Media = media;
 
         _initialOrientation = DeviceDisplay.Current.MainDisplayInfo.Orientation;
+
+        _settingsService.Load();
+
+        _apiClient.ProviderKey = _settingsService.LastProviderKey!;
 
         IsBusy = true;
 
@@ -190,6 +208,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
         Shell.Current.Navigating -= Current_Navigating;
         ApplicationEx.SetOrientation(_initialOrientation);
         Controller.Dispose();
+        (MediaElement as MediaElement)?.Dispose();
         IsDisposed = true;
     }
 
@@ -242,7 +261,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
     public async Task ShowSpeedSelector()
     {
         var speeds = _playerSettings.GetSpeeds();
-        var speedsName = speeds.Select(x => $"{x}x").ToList();
+        var speedsName = speeds.Select(speed => $"{speed}x").ToList();
 
         var speedName = await Shell.Current.DisplayActionSheet(
             "Playback Speed",
@@ -264,14 +283,6 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
     protected override async Task LoadCore()
     {
-        if (_provider is null)
-        {
-            IsBusy = false;
-            IsRefreshing = false;
-            await Toast.Make("No providers installed").Show();
-            return;
-        }
-
         IsBusy = true;
 
         try
@@ -279,6 +290,38 @@ public partial class VideoPlayerViewModel : BaseViewModel
             var video = Video ?? await GetVideoAsync();
             if (video is null)
                 return;
+
+            var language = CultureInfo.CurrentCulture.IsNeutralCulture
+                ? CultureInfo.CurrentCulture.EnglishName
+                : CultureInfo.CurrentCulture.Parent.EnglishName;
+
+            var subtitle = video.Subtitles.Find(x =>
+                x.Language.Equals(language, StringComparison.OrdinalIgnoreCase)
+            );
+            if (subtitle is not null)
+            {
+                var http = new HttpClient();
+
+                var subtitlesStr = await http.ExecuteAsync(
+                    subtitle.Url,
+                    subtitle.Headers!,
+                    CancellationToken
+                );
+
+                ISubtitlesParser parser = video.Subtitles[0].Type switch
+                {
+                    SubtitleType.VTT => new VttParser(),
+                    SubtitleType.ASS => throw new NotImplementedException(),
+                    SubtitleType.SRT => new SrtParser(),
+                    _ => throw new NotImplementedException(),
+                };
+
+                var bytes = Encoding.UTF8.GetBytes(subtitlesStr);
+                var stream = new MemoryStream(bytes);
+                SubtitleItems = parser.ParseStream(stream, Encoding.UTF8);
+
+                StartUpdatingSubtitles();
+            }
 
             Video = video;
 
@@ -326,10 +369,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
             return null;
         }
 
-        if (_provider is null)
-            return null;
-
-        var videos = await _provider.GetVideosAsync(videoServer, CancellationToken);
+        var videos = await _apiClient.GetVideosAsync(videoServer.Embed.Url, CancellationToken);
         if (videos.Count == 0)
         {
             await Toast.Make("No videos found").Show();
@@ -342,10 +382,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
     private async Task<VideoServer?> GetVideoServerAsync()
     {
-        if (_provider is null)
-            return null;
-
-        var videoServers = await _provider.GetVideoServersAsync(Episode.Id, CancellationToken);
+        var videoServers = await _apiClient.GetVideoServersAsync(Episode.Id, CancellationToken);
         if (videoServers.Count == 0)
             return null;
 
@@ -354,6 +391,27 @@ public partial class VideoPlayerViewModel : BaseViewModel
                 || x.Name?.Contains("vidstream", StringComparison.OrdinalIgnoreCase) == true
                 || x.Name?.Equals("mirror", StringComparison.OrdinalIgnoreCase) == true // Indonesian
             ) ?? videoServers[0];
+    }
+
+    private void StartUpdatingSubtitles()
+    {
+        Task.Run(async () =>
+        {
+            while (SubtitleItems.Count > 0 && !CancellationToken.IsCancellationRequested)
+            {
+                var currentSubtitle = SubtitleItems.FirstOrDefault(x =>
+                    MediaElement.Position.TotalMilliseconds >= x.StartTime
+                    && MediaElement.Position.TotalMilliseconds <= x.EndTime
+                );
+
+                if (currentSubtitle is not null)
+                {
+                    CurrentSubtitle = string.Join(Environment.NewLine, currentSubtitle.Lines);
+                }
+
+                await Task.Delay(50);
+            }
+        });
     }
 
     async Task ShowSheet()

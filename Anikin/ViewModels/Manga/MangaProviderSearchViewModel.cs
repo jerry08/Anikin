@@ -1,20 +1,20 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Anikin.Utils;
+using Anikin.Services;
 using Anikin.ViewModels.Framework;
-using Anikin.ViewModels.Manga;
 using Berry.Maui.Controls;
-using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Mvvm.Input;
+using Juro.Clients;
 using Juro.Core.Models.Manga;
-using Juro.Core.Providers;
 
 namespace Anikin.ViewModels.Manga;
 
 public partial class MangaProviderSearchViewModel : CollectionViewModel<IMangaResult>
 {
-    private readonly IMangaProvider? _provider = ProviderResolver.GetMangaProvider();
+    private readonly SettingsService _settingsService = new();
+    private readonly MangaApiClient _apiClient = new(Constants.ApiEndpoint);
+
     private readonly MangaItemViewModel _mangaItemViewModel;
     private readonly BottomSheet _bottomSheet;
 
@@ -32,6 +32,10 @@ public partial class MangaProviderSearchViewModel : CollectionViewModel<IMangaRe
         _bottomSheet = bottomSheet;
         Query = query;
 
+        _settingsService.Load();
+
+        _apiClient.ProviderKey = _settingsService.LastMangaProviderKey!;
+
         Load();
     }
 
@@ -45,12 +49,6 @@ public partial class MangaProviderSearchViewModel : CollectionViewModel<IMangaRe
             return;
         }
 
-        if (_provider is null)
-        {
-            await Toast.Make("No providers installed").Show();
-            return;
-        }
-
         if (!await IsOnline())
             return;
 
@@ -59,7 +57,7 @@ public partial class MangaProviderSearchViewModel : CollectionViewModel<IMangaRe
 
         try
         {
-            var result = await _provider.SearchAsync(Query, CancellationToken);
+            var result = await _apiClient.SearchAsync(Query, CancellationToken);
             Push(result);
             Offset += result.Count;
         }

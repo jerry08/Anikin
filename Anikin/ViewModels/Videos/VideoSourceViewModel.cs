@@ -1,16 +1,17 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Anikin.Utils;
+using Anikin.Services;
 using Anikin.ViewModels.Framework;
 using Anikin.Views;
 using Anikin.Views.BottomSheets;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Mvvm.Input;
+using Juro.Clients;
 using Juro.Core.Models.Anime;
 using Juro.Core.Models.Videos;
-using Juro.Core.Providers;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
@@ -20,9 +21,11 @@ namespace Anikin.ViewModels;
 
 public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoSource>>
 {
+    private readonly SettingsService _settingsService = new();
+    private readonly AnimeApiClient _apiClient = new(Constants.ApiEndpoint);
+
     private readonly Media _media;
 
-    private readonly IAnimeProvider? _provider = ProviderResolver.GetAnimeProvider();
     private readonly IAnimeInfo _anime;
     private readonly Episode _episode;
 
@@ -45,61 +48,46 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
 
         VideoSourceSheet = episodeSelectionSheet;
 
+        _settingsService.Load();
+
+        _apiClient.ProviderKey = _settingsService.LastProviderKey!;
+
         Load();
     }
 
     protected override async Task LoadCore()
     {
-        if (_provider is null)
-        {
-            IsBusy = false;
-            IsRefreshing = false;
-            await Toast.Make("No providers installed").Show();
-            return;
-        }
-
         IsBusy = true;
         IsLoading = true;
 
         try
         {
-            var servers = await _provider.GetVideoServersAsync(_episode.Id, CancellationToken);
+            var videos = await _apiClient.GetVideosAsync(_episode.Id, CancellationToken);
+            //Push(videos);
 
-            foreach (var server in servers)
+            foreach (var video in videos)
             {
-                try
-                {
-                    var videos = await _provider.GetVideosAsync(server, CancellationToken);
-                    //Push(videos);
+                video.Title ??=
+                    !string.IsNullOrEmpty(video.Title) ? video.Title
+                    : !string.IsNullOrEmpty(video.Resolution) ? video.Resolution
+                    : "Default Quality";
+            }
 
-                    if (videos.Count == 0)
-                        continue;
+            var groups = videos.GroupBy(x => x.VideoServer?.Name);
 
-                    foreach (var video in videos)
-                    {
-                        video.Title ??= !string.IsNullOrEmpty(video.Title)
-                            ? video.Title
-                            : !string.IsNullOrEmpty(video.Resolution)
-                                ? video.Resolution
-                                : "Default Quality";
-                    }
-
-                    Entities.Add(new(server.Name, videos));
-                }
-                catch (Exception ex)
-                {
-                    if (App.IsInDeveloperMode)
-                    {
-                        await App.AlertService.ShowAlertAsync("Error", $"{ex}");
-                    }
-                }
+            foreach (var group in groups)
+            {
+                Entities.Add(new(group.Key ?? "Default Server", [.. group]));
             }
         }
         catch (Exception ex)
         {
-            if (!CancellationToken.IsCancellationRequested)
+            if (App.IsInDeveloperMode)
             {
-                await App.AlertService.ShowAlertAsync("Error", ex.ToString());
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await App.AlertService.ShowAlertAsync("Error", $"{ex}");
+                });
             }
         }
         finally
@@ -126,7 +114,7 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
 
         var page = new VideoPlayerView
         {
-            BindingContext = new VideoPlayerViewModel(_anime, _episode, video, _media)
+            BindingContext = new VideoPlayerViewModel(_anime, _episode, video, _media),
         };
 
         await Shell.Current.Navigation.PushAsync(page);

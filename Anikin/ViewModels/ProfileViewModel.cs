@@ -2,7 +2,6 @@
 using Anikin.Services;
 using Anikin.ViewModels.Framework;
 using Anikin.Views;
-using Anikin.Views.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jita.AniList;
@@ -67,7 +66,7 @@ public partial class ProfileViewModel : BaseViewModel
                 {
                     Type = MediaType.Anime,
                     Sort = MediaEntrySort.Score,
-                    SortDescending = true
+                    SortDescending = true,
                 }
             );
 
@@ -82,7 +81,7 @@ public partial class ProfileViewModel : BaseViewModel
                 {
                     Type = MediaType.Manga,
                     Sort = MediaEntrySort.Score,
-                    SortDescending = true
+                    SortDescending = true,
                 }
             );
 
@@ -154,8 +153,5 @@ public partial class ProfileViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    async Task GoToExtensionsSettings()
-    {
-        await Shell.Current.GoToAsync(nameof(ExtensionsView));
-    }
+    async Task GoToExtensionsSettings() { }
 }

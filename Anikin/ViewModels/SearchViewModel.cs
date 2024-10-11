@@ -114,7 +114,7 @@ public partial class SearchViewModel : CollectionViewModel<Jita.AniList.Models.M
                     Query = Query,
                     IsAdult = false,
                     Sort = Jita.AniList.Models.MediaSort.Popularity,
-                    Type = Jita.AniList.Models.MediaType.Anime
+                    Type = Jita.AniList.Models.MediaType.Anime,
                 },
                 new AniPaginationOptions(PageIndex, PageSize),
                 CancellationTokenSource.Token

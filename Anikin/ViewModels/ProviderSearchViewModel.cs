@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Anikin.Utils;
+using Anikin.Services;
 using Anikin.ViewModels.Framework;
 using Berry.Maui.Controls;
-using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Mvvm.Input;
+using Juro.Clients;
 using Juro.Core.Models.Anime;
-using Juro.Core.Providers;
 
 namespace Anikin.ViewModels;
 
 public partial class ProviderSearchViewModel : CollectionViewModel<IAnimeInfo>
 {
-    private readonly IAnimeProvider? _provider = ProviderResolver.GetAnimeProvider();
+    private readonly SettingsService _settingsService = new();
+
+    private readonly AnimeApiClient _apiClient = new(Constants.ApiEndpoint);
     private readonly BottomSheet _bottomSheet;
     private readonly EpisodeViewModel _episodeViewModel;
 
@@ -31,6 +32,10 @@ public partial class ProviderSearchViewModel : CollectionViewModel<IAnimeInfo>
         _bottomSheet = bottomSheet;
         Query = query;
 
+        _settingsService.Load();
+
+        _apiClient.ProviderKey = _settingsService.LastProviderKey!;
+
         Load();
     }
 
@@ -44,12 +49,6 @@ public partial class ProviderSearchViewModel : CollectionViewModel<IAnimeInfo>
             return;
         }
 
-        if (_provider is null)
-        {
-            await Toast.Make("No providers installed").Show();
-            return;
-        }
-
         if (!await IsOnline())
             return;
 
@@ -58,7 +57,7 @@ public partial class ProviderSearchViewModel : CollectionViewModel<IAnimeInfo>
 
         try
         {
-            var result = await _provider.SearchAsync(Query, CancellationToken);
+            var result = await _apiClient.SearchAsync(Query, CancellationToken);
             Push(result);
             Offset += result.Count;
         }

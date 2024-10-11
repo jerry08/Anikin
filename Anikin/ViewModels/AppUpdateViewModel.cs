@@ -9,7 +9,7 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace Anikin.ViewModels;
 
-public partial class AppUpdateViewModel : CollectionViewModel<PluginListGroup<PluginItem>>
+public partial class AppUpdateViewModel : BaseViewModel
 {
     private readonly UpdateService _updateService;
 

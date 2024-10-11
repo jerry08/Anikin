@@ -11,14 +11,16 @@ using Anikin.ViewModels.Components;
 using Anikin.ViewModels.Framework;
 using Anikin.Views;
 using Anikin.Views.BottomSheets;
+using Berry.Maui.Extensions;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jita.AniList;
 using Jita.AniList.Models;
+using Juro.Clients;
+using Juro.Core.Models;
 using Juro.Core.Models.Anime;
-using Juro.Core.Providers;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
 using EpisodeRange = Anikin.Models.EpisodeRange;
@@ -27,18 +29,18 @@ namespace Anikin.ViewModels;
 
 public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttributable
 {
+    private readonly AnimeApiClient _apiClient = new(Constants.ApiEndpoint);
     private readonly AniClient _anilistClient;
     private readonly PlayerSettings _playerSettings = new();
     private readonly SettingsService _settingsService = new();
 
-    private IAnimeProvider? _provider = ProviderResolver.GetAnimeProvider();
-    private readonly List<IAnimeProvider> _providers = ProviderResolver.GetAnimeProviders();
+    private List<Provider> Providers { get; set; } = [];
+
+    public ObservableRangeCollection<ListGroup<ProviderModel>> ProviderGroups { get; set; } = [];
 
     public static List<Episode> Episodes { get; private set; } = [];
 
     public ObservableRangeCollection<string> ProviderNames { get; set; } = [];
-
-    public ObservableRangeCollection<ListGroup<ProviderModel>> ProviderGroups { get; set; } = [];
 
     [ObservableProperty]
     private Media _entity = default!;
@@ -64,6 +66,10 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     [ObservableProperty]
     private bool _isDubSelected;
 
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ShowProviderSourcesSheetCommand))]
+    private bool _isLoadingProviders;
+
     private bool IsSavingFavorite { get; set; }
 
     private bool IsProviderSearchSheetShowing { get; set; }
@@ -80,33 +86,6 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
         SelectedViewModelIndex = 1;
 
-        ProviderNames.AddRange(_providers.ConvertAll(x => x.Name));
-
-        var providers = _providers.Select(x => new ProviderModel()
-        {
-            Key = x.Key,
-            Language = x.Language,
-            Name = x.Name,
-            LanguageDisplayName = x.GetLanguageDisplayName()
-        });
-
-        var selectedProvider = _providers.Find(x => x.Key == _provider?.Key);
-
-        var groups = providers.GroupBy(x => x.LanguageDisplayName);
-        foreach (var group in groups)
-        {
-            ProviderGroups.Add(new(group.Key, group.ToList()));
-        }
-
-        var list = ProviderGroups.SelectMany(x => x).ToList();
-        list.ForEach(x => x.IsSelected = false);
-
-        var defaultProvider = list.Find(x => x.Key == selectedProvider?.Key);
-        if (defaultProvider is not null)
-        {
-            defaultProvider.IsSelected = true;
-        }
-
         //Load();
 
         _playerSettings.Load();
@@ -114,13 +93,10 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
         GridLayoutMode = _settingsService.EpisodesGridLayoutMode;
 
-        PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName == nameof(IsDubSelected))
-                IsDubSelectedChanged();
-        };
-
         Shell.Current.Navigating += Current_Navigating;
+
+        IsLoadingProviders = true;
+        LoadProviderSources().FireAndForget();
     }
 
     private void Current_Navigating(object? sender, ShellNavigatingEventArgs e)
@@ -131,10 +107,37 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             Cancel();
     }
 
-    private async void IsDubSelectedChanged()
+    async partial void OnIsDubSelectedChanged(bool value)
     {
         Entities.Clear();
+
         await LoadCore();
+    }
+
+    private async Task LoadProviderSources()
+    {
+        if (Providers.Count > 0)
+            return;
+
+        try
+        {
+            Providers = await _apiClient.GetProvidersAsync();
+        }
+        catch
+        {
+            await Toast.Make("Failed to load providers").Show();
+        }
+
+        if (string.IsNullOrEmpty(_settingsService.LastAnimeProviderName))
+        {
+            _settingsService.LastAnimeProviderName = Providers.FirstOrDefault()?.Key;
+            _settingsService.Save();
+        }
+
+        IsLoadingProviders = false;
+
+        ProviderNames.Clear();
+        ProviderNames.AddRange(Providers.ConvertAll(x => x.Name));
     }
 
     [RelayCommand]
@@ -148,7 +151,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         var providersName = providers.Select(x => x.Name).ToList();
 
         var result = await Shell.Current.DisplayActionSheet(
-            $"Select Provider ({_provider?.Name ?? "??"})",
+            $"Select Provider ({_settingsService.LastProviderKey ?? "??"})",
             "Cancel",
             "Ok",
             providersName.ToArray()
@@ -157,7 +160,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             return;
 
         var index = providersName.IndexOf(result);
-        if (index <= 0)
+        if (index < 0)
             return;
 
         await SelectedProviderKeyChanged(providers[index].Key);
@@ -167,7 +170,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     [RelayCommand]
     private async Task SelectedProviderKeyChanged(string? key)
     {
-        if (string.IsNullOrWhiteSpace(key) || _provider?.Key == key)
+        if (string.IsNullOrWhiteSpace(key) || _settingsService.LastProviderKey == key)
             return;
 
         if (ChangeSourceSheet is not null)
@@ -176,29 +179,52 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             ChangeSourceSheet = null;
         }
 
-        var provider = _providers.Find(x => x.Key == key);
+        var provider = Providers.Find(x => x.Key == key);
         if (provider is null)
             return;
+
+        await Snackbar.Make($"Source provider changed to {provider.Name}").Show();
+
+        _settingsService.LastProviderKey = provider.Key;
+        _settingsService.LastAnimeProviderName = provider.Name;
+        _settingsService.Save();
+
+        SelectDefaultProvider();
+
+        Entities.Clear();
+
+        await LoadCore();
+    }
+
+    private void SelectDefaultProvider()
+    {
+        var providerModels = Providers.Select(x => new ProviderModel()
+        {
+            Key = x.Key,
+            //Language = x.Language,
+            Language = "en",
+            Name = x.Name,
+            //LanguageDisplayName = x.GetLanguageDisplayName(),
+        });
+
+        ProviderGroups.Clear();
+
+        var groups = providerModels.GroupBy(x => x.LanguageDisplayName);
+        foreach (var group in groups)
+        {
+            ProviderGroups.Add(new(group.Key, group.ToList()));
+        }
 
         var list = ProviderGroups.SelectMany(x => x).ToList();
         list.ForEach(x => x.IsSelected = false);
 
-        var defaultProvider = list.Find(x => x.Key == provider.Key);
+        var defaultProvider = list.Find(x => x.Key == _settingsService.LastProviderKey);
         if (defaultProvider is not null)
         {
             defaultProvider.IsSelected = true;
         }
 
-        await Snackbar.Make($"Source provider changed to {provider.Name}").Show();
-
-        _settingsService.LastProviderKey = provider.Key;
-        _settingsService.Save();
-
-        Entities.Clear();
-
-        _provider = provider;
-
-        await LoadCore();
+        _apiClient.ProviderKey = _settingsService.LastProviderKey!;
     }
 
     protected override async Task LoadCore()
@@ -210,19 +236,23 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             return;
         }
 
-        if (_provider is null)
-        {
-            IsBusy = false;
-            IsRefreshing = false;
-            await Toast.Make("No providers installed").Show();
-            return;
-        }
-
         IsBusy = true;
         IsRefreshing = true;
 
         try
         {
+            while (IsLoadingProviders)
+            {
+                // Delay is necessary in windows release mode (while not debugging).
+                // Otherwise the app will freeze.
+                await Task.Delay(500);
+            }
+
+            if (Providers.Count == 0)
+                return;
+
+            SelectDefaultProvider();
+
             // Find best match
             Anime = await TryFindBestAnime();
 
@@ -268,15 +298,9 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         Ranges.Clear();
         Entities.Clear();
 
-        if (_provider is null)
-        {
-            await Toast.Make("No providers installed").Show();
-            return;
-        }
-
         try
         {
-            var result = await _provider.GetEpisodesAsync(anime.Id, CancellationToken);
+            var result = await _apiClient.GetEpisodesAsync(anime.Id, CancellationToken);
             if (result.Count == 0)
                 return;
 
@@ -394,23 +418,20 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
     private async Task<IAnimeInfo?> TryFindBestAnime()
     {
-        if (_provider is null)
-            return null;
-
         try
         {
             var dubText = IsDubSelected ? " (dub)" : "";
 
             SearchingText = $"Searching : {Entity.Title?.PreferredTitle}" + dubText;
 
-            var result = await _provider.SearchAsync(
+            var result = await _apiClient.SearchAsync(
                 Entity.Title.RomajiTitle + dubText,
                 CancellationToken
             );
 
             if (result.Count == 0)
             {
-                result = await _provider.SearchAsync(
+                result = await _apiClient.SearchAsync(
                     Entity.Title.NativeTitle + dubText,
                     CancellationToken
                 );
@@ -418,7 +439,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
             if (result.Count == 0)
             {
-                result = await _provider.SearchAsync(
+                result = await _apiClient.SearchAsync(
                     Entity.Title.EnglishTitle + dubText,
                     CancellationToken
                 );
@@ -457,7 +478,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
         var page = new VideoPlayerView
         {
-            BindingContext = new VideoPlayerViewModel(Anime, episode, Entity)
+            BindingContext = new VideoPlayerViewModel(Anime, episode, Entity),
         };
 
         await Shell.Current.Navigation.PushAsync(page);
@@ -575,7 +596,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             {
                 //Uri = $"https://anilist.cs/anime/{Entity.Id}",
                 Uri = Entity.Url.OriginalString,
-                Title = "Share Anilist Link"
+                Title = "Share Anilist Link",
             }
         );
     }

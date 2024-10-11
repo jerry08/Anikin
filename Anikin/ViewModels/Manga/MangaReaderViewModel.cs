@@ -15,8 +15,8 @@ using CommunityToolkit.Mvvm.Input;
 using Httpz;
 using Jita.AniList;
 using Jita.AniList.Models;
+using Juro.Clients;
 using Juro.Core.Models.Manga;
-using Juro.Core.Providers;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
@@ -29,13 +29,12 @@ public partial class MangaReaderViewModel
     : CollectionViewModel<IMangaChapterPage>,
         IQueryAttributable
 {
+    private readonly MangaApiClient _apiClient = new(Constants.ApiEndpoint);
     private readonly AniClient _anilistClient;
     private readonly PlayerSettings _playerSettings = new();
     private readonly SettingsService _settingsService = new();
 
     private readonly Downloader _downloader = new();
-
-    private readonly IMangaProvider? _provider = ProviderResolver.GetMangaProvider();
 
     public static List<IMangaChapter> Chapters { get; private set; } = [];
 
@@ -61,6 +60,8 @@ public partial class MangaReaderViewModel
         _playerSettings.Load();
         _settingsService.Load();
 
+        _apiClient.ProviderKey = _settingsService.LastMangaProviderKey!;
+
         Shell.Current.Navigating += Current_Navigating;
     }
 
@@ -73,7 +74,7 @@ public partial class MangaReaderViewModel
         Media.Description = Html.ConvertToPlainText(Media.Description);
 
         Title = $"Chapter {MangaChapter.Number}";
-        ProviderName = _provider?.Name;
+        ProviderName = _settingsService.LastMangaProviderName;
 
         OnPropertyChanged(nameof(Media));
     }
@@ -104,14 +105,6 @@ public partial class MangaReaderViewModel
 
     protected override async Task LoadCore()
     {
-        if (_provider is null)
-        {
-            IsBusy = false;
-            IsRefreshing = false;
-            await Toast.Make("No providers installed").Show();
-            return;
-        }
-
 #if ANDROID
         Platform.CurrentActivity.HideSystemBars();
 #endif
@@ -121,7 +114,7 @@ public partial class MangaReaderViewModel
 
         try
         {
-            var pages = await _provider.GetChapterPagesAsync(MangaChapter.Id, CancellationToken);
+            var pages = await _apiClient.GetChapterPagesAsync(MangaChapter.Id, CancellationToken);
             if (pages.Count == 0)
             {
                 await Toast.Make("Nothing found").Show();
@@ -237,7 +230,7 @@ public partial class MangaReaderViewModel
             {
                 //Uri = $"https://anilist.cs/manga/{Media.Id}",
                 Uri = Media.Url.OriginalString,
-                Title = "Share Anilist Link"
+                Title = "Share Anilist Link",
             }
         );
     }

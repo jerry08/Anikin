@@ -71,7 +71,7 @@ public partial class MangaSearchViewModel : CollectionViewModel<Jita.AniList.Mod
                     Query = Query,
                     IsAdult = false,
                     Sort = Jita.AniList.Models.MediaSort.Popularity,
-                    Type = Jita.AniList.Models.MediaType.Manga
+                    Type = Jita.AniList.Models.MediaType.Manga,
                 },
                 new AniPaginationOptions(PageIndex, PageSize),
                 CancellationTokenSource.Token

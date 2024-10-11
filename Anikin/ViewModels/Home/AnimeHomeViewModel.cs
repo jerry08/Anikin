@@ -184,7 +184,7 @@ public partial class AnimeHomeViewModel : BaseViewModel
                     Tags = new Dictionary<string, bool>() { ["Shounen"] = true },
                     Type = MediaType.Anime,
                     IsAdult = false,
-                    Sort = MediaSort.Popularity
+                    Sort = MediaSort.Popularity,
                 }
             );
 
@@ -219,7 +219,7 @@ public partial class AnimeHomeViewModel : BaseViewModel
                     Tags = new Dictionary<string, bool>() { ["Shoujo"] = true },
                     Type = MediaType.Anime,
                     IsAdult = false,
-                    Sort = MediaSort.Popularity
+                    Sort = MediaSort.Popularity,
                 }
             );
 
@@ -254,7 +254,7 @@ public partial class AnimeHomeViewModel : BaseViewModel
                     Type = MediaType.Anime,
                     IsAdult = false,
                     Sort = MediaSort.Favorites,
-                    SortDescending = false
+                    SortDescending = false,
                 }
             );
 
@@ -319,7 +319,7 @@ public partial class AnimeHomeViewModel : BaseViewModel
                     EndedBeforeDate = DateTime.Now,
                     NotYetAired = false,
                     Sort = MediaScheduleSort.Time,
-                    SortDescending = true
+                    SortDescending = true,
                 },
                 new AniPaginationOptions(1, 50)
             );

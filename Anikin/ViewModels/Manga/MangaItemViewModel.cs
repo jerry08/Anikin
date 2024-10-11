@@ -12,14 +12,16 @@ using Anikin.ViewModels.Components;
 using Anikin.ViewModels.Framework;
 using Anikin.Views.BottomSheets;
 using Anikin.Views.Manga;
+using Berry.Maui.Extensions;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jita.AniList;
 using Jita.AniList.Models;
+using Juro.Clients;
+using Juro.Core.Models;
 using Juro.Core.Models.Manga;
-using Juro.Core.Providers;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
 
@@ -27,16 +29,18 @@ namespace Anikin.ViewModels.Manga;
 
 public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQueryAttributable
 {
+    private readonly MangaApiClient _apiClient = new(Constants.ApiEndpoint);
     private readonly AniClient _anilistClient;
     private readonly PlayerSettings _playerSettings = new();
     private readonly SettingsService _settingsService = new();
 
-    private IMangaProvider? _provider = ProviderResolver.GetMangaProvider();
-    private readonly List<IMangaProvider> _providers = ProviderResolver.GetMangaProviders();
+    private List<Provider> Providers { get; set; } = [];
 
     public static List<IMangaChapter> Chapters { get; private set; } = [];
 
     public ObservableRangeCollection<string> ProviderNames { get; set; } = [];
+
+    private string? SelectedProviderName { get; set; }
 
     public ObservableRangeCollection<ListGroup<ProviderModel>> ProviderGroups { get; set; } = [];
 
@@ -62,7 +66,8 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
     private GridLayoutMode _gridLayoutMode;
 
     [ObservableProperty]
-    private bool _isDubSelected;
+    [NotifyCanExecuteChangedFor(nameof(ShowProviderSourcesSheetCommand))]
+    private bool _isLoadingProviders;
 
     private bool IsSavingFavorite { get; set; }
 
@@ -80,41 +85,19 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
 
         SelectedViewModelIndex = 1;
 
-        ProviderNames.AddRange(_providers.ConvertAll(x => x.Name));
-
-        var providers = _providers.Select(x => new ProviderModel()
-        {
-            Key = x.Key,
-            Language = x.Language,
-            Name = x.Name,
-            LanguageDisplayName = x.GetLanguageDisplayName()
-        });
-
-        var selectedProvider = _providers.Find(x => x.Key == _provider?.Key);
-
-        var groups = providers.GroupBy(x => x.LanguageDisplayName);
-        foreach (var group in groups)
-        {
-            ProviderGroups.Add(new(group.Key, group.ToList()));
-        }
-
-        var list = ProviderGroups.SelectMany(x => x).ToList();
-        list.ForEach(x => x.IsSelected = false);
-
-        var defaultProvider = list.Find(x => x.Key == selectedProvider?.Key);
-        if (defaultProvider is not null)
-        {
-            defaultProvider.IsSelected = true;
-        }
-
         //Load();
 
         _playerSettings.Load();
         _settingsService.Load();
 
+        _apiClient.ProviderKey = _settingsService.LastMangaProviderKey!;
+
         GridLayoutMode = _settingsService.MangaItemsGridLayoutMode;
 
         Shell.Current.Navigating += Current_Navigating;
+
+        IsLoadingProviders = true;
+        LoadProviderSources().FireAndForget();
     }
 
     private void Current_Navigating(object? sender, ShellNavigatingEventArgs e)
@@ -125,17 +108,63 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
             Cancel();
     }
 
+    private async Task LoadProviderSources()
+    {
+        if (Providers.Count > 0)
+            return;
+
+        try
+        {
+            Providers = await _apiClient.GetProvidersAsync();
+        }
+        catch
+        {
+            await Toast.Make("Failed to load providers").Show();
+        }
+
+        if (string.IsNullOrEmpty(_settingsService.LastAnimeProviderName))
+        {
+            _settingsService.LastAnimeProviderName = Providers.FirstOrDefault()?.Key;
+            _settingsService.Save();
+        }
+
+        IsLoadingProviders = false;
+
+        ProviderNames.Clear();
+        ProviderNames.AddRange(Providers.ConvertAll(x => x.Name));
+    }
+
     [RelayCommand]
     private async Task ShowProviderSourcesSheet()
     {
+#if ANDROID || IOS
         ChangeSourceSheet = new() { BindingContext = this };
         await ChangeSourceSheet.ShowAsync();
+#else
+        var providers = ProviderGroups.SelectMany(x => x).ToList();
+        var providersName = providers.Select(x => x.Name).ToList();
+
+        var result = await Shell.Current.DisplayActionSheet(
+            $"Select Provider ({_settingsService.LastMangaProviderKey ?? "??"})",
+            "Cancel",
+            "Ok",
+            providersName.ToArray()
+        );
+        if (string.IsNullOrWhiteSpace(result))
+            return;
+
+        var index = providersName.IndexOf(result);
+        if (index <= 0)
+            return;
+
+        await SelectedProviderKeyChanged(providers[index].Key);
+#endif
     }
 
     [RelayCommand]
     private async Task SelectedProviderKeyChanged(string? key)
     {
-        if (string.IsNullOrWhiteSpace(key) || _provider?.Key == key)
+        if (string.IsNullOrWhiteSpace(key) || _settingsService.LastMangaProviderKey == key)
             return;
 
         if (ChangeSourceSheet is not null)
@@ -144,29 +173,52 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
             ChangeSourceSheet = null;
         }
 
-        var provider = _providers.Find(x => x.Key == key);
+        var provider = Providers.Find(x => x.Key == key);
         if (provider is null)
             return;
+
+        await Snackbar.Make($"Source provider changed to {provider.Name}").Show();
+
+        _settingsService.LastMangaProviderKey = provider.Key;
+        _settingsService.LastAnimeProviderName = provider.Name;
+        _settingsService.Save();
+
+        SelectDefaultProvider();
+
+        Entities.Clear();
+
+        await LoadCore();
+    }
+
+    private void SelectDefaultProvider()
+    {
+        var providerModels = Providers.Select(x => new ProviderModel()
+        {
+            Key = x.Key,
+            //Language = x.Language,
+            Language = "en",
+            Name = x.Name,
+            //LanguageDisplayName = x.GetLanguageDisplayName(),
+        });
+
+        ProviderGroups.Clear();
+
+        var groups = providerModels.GroupBy(x => x.LanguageDisplayName);
+        foreach (var group in groups)
+        {
+            ProviderGroups.Add(new(group.Key, group.ToList()));
+        }
 
         var list = ProviderGroups.SelectMany(x => x).ToList();
         list.ForEach(x => x.IsSelected = false);
 
-        var defaultProvider = list.Find(x => x.Key == provider.Key);
+        var defaultProvider = list.Find(x => x.Key == _settingsService.LastMangaProviderKey);
         if (defaultProvider is not null)
         {
             defaultProvider.IsSelected = true;
         }
 
-        await Snackbar.Make($"Source provider changed to {provider.Name}").Show();
-
-        _settingsService.LastProviderKey = provider.Key;
-        _settingsService.Save();
-
-        Entities.Clear();
-
-        _provider = provider;
-
-        await LoadCore();
+        _apiClient.ProviderKey = _settingsService.LastMangaProviderKey!;
     }
 
     protected override async Task LoadCore()
@@ -178,19 +230,23 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
             return;
         }
 
-        if (_provider is null)
-        {
-            IsBusy = false;
-            IsRefreshing = false;
-            await Toast.Make("No providers installed").Show();
-            return;
-        }
-
         IsBusy = true;
         IsRefreshing = true;
 
         try
         {
+            while (IsLoadingProviders)
+            {
+                // Delay is necessary in windows release mode (while not debugging).
+                // Otherwise the app will freeze.
+                await Task.Delay(500);
+            }
+
+            if (Providers.Count == 0)
+                return;
+
+            SelectDefaultProvider();
+
             // Find best match
             Manga = await TryFindBestManga();
 
@@ -232,15 +288,9 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
         Ranges.Clear();
         Entities.Clear();
 
-        if (_provider is null)
-        {
-            await Toast.Make("No providers installed").Show();
-            return;
-        }
-
         try
         {
-            var result = await _provider.GetMangaInfoAsync(manga.Id, CancellationToken);
+            var result = await _apiClient.GetAsync(manga.Id, CancellationToken);
             if (result is null || result.Chapters.Count == 0)
                 return;
 
@@ -349,34 +399,19 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
 
     private async Task<IMangaResult?> TryFindBestManga()
     {
-        if (_provider is null)
-            return null;
-
         try
         {
-            var dubText = IsDubSelected ? " (dub)" : "";
+            SearchingText = $"Searching : {Media.Title?.PreferredTitle}";
 
-            SearchingText = $"Searching : {Media.Title?.PreferredTitle}" + dubText;
-
-            var result = await _provider.SearchAsync(
-                Media.Title.RomajiTitle + dubText,
-                CancellationToken
-            );
-
+            var result = await _apiClient.SearchAsync(Media.Title.RomajiTitle, CancellationToken);
             if (result.Count == 0)
             {
-                result = await _provider.SearchAsync(
-                    Media.Title.NativeTitle + dubText,
-                    CancellationToken
-                );
+                result = await _apiClient.SearchAsync(Media.Title.NativeTitle, CancellationToken);
             }
 
             if (result.Count == 0)
             {
-                result = await _provider.SearchAsync(
-                    Media.Title.EnglishTitle + dubText,
-                    CancellationToken
-                );
+                result = await _apiClient.SearchAsync(Media.Title.EnglishTitle, CancellationToken);
             }
 
             return result.FirstOrDefault();
@@ -413,7 +448,7 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
         var navigationParameter = new Dictionary<string, object>()
         {
             ["Media"] = Media,
-            ["MangaChapter"] = chapter
+            ["MangaChapter"] = chapter,
         };
 
         await Shell.Current.GoToAsync(nameof(MangaReaderPage), navigationParameter);
@@ -531,7 +566,7 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
             {
                 //Uri = $"https://anilist.cs/manga/{Media.Id}",
                 Uri = Media.Url.OriginalString,
-                Title = "Share Anilist Link"
+                Title = "Share Anilist Link",
             }
         );
     }
