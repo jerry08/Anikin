@@ -38,7 +38,7 @@ jobs:
 
       - name: Update API
         run: |
-          sed -i "s/anikin_api_endpoint/${{ secrets.API_URL }}/g" Anikin/Constants.cs
+          sed -i "s|anikin_api_endpoint|${{ secrets.API_URL }}|g" Anikin/Constants.cs
 
       - name: Create keystore file
         run:  echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.keystore
@@ -109,7 +109,7 @@ jobs:
 
       - name: Update API
         run: |
-          sed -i "s/anikin_api_endpoint/${{ secrets.API_URL }}/g" Anikin/Constants.cs
+          sed -i "s|anikin_api_endpoint|${{ secrets.API_URL }}|g" Anikin/Constants.cs
 
       - name: Install .NET
         uses: actions/setup-dotnet@v4
