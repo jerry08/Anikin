@@ -9,13 +9,17 @@ using Android.Content.PM;
 using Android.Graphics.Drawables;
 using Android.Media.Audiofx;
 using Android.OS;
-using Android.Support.V4.Media.Session;
 using Android.Util;
 using Android.Views;
 using Android.Views.Animations;
 using Android.Widget;
 using AndroidX.CardView.Widget;
 using AndroidX.Core.View;
+using AndroidX.Media3.Common;
+using AndroidX.Media3.Common.Text;
+using AndroidX.Media3.ExoPlayer;
+using AndroidX.Media3.Session;
+using AndroidX.Media3.UI;
 using Anikin.Services;
 using Anikin.Utils.Extensions;
 using Anikin.Utils.Listeners;
@@ -25,15 +29,6 @@ using Berry.Maui.Core;
 using Berry.Maui.Core.Handlers;
 using Berry.Maui.Core.Primitives;
 using Bumptech.Glide;
-using Com.Google.Android.Exoplayer2;
-using Com.Google.Android.Exoplayer2.Audio;
-using Com.Google.Android.Exoplayer2.Ext.Mediasession;
-using Com.Google.Android.Exoplayer2.Metadata;
-using Com.Google.Android.Exoplayer2.Text;
-using Com.Google.Android.Exoplayer2.Trackselection;
-using Com.Google.Android.Exoplayer2.UI;
-using Com.Google.Android.Exoplayer2.Video;
-using CommunityToolkit.Maui.Alerts;
 using Google.Android.Material.Card;
 using Jita.AniList;
 using Jita.Aniskip;
@@ -41,17 +36,20 @@ using Juro.Core.Models.Anime;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Platform;
 using Microsoft.Maui.Storage;
-using static Com.Google.Android.Exoplayer2.IPlayer;
 using AudioFocus = Android.Media.AudioFocus;
-using Format = Com.Google.Android.Exoplayer2.Format;
 using Handler = Android.OS.Handler;
 using Media = Jita.AniList.Models.Media;
 using Shell = Microsoft.Maui.Controls.Shell;
 
 namespace Anikin;
 
-public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITrackNameProvider
+public class PlatformMediaController : Java.Lang.Object, IPlayerListener
 {
+    public const int StateIdle = 1;
+    public const int StateBuffering = 2;
+    public const int StateReady = 3;
+    public const int StateEnded = 4;
+
     private readonly PlayerSettings _playerSettings = new();
     private readonly VideoPlayerViewModel _playerViewModel;
     private readonly Handler _handler = new(Looper.MainLooper!);
@@ -65,14 +63,10 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     Episode Episode = default!;
 
     IExoPlayer exoPlayer = default!;
-    StyledPlayerView playerView = default!;
+    PlayerView playerView = default!;
 
     //private PlayerView playerView = default!;
-    DefaultTrackSelector trackSelector = default!;
-
-    //private MediaSession? MediaSession { get; set; }
-    private MediaSessionCompat? MediaSession { get; set; }
-    private MediaSessionConnector? MediaSessionConnector { get; set; }
+    //DefaultTrackSelector trackSelector = default!;
 
     //private ProgressBar progressBar = default!;
     private ImageButton exoplay = default!;
@@ -151,11 +145,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         SetNextAndPrev();
 
         var handler = (MediaElementHandler)MediaElement.Handler;
-        playerView = handler.PlatformView.GetFirstChildOfType<StyledPlayerView>()!;
+        playerView = handler.PlatformView.GetFirstChildOfType<PlayerView>()!;
         exoPlayer = (IExoPlayer)playerView.Player;
         exoPlayer.AddListener(this);
-
-        SetMediaSession();
     }
 
     #region Setup
@@ -164,9 +156,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
         MediaElement = mediaElement;
 
         var handler = (MediaElementHandler)mediaElement.Handler;
-        playerView = handler.PlatformView.GetFirstChildOfType<StyledPlayerView>()!;
+        playerView = handler.PlatformView.GetFirstChildOfType<PlayerView>()!;
         var styledPlayerControlView =
-            handler.PlatformView.GetFirstChildOfType<StyledPlayerControlView>()!;
+            handler.PlatformView.GetFirstChildOfType<PlayerControlView>()!;
         styledPlayerControlView.AnimationEnabled = false;
 
         //var view = (MauiMediaElement)mediaElement.ToPlatform(mediaElement.Handler.MauiContext);
@@ -187,10 +179,6 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             exoPlayer.Stop();
             exoPlayer.Release();
         }
-
-        MediaSession?.Release();
-        MediaSessionConnector?.Dispose();
-        MediaSession?.Dispose();
 
         CancellationTokenSource.Cancel();
 
@@ -214,21 +202,6 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     }
     #endregion
 
-    private void SetMediaSession()
-    {
-        try
-        {
-            MediaSession = new(Platform.CurrentActivity, "AnikinMediaSession");
-
-            MediaSessionConnector = new MediaSessionConnector(MediaSession);
-            MediaSessionConnector.SetPlayer(exoPlayer);
-        }
-        catch (Exception e)
-        {
-            Snackbar.Make(e.Message).Show();
-        }
-    }
-
     public void Initialize()
     {
         exoPlayer = (IExoPlayer)playerView.Player;
@@ -239,8 +212,6 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
             if (e.NewState == MediaElementState.Paused && !playerView.IsControllerFullyVisible)
                 HandleController();
         };
-
-        SetMediaSession();
 
         //var bookmarkManager = new BookmarkManager("recently_watched");
         //
@@ -875,7 +846,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
                 new Jita.AniList.Parameters.SearchMediaFilter()
                 {
                     Type = Jita.AniList.Models.MediaType.Anime,
-                    Query = Anime.Title
+                    Query = Anime.Title,
                 }
             );
             if (searchResults is null)
@@ -1003,11 +974,11 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
     public void OnMediaItemTransition(MediaItem? mediaItem, int reason) { }
 
-    public void OnAvailableCommandsChanged(Commands? availableCommands) { }
+    public void OnAvailableCommandsChanged(PlayerCommands? availableCommands) { }
 
     public void OnPlaybackStateChanged(int playbackState)
     {
-        IsBuffering = playbackState == IPlayer.StateBuffering;
+        IsBuffering = playbackState == StateBuffering;
 
         if (playbackState == StateReady)
         {
@@ -1030,7 +1001,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
     {
         //TODO: Bind exoplayer correctly to include "Groups" in tracks
 
-        if (tracks is null)
+        if (tracks is null || exoQuality is null)
             return;
 
         if (tracks.IsEmpty)
@@ -1096,7 +1067,11 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
     public void OnPlaybackParametersChanged(PlaybackParameters? playbackParameters) { }
 
-    public void OnPositionDiscontinuity(int reason) { }
+    public void OnPositionDiscontinuity(
+        PlayerPositionInfo? oldPosition,
+        PlayerPositionInfo? newPosition,
+        int reason
+    ) { }
 
     public void OnSeekProcessed() { }
 
@@ -1106,7 +1081,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
     public void OnPlayWhenReadyChanged(bool playWhenReady, int reason) { }
 
-    public void OnEvents(IPlayer? player, Events? events) { }
+    public void OnEvents(IPlayer? player, PlayerEvents? events) { }
 
     public void OnSurfaceSizeChanged(int width, int height) { }
 
@@ -1181,9 +1156,12 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
     public void OnTrackSelectionParametersChanged(TrackSelectionParameters? parameters) { }
 
-#pragma warning disable CS0618, CS0672, CA1422
+#pragma warning disable CS0618, CS0672, CA1422, CA1416
     private void EnterPipMode()
     {
+        if (Platform.CurrentActivity is null)
+            return;
+
         try
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
@@ -1205,6 +1183,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayer.IListener, ITra
 
     public void OnPiPChanged(bool isInPictureInPictureMode)
     {
+        if (Platform.CurrentActivity is null)
+            return;
+
         playerView.UseController = !isInPictureInPictureMode;
 
         if (isInPictureInPictureMode)
