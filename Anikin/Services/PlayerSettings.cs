@@ -78,5 +78,5 @@ public enum PlayerResizeMode
 {
     Original,
     Zoom,
-    Stretch
+    Stretch,
 }
