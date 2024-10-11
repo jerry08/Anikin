@@ -57,7 +57,7 @@ public static class ActivityExtensions
                 ViewGroup.LayoutParams.WrapContent
             )
             {
-                Gravity = GravityFlags.CenterHorizontal | GravityFlags.Bottom
+                Gravity = GravityFlags.CenterHorizontal | GravityFlags.Bottom,
             };
 
             snackBar.View.SetBackgroundColor(Color.White);
