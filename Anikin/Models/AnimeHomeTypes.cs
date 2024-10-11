@@ -26,5 +26,5 @@ public enum AnimeHomeTypes
     MaleMedia,
 
     [Description("Trash Anime")]
-    TrashMedia
+    TrashMedia,
 }

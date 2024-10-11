@@ -98,7 +98,7 @@
                         FontFamily="SoraBold"
                         FontSize="16"
                         Text="Wrong Title?"
-                        TextColor="#9575ff"
+                        TextColor="{StaticResource Tertiary}"
                         TextDecorations="Underline" />
                 </Grid>
             </Border>

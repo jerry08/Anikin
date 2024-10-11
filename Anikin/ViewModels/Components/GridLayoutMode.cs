@@ -4,5 +4,5 @@ public enum GridLayoutMode
 {
     Compact,
     Semi,
-    Full
+    Full,
 }

@@ -9,7 +9,7 @@
     xmlns:models="clr-namespace:Juro.Core.Models.Anime;assembly=Juro.Core"
     x:Name="this"
     Margin="3"
-    Padding="0"
+    Padding="1"
     x:DataType="models:Episode"
     BackgroundColor="Transparent"
     HeightRequest="70"
@@ -24,10 +24,11 @@
         <Border
             Grid.Column="0"
             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200},
-                                              Dark={StaticResource Gray900}}"
+                                              Dark={StaticResource Gray830}}"
             HorizontalOptions="FillAndExpand"
-            Stroke="White"
-            StrokeThickness="0"
+            Stroke="{AppThemeBinding Light={StaticResource Gray300},
+                                     Dark={StaticResource Gray800}}"
+            StrokeThickness="1"
             VerticalOptions="FillAndExpand">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="14" />

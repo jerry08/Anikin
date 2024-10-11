@@ -57,9 +57,6 @@ public partial class App : Application
         // (Snackbar doesn't show, only toast?!)
         Microsoft.Windows.AppNotifications.AppNotificationManager.Default.Register();
 #endif
-
-        // Initialize providers
-        new ProviderService().Initialize();
     }
 
     public static bool IsOnline(bool showSnackbar = true)
@@ -78,7 +75,7 @@ public partial class App : Application
                         {
                             BackgroundColor = Colors.Red,
                             TextColor = Colors.White,
-                            ActionButtonTextColor = Colors.White
+                            ActionButtonTextColor = Colors.White,
                         }
                     )
                     .Show();
@@ -101,7 +98,7 @@ public partial class App : Application
                         {
                             BackgroundColor = Colors.Green,
                             TextColor = Colors.White,
-                            ActionButtonTextColor = Colors.White
+                            ActionButtonTextColor = Colors.White,
                         }
                     )
                     .Show();

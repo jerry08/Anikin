@@ -8,10 +8,10 @@ using Anikin.ViewModels.Manga;
 using Anikin.Views;
 using Anikin.Views.Home;
 using Anikin.Views.Manga;
-using Anikin.Views.Settings;
 using Berry.Maui;
 using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Markup;
+using FFImageLoading.Maui;
 using Jita.AniList;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -20,10 +20,9 @@ using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using Microsoft.Maui.LifecycleEvents;
 using Woka;
-using FFImageLoading.Maui;
-
 
 #if ANDROID
+using Berry.Maui.Handlers.Slider;
 using Microsoft.Maui.Controls.Compatibility.Platform.Android;
 #endif
 
@@ -51,12 +50,8 @@ public static class MauiProgram
 
 #if ANDROID
                 //handlers.AddHandler<Slider, MaterialSliderHandler>();
-                handlers.AddHandler<Slider, Berry.Maui.Handlers.Slider.BerrySliderHandler>();
+                handlers.AddHandler<Slider, BerrySliderHandler>();
 #endif
-
-                //handlers.AddHandler<Entry, MaterialEntryHandler>();
-                //handlers.AddHandler<MaterialEntry, MaterialEntryHandler>();
-                //handlers.AddHandler(typeof(Page), typeof(WorkaroundPageHandler));
             })
             .ConfigureFonts(fonts =>
             {
@@ -129,7 +124,6 @@ public static class MauiProgram
         builder.Services.AddTransient<MangaPage>();
         builder.Services.AddTransient<MangaReaderPage>();
         builder.Services.AddTransient<ProfileTabView>();
-        builder.Services.AddTransient<ExtensionsView>();
         builder.Services.AddTransient<AnilistLoginView>();
 
         // ViewModels
@@ -142,13 +136,11 @@ public static class MauiProgram
         builder.Services.AddTransient<MangaItemViewModel>();
         builder.Services.AddTransient<MangaReaderViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
-        builder.Services.AddTransient<ExtensionsViewModel>();
 
         // Services
         builder.Services.AddTransient(x => AniClientFactory());
         builder.Services.AddSingleton<IAlertService, AlertService>();
         builder.Services.AddScoped<SettingsService>();
-        builder.Services.AddScoped<ProviderService>();
 
         return builder.Build();
     }

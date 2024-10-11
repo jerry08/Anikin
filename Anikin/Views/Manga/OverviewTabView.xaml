@@ -13,19 +13,66 @@
     xmlns:views="clr-namespace:Anikin.Views"
     x:Name="this"
     x:DataType="viewModels:MangaItemViewModel">
-    <VerticalStackLayout Spacing="4">
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <converters:RatingConverter x:Key="RatingConverter" />
+        </ResourceDictionary>
+    </ContentView.Resources>
+    <VerticalStackLayout Margin="10,5" Spacing="5">
+        <Grid ColumnDefinitions="*,*">
+            <Label
+                Grid.Column="0"
+                FontAttributes="Bold"
+                FontSize="16"
+                HorizontalOptions="Start"
+                Opacity="0.9"
+                Text="Mean Score" />
+            <Label
+                Grid.Column="1"
+                FontAttributes="Bold"
+                FontSize="16"
+                HorizontalOptions="End"
+                Opacity="0.9">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span
+                            FontFamily="SoraBold"
+                            Text="{Binding Media.MeanScore, Converter={StaticResource RatingConverter}}"
+                            TextColor="{StaticResource Secondary}" />
+                        <Span FontFamily="SoraBold" Text="/10" />
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
+        </Grid>
+        <Grid ColumnDefinitions="*,*">
+            <Label
+                Grid.Column="0"
+                FontAttributes="Bold"
+                FontSize="16"
+                HorizontalOptions="Start"
+                Opacity="0.9"
+                Text="Status" />
+            <Label
+                Grid.Column="1"
+                FontAttributes="Bold"
+                FontFamily="SoraBold"
+                FontSize="16"
+                HorizontalOptions="End"
+                Opacity="0.9"
+                Text="{Binding Media.Status}" />
+        </Grid>
         <Label
-            Margin="10,5"
             FontAttributes="Bold"
             FontSize="20"
             HorizontalTextAlignment="Start"
-            Opacity="0.8"
+            Opacity="0.9"
             Text="Description"
             VerticalOptions="Start" />
 
         <Label
-            Margin="10,5"
+            FontSize="15.5"
             HorizontalTextAlignment="Start"
+            Opacity="0.9"
             Text="{Binding Media.Description}"
             VerticalOptions="Start" />
     </VerticalStackLayout>

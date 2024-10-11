@@ -100,7 +100,7 @@ public partial class Snackbar : ISnackbar
             ActionButtonText = actionButtonText,
             Duration = duration ?? GetDefaultTimeSpan(),
             VisualOptions = visualOptions ?? new(),
-            Anchor = anchor
+            Anchor = anchor,
         };
     }
 

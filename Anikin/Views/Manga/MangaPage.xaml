@@ -31,6 +31,8 @@
     <Grid>
         <Grid
             HeightRequest="40"
+            IsVisible="{OnPlatform Default=True,
+                                   WinUI=False}"
             VerticalOptions="Start"
             ZIndex="1">
             <Grid.Background>
@@ -40,6 +42,52 @@
                 </LinearGradientBrush>
             </Grid.Background>
         </Grid>
+
+        <Border
+            Grid.Column="0"
+            Margin="12,40"
+            HorizontalOptions="Start"
+            StrokeThickness="0"
+            VerticalOptions="Start"
+            ZIndex="1">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="18" />
+            </Border.StrokeShape>
+            <Border.Behaviors>
+                <berry:TouchBehavior Command="{Binding GoBackCommand}" NativeAnimation="True" />
+            </Border.Behaviors>
+            <Label
+                Padding="12"
+                BackgroundColor="#66000000"
+                FontFamily="Material"
+                FontSize="26"
+                Opacity="0.95"
+                Text="{x:Static materialDesign:MaterialDesignIcons.ArrowBack}"
+                TextColor="White" />
+        </Border>
+
+        <Border
+            Grid.Column="0"
+            Margin="12,40"
+            HorizontalOptions="End"
+            StrokeThickness="0"
+            VerticalOptions="Start"
+            ZIndex="1">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="18" />
+            </Border.StrokeShape>
+            <Border.Behaviors>
+                <berry:TouchBehavior Command="{Binding ShowProviderSourcesSheetCommand}" NativeAnimation="True" />
+            </Border.Behaviors>
+            <Label
+                Padding="12"
+                BackgroundColor="#66000000"
+                FontFamily="Material"
+                FontSize="26"
+                Opacity="0.95"
+                Text="{x:Static materialDesign:MaterialDesignIcons.Dns}"
+                TextColor="White" />
+        </Border>
 
         <ScrollView>
             <VerticalStackLayout Margin="0,0,0,50">
@@ -54,55 +102,9 @@
                             <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="CoverImage_OnDoubleTap" />
                         </Image.GestureRecognizers>
                         <Image.Behaviors>
-                            <berry:TouchBehavior LongPressCommand="{Binding BindingContext.ShowCoverImageCommand, Source={x:Reference this}}" />
+                            <berry:TouchBehavior LongPressCommand="{Binding ShowCoverImageCommand}" />
                         </Image.Behaviors>
                     </Image>
-
-                    <Grid Grid.Column="0" Margin="10,40">
-                        <Border
-                            Grid.Column="0"
-                            Margin="2"
-                            HorizontalOptions="Start"
-                            StrokeThickness="0"
-                            VerticalOptions="Start">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="18" />
-                            </Border.StrokeShape>
-                            <Border.Behaviors>
-                                <berry:TouchBehavior Command="{Binding BindingContext.GoBackCommand, Source={x:Reference this}}" NativeAnimation="True" />
-                            </Border.Behaviors>
-                            <Label
-                                Padding="12"
-                                BackgroundColor="#77000000"
-                                FontFamily="Material"
-                                FontSize="26"
-                                Opacity="0.8"
-                                Text="{x:Static materialDesign:MaterialDesignIcons.ArrowBack}"
-                                TextColor="White" />
-                        </Border>
-
-                        <Border
-                            Grid.Column="0"
-                            Margin="2"
-                            HorizontalOptions="End"
-                            StrokeThickness="0"
-                            VerticalOptions="Start">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="18" />
-                            </Border.StrokeShape>
-                            <Border.Behaviors>
-                                <berry:TouchBehavior Command="{Binding BindingContext.ShowProviderSourcesSheetCommand, Source={x:Reference this}}" NativeAnimation="True" />
-                            </Border.Behaviors>
-                            <Label
-                                Padding="12"
-                                BackgroundColor="#77000000"
-                                FontFamily="Material"
-                                FontSize="26"
-                                Opacity="0.8"
-                                Text="{x:Static materialDesign:MaterialDesignIcons.Dns}"
-                                TextColor="White" />
-                        </Border>
-                    </Grid>
 
                     <Border
                         Grid.Column="0"
@@ -161,7 +163,7 @@
                             TextColor="White"
                             VerticalOptions="Center">
                             <Label.Behaviors>
-                                <berry:TouchBehavior LongPressCommand="{Binding BindingContext.CopyTitleCommand, Source={x:Reference this}}" />
+                                <berry:TouchBehavior LongPressCommand="{Binding CopyTitleCommand}" />
                             </Label.Behaviors>
                         </Label>
 
@@ -271,16 +273,16 @@
                             FontFamily="SoraBold"
                             Label="Overview"
                             LabelSize="16"
-                            SelectedTabColor="#9575ff"
+                            SelectedTabColor="{StaticResource Tertiary}"
                             UnderlineHeight="1"
                             UnselectedLabelColor="{StaticResource Gray400}" />
                         <berry:MaterialUnderlinedTabItem
                             FontFamily="SoraBold"
                             IconOptions="TextOnly"
                             IconSize="30"
-                            Label="Episodes"
+                            Label="Chapters"
                             LabelSize="16"
-                            SelectedTabColor="#9575ff"
+                            SelectedTabColor="{StaticResource Tertiary}"
                             UnderlineHeight="1"
                             UnselectedLabelColor="{StaticResource Gray400}" />
                     </berry:TabHostView>

@@ -105,12 +105,9 @@
                     <ImageButton
                         HeightRequest="35"
                         HorizontalOptions="Start"
-                        Source="logo.svg"
+                        Source="tori_gate.png"
                         VerticalOptions="Start"
                         WidthRequest="35">
-                        <ImageButton.Behaviors>
-                            <toolkit:IconTintColorBehavior TintColor="#A9FFFFFF" />
-                        </ImageButton.Behaviors>
                     </ImageButton>
 
                     <Grid HorizontalOptions="End" VerticalOptions="Start">

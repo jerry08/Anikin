@@ -7,7 +7,7 @@
     xmlns:models="clr-namespace:Juro.Core.Models.Anime;assembly=Juro.Core"
     x:Name="this"
     Margin="0"
-    Padding="0"
+    Padding="1"
     BackgroundColor="Transparent"
     HeightRequest="35">
     <Grid BackgroundColor="Transparent">

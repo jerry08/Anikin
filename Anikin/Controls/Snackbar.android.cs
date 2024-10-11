@@ -166,7 +166,7 @@ public partial class Snackbar
                     (float)cornerRadius.Right,
                     (float)cornerRadius.Right,
                     (float)cornerRadius.Bottom,
-                    (float)cornerRadius.Bottom
+                    (float)cornerRadius.Bottom,
                 ]
             );
 

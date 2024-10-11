@@ -8,10 +8,10 @@
     xmlns:models="clr-namespace:Anikin.Models"
     x:Name="this"
     Margin="0"
-    Padding="5,0,0,0"
+    Padding="4,0"
     x:DataType="models:AnimeHomeRange"
     BackgroundColor="Transparent">
-    <Grid BackgroundColor="Transparent">
+    <Grid BackgroundColor="Transparent" Padding="0,2">
         <Border
             Grid.Column="0"
             BackgroundColor="{AppThemeBinding Light={StaticResource Gray300},

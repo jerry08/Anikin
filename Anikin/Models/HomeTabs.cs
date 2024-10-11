@@ -4,5 +4,5 @@ public enum HomeTabs
 {
     Anime,
     Profile,
-    Manga
+    Manga,
 }

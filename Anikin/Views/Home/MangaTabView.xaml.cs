@@ -51,7 +51,7 @@ public partial class MangaTabView
         {
             ItemTemplate = new MainDataTemplateSelector()
             {
-                DataTemplate = new DataTemplate(() => new MangaCarouselTemplateView())
+                DataTemplate = new DataTemplate(() => new MangaCarouselTemplateView()),
             },
             IsBounceEnabled = false,
             IsScrollAnimated = false,
@@ -62,8 +62,8 @@ public partial class MangaTabView
             {
                 ItemSpacing = 0,
                 SnapPointsAlignment = SnapPointsAlignment.Start,
-                SnapPointsType = SnapPointsType.MandatorySingle
-            }
+                SnapPointsType = SnapPointsType.MandatorySingle,
+            },
         }.Bind(ItemsView.ItemsSourceProperty, (MangaHomeViewModel vm) => vm.PopularMedias);
 
         IDispatcherTimer? timer = null;

@@ -80,7 +80,7 @@
                                 Text="{Binding MeanScore, Converter={StaticResource RatingConverter}}"
                                 TextColor="White"
                                 VerticalTextAlignment="Center" />
-                            <Image>
+                            <!--<Image>
                                 <Image.Source>
                                     <FontImageSource
                                         FontFamily="Material"
@@ -88,7 +88,13 @@
                                         Size="17"
                                         Color="Gold" />
                                 </Image.Source>
-                            </Image>
+                            </Image>-->
+                            <Label
+                                FontFamily="Material"
+                                FontSize="17"
+                                Text="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
+                                TextColor="Gold"
+                                VerticalOptions="Center" />
                         </HorizontalStackLayout>
                     </Border>
                 </Grid>

@@ -93,7 +93,7 @@ public partial class AnimeTabView
         {
             ItemTemplate = new MainDataTemplateSelector()
             {
-                DataTemplate = new DataTemplate(() => new AnimeCarouselTemplateView())
+                DataTemplate = new DataTemplate(() => new AnimeCarouselTemplateView()),
             },
             //ItemsSource = viewModel.CurrentSeasonMedias,
             IsBounceEnabled = false,
@@ -105,8 +105,8 @@ public partial class AnimeTabView
             {
                 ItemSpacing = 0,
                 SnapPointsAlignment = SnapPointsAlignment.Start,
-                SnapPointsType = SnapPointsType.MandatorySingle
-            }
+                SnapPointsType = SnapPointsType.MandatorySingle,
+            },
         }
         //.Bind(ItemsView.ItemsSourceProperty, nameof(AnimeHomeViewModel.CurrentSeasonMedias));
         .Bind(ItemsView.ItemsSourceProperty, (AnimeHomeViewModel vm) => vm.CurrentSeasonMedias);

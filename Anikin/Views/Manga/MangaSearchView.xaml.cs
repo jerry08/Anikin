@@ -95,7 +95,7 @@ public partial class MangaSearchView
             {
                 AutoReset = false,
                 Enabled = true,
-                Interval = 800
+                Interval = 800,
             };
 
             Timer.Elapsed += (s, e) =>

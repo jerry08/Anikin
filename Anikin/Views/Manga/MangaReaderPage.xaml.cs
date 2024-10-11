@@ -106,7 +106,7 @@ public partial class MangaReaderPage
         {
             AutoReset = false,
             Enabled = true,
-            Interval = 5000
+            Interval = 5000,
         };
 
         Timer.Elapsed += (_, _) =>
