@@ -84,7 +84,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
         _settingsService.Load();
 
-        _apiClient.ProviderKey = _settingsService.LastProviderKey!;
+        _apiClient.ProviderKey = _settingsService.LastAnimeProviderKey!;
 
         IsBusy = true;
 

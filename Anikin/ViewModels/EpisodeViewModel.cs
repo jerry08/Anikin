@@ -151,7 +151,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         var providersName = providers.Select(x => x.Name).ToList();
 
         var result = await Shell.Current.DisplayActionSheet(
-            $"Select Provider ({_settingsService.LastProviderKey ?? "??"})",
+            $"Select Provider ({_settingsService.LastAnimeProviderKey ?? "??"})",
             "Cancel",
             "Ok",
             providersName.ToArray()
@@ -170,7 +170,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
     [RelayCommand]
     private async Task SelectedProviderKeyChanged(string? key)
     {
-        if (string.IsNullOrWhiteSpace(key) || _settingsService.LastProviderKey == key)
+        if (string.IsNullOrWhiteSpace(key) || _settingsService.LastAnimeProviderKey == key)
             return;
 
         if (ChangeSourceSheet is not null)
@@ -185,7 +185,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
 
         await Snackbar.Make($"Source provider changed to {provider.Name}").Show();
 
-        _settingsService.LastProviderKey = provider.Key;
+        _settingsService.LastAnimeProviderKey = provider.Key;
         _settingsService.LastAnimeProviderName = provider.Name;
         _settingsService.Save();
 
@@ -218,13 +218,13 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         var list = ProviderGroups.SelectMany(x => x).ToList();
         list.ForEach(x => x.IsSelected = false);
 
-        var defaultProvider = list.Find(x => x.Key == _settingsService.LastProviderKey);
+        var defaultProvider = list.Find(x => x.Key == _settingsService.LastAnimeProviderKey);
         if (defaultProvider is not null)
         {
             defaultProvider.IsSelected = true;
         }
 
-        _apiClient.ProviderKey = _settingsService.LastProviderKey!;
+        _apiClient.ProviderKey = _settingsService.LastAnimeProviderKey!;
     }
 
     protected override async Task LoadCore()

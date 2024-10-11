@@ -15,7 +15,7 @@ public partial class SettingsService : SettingsBase
 
     public bool AlwaysCheckForUpdates { get; set; } = true;
 
-    public string? LastProviderKey { get; set; }
+    public string? LastAnimeProviderKey { get; set; }
     public string? LastAnimeProviderName { get; set; }
 
     public string? LastMangaProviderKey { get; set; }

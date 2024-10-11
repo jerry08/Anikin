@@ -34,7 +34,7 @@ public partial class ProviderSearchViewModel : CollectionViewModel<IAnimeInfo>
 
         _settingsService.Load();
 
-        _apiClient.ProviderKey = _settingsService.LastProviderKey!;
+        _apiClient.ProviderKey = _settingsService.LastAnimeProviderKey!;
 
         Load();
     }

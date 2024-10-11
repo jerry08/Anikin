@@ -50,7 +50,7 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
 
         _settingsService.Load();
 
-        _apiClient.ProviderKey = _settingsService.LastProviderKey!;
+        _apiClient.ProviderKey = _settingsService.LastAnimeProviderKey!;
 
         Load();
     }
