@@ -3,10 +3,13 @@
   <PropertyGroup>
     <TargetFrameworks>$(NetVersion)-android;$(NetVersion)-ios;$(NetVersion)-maccatalyst</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);$(NetVersion)-windows10.0.19041.0</TargetFrameworks>
+    <!-- https://stackoverflow.com/questions/78981306/microsoft-windows-sdk-net-ref-error-with-community-toolkit-is-not-exists -->
+    <!--<WindowsSdkPackageVersion>10.0.19041.41</WindowsSdkPackageVersion>-->
     <OutputType>Exe</OutputType>
     <RootNamespace>Anikin</RootNamespace>
     <UseMaui>true</UseMaui>
     <SingleProject>true</SingleProject>
+    <CsWinRTRcwFactoryFallbackGeneratorForceOptOut>true</CsWinRTRcwFactoryFallbackGeneratorForceOptOut>
 
     <!-- Rollback MAUI version because of bug (https://github.com/dotnet/maui/issues/14520) -->
     <!--<MauiVersion>7.0.59</MauiVersion>-->
@@ -66,22 +69,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Berry.Maui" Version="1.3.1" />
-    <PackageReference Include="Berry.Maui.MediaElement" Version="1.3.1" />
+    <PackageReference Include="Berry.Maui" Version="1.3.7" />
+    <PackageReference Include="Berry.Maui.MediaElement" Version="1.3.7" />
     <PackageReference Include="Cogwheel" Version="2.1.0" />
-    <PackageReference Include="CommunityToolkit.Maui" Version="9.0.1" />
-    <PackageReference Include="CommunityToolkit.Maui.Markup" Version="4.0.0" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-    <PackageReference Include="CSharpier.MsBuild" Version="0.29.0" PrivateAssets="all" />
+    <PackageReference Include="CommunityToolkit.Maui" Version="9.1.0" />
+    <PackageReference Include="CommunityToolkit.Maui.Markup" Version="4.1.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="CSharpier.MsBuild" Version="0.29.2" PrivateAssets="all" />
     <PackageReference Include="FFImageLoadingCompat.Maui" Version="0.1.1" />
-    <PackageReference Include="Httpz" Version="1.1.6" />
+    <PackageReference Include="Httpz" Version="1.1.7" />
     <PackageReference Include="Jita.AniList" Version="0.0.4" />
     <PackageReference Include="Jita.Aniskip" Version="0.0.4" />
-    <PackageReference Include="Juro" Version="1.4.2" />
-    <PackageReference Include="Juro.Providers" Version="1.4.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.80" />
-    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.80" />
+    <PackageReference Include="Juro" Version="1.4.4" />
+    <PackageReference Include="Juro.Providers" Version="1.4.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.91" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.91" />
     <PackageReference Include="Octokit" Version="13.0.1" />
     <PackageReference Include="Plugin.ContextMenuContainer" Version="1.0.7" />
     <PackageReference Include="SkiaSharp.Extended.UI.Maui" Version="2.0.0" />
@@ -105,10 +108,6 @@
     <PackageReference Include="Xamarin.Firebase.Auth" Version="121.1.0" />
     <PackageReference Include="Xamarin.Firebase.Crashlytics" Version="118.3.2.1" />
     <PackageReference Include="Xamarin.Firebase.Database" Version="120.1.0" />
-
-    <PackageReference Include="Xam.Plugins.Android.ExoPlayer" Version="2.19.1" />
-    <PackageReference Include="Xam.Plugins.Android.ExoPlayer.OkHttp" Version="2.19.1" />
-    <PackageReference Include="Xam.Plugins.Android.ExoPlayer.MediaSession" Version="2.19.1" />
   </ItemGroup>
 
 </Project>
