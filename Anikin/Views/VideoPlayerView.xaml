@@ -12,6 +12,7 @@
     <ContentPage.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <toolkit:IsStringNotNullOrWhiteSpaceConverter x:Key="IsStringNotNullOrWhiteSpaceConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
     <Grid HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
@@ -52,5 +53,31 @@
                 <toolkit:EventToCommandBehavior Command="{Binding UnloadedCommand}" EventName="Unloaded" />
             </berry:MediaElement.Behaviors>
         </berry:MediaElement>
+
+        <Border
+            x:Name="subtitlesContainer"
+            Margin="{OnPlatform Default='0,20',
+                                WinUI='0,50'}"
+            Padding="20,10"
+            BackgroundColor="#38000000"
+            HorizontalOptions="Center"
+            IsVisible="{Binding CurrentSubtitle, Converter={StaticResource IsStringNotNullOrWhiteSpaceConverter}}"
+            StrokeThickness="0"
+            VerticalOptions="End">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8" />
+            </Border.StrokeShape>
+            <Grid>
+                <Label
+                    CharacterSpacing="0.1"
+                    FontFamily="SoraBold"
+                    FontSize="20"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center"
+                    Opacity="0.95"
+                    Text="{Binding CurrentSubtitle}"
+                    TextColor="White" />
+            </Grid>
+        </Border>
     </Grid>
 </ContentPage>
