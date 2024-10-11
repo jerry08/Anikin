@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-   <a href="https://discord.com/invite/nZj46N5a"><img src="https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white"></a>
+   <a href="https://discord.com/invite/U7XweVubJN"><img src="https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white"></a>
    <a href="https://github.com/jerry08/Anikin/releases"><img src="https://img.shields.io/github/downloads/jerry08/Anikin/total?color=%233DDC84&logo=android&logoColor=%23fff&style=for-the-badge"></a>
 </p>
 
@@ -50,7 +50,7 @@ Anikin parses website data and filter required info, thus It removes the ads for
 ### Official Discord Server
 
 <p align="center">
- <a href="https://discord.com/invite/nZj46N5a">
+ <a href="https://discord.com/invite/U7XweVubJN">
   <img src="https://invidget.switchblade.xyz/mhxsSMy2Nf">
  </a>
 </p>
