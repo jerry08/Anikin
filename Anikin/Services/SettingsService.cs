@@ -15,10 +15,10 @@ public partial class SettingsService : SettingsBase
 
     public bool AlwaysCheckForUpdates { get; set; } = true;
 
-    public string? LastAnimeProviderKey { get; set; }
+    public string? LastAnimeProviderKey { get; set; } = "Anime";
     public string? LastAnimeProviderName { get; set; }
 
-    public string? LastMangaProviderKey { get; set; }
+    public string? LastMangaProviderKey { get; set; } = "Manga";
     public string? LastMangaProviderName { get; set; }
 
     public string? AnilistAccessToken { get; set; }
