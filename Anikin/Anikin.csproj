@@ -106,7 +106,7 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == '$(NetVersion)-android'">
     <PackageReference Include="Jerro.Maui.GoogleClient" Version="1.0.4" />
-    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Service" Version="2.7.0.4" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Service" Version="2.8.6" />
     <PackageReference Include="Xamarin.Firebase.Auth" Version="121.1.0" />
     <PackageReference Include="Xamarin.Firebase.Crashlytics" Version="118.3.2.1" />
     <PackageReference Include="Xamarin.Firebase.Database" Version="120.1.0" />
