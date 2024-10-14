@@ -83,6 +83,11 @@ public partial class PinchZoom : ContentView
 
     public void OnPanUpdated(object? sender, PanUpdatedEventArgs e)
     {
+        if (Application.Current?.MainPage is null)
+        {
+            return;
+        }
+
         if (Content.Scale == 1)
         {
             return;

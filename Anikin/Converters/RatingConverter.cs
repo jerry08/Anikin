@@ -6,7 +6,12 @@ namespace Anikin.Converters;
 
 public class RatingConverter : IValueConverter
 {
-    public object? Convert(object? value, Type targetType, object parameter, CultureInfo culture) =>
+    public object? Convert(
+        object? value,
+        Type targetType,
+        object? parameter,
+        CultureInfo culture
+    ) =>
         float.TryParse(value?.ToString(), out var score)
             ? string.Format("{0:0.0}", score / 10f)
             : "??";
@@ -14,7 +19,7 @@ public class RatingConverter : IValueConverter
     public object ConvertBack(
         object? value,
         Type targetType,
-        object parameter,
+        object? parameter,
         CultureInfo culture
     ) => throw new NotSupportedException();
 }

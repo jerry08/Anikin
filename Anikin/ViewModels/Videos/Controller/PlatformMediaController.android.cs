@@ -120,7 +120,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayerListener
 
         _playerSettings.Load();
 
-        WindowCompat.SetDecorFitsSystemWindows(Platform.CurrentActivity.Window!, false);
+        WindowCompat.SetDecorFitsSystemWindows(Platform.CurrentActivity!.Window!, false);
         Platform.CurrentActivity.HideSystemBars();
 
         if (
@@ -144,9 +144,9 @@ public class PlatformMediaController : Java.Lang.Object, IPlayerListener
 
         SetNextAndPrev();
 
-        var handler = (MediaElementHandler)MediaElement.Handler;
+        var handler = (MediaElementHandler)MediaElement.Handler!;
         playerView = handler.PlatformView.GetFirstChildOfType<PlayerView>()!;
-        exoPlayer = (IExoPlayer)playerView.Player;
+        exoPlayer = (IExoPlayer)playerView.Player!;
         exoPlayer.AddListener(this);
     }
 
@@ -155,7 +155,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayerListener
     {
         MediaElement = mediaElement;
 
-        var handler = (MediaElementHandler)mediaElement.Handler;
+        var handler = (MediaElementHandler)mediaElement.Handler!;
         playerView = handler.PlatformView.GetFirstChildOfType<PlayerView>()!;
         var styledPlayerControlView =
             handler.PlatformView.GetFirstChildOfType<PlayerControlView>()!;
@@ -182,7 +182,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayerListener
 
         CancellationTokenSource.Cancel();
 
-        Platform.CurrentActivity.RequestedOrientation = ScreenOrientation.Unspecified;
+        Platform.CurrentActivity!.RequestedOrientation = ScreenOrientation.Unspecified;
         Platform.CurrentActivity.ShowSystemBars();
 
         if (Platform.CurrentActivity is MainActivity mainActivity)
@@ -204,7 +204,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayerListener
 
     public void Initialize()
     {
-        exoPlayer = (IExoPlayer)playerView.Player;
+        exoPlayer = (IExoPlayer)playerView.Player!;
         exoPlayer.AddListener(this);
 
         MediaElement.StateChanged += (s, e) =>
@@ -221,7 +221,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayerListener
         //
         //await bookmarkManager.SaveBookmarkAsync(Anime, true);
 
-        animeTitle = Platform.CurrentActivity.FindViewById<TextView>(Resource.Id.exo_anime_title)!;
+        animeTitle = Platform.CurrentActivity!.FindViewById<TextView>(Resource.Id.exo_anime_title)!;
         episodeTitle = Platform.CurrentActivity.FindViewById<TextView>(Resource.Id.exo_ep_sel)!;
 
         animeTitle.Text = Anime.Title;

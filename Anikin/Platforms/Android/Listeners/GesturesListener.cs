@@ -38,7 +38,7 @@ public class GesturesListener : GestureDetector.SimpleOnGestureListener
         return base.OnDoubleTap(e);
     }
 
-    public override bool OnScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
+    public override bool OnScroll(MotionEvent? e1, MotionEvent e2, float distanceX, float distanceY)
     {
         OnScrollYClick?.Invoke(this, distanceX);
         OnScrollXClick?.Invoke(this, distanceY);
