@@ -23,14 +23,13 @@
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <toolkit:IsListNullOrEmptyConverter x:Key="IsListNullOrEmptyConverter" />
             <toolkit:IsListNotNullOrEmptyConverter x:Key="IsListNotNullOrEmptyConverter" />
-
             <DataTemplate x:Key="ImageTemplate" x:DataType="models:IMangaChapterPage">
                 <Grid>
                     <ff:CachedImage
                         Aspect="AspectFill"
-                        HorizontalOptions="CenterAndExpand"
+                        HorizontalOptions="Center"
                         Source="{Binding Image}"
-                        VerticalOptions="CenterAndExpand">
+                        VerticalOptions="Center">
                         <!--<ff:CachedImage.Source>
                             <controls:BerryUriImageSource Headers="{Binding Headers}" Uri="{Binding Image}" />
                         </ff:CachedImage.Source>-->
@@ -40,29 +39,26 @@
                     </ff:CachedImage>
                 </Grid>
             </DataTemplate>
-
             <DataTemplate x:Key="WindowsImageTemplate" x:DataType="models:IMangaChapterPage">
                 <Grid>
                     <Image
                         Aspect="AspectFill"
-                        HorizontalOptions="CenterAndExpand"
+                        HorizontalOptions="Center"
                         MaximumWidthRequest="600"
                         Source="{Binding Image}"
-                        VerticalOptions="CenterAndExpand">
+                        VerticalOptions="Center">
                         <Image.GestureRecognizers>
                             <TapGestureRecognizer NumberOfTapsRequired="1" Tapped="OnTapped" />
                         </Image.GestureRecognizers>
                     </Image>
                 </Grid>
             </DataTemplate>
-
             <local:MainDataTemplateSelector
                 x:Key="ImageTemplateSelector"
                 DataTemplate="{StaticResource ImageTemplate}"
                 WindowsDataTemplate="{StaticResource WindowsImageTemplate}" />
         </ResourceDictionary>
     </ContentPage.Resources>
-
     <Grid RowDefinitions="*">
         <Grid
             x:Name="TitleGrid"
@@ -91,7 +87,7 @@
                                 Padding="12"
                                 FontFamily="Material"
                                 FontSize="26"
-                                Text="{x:Static materialDesign:MaterialDesignIcons.ArrowBackIos}"
+                                Text="{x:Static materialDesign:MaterialIcons.ArrowBackIos}"
                                 TextColor="White" />
                         </Grid>
                     </Border>
@@ -123,18 +119,17 @@
                 </Grid>
             </Border>
         </Grid>
-
         <Grid
-            HorizontalOptions="CenterAndExpand"
+            HorizontalOptions="Center"
             IsVisible="{Binding IsBusy}"
-            VerticalOptions="CenterAndExpand"
+            VerticalOptions="Center"
             ZIndex="1000">
             <ActivityIndicator
                 HeightRequest="{OnPlatform Default=60,
                                            WinUI=100}"
-                HorizontalOptions="CenterAndExpand"
+                HorizontalOptions="Center"
                 IsRunning="True"
-                VerticalOptions="CenterAndExpand"
+                VerticalOptions="Center"
                 WidthRequest="{OnPlatform Default=60,
                                           WinUI=100}">
                 <ActivityIndicator.Triggers>
@@ -148,11 +143,10 @@
                 </ActivityIndicator.Triggers>
             </ActivityIndicator>
         </Grid>
-
         <Grid
-            HorizontalOptions="FillAndExpand"
+            HorizontalOptions="Fill"
             IsVisible="False"
-            VerticalOptions="FillAndExpand">
+            VerticalOptions="Fill">
             <Grid.Triggers>
                 <MultiTrigger TargetType="Grid">
                     <MultiTrigger.Conditions>
@@ -171,7 +165,6 @@
                 Text="Failed to load images"
                 VerticalOptions="Center" />
         </Grid>
-
         <!--<CollectionView
             x:Name="PagesCollectionView"
             HorizontalOptions="Center"
@@ -182,7 +175,6 @@
                 <LinearItemsLayout Orientation="Vertical" />
             </CollectionView.ItemsLayout>
         </CollectionView>-->
-
         <!--<ScrollView
             x:Name="PagesScrollView"
             HorizontalOptions="Center"
@@ -193,7 +185,6 @@
                 BindableLayout.ItemTemplateSelector="{StaticResource ImageTemplateSelector}"
                 BindableLayout.ItemsSource="{Binding Entities}" />
         </ScrollView>-->
-
         <CollectionView
             x:Name="MainContent"
             HorizontalOptions="Center"
@@ -203,7 +194,6 @@
                 <LinearItemsLayout Orientation="Vertical" />
             </CollectionView.ItemsLayout>
         </CollectionView>
-
         <Grid
             x:Name="SliderView"
             Margin="{OnPlatform Android='15,0,15,50',
@@ -227,7 +217,6 @@
                         MinimumTrackColor="{StaticResource Tertiary}"
                         ThumbColor="{StaticResource Tertiary}"
                         ValueChanged="Slider_ValueChanged" />
-
                     <!--<controls:RangeSlider
                         MaximumValue="8"
                         MinimumValue="0"

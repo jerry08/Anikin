@@ -18,11 +18,9 @@
     <Border.Resources>
         <ResourceDictionary>
             <converters:RatingConverter x:Key="RatingConverter" />
-
             <DataTemplate x:Key="GenreTemplate">
                 <viewTemplates:CarouselGenreTemplateView />
             </DataTemplate>
-
             <views:MainDataTemplateSelector x:Key="GenreTemplateSelector" DataTemplate="{StaticResource GenreTemplate}" />
         </ResourceDictionary>
     </Border.Resources>
@@ -32,12 +30,11 @@
         Grid.Row="0"
         Aspect="AspectFill"
         HeightRequest="270"
-        HorizontalOptions="FillAndExpand"
+        HorizontalOptions="Fill"
         IsAnimationPlaying="False"
         IsVisible="True"
         Source="home_cover.gif"
         VerticalOptions="Start" />-->
-
     <Grid HeightRequest="305">
         <Grid.GestureRecognizers>
             <TapGestureRecognizer Command="{Binding Parent.BindingContext.ItemSelectedCommand, Source={x:Reference this}}" CommandParameter="{Binding BindingContext, Source={x:Reference this}}" />
@@ -51,7 +48,7 @@
                 <berry:BlurBehavior Radius="40" />
             </Image.Behaviors>
         </Image>
-        <Grid Grid.Row="0" HorizontalOptions="FillAndExpand">
+        <Grid Grid.Row="0" HorizontalOptions="Fill">
             <Grid.Background>
                 <!--  StartPoint defaults to (0,0)  -->
                 <LinearGradientBrush EndPoint="0,0.98">
@@ -96,7 +93,7 @@
                                 <Image.Source>
                                     <FontImageSource
                                         FontFamily="Material"
-                                        Glyph="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
+                                        Glyph="{x:Static materialDesign:MaterialIcons.StarRate}"
                                         Size="17"
                                         Color="Gold" />
                                 </Image.Source>
@@ -104,14 +101,13 @@
                             <Label
                                 FontFamily="Material"
                                 FontSize="17"
-                                Text="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
+                                Text="{x:Static materialDesign:MaterialIcons.StarRate}"
                                 TextColor="Gold"
                                 VerticalOptions="Center" />
                         </HorizontalStackLayout>
                     </Border>
                 </Grid>
             </Border>
-
             <Grid Grid.Column="1">
                 <VerticalStackLayout Spacing="5" VerticalOptions="Center">
                     <Label
@@ -123,7 +119,6 @@
                         Text="{Binding Title.PreferredTitle}"
                         TextColor="White"
                         VerticalOptions="Center" />
-
                     <Label
                         FontAttributes="Bold"
                         FontSize="14"
@@ -134,7 +129,6 @@
                         Text="{Binding Status}"
                         TextColor="{StaticResource Secondary}"
                         VerticalOptions="Center" />
-
                     <FlexLayout
                         Margin="0,0,0,10"
                         BindableLayout.ItemTemplateSelector="{StaticResource GenreTemplateSelector}"

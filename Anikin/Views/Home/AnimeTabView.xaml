@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<berry:DelayedView
+<ContentPage
     x:Class="Anikin.Views.Home.AnimeTabView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -13,29 +13,24 @@
     xmlns:views="clr-namespace:Anikin.Views"
     x:Name="this"
     x:DataType="viewModels:AnimeHomeViewModel">
-    <ContentView.Resources>
+    <ContentPage.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <toolkit:IsListNotNullOrEmptyConverter x:Key="IsListNotNullOrEmptyConverter" />
-
             <DataTemplate x:Key="AnimeInfoDataTemplate">
                 <views:AnimeItemView />
             </DataTemplate>
-
             <DataTemplate x:Key="AnimeCarouselDataTemplate">
                 <templates:AnimeCarouselTemplateView />
             </DataTemplate>
-
             <DataTemplate x:Key="RangeTemplate">
-                <viewTemplates:AnimeTypeRangeTemplateView />
+                <templates:AnimeTypeRangeTemplateView />
             </DataTemplate>
-
             <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
             <views:MainDataTemplateSelector x:Key="AnimeCarouselDataTemplateSelector" DataTemplate="{StaticResource AnimeCarouselDataTemplate}" />
             <views:MainDataTemplateSelector x:Key="RangeTemplateSelector" DataTemplate="{StaticResource RangeTemplate}" />
         </ResourceDictionary>
-    </ContentView.Resources>
-
+    </ContentPage.Resources>
     <RefreshView
         Margin="0,0,0,0"
         Command="{Binding RefreshCommand}"
@@ -56,18 +51,16 @@
                     Source="typing.json"
                     VerticalOptions="Center"
                     WidthRequest="70" />-->
-
                 <!--<Image
                     x:Name="img1"
                     Grid.Row="0"
                     Aspect="AspectFill"
                     HeightRequest="270"
-                    HorizontalOptions="FillAndExpand"
+                    HorizontalOptions="Fill"
                     IsAnimationPlaying="False"
                     IsVisible="True"
                     Source="https://media.tenor.com/l47dR9-6BGIAAAAd/demon-slayer-kimetsu-no-yaiba.gif"
                     VerticalOptions="Start" />-->
-
                 <ContentView x:Name="CarouselContent">
                     <!--<CarouselView
                         IsBounceEnabled="False"
@@ -86,12 +79,11 @@
                         </CarouselView.ItemsLayout>
                     </CarouselView>-->
                 </ContentView>
-
                 <!--<CollectionView
-                    HorizontalOptions="FillAndExpand"
+                    HorizontalOptions="Fill"
                     ItemTemplate="{StaticResource AnimeCarouselDataTemplateSelector}"
                     ItemsSource="{Binding CurrentSeasonMedias}"
-                    VerticalOptions="FillAndExpand">
+                    VerticalOptions="Fill">
                     <CollectionView.ItemsLayout>
                         <LinearItemsLayout
 
@@ -99,7 +91,6 @@
                             SnapPointsType="MandatorySingle" />
                     </CollectionView.ItemsLayout>
                 </CollectionView>-->
-
                 <Grid x:Name="NavGrid" Grid.Row="0">
                     <!--  Command="{Binding GithubCommand}"  -->
                     <ImageButton
@@ -107,9 +98,7 @@
                         HorizontalOptions="Start"
                         Source="tori_gate.png"
                         VerticalOptions="Start"
-                        WidthRequest="35">
-                    </ImageButton>
-
+                        WidthRequest="35" />
                     <Grid HorizontalOptions="End" VerticalOptions="Start">
                         <Grid.Behaviors>
                             <berry:TouchBehavior Command="{Binding BindingContext.GoToSearchCommand, Source={x:Reference this}}" NativeAnimation="True" />
@@ -119,21 +108,19 @@
                             FontSize="28"
                             HorizontalOptions="End"
                             Opacity="0.9"
-                            Text="{x:Static materialDesign:MaterialDesignIcons.Search}"
+                            Text="{x:Static materialDesign:MaterialIcons.Search}"
                             TextColor="{AppThemeBinding Light={StaticResource Gray400},
                                                         Dark={StaticResource White}}"
                             VerticalOptions="Start" />
                     </Grid>
                 </Grid>
-
                 <!--<Label
                     Grid.Row="0"
                     FontFamily="BloodCrow"
-                    VerticalOptions="EndAndExpand"
+                    VerticalOptions="End"
                     FontSize="30"
                     Margin="20,20"
                     Text="Demon&#10;Slayer" />-->
-
                 <!--<Label
                     Grid.Row="0"
                     Margin="20,20"
@@ -142,7 +129,7 @@
                     HorizontalOptions="Start"
                     HorizontalTextAlignment="Center"
                     Text="Demon"
-                    VerticalOptions="EndAndExpand"
+                    VerticalOptions="End"
                     WidthRequest="120" />
                 <Label
                     Grid.Row="0"
@@ -152,9 +139,8 @@
                     HorizontalOptions="Start"
                     HorizontalTextAlignment="Center"
                     Text="Slayer"
-                    VerticalOptions="EndAndExpand"
+                    VerticalOptions="End"
                     WidthRequest="120" />-->
-
                 <VerticalStackLayout Grid.Row="1">
                     <Grid
                         Grid.Row="0"
@@ -178,7 +164,6 @@
                             HorizontalOptions="End"
                             Text="See all &gt;" />
                     </Grid>
-
                     <CollectionView
                         HorizontalOptions="Center"
                         IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
@@ -192,21 +177,19 @@
                                 Orientation="Vertical"
                                 Span="5"
                                 VerticalItemSpacing="4" />-->
-
                             <!--<GridItemsLayout
                                 x:Name="AlbumViewLayout"
                                 HorizontalItemSpacing="4"
                                 Orientation="Horizontal"
                                 Span="5"
                                 VerticalItemSpacing="4" />-->
-
                             <LinearItemsLayout Orientation="Horizontal" />
                         </CollectionView.ItemsLayout>
                         <CollectionView.EmptyView>
                             <Grid
-                                HorizontalOptions="FillAndExpand"
+                                HorizontalOptions="Fill"
                                 IsVisible="False"
-                                VerticalOptions="FillAndExpand">
+                                VerticalOptions="Fill">
                                 <Grid.Triggers>
                                     <DataTrigger
                                         Binding="{Binding IsBusy}"
@@ -223,11 +206,9 @@
                             </Grid>
                         </CollectionView.EmptyView>
                     </CollectionView>
-
                     <!--<StackLayout x:Name="test2">
                         <views:HomeViewTextCol x:Name="test1" />
                     </StackLayout>-->
-
                     <Grid
                         Grid.Row="0"
                         Margin="10,5,10,0"
@@ -250,7 +231,6 @@
                             HorizontalOptions="End"
                             Text="See all &gt;" />
                     </Grid>
-
                     <CollectionView
                         HorizontalOptions="Center"
                         IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
@@ -271,9 +251,9 @@
                         </CollectionView.ItemsLayout>
                         <CollectionView.EmptyView>
                             <Grid
-                                HorizontalOptions="FillAndExpand"
+                                HorizontalOptions="Fill"
                                 IsVisible="False"
-                                VerticalOptions="FillAndExpand">
+                                VerticalOptions="Fill">
                                 <Grid.Triggers>
                                     <DataTrigger
                                         Binding="{Binding IsBusy}"
@@ -290,7 +270,6 @@
                             </Grid>
                         </CollectionView.EmptyView>
                     </CollectionView>
-
                     <CollectionView
                         Margin="0,15,0,8"
                         HorizontalOptions="Center"
@@ -303,9 +282,9 @@
                         </CollectionView.ItemsLayout>
                         <CollectionView.EmptyView>
                             <Grid
-                                HorizontalOptions="FillAndExpand"
+                                HorizontalOptions="Fill"
                                 IsVisible="False"
-                                VerticalOptions="FillAndExpand">
+                                VerticalOptions="Fill">
                                 <Grid.Triggers>
                                     <DataTrigger
                                         Binding="{Binding IsBusy}"
@@ -322,23 +301,21 @@
                             </Grid>
                         </CollectionView.EmptyView>
                     </CollectionView>
-
                     <Grid MinimumHeightRequest="200">
                         <Grid
-                            HorizontalOptions="CenterAndExpand"
+                            HorizontalOptions="Center"
                             IsVisible="{Binding SelectedRange.IsLoading}"
-                            VerticalOptions="CenterAndExpand"
+                            VerticalOptions="Center"
                             ZIndex="1000">
                             <ActivityIndicator
                                 HeightRequest="{OnPlatform Default=50,
                                                            WinUI=100}"
-                                HorizontalOptions="CenterAndExpand"
+                                HorizontalOptions="Center"
                                 IsRunning="True"
-                                VerticalOptions="CenterAndExpand"
+                                VerticalOptions="Center"
                                 WidthRequest="{OnPlatform Default=50,
                                                           WinUI=100}" />
                         </Grid>
-
                         <CollectionView
                             HorizontalOptions="Center"
                             IsVisible="{Binding SelectedRange.IsLoading, Converter={StaticResource InvertedBoolConverter}}"
@@ -359,9 +336,9 @@
                             </CollectionView.ItemsLayout>
                             <CollectionView.EmptyView>
                                 <Grid
-                                    HorizontalOptions="FillAndExpand"
+                                    HorizontalOptions="Fill"
                                     IsVisible="False"
-                                    VerticalOptions="FillAndExpand">
+                                    VerticalOptions="Fill">
                                     <Grid.Triggers>
                                         <DataTrigger
                                             Binding="{Binding SelectedRange.IsLoading}"
@@ -383,4 +360,4 @@
             </Grid>
         </ScrollView>
     </RefreshView>
-</berry:DelayedView>
+</ContentPage>

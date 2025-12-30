@@ -8,57 +8,57 @@
     xmlns:viewModels="clr-namespace:Anikin.ViewModels"
     xmlns:views="clr-namespace:Anikin.Views"
     x:Name="this"
-    x:DataType="viewModels:VideoPlayerViewModel">
+    x:DataType="viewModels:VideoPlayerViewModel"
+    Shell.TabBarIsVisible="False">
     <ContentPage.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <toolkit:IsStringNotNullOrWhiteSpaceConverter x:Key="IsStringNotNullOrWhiteSpaceConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
-    <Grid HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+    <Grid HorizontalOptions="Fill" VerticalOptions="Fill">
         <Grid
             BackgroundColor="{StaticResource Black}"
-            HorizontalOptions="FillAndExpand"
+            HorizontalOptions="Fill"
             IsVisible="{Binding StartedPlaying, Converter={StaticResource InvertedBoolConverter}}"
-            VerticalOptions="FillAndExpand"
+            VerticalOptions="Fill"
             ZIndex="1000">
             <ActivityIndicator
                 HeightRequest="{OnPlatform Default=60,
                                            WinUI=100}"
-                HorizontalOptions="CenterAndExpand"
+                HorizontalOptions="Center"
                 IsRunning="{Binding StartedPlaying, Converter={StaticResource InvertedBoolConverter}}"
-                VerticalOptions="CenterAndExpand"
+                VerticalOptions="Center"
                 WidthRequest="{OnPlatform Default=60,
                                           WinUI=100}"
                 Color="White" />
         </Grid>
-
         <berry:MediaElement
             x:Name="videoPlayer"
-            HorizontalOptions="FillAndExpand"
+            HorizontalOptions="Fill"
             IsVisible="{Binding StartedPlaying}"
             ShouldAutoPlay="True"
             ShouldShowPlaybackControls="True"
             Source="{Binding Source}"
-            VerticalOptions="FillAndExpand">
+            VerticalOptions="Fill">
             <berry:MediaElement.Behaviors>
                 <toolkit:EventToCommandBehavior
-                    Command="{Binding LoadedCommand}"
+                    Command="{Binding BindingContext.LoadedCommand, Source={x:Reference this}}"
                     CommandParameter="{x:Reference videoPlayer}"
                     EventName="Loaded" />
                 <toolkit:EventToCommandBehavior
-                    Command="{Binding StateChangedCommand}"
+                    Command="{Binding BindingContext.StateChangedCommand, Source={x:Reference this}}"
                     CommandParameter="{Binding CurrentState, Source={x:Reference videoPlayer}}"
                     EventName="StateChanged" />
-                <toolkit:EventToCommandBehavior Command="{Binding UnloadedCommand}" EventName="Unloaded" />
+                <toolkit:EventToCommandBehavior Command="{Binding BindingContext.UnloadedCommand, Source={x:Reference this}}" EventName="Unloaded" />
             </berry:MediaElement.Behaviors>
         </berry:MediaElement>
-
         <Border
             x:Name="subtitlesContainer"
-            Margin="{OnPlatform Default='0,20',
+            Margin="{OnPlatform Default='0,10',
                                 WinUI='0,50'}"
-            Padding="20,10"
+            Padding="{OnPlatform '10,5',
+                                 WinUI='20,10'}"
             BackgroundColor="#38000000"
             HorizontalOptions="Center"
             IsVisible="{Binding CurrentSubtitle, Converter={StaticResource IsStringNotNullOrWhiteSpaceConverter}}"

@@ -30,15 +30,12 @@
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <toolkit:IsListNullOrEmptyConverter x:Key="IsListNullOrEmptyConverter" />
             <toolkit:IsListNotNullOrEmptyConverter x:Key="IsListNotNullOrEmptyConverter" />
-
             <DataTemplate x:Key="AnimeInfoDataTemplate">
                 <views:ProviderAnimeItemView />
             </DataTemplate>
-
             <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
         </ResourceDictionary>
     </ContentView.Resources>
-
     <Grid x:Name="MainGrid" RowDefinitions="auto,auto,*">
         <!--  SEARCH  -->
         <Grid Grid.Row="0">
@@ -58,7 +55,7 @@
                         Text="{Binding Query}">
                         <Entry.Behaviors>
                             <!--<woka:TapToCloseBehavior />-->
-                            <toolkit:EventToCommandBehavior Command="{Binding QueryChangedCommand}" EventName="Completed" />
+                            <toolkit:EventToCommandBehavior Command="{Binding BindingContext.QueryChangedCommand, Source={x:Reference this}}" EventName="Completed" />
                         </Entry.Behaviors>
                         <!--<Entry.GestureRecognizers>
                             <TapGestureRecognizer NumberOfTapsRequired="1" Tapped="TapGestureRecognizer_Tapped" />
@@ -67,7 +64,6 @@
                 </Grid>
             </Border>
         </Grid>
-
         <Grid
             Grid.Row="1"
             Margin="10,5"
@@ -80,7 +76,6 @@
                 HorizontalTextAlignment="Start"
                 Text="Results"
                 VerticalOptions="Center" />
-
             <Button
                 Grid.Column="1"
                 Margin="0"
@@ -89,13 +84,12 @@
                 <Button.ImageSource>
                     <FontImageSource
                         FontFamily="Material"
-                        Glyph="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
+                        Glyph="{x:Static materialDesign:MaterialIcons.ViewList}"
                         Size="25"
                         Color="{AppThemeBinding Light={StaticResource Gray500},
                                                 Dark={StaticResource Gray600}}" />
                 </Button.ImageSource>
             </Button>
-
             <Button
                 Grid.Column="2"
                 Margin="0"
@@ -104,13 +98,12 @@
                 <Button.ImageSource>
                     <FontImageSource
                         FontFamily="Material"
-                        Glyph="{x:Static materialDesign:MaterialDesignIcons.GridView}"
+                        Glyph="{x:Static materialDesign:MaterialIcons.GridView}"
                         Size="25"
                         Color="{AppThemeBinding Light={StaticResource Gray500},
                                                 Dark={StaticResource White}}" />
                 </Button.ImageSource>
             </Button>
-
             <Button
                 Grid.Column="3"
                 Margin="0"
@@ -119,19 +112,18 @@
                 <Button.ImageSource>
                     <FontImageSource
                         FontFamily="Material"
-                        Glyph="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
+                        Glyph="{x:Static materialDesign:MaterialIcons.GridOn}"
                         Size="25"
                         Color="{AppThemeBinding Light={StaticResource Gray500},
                                                 Dark={StaticResource Gray600}}" />
                 </Button.ImageSource>
             </Button>
         </Grid>
-
         <Grid
             Grid.Row="2"
-            HorizontalOptions="FillAndExpand"
+            HorizontalOptions="Fill"
             IsVisible="False"
-            VerticalOptions="FillAndExpand">
+            VerticalOptions="Fill">
             <Grid.Triggers>
                 <MultiTrigger TargetType="Grid">
                     <MultiTrigger.Conditions>
@@ -149,7 +141,6 @@
                 Text="Nothing found :("
                 VerticalOptions="Center" />
         </Grid>
-
         <CollectionView
             x:Name="SearchCollectionView"
             Grid.Row="2"
@@ -162,8 +153,8 @@
                 <Grid Margin="0,20,0,0" HeightRequest="50">
                     <ActivityIndicator
                         HeightRequest="40"
-                        HorizontalOptions="{OnPlatform WinUI=FillAndExpand,
-                                                       Default=CenterAndExpand}"
+                        HorizontalOptions="{OnPlatform WinUI=Fill,
+                                                       Default=Center}"
                         IsRunning="{Binding IsBusy}"
                         IsVisible="{Binding IsBusy}"
                         VerticalOptions="Center"
@@ -172,9 +163,9 @@
             </CollectionView.Footer>
             <!--<CollectionView.EmptyView>
                 <Grid
-                    HorizontalOptions="FillAndExpand"
+                    HorizontalOptions="Fill"
                     IsVisible="False"
-                    VerticalOptions="FillAndExpand">
+                    VerticalOptions="Fill">
                     <Grid.Triggers>
                         <DataTrigger
                             Binding="{Binding IsBusy}"

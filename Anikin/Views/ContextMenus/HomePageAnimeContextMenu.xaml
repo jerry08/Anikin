@@ -12,7 +12,7 @@
         Padding="0"
         BackgroundColor="Transparent"
         HeightRequest="44"
-        HorizontalOptions="FillAndExpand"
+        HorizontalOptions="Fill"
         VerticalOptions="Start"
         WidthRequest="44">
         <cm:ContextMenuContainer.MenuItems>
@@ -36,7 +36,7 @@
                 Padding="0"
                 BackgroundColor="Transparent"
                 HeightRequest="44"
-                HorizontalOptions="FillAndExpand"
+                HorizontalOptions="Fill"
                 StrokeThickness="0"
                 VerticalOptions="Start"
                 WidthRequest="44">
@@ -55,7 +55,7 @@
                     <Image.Source>
                         <FontImageSource
                             FontFamily="Material"
-                            Glyph="{x:Static materialDesign:MaterialDesignIcons.MoreVert}"
+                            Glyph="{x:Static materialDesign:MaterialIcons.MoreVert}"
                             Size="Large"
                             Color="{AppThemeBinding Light={StaticResource Gray400},
                                                     Dark={StaticResource White}}" />
@@ -64,5 +64,4 @@
             </Border>
         </cm:ContextMenuContainer.Content>
     </cm:ContextMenuContainer>
-
 </ContentPage>

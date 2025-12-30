@@ -3,14 +3,71 @@
     x:Class="Anikin.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
     xmlns:local="clr-namespace:Anikin"
-    xmlns:views="clr-namespace:Anikin.Views"
+    xmlns:materialDesign="clr-namespace:MaterialDesign"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:views="clr-namespace:Anikin.Views.Home"
     Shell.FlyoutBehavior="Disabled"
     Shell.NavBarIsVisible="False">
-
-    <ShellContent
+    <Shell.Behaviors>
+        <toolkit:StatusBarBehavior StatusBarColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray900}}" StatusBarStyle="LightContent" />
+        <berry:NavigationBarBehavior NavigationBarColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}" NavigationBarStyle="{AppThemeBinding Light=DarkContent, Dark=LightContent}" />
+    </Shell.Behaviors>
+    <!--<ShellContent
         Title="Home"
         ContentTemplate="{DataTemplate views:HomeView}"
-        Route="MainPage" />
+        Route="MainPage" />-->
 
+    <TabBar Route="main">
+        <Tab x:Name="AnimeTab" Title="Anime">
+            <Tab.Icon>
+                <FontImageSource
+                    FontFamily="Material"
+                    Glyph="{x:Static materialDesign:MaterialIcons.Movie}"
+                    Size="{OnPlatform 25,
+                                      Android=34}"
+                    Color="{StaticResource Primary}" />
+            </Tab.Icon>
+            <ShellContent
+                x:Name="AnimeContent"
+                Title="Home"
+                ContentTemplate="{DataTemplate views:AnimeTabView}"
+                FlyoutItemIsVisible="False"
+                Route="HomePage"
+                Shell.FlyoutBehavior="Disabled" />
+        </Tab>
+        <Tab x:Name="MangaTab" Title="Manga">
+            <Tab.Icon>
+                <FontImageSource
+                    FontFamily="Material"
+                    Glyph="{x:Static materialDesign:MaterialIcons.Book}"
+                    Size="{OnPlatform 25,
+                                      Android=34}"
+                    Color="{StaticResource Primary}" />
+            </Tab.Icon>
+            <ShellContent
+                Title="Manga"
+                ContentTemplate="{DataTemplate views:MangaTabView}"
+                FlyoutItemIsVisible="False"
+                Route="MangaTabPage"
+                Shell.FlyoutBehavior="Disabled" />
+        </Tab>
+        <Tab x:Name="ProfileTab" Title="Profile">
+            <Tab.Icon>
+                <FontImageSource
+                    FontFamily="Material"
+                    Glyph="{x:Static materialDesign:MaterialIcons.Person}"
+                    Size="{OnPlatform 25,
+                                      Android=34}"
+                    Color="{StaticResource Primary}" />
+            </Tab.Icon>
+            <ShellContent
+                Title="Profile"
+                ContentTemplate="{DataTemplate views:ProfileTabView}"
+                FlyoutItemIsVisible="False"
+                Route="ProfileTabPage"
+                Shell.FlyoutBehavior="Disabled" />
+        </Tab>
+    </TabBar>
 </Shell>

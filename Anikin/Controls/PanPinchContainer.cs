@@ -266,13 +266,13 @@ public class PanPinchContainer : ContentView
 
     private async Task ScaleToAsync(double scale)
     {
-        await Content.ScaleTo(scale, 250, Easing.Linear);
+        await Content.ScaleToAsync(scale, 250, Easing.Linear);
         _currentScale = scale;
     }
 
     private async Task TranslateToAsync(double x, double y)
     {
-        await Content.TranslateTo(x, y, 250, Easing.Linear);
+        await Content.TranslateToAsync(x, y, 250, Easing.Linear);
         _panX = x;
         _panY = y;
     }

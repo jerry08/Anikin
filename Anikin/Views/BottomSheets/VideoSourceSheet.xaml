@@ -32,10 +32,10 @@
     </ContentView.Resources>
     <Border
         Grid.Column="0"
-        HorizontalOptions="FillAndExpand"
+        HorizontalOptions="Fill"
         Stroke="{StaticResource Gray700}"
         StrokeThickness="0"
-        VerticalOptions="FillAndExpand">
+        VerticalOptions="Fill">
         <Border.StrokeShape>
             <RoundRectangle CornerRadius="22" />
         </Border.StrokeShape>
@@ -47,16 +47,13 @@
                 FontAttributes="Bold"
                 FontSize="20"
                 HeightRequest="60"
-                HorizontalOptions="CenterAndExpand"
+                HorizontalOptions="Center"
                 HorizontalTextAlignment="Center"
                 Text="Select server"
                 TextTransform="Uppercase"
                 VerticalTextAlignment="Center" />
-
             <BoxView Grid.Row="1" Style="{StaticResource SeparatorBoxView}" />
-
             <!--<Label HeightRequest="50" />-->
-
             <CollectionView
                 x:Name="test24"
                 Grid.Row="2"
@@ -107,13 +104,15 @@
                                     Margin="15,20"
                                     FontAttributes="Bold"
                                     FontSize="18"
-                                    HorizontalOptions="FillAndExpand"
+                                    HorizontalOptions="Fill"
                                     Text="{Binding Title}"
                                     VerticalOptions="Center" />
                                 <Button
                                     Grid.Column="1"
                                     Margin="0"
                                     BackgroundColor="Transparent"
+                                    Command="{Binding BindingContext.DownloadCommand, Source={x:Reference this}}"
+                                    CommandParameter="{Binding BindingContext, Source={x:Reference videoSourceGrid}}"
                                     FontAttributes="Bold"
                                     FontSize="14"
                                     HorizontalOptions="Center"
@@ -121,7 +120,7 @@
                                     <Button.ImageSource>
                                         <FontImageSource
                                             FontFamily="Material"
-                                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Download}"
+                                            Glyph="{x:Static materialDesign:MaterialIcons.Download}"
                                             Size="25"
                                             Color="{AppThemeBinding Light={StaticResource Primary},
                                                                     Dark={StaticResource White}}" />
@@ -135,19 +134,19 @@
                     <StackLayout HeightRequest="50">
                         <ActivityIndicator
                             HeightRequest="40"
-                            HorizontalOptions="{OnPlatform WinUI=FillAndExpand,
-                                                           Default=CenterAndExpand}"
+                            HorizontalOptions="{OnPlatform WinUI=Fill,
+                                                           Default=Center}"
                             IsRunning="{Binding IsLoading}"
                             IsVisible="{Binding IsLoading}"
-                            VerticalOptions="CenterAndExpand"
+                            VerticalOptions="Center"
                             WidthRequest="40" />
                     </StackLayout>
                 </CollectionView.Footer>
                 <CollectionView.EmptyView>
                     <Grid
-                        HorizontalOptions="FillAndExpand"
+                        HorizontalOptions="Fill"
                         IsVisible="False"
-                        VerticalOptions="FillAndExpand">
+                        VerticalOptions="Fill">
                         <Grid.Triggers>
                             <DataTrigger
                                 Binding="{Binding IsBusy}"

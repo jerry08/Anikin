@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+  <!--============-->
+  <!-- Base Theme -->
+  <!--============-->
+  <!--== Theme Base ==-->
+  <style name="Base.Theme.Anikin" parent="Theme.Material3.DayNight">
+    <!-- Disallow "Force dark theme" -->
+    <item name="android:forceDarkAllowed" tools:targetApi="Q">false</item>
+    <!-- Theme Colors -->
+    <item name="colorPrimary">@color/md_theme_primary</item>
+    <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
+    <item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>
+    <item name="colorOnPrimaryContainer">@color/md_theme_onPrimaryContainer</item>
+    <item name="colorSecondary">@color/md_theme_secondary</item>
+    <item name="colorOnSecondary">@color/md_theme_onSecondary</item>
+    <item name="colorSecondaryContainer">@color/md_theme_secondaryContainer</item>
+    <item name="colorOnSecondaryContainer">@color/md_theme_onSecondaryContainer</item>
+    <item name="colorTertiary">@color/md_theme_tertiary</item>
+    <item name="colorOnTertiary">@color/md_theme_onTertiary</item>
+    <item name="colorTertiaryContainer">@color/md_theme_tertiaryContainer</item>
+    <item name="colorOnTertiaryContainer">@color/md_theme_onTertiaryContainer</item>
+    <item name="colorError">@color/md_theme_error</item>
+    <item name="colorOnError">@color/md_theme_onError</item>
+    <item name="colorErrorContainer">@color/md_theme_errorContainer</item>
+    <item name="colorOnErrorContainer">@color/md_theme_onErrorContainer</item>
+    <item name="android:colorBackground">@color/md_theme_background</item>
+    <item name="colorOnBackground">@color/md_theme_onBackground</item>
+    <item name="colorSurface">@color/md_theme_surface</item>
+    <item name="colorOnSurface">@color/md_theme_onSurface</item>
+    <item name="colorSurfaceVariant">@color/md_theme_surfaceVariant</item>
+    <item name="colorOnSurfaceVariant">@color/md_theme_onSurfaceVariant</item>
+    <item name="colorOutline">@color/md_theme_outline</item>
+    <item name="colorOutlineVariant">@color/md_theme_outlineVariant</item>
+    <item name="colorSurfaceInverse">@color/md_theme_inverseSurface</item>
+    <item name="colorOnSurfaceInverse">@color/md_theme_inverseOnSurface</item>
+    <item name="colorPrimaryInverse">@color/md_theme_inversePrimary</item>
+    <item name="colorPrimaryFixed">@color/md_theme_primaryFixed</item>
+    <item name="colorOnPrimaryFixed">@color/md_theme_onPrimaryFixed</item>
+    <item name="colorPrimaryFixedDim">@color/md_theme_primaryFixedDim</item>
+    <item name="colorOnPrimaryFixedVariant">@color/md_theme_onPrimaryFixedVariant</item>
+    <item name="colorSecondaryFixed">@color/md_theme_secondaryFixed</item>
+    <item name="colorOnSecondaryFixed">@color/md_theme_onSecondaryFixed</item>
+    <item name="colorSecondaryFixedDim">@color/md_theme_secondaryFixedDim</item>
+    <item name="colorOnSecondaryFixedVariant">@color/md_theme_onSecondaryFixedVariant</item>
+    <item name="colorTertiaryFixed">@color/md_theme_tertiaryFixed</item>
+    <item name="colorOnTertiaryFixed">@color/md_theme_onTertiaryFixed</item>
+    <item name="colorTertiaryFixedDim">@color/md_theme_tertiaryFixedDim</item>
+    <item name="colorOnTertiaryFixedVariant">@color/md_theme_onTertiaryFixedVariant</item>
+    <item name="colorSurfaceDim">@color/md_theme_surfaceDim</item>
+    <item name="colorSurfaceBright">@color/md_theme_surfaceBright</item>
+    <item name="colorSurfaceContainerLowest">@color/md_theme_surfaceContainerLowest</item>
+    <item name="colorSurfaceContainerLow">@color/md_theme_surfaceContainerLow</item>
+    <item name="colorSurfaceContainer">@color/md_theme_surfaceContainer</item>
+    <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh</item>
+    <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest</item>
+    <!--<item name="android:divider">@color/divider_default</item>
+        <item name="android:listDivider">@drawable/line_divider</item>
+        <item name="materialDividerStyle">@style/Widget.Tachiyomi.MaterialDivider</item>-->
+    <!-- Ripples -->
+    <item name="colorControlHighlight">?attr/colorSurfaceVariant</item>
+    <!-- Handles RTL Text -->
+    <!--<item name="android:textAlignment">gravity</item>
+        <item name="android:textDirection">locale</item>-->
+    <!-- Themes -->
+    <!--<item name="android:windowLightStatusBar">@bool/lightStatusBar</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@color/amoled_surface</item>
+        <item name="android:navigationBarDividerColor" tools:targetApi="o_mr1">@null</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="Q">false</item>
+        <item name="android:enforceStatusBarContrast" tools:targetApi="Q">false</item>
+        <item name="android:itemTextAppearance">@style/TextAppearance.Widget.Menu</item>-->
+    <item name="materialAlertDialogTheme">@style/ThemeOverlay.Anikin.MaterialAlertDialog</item>
+    <item name="alertDialogTheme">@style/ThemeOverlay.Anikin.MaterialAlertDialog</item>
+    <!--<item name="textAppearanceButton">@style/TextAppearance.Widget.Button</item>
+        <item name="android:buttonStyle">?attr/borderlessButtonStyle</item>
+        <item name="android:backgroundDimAmount">0.32</item>
+        <item name="windowActionModeOverlay">true</item>
+        <item name="actionOverflowButtonStyle">@style/Theme.Tachiyomi.ActionButton.Overflow</item>
+        <item name="actionModeCloseDrawable">@drawable/ic_close_24dp</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.Tachiyomi</item>-->
+    <item name="textInputStyle">@style/Widget.Material3.TextInputLayout.OutlinedBox</item>
+    <item name="appBarLayoutStyle">@style/Widget.Material3.AppBarLayout</item>
+    <item name="toolbarStyle">@style/Widget.Material3.Toolbar.Surface</item>
+    <item name="switchStyle">@style/Widget.Anikin.Switch</item>
+    <item name="materialSwitchStyle">@style/Widget.Material3.CompoundButton.MaterialSwitch</item>
+    <!--<item name="switchPreferenceCompatStyle">@style/Widget.Anikin.Switch</item>
+        <item name="materialCardViewStyle">@style/Widget.Material3.CardView.Elevated</item>-->
+    <!-- Preference text appearance -->
+    <!--<item name="android:textAppearanceListItem">?attr/textAppearanceBodyLarge</item>
+        <item name="android:textAppearanceListItemSecondary">@style/TextAppearance.Tachiyomi.Preference.Secondary</item>-->
+  </style>
+  <!--== Default Theme ==-->
+  <style name="Theme.Anikin" parent="Base.Theme.Anikin" />
+</resources>

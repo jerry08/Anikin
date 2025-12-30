@@ -12,9 +12,10 @@ namespace Anikin.Views.Home;
 
 public partial class MangaTabView
 {
-    public MangaTabView()
+    public MangaTabView(MangaHomeViewModel viewModel)
     {
         InitializeComponent();
+        BindingContext = viewModel;
 
         SizeChanged += (_, _) => SetMargins();
 

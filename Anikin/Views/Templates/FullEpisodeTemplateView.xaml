@@ -41,7 +41,6 @@
                 Source="{Binding Image}"
                 WidthRequest="200" />
         </Border>
-
         <!--  Display Progress  -->
         <Grid IsVisible="{Binding Progress, Converter={StaticResource IsWatchedEpisodeProgressVisibleConverter}}" ZIndex="2">
             <ProgressBar
@@ -55,7 +54,6 @@
                 Opacity="0.5"
                 VerticalOptions="End" />
         </Grid>
-
         <Border
             Grid.Column="0"
             Margin="-10,-3,0,0"
@@ -84,7 +82,6 @@
                 TextColor="White"
                 VerticalTextAlignment="Start" />
         </Border>
-
         <Label
             Grid.Column="1"
             Padding="8,5"

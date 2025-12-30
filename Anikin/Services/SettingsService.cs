@@ -37,6 +37,8 @@ public partial class SettingsService : SettingsBase
 
     public bool EnableDeveloperMode { get; set; }
 
+    public int ParallelLimit { get; set; } = 5;
+
     public SettingsService()
         : base(Path.Combine(FileSystem.AppDataDirectory, "settings.json")) { }
 }

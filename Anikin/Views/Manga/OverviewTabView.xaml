@@ -68,7 +68,6 @@
             Opacity="0.9"
             Text="Description"
             VerticalOptions="Start" />
-
         <Label
             FontSize="15.5"
             HorizontalTextAlignment="Start"

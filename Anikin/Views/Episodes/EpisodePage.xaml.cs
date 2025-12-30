@@ -15,7 +15,7 @@ public partial class EpisodePage
 
         return;
 
-        testImg.TranslateTo(0, 0, 5000);
+        testImg.TranslateToAsync(0, 0, 5000);
         testImg.Animate(
             "ChangeMargins",
             length: 5000,
@@ -48,9 +48,9 @@ public partial class EpisodePage
         {
             viewModel.FavouriteToggleCommand.Execute(null);
 
-            await favouriteBtn.ScaleTo(0.2, 100);
-            await favouriteBtn.ScaleTo(2, 100);
-            await favouriteBtn.ScaleTo(1, 100);
+            await favouriteBtn.ScaleToAsync(0.2, 100);
+            await favouriteBtn.ScaleToAsync(2, 100);
+            await favouriteBtn.ScaleToAsync(1, 100);
         }
     }
 }

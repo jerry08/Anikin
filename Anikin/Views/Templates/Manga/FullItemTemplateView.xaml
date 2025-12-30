@@ -23,7 +23,6 @@
                 CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
                 NativeAnimation="True" />
         </Grid.Behaviors>
-
         <Label
             Grid.Column="1"
             Padding="8,5"

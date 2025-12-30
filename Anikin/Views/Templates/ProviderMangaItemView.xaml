@@ -39,9 +39,9 @@
                 <Border
                     Grid.Column="0"
                     HeightRequest="168"
-                    HorizontalOptions="FillAndExpand"
+                    HorizontalOptions="Fill"
                     StrokeThickness="0"
-                    VerticalOptions="FillAndExpand"
+                    VerticalOptions="Fill"
                     WidthRequest="120">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="10" />

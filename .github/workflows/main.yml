@@ -47,7 +47,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       - name: Install MAUI Workload
         #run: dotnet workload install maui --ignore-failed-sources
@@ -70,7 +70,7 @@ jobs:
         run: >
             dotnet publish Anikin/
             -c Release
-            -f net8.0-android
+            -f net10.0-android
             -p:AndroidKeyStore=true
             -p:AndroidSigningKeyStore=${{ github.workspace }}/signing-key.keystore
             -p:AndroidSigningStorePass="${{ secrets.PASSWORD }}"
@@ -83,7 +83,7 @@ jobs:
         run: |
           set -e
 
-          mv Anikin/bin/Release/net8.0-android${{ startsWith(matrix.rid, 'android-') && format('{0}{1}', '/', matrix.rid) || '' }}/*.apk Anikin-${{ matrix.rid }}.apk
+          mv Anikin/bin/Release/net10.0-android${{ startsWith(matrix.rid, 'android-') && format('{0}{1}', '/', matrix.rid) || '' }}/*.apk Anikin-${{ matrix.rid }}.apk
         shell: bash
         
       - name: Upload artifactss
@@ -114,7 +114,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       - name: Install MAUI Workload
         run: dotnet workload install maui --ignore-failed-sources
@@ -126,7 +126,7 @@ jobs:
         run: >
             dotnet publish Anikin/
             -c Release
-            -f net8.0-windows10.0.19041.0
+            -f net10.0-windows10.0.19041.0
             -p:RuntimeIdentifierOverride=${{ matrix.rid }}
             -p:WindowsPackageType=None
             -o build/windows

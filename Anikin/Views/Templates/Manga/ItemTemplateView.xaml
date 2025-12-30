@@ -19,11 +19,11 @@
             Grid.Column="0"
             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200},
                                               Dark={StaticResource Gray830}}"
-            HorizontalOptions="FillAndExpand"
+            HorizontalOptions="Fill"
             Stroke="{AppThemeBinding Light={StaticResource Gray300},
                                      Dark={StaticResource Gray800}}"
             StrokeThickness="1"
-            VerticalOptions="FillAndExpand">
+            VerticalOptions="Fill">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="14" />
             </Border.StrokeShape>
@@ -34,7 +34,6 @@
                         CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
                         NativeAnimation="True" />
                 </Grid.Behaviors>
-
                 <Label
                     Grid.Row="1"
                     Padding="10"

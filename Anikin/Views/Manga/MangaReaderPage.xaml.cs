@@ -145,10 +145,10 @@ public partial class MangaReaderPage
             if (!SliderView.IsVisible)
             {
                 SliderView.IsVisible = true;
-                SliderView.ScaleTo(1, 80);
+                SliderView.ScaleToAsync(1, 80);
 
                 TitleGrid.IsVisible = true;
-                TitleGrid.ScaleTo(1, 80);
+                TitleGrid.ScaleToAsync(1, 80);
             }
         });
     }
@@ -159,7 +159,7 @@ public partial class MangaReaderPage
         {
             if (SliderView.IsVisible)
             {
-                await SliderView.ScaleTo(0, 80);
+                await SliderView.ScaleToAsync(0, 80);
                 SliderView.IsVisible = false;
             }
         });
@@ -168,7 +168,7 @@ public partial class MangaReaderPage
         {
             if (TitleGrid.IsVisible)
             {
-                await TitleGrid.ScaleTo(0, 80);
+                await TitleGrid.ScaleToAsync(0, 80);
                 TitleGrid.IsVisible = false;
             }
         });

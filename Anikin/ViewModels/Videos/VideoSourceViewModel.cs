@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Anikin.Services;
+using Anikin.Utils;
+using Anikin.ViewModels.Components;
 using Anikin.ViewModels.Framework;
 using Anikin.Views;
 using Anikin.Views.BottomSheets;
@@ -15,6 +17,7 @@ using Juro.Core.Models.Videos;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
+using TaskExecutor;
 using Media = Jita.AniList.Models.Media;
 
 namespace Anikin.ViewModels;
@@ -22,7 +25,10 @@ namespace Anikin.ViewModels;
 public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoSource>>
 {
     private readonly SettingsService _settingsService = new();
+    private readonly DownloadHistoryDatabase _database = new();
     private readonly AnimeApiClient _apiClient = new(Constants.ApiEndpoint);
+
+    private readonly ResizableSemaphore _downloadSemaphore = new();
 
     private readonly Media _media;
 
@@ -146,6 +152,32 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
 
         Platform.CurrentActivity?.StartActivity(chooserIntent);
 #endif
+    }
+
+    [RelayCommand]
+    async Task Download(VideoSource video)
+    {
+        var download = new VideoDownloadViewModel() { Anime = _anime };
+
+        var title = $"{_anime.Title} - Ep {_episode.Number}";
+        await _database.AddItemAsync(DownloadItem.From(video, title));
+
+        DownloadViewModel.Downloads.Add(download);
+
+        download.BeginDownload();
+
+        _downloadSemaphore.MaxCount = _settingsService.ParallelLimit;
+
+        try
+        {
+            using var access = await _downloadSemaphore.AcquireAsync(download.CancellationToken);
+
+            download.Status = DownloadStatus.Started;
+
+            //var progress = new ProgressReporter();
+            //progress.OnReport += (_, e) => download.PercentageProgress = e;
+        }
+        catch { }
     }
 
     public void Cancel() => _cancellationTokenSource.Cancel();

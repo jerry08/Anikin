@@ -20,30 +20,24 @@
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <toolkit:IsListNotNullOrEmptyConverter x:Key="IsListNotNullOrEmptyConverter" />
             <converters:RatingConverter x:Key="RatingConverter" />
-
             <DataTemplate x:Key="AnimeInfoDataTemplate">
                 <views:AnimeItemView />
             </DataTemplate>
-
             <DataTemplate x:Key="ItemTemplate">
                 <viewTemplates:ItemTemplateView />
             </DataTemplate>
-
             <DataTemplate x:Key="FullItemTemplate">
                 <viewTemplates:FullItemTemplateView />
             </DataTemplate>
-
             <DataTemplate x:Key="ItemRangeTemplate">
                 <viewTemplates:ItemRangeTemplateView />
             </DataTemplate>
-
             <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
             <views:MainDataTemplateSelector x:Key="FullItemTemplateSelector" DataTemplate="{StaticResource FullItemTemplate}" />
             <views:MainDataTemplateSelector x:Key="ItemTemplateSelector" DataTemplate="{StaticResource ItemTemplate}" />
             <views:MainDataTemplateSelector x:Key="ItemRangeTemplateSelector" DataTemplate="{StaticResource ItemRangeTemplate}" />
         </ResourceDictionary>
     </ContentView.Resources>
-
     <VerticalStackLayout>
         <Grid Margin="20,0,10,0" ColumnDefinitions="*,auto">
             <Label
@@ -55,7 +49,6 @@
                 HorizontalTextAlignment="Center"
                 Text="{Binding SearchingText}" />
         </Grid>
-
         <Grid Margin="20,0,10,0" ColumnDefinitions="*">
             <Border
                 Grid.Column="1"
@@ -79,7 +72,6 @@
                 </Grid>
             </Border>
         </Grid>
-
         <Grid Margin="10,2" ColumnDefinitions="*,auto,auto,auto">
             <Label
                 Margin="10,0"
@@ -88,7 +80,6 @@
                 HorizontalTextAlignment="Start"
                 Text="Chapters"
                 VerticalOptions="Center" />
-
             <Button
                 Grid.Column="1"
                 Margin="0"
@@ -98,7 +89,7 @@
                 CommandParameter="{x:Static components:GridLayoutMode.Full}"
                 FontFamily="Material"
                 FontSize="25"
-                Text="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
+                Text="{x:Static materialDesign:MaterialIcons.ViewList}"
                 TextColor="{AppThemeBinding Light={StaticResource Gray500},
                                             Dark={StaticResource Gray800}}">
                 <Button.Triggers>
@@ -110,7 +101,6 @@
                     </DataTrigger>
                 </Button.Triggers>
             </Button>
-
             <Button
                 Grid.Column="3"
                 Margin="0"
@@ -120,7 +110,7 @@
                 CommandParameter="{x:Static components:GridLayoutMode.Compact}"
                 FontFamily="Material"
                 FontSize="25"
-                Text="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
+                Text="{x:Static materialDesign:MaterialIcons.GridOn}"
                 TextColor="{AppThemeBinding Light={StaticResource Gray500},
                                             Dark={StaticResource Gray800}}">
                 <Button.Triggers>
@@ -133,22 +123,20 @@
                 </Button.Triggers>
             </Button>
         </Grid>
-
         <Grid
-            HorizontalOptions="CenterAndExpand"
+            HorizontalOptions="Center"
             IsVisible="{Binding IsBusy}"
-            VerticalOptions="CenterAndExpand">
+            VerticalOptions="Center">
             <ActivityIndicator
                 Margin="0,30,0,60"
                 HeightRequest="{OnPlatform Default=52,
                                            WinUI=100}"
-                HorizontalOptions="CenterAndExpand"
+                HorizontalOptions="Center"
                 IsRunning="True"
-                VerticalOptions="CenterAndExpand"
+                VerticalOptions="Center"
                 WidthRequest="{OnPlatform Default=52,
                                           WinUI=100}" />
         </Grid>
-
         <CollectionView
             HorizontalOptions="Center"
             IsVisible="{Binding Ranges, Converter={StaticResource IsListNotNullOrEmptyConverter}}"
@@ -160,9 +148,9 @@
             </CollectionView.ItemsLayout>
             <CollectionView.EmptyView>
                 <Grid
-                    HorizontalOptions="FillAndExpand"
+                    HorizontalOptions="Fill"
                     IsVisible="False"
-                    VerticalOptions="FillAndExpand">
+                    VerticalOptions="Fill">
                     <Grid.Triggers>
                         <DataTrigger
                             Binding="{Binding IsBusy}"
@@ -179,7 +167,6 @@
                 </Grid>
             </CollectionView.EmptyView>
         </CollectionView>
-
         <FlexLayout
             Margin="0,10"
             BindableLayout.ItemsSource="{Binding Entities}"
@@ -201,7 +188,6 @@
                 </DataTrigger>
             </FlexLayout.Triggers>
         </FlexLayout>
-
         <CollectionView
             HorizontalOptions="Center"
             IsVisible="False"

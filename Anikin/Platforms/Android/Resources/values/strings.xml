@@ -1,6 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="com.crashlytics.android.build_id">AnikinVersion20</string>
-
   <string name="animations">Animations</string>
   <string name="skip">Skip</string>
 </resources>

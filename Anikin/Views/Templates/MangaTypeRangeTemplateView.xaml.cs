@@ -14,6 +14,6 @@ public partial class MangaTypeRangeTemplateView
         base.OnBindingContextChanged();
 
         Scale = 0.4;
-        this.ScaleTo(1, 150);
+        this.ScaleToAsync(1, 150);
     }
 }

@@ -24,9 +24,9 @@ public partial class MangaPage
         {
             viewModel.FavouriteToggleCommand.Execute(null);
 
-            await favouriteBtn.ScaleTo(0.2, 100);
-            await favouriteBtn.ScaleTo(2, 100);
-            await favouriteBtn.ScaleTo(1, 100);
+            await favouriteBtn.ScaleToAsync(0.2, 100);
+            await favouriteBtn.ScaleToAsync(2, 100);
+            await favouriteBtn.ScaleToAsync(1, 100);
         }
     }
 }

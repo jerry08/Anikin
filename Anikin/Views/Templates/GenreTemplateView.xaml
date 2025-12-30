@@ -17,7 +17,7 @@
                                               Dark={StaticResource Gray830}}"
             HorizontalOptions="Center"
             StrokeThickness="0"
-            VerticalOptions="FillAndExpand">
+            VerticalOptions="Fill">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="8" />
             </Border.StrokeShape>

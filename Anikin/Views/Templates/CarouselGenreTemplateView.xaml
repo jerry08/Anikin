@@ -15,7 +15,7 @@
             Grid.Column="0"
             HorizontalOptions="Center"
             StrokeThickness="1"
-            VerticalOptions="FillAndExpand">
+            VerticalOptions="Fill">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="15" />
             </Border.StrokeShape>

@@ -107,6 +107,17 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             Cancel();
     }
 
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        Entity = (Media)query["SourceItem"];
+        Entity.Description = Html.ConvertToPlainText(Entity.Description);
+        IsFavorite = Entity.IsFavorite;
+
+        OnPropertyChanged(nameof(Entity));
+
+        RefreshIsFavorite();
+    }
+
     async partial void OnIsDubSelectedChanged(bool value)
     {
         Entities.Clear();
@@ -322,7 +333,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
                 {
                     if (_settingsService.EpisodesDescending)
                     {
-                        EpisodeChunks[i] = EpisodeChunks[i].Reverse().ToArray();
+                        EpisodeChunks[i] = EpisodeChunks[i].AsEnumerable().Reverse().ToArray();
                     }
 
                     endIndex = startIndex + EpisodeChunks[i].Length - 1;
@@ -336,7 +347,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
             {
                 if (_settingsService.EpisodesDescending)
                 {
-                    EpisodeChunks[0] = EpisodeChunks[0].Reverse().ToArray();
+                    EpisodeChunks[0] = EpisodeChunks[0].AsEnumerable().Reverse().ToArray();
                 }
             }
 
@@ -627,17 +638,6 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         sheet.Dismissed += (_, _) => IsProviderSearchSheetShowing = false;
 
         await sheet.ShowAsync();
-    }
-
-    public void ApplyQueryAttributes(IDictionary<string, object> query)
-    {
-        Entity = (Media)query["SourceItem"];
-        Entity.Description = Html.ConvertToPlainText(Entity.Description);
-        IsFavorite = Entity.IsFavorite;
-
-        OnPropertyChanged(nameof(Entity));
-
-        RefreshIsFavorite();
     }
 
     public void Cancel() => _cancellationTokenSource.Cancel();

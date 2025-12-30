@@ -11,21 +11,19 @@
     xmlns:views="clr-namespace:Anikin.Views"
     xmlns:woka="clr-namespace:Woka;assembly=Woka"
     x:Name="this"
-    x:DataType="viewModels:SearchViewModel">
+    x:DataType="viewModels:SearchViewModel"
+    Shell.TabBarIsVisible="False">
     <ContentPage.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <toolkit:IsListNullOrEmptyConverter x:Key="IsListNullOrEmptyConverter" />
             <toolkit:IsListNotNullOrEmptyConverter x:Key="IsListNotNullOrEmptyConverter" />
-
             <DataTemplate x:Key="AnimeInfoDataTemplate">
                 <views:AnimeItemView />
             </DataTemplate>
-
             <views:MainDataTemplateSelector x:Key="MainDataTemplateSelector" DataTemplate="{StaticResource AnimeInfoDataTemplate}" />
         </ResourceDictionary>
     </ContentPage.Resources>
-
     <Grid
         x:Name="MainGrid"
         Margin="{OnPlatform Default='5,0,5,0',
@@ -56,7 +54,6 @@
                 </Grid>
             </Border>
         </Grid>
-
         <Grid
             Grid.Row="1"
             Margin="10,5"
@@ -69,7 +66,6 @@
                 HorizontalTextAlignment="Start"
                 Text="Results"
                 VerticalOptions="Center" />
-
             <Button
                 Grid.Column="1"
                 Margin="0"
@@ -77,10 +73,9 @@
                 BackgroundColor="Transparent"
                 FontFamily="Material"
                 FontSize="25"
-                Text="{x:Static materialDesign:MaterialDesignIcons.ViewList}"
+                Text="{x:Static materialDesign:MaterialIcons.ViewList}"
                 TextColor="{AppThemeBinding Light={StaticResource Gray500},
                                             Dark={StaticResource Gray600}}" />
-
             <Button
                 Grid.Column="2"
                 Margin="0"
@@ -88,10 +83,9 @@
                 BackgroundColor="Transparent"
                 FontFamily="Material"
                 FontSize="25"
-                Text="{x:Static materialDesign:MaterialDesignIcons.GridView}"
+                Text="{x:Static materialDesign:MaterialIcons.GridView}"
                 TextColor="{AppThemeBinding Light={StaticResource Gray500},
                                             Dark={StaticResource White}}" />
-
             <Button
                 Grid.Column="3"
                 Margin="0"
@@ -99,23 +93,22 @@
                 BackgroundColor="Transparent"
                 FontFamily="Material"
                 FontSize="25"
-                Text="{x:Static materialDesign:MaterialDesignIcons.GridOn}"
+                Text="{x:Static materialDesign:MaterialIcons.GridOn}"
                 TextColor="{AppThemeBinding Light={StaticResource Gray500},
                                             Dark={StaticResource Gray600}}" />
         </Grid>
-
         <Grid
             Grid.Row="2"
-            HorizontalOptions="CenterAndExpand"
+            HorizontalOptions="Center"
             IsVisible="{Binding IsBusy}"
-            VerticalOptions="CenterAndExpand"
+            VerticalOptions="Center"
             ZIndex="1000">
             <ActivityIndicator
                 HeightRequest="{OnPlatform Default=60,
                                            WinUI=100}"
-                HorizontalOptions="CenterAndExpand"
+                HorizontalOptions="Center"
                 IsRunning="True"
-                VerticalOptions="CenterAndExpand"
+                VerticalOptions="Center"
                 WidthRequest="{OnPlatform Default=60,
                                           WinUI=100}">
                 <ActivityIndicator.Triggers>
@@ -129,12 +122,11 @@
                 </ActivityIndicator.Triggers>
             </ActivityIndicator>
         </Grid>
-
         <Grid
             Grid.Row="2"
-            HorizontalOptions="FillAndExpand"
+            HorizontalOptions="Fill"
             IsVisible="False"
-            VerticalOptions="FillAndExpand">
+            VerticalOptions="Fill">
             <Grid.Triggers>
                 <MultiTrigger TargetType="Grid">
                     <MultiTrigger.Conditions>
@@ -153,7 +145,6 @@
                 Text="Empty"
                 VerticalOptions="Center" />
         </Grid>
-
         <CollectionView
             x:Name="SearchCollectionView"
             Grid.Row="2"
@@ -170,19 +161,19 @@
                 <StackLayout x:Name="CollectionFooter" HeightRequest="50">
                     <ActivityIndicator
                         HeightRequest="40"
-                        HorizontalOptions="{OnPlatform WinUI=FillAndExpand,
-                                                       Default=CenterAndExpand}"
+                        HorizontalOptions="{OnPlatform WinUI=Fill,
+                                                       Default=Center}"
                         IsRunning="{Binding IsLoading}"
                         IsVisible="{Binding IsLoading}"
-                        VerticalOptions="CenterAndExpand"
+                        VerticalOptions="Center"
                         WidthRequest="40" />
                 </StackLayout>
             </CollectionView.Footer>
             <!--<CollectionView.EmptyView>
                 <Grid
-                    HorizontalOptions="FillAndExpand"
+                    HorizontalOptions="Fill"
                     IsVisible="False"
-                    VerticalOptions="FillAndExpand">
+                    VerticalOptions="Fill">
                     <Grid.Triggers>
                         <DataTrigger
                             Binding="{Binding IsBusy}"

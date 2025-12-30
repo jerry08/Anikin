@@ -22,7 +22,6 @@
             Opacity="0.8"
             Text="Description"
             VerticalOptions="Start" />
-
         <Label
             Margin="10,5"
             HorizontalTextAlignment="Start"

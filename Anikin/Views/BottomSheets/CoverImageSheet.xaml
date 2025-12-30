@@ -23,7 +23,6 @@
             <berry:RatioDetent IsDefault="True" Ratio="0.60" />
         </berry:DetentsCollection>
     </berry:BottomSheet.Detents>
-
     <ScrollView>
         <VerticalStackLayout x:Name="MainGrid">
             <Label
@@ -34,14 +33,12 @@
                 HorizontalTextAlignment="Center"
                 Text="{Binding Entity.Title.PreferredTitle}"
                 VerticalTextAlignment="Center" />
-
             <!--  Set image height so that bottom sheet can get correct height  -->
             <Image
                 Margin="10,0,10,0"
                 Aspect="AspectFill"
                 HeightRequest="620"
                 Source="{Binding Entity.Cover.ExtraLargeImageUrl}" />
-
             <Grid
                 Margin="20,10,20,0"
                 ColumnDefinitions="*,*"
@@ -56,7 +53,6 @@
                     Text="Download"
                     TextColor="{AppThemeBinding Light={StaticResource Black},
                                                 Dark={StaticResource White}}" />
-
                 <Button
                     Grid.Column="1"
                     BackgroundColor="Transparent"

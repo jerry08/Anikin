@@ -5,12 +5,16 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:berry="https://schemas.jerry08/dotnet/2023/maui"
     xmlns:local="clr-namespace:Anikin"
+    xmlns:system="clr-namespace:System;assembly=mscorlib"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:viewModels="clr-namespace:Anikin.ViewModels.Popups"
     x:Name="this"
     x:DataType="{x:Type viewModels:ExtensionsPopupViewModel}"
+    x:TypeArguments="system:Boolean"
+    BackgroundColor="Transparent"
     CanBeDismissedByTappingOutsideOfPopup="True"
-    Color="Transparent">
+    HeightRequest="280"
+    WidthRequest="380">
     <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray830}}" StrokeThickness="0">
         <Border.StrokeShape>
             <RoundRectangle CornerRadius="25" />
@@ -28,7 +32,6 @@
                     HorizontalOptions="Center"
                     Text="Add Extension"
                     VerticalOptions="Center" />
-
                 <Grid Grid.Row="0">
                     <!--<Border
                         Margin="12,0"
@@ -41,7 +44,6 @@
                         </Border.StrokeShape>
 
                     </Border>-->
-
                     <Border Style="{StaticResource EntrySearchBorderStyle}">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="25" />
@@ -63,7 +65,6 @@
                     </Border>
                 </Grid>
             </VerticalStackLayout>
-
             <HorizontalStackLayout
                 Grid.Row="1"
                 Margin="0,0,0,8"

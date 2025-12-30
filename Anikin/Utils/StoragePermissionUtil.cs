@@ -34,7 +34,6 @@ internal class StoragePermissionUtil
         //    return PermissionStatus.Granted;
         //}
 
-
 #endif
 
         var status = await Permissions.RequestAsync<Permissions.StorageRead>();

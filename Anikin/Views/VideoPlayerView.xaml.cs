@@ -1,7 +1,12 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Platform;
+#if WINDOWS
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
+#endif
 
 namespace Anikin.Views;
 
@@ -15,32 +20,65 @@ public partial class VideoPlayerView
         videoPlayer.Loaded += async (_, _) =>
         {
             ArgumentNullException.ThrowIfNull(videoPlayer.Handler?.MauiContext);
+            var platformView = videoPlayer.ToPlatform(videoPlayer.Handler.MauiContext);
 
-            var grid = (Microsoft.UI.Xaml.Controls.Grid)
-                videoPlayer.ToPlatform(videoPlayer.Handler.MauiContext);
-            var buttonContainer = grid.Children[1];
-
-            var lastVisibility = buttonContainer.Visibility;
-            while (true)
+            if (
+                FindChild<Microsoft.UI.Xaml.Controls.MediaPlayerElement>(platformView)
+                is not { } nativePlayer
+            )
             {
-                if (!IsLoaded)
-                    break;
+                return;
+            }
 
-                if (lastVisibility != buttonContainer.Visibility)
+            var transportControls = nativePlayer.TransportControls;
+
+            transportControls.Loaded += TransportControlsLoaded;
+
+            if (transportControls.IsLoaded)
+            {
+                TransportControlsLoaded(transportControls, null!);
+            }
+
+            void TransportControlsLoaded(object sender, RoutedEventArgs e)
+            {
+                transportControls.Loaded -= TransportControlsLoaded;
+
+                if (
+                    FindChild<Microsoft.UI.Xaml.Controls.Grid>(
+                        transportControls,
+                        "ControlPanelGrid"
+                    )?.Parent
+                    is not FrameworkElement controlPanel
+                )
                 {
-                    lastVisibility = buttonContainer.Visibility;
-
-                    if (buttonContainer.Visibility is Microsoft.UI.Xaml.Visibility.Visible)
-                    {
-                        await subtitlesContainer.TranslateTo(0, -80, 450);
-                    }
-                    else
-                    {
-                        await subtitlesContainer.TranslateTo(0, 0, 450);
-                    }
+                    return;
                 }
 
-                await Task.Delay(400);
+                var isVisible = controlPanel.Opacity > 0.5;
+
+                var token = controlPanel.RegisterPropertyChangedCallback(
+                    UIElement.OpacityProperty,
+                    async (_, _) =>
+                    {
+                        var nowVisible = controlPanel.Opacity > 0.5;
+                        if (isVisible == nowVisible)
+                            return;
+
+                        isVisible = nowVisible;
+                        await subtitlesContainer.TranslateToAsync(0, isVisible ? -80 : 0, 450);
+                    }
+                );
+
+                videoPlayer.Unloaded += Cleanup;
+
+                void Cleanup(object? s, EventArgs e)
+                {
+                    videoPlayer.Unloaded -= Cleanup;
+                    controlPanel.UnregisterPropertyChangedCallback(
+                        UIElement.OpacityProperty,
+                        token
+                    );
+                }
             }
         };
 #endif
@@ -60,4 +98,47 @@ public partial class VideoPlayerView
         //});
         base.OnSizeAllocated(width, height);
     }
+
+#if WINDOWS
+    public static T? FindChild<T>(DependencyObject parent)
+        where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T found)
+                return found;
+
+            var result = FindChild<T>(child);
+            if (result != null)
+                return result;
+        }
+
+        return null;
+    }
+
+    // Helper overload to find by name
+    public static T? FindChild<T>(DependencyObject parent, string name)
+        where T : FrameworkElement
+    {
+        var childCount = VisualTreeHelper.GetChildrenCount(parent);
+
+        for (var i = 0; i < childCount; i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+
+            if (child is T typedChild && typedChild.Name == name)
+            {
+                return typedChild;
+            }
+
+            if (FindChild<T>(child, name) is { } result)
+            {
+                return result;
+            }
+        }
+
+        return null;
+    }
+#endif
 }

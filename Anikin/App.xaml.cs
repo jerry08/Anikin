@@ -24,8 +24,6 @@ public partial class App : Application
     {
         InitializeComponent();
 
-        MainPage = new AppShell();
-
         Services = provider;
 
         AlertService = Services.GetRequiredService<IAlertService>();
@@ -37,13 +35,21 @@ public partial class App : Application
 
         ApplyTheme();
 
-        AppDomain.CurrentDomain.UnhandledException += (sender, args) => {
+        AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+        {
+            var tt = "";
+
             //UnhandledException?.Invoke(sender, args);
 
             //var path = Path.Join(Environment.CurrentDirectory, $"error_log.txt");
             //var path = Path.Join(AppDomain.CurrentDomain.BaseDirectory, $"error_log.txt");
             //File.WriteAllText(path, $"{args}");
         };
+    }
+
+    protected override Window CreateWindow(IActivationState? activationState)
+    {
+        return new(new AppShell());
     }
 
     protected override void OnStart()

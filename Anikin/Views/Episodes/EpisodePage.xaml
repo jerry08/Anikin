@@ -14,20 +14,18 @@
     x:Name="this"
     berry:Insets.EdgeToEdge="True"
     berry:Insets.StatusBarStyle="LightContent"
+    Shell.TabBarIsVisible="False"
     x:DataType="viewModels:EpisodeViewModel">
     <ContentPage.Resources>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:RatingConverter x:Key="RatingConverter" />
-
             <DataTemplate x:Key="GenreTemplate">
                 <viewTemplates:GenreTemplateView />
             </DataTemplate>
-
             <views:MainDataTemplateSelector x:Key="GenreTemplateSelector" DataTemplate="{StaticResource GenreTemplate}" />
         </ResourceDictionary>
     </ContentPage.Resources>
-
     <Grid>
         <Grid
             HeightRequest="40"
@@ -42,7 +40,6 @@
                 </LinearGradientBrush>
             </Grid.Background>
         </Grid>
-
         <Border
             Grid.Column="0"
             Margin="12,40"
@@ -62,10 +59,9 @@
                 FontFamily="Material"
                 FontSize="26"
                 Opacity="0.95"
-                Text="{x:Static materialDesign:MaterialDesignIcons.ArrowBack}"
+                Text="{x:Static materialDesign:MaterialIcons.ArrowBack}"
                 TextColor="White" />
         </Border>
-
         <Border
             Grid.Column="0"
             Margin="12,40"
@@ -85,14 +81,12 @@
                 FontFamily="Material"
                 FontSize="26"
                 Opacity="0.95"
-                Text="{x:Static materialDesign:MaterialDesignIcons.Dns}"
+                Text="{x:Static materialDesign:MaterialIcons.Dns}"
                 TextColor="White" />
         </Border>
-
         <ScrollView>
             <VerticalStackLayout Margin="0,0,0,50">
                 <Grid>
-
                     <!--<Image
                         x:Name="testImg"
                         Margin="0,0,0,-100"
@@ -101,7 +95,6 @@
                         Source="{Binding Entity.Image}"
                         TranslationY="-100"
                         VerticalOptions="Start" />-->
-
                     <Image
                         x:Name="testImg"
                         Margin="0,0,0,-260"
@@ -116,7 +109,6 @@
                             <berry:TouchBehavior LongPressCommand="{Binding BindingContext.ShowCoverImageCommand, Source={x:Reference this}}" />
                         </Image.Behaviors>
                     </Image>
-
                     <Border
                         Grid.Column="0"
                         Margin="2"
@@ -142,13 +134,12 @@
                             <Label
                                 FontFamily="Material"
                                 FontSize="20"
-                                Text="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
+                                Text="{x:Static materialDesign:MaterialIcons.StarRate}"
                                 TextColor="Gold"
                                 VerticalOptions="Center"
                                 VerticalTextAlignment="Center" />
                         </HorizontalStackLayout>
                     </Border>
-
                     <!--<Border
                         Grid.Column="0"
                         Margin="2"
@@ -168,7 +159,7 @@
                                 <Image.Source>
                                     <FontImageSource
                                         FontFamily="Material"
-                                        Glyph="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
+                                        Glyph="{x:Static materialDesign:MaterialIcons.StarRate}"
                                         Size="18"
                                         Color="#AD3AFF" />
                                 </Image.Source>
@@ -182,7 +173,6 @@
                         </HorizontalStackLayout>
                     </Border>-->
                 </Grid>
-
                 <VerticalStackLayout>
                     <VerticalStackLayout.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,0.2">
@@ -191,7 +181,6 @@
                             <GradientStop Offset="0.3" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" />
                         </LinearGradientBrush>
                     </VerticalStackLayout.Background>
-
                     <Grid
                         Margin="8,10"
                         ColumnDefinitions="auto,*,auto,auto"
@@ -210,7 +199,6 @@
                                 <berry:TouchBehavior LongPressCommand="{Binding BindingContext.CopyTitleCommand, Source={x:Reference this}}" />
                             </Label.Behaviors>
                         </Label>
-
                         <Grid Grid.Column="2">
                             <ImageButton
                                 x:Name="favouriteBtn"
@@ -228,7 +216,7 @@
                                             <Setter.Value>
                                                 <FontImageSource
                                                     FontFamily="Material"
-                                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.Favorite}"
+                                                    Glyph="{x:Static materialDesign:MaterialIcons.Favorite}"
                                                     Size="30"
                                                     Color="Red" />
                                             </Setter.Value>
@@ -242,7 +230,7 @@
                                             <Setter.Value>
                                                 <FontImageSource
                                                     FontFamily="Material"
-                                                    Glyph="{x:Static materialDesign:MaterialDesignIcons.FavoriteOutline}"
+                                                    Glyph="{x:Static materialDesign:MaterialIcons.FavoriteOutline}"
                                                     Size="30"
                                                     Color="White" />
                                             </Setter.Value>
@@ -251,7 +239,6 @@
                                 </ImageButton.Triggers>
                             </ImageButton>
                         </Grid>
-
                         <Grid Grid.Column="3">
                             <ImageButton
                                 Grid.Column="3"
@@ -263,21 +250,19 @@
                                 <ImageButton.Source>
                                     <FontImageSource
                                         FontFamily="Material"
-                                        Glyph="{x:Static materialDesign:MaterialDesignIcons.Share}"
+                                        Glyph="{x:Static materialDesign:MaterialIcons.Share}"
                                         Size="30"
                                         Color="White" />
                                 </ImageButton.Source>
                             </ImageButton>
                         </Grid>
                     </Grid>
-
                     <!--<FlexLayout
                         Margin="0,0,0,10"
                         BindableLayout.ItemTemplateSelector="{StaticResource GenreTemplateSelector}"
                         BindableLayout.ItemsSource="{Binding Entity.Genres}"
                         JustifyContent="Center"
                         Wrap="Wrap" />-->
-
                     <CollectionView
                         Margin="0,0,0,10"
                         HorizontalOptions="Center"
@@ -289,9 +274,9 @@
                         </CollectionView.ItemsLayout>
                         <CollectionView.EmptyView>
                             <Grid
-                                HorizontalOptions="FillAndExpand"
+                                HorizontalOptions="Fill"
                                 IsVisible="False"
-                                VerticalOptions="FillAndExpand">
+                                VerticalOptions="Fill">
                                 <Label
                                     FontSize="16"
                                     HorizontalOptions="Center"
@@ -300,7 +285,6 @@
                             </Grid>
                         </CollectionView.EmptyView>
                     </CollectionView>
-
                     <berry:TabHostView
                         x:Name="tabHostView"
                         Padding="0,0"
@@ -330,7 +314,6 @@
                             UnderlineHeight="1"
                             UnselectedLabelColor="{StaticResource Gray400}" />
                     </berry:TabHostView>
-
                     <berry:ViewSwitcher
                         x:Name="Switcher"
                         Grid.RowSpan="3"

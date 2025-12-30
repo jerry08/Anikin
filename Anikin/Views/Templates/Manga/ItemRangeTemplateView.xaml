@@ -16,9 +16,9 @@
             Grid.Column="0"
             BackgroundColor="{AppThemeBinding Light={StaticResource Gray300},
                                               Dark={StaticResource Gray830}}"
-            HorizontalOptions="FillAndExpand"
+            HorizontalOptions="Fill"
             StrokeThickness="0"
-            VerticalOptions="FillAndExpand">
+            VerticalOptions="Fill">
             <Border.Triggers>
                 <DataTrigger
                     Binding="{Binding IsSelected}"

@@ -29,7 +29,6 @@
                     CommandParameter="{Binding BindingContext, Source={x:Reference this}}"
                     NativeAnimation="True" />
             </Grid.Behaviors>
-
             <Grid
                 Margin="4"
                 BackgroundColor="Transparent"
@@ -39,9 +38,9 @@
                 <Border
                     Grid.Column="0"
                     HeightRequest="168"
-                    HorizontalOptions="FillAndExpand"
+                    HorizontalOptions="Fill"
                     StrokeThickness="0"
-                    VerticalOptions="FillAndExpand"
+                    VerticalOptions="Fill"
                     WidthRequest="120">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="10" />
@@ -77,7 +76,7 @@
                                     <Image.Source>
                                         <FontImageSource
                                             FontFamily="Material"
-                                            Glyph="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
+                                            Glyph="{x:Static materialDesign:MaterialIcons.StarRate}"
                                             Size="40"
                                             Color="Gold" />
                                     </Image.Source>
@@ -85,7 +84,7 @@
                                 <Label
                                     FontFamily="Material"
                                     FontSize="18"
-                                    Text="{x:Static materialDesign:MaterialDesignIcons.StarRate}"
+                                    Text="{x:Static materialDesign:MaterialIcons.StarRate}"
                                     TextColor="Gold"
                                     VerticalOptions="Center" />
                             </HorizontalStackLayout>

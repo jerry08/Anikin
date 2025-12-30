@@ -8,7 +8,7 @@
     x:Name="this"
     x:DataType="{x:Type viewModels:LoadingPopupViewModel}"
     CanBeDismissedByTappingOutsideOfPopup="False"
-    Color="Transparent">
+    BackgroundColor="Transparent">
     <VerticalStackLayout Spacing="10">
         <ActivityIndicator
             BackgroundColor="Transparent"

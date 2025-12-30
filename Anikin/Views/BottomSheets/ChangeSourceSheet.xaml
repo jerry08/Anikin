@@ -31,10 +31,10 @@
     </berry:BottomSheet.Detents>
     <Border
         Grid.Column="0"
-        HorizontalOptions="FillAndExpand"
+        HorizontalOptions="Fill"
         Stroke="{StaticResource Gray700}"
         StrokeThickness="0"
-        VerticalOptions="FillAndExpand">
+        VerticalOptions="Fill">
         <Border.StrokeShape>
             <RoundRectangle CornerRadius="22" />
         </Border.StrokeShape>
@@ -45,14 +45,12 @@
                 FontAttributes="Bold"
                 FontSize="20"
                 HeightRequest="60"
-                HorizontalOptions="CenterAndExpand"
+                HorizontalOptions="Center"
                 HorizontalTextAlignment="Center"
                 Text="Select source"
                 TextTransform="Uppercase"
                 VerticalTextAlignment="Center" />
-
             <BoxView Grid.Row="1" Style="{StaticResource SeparatorBoxView}" />
-
             <!--<ScrollView>
                 <StackLayout
                     BindableLayout.ItemsSource="{Binding ProviderGroups}"
@@ -86,7 +84,7 @@
                                                         Content="{Binding Name}"
                                                         FontAttributes="Bold"
                                                         FontSize="18"
-                                                        HorizontalOptions="FillAndExpand"
+                                                        HorizontalOptions="Fill"
                                                         VerticalOptions="Center"
                                                         Value="{Binding Key}">
                                                         <RadioButton.Behaviors>
@@ -106,7 +104,6 @@
                     </BindableLayout.ItemTemplate>
                 </StackLayout>
             </ScrollView>-->
-
             <!--  Setting RadioButtonGroup property doesn't work in grouped CollectionView  -->
             <CollectionView
                 Grid.Row="2"
@@ -149,13 +146,13 @@
                                     FontAttributes="Bold"
                                     FontSize="18"
                                     GroupName="ProviderKeyRadio"
-                                    HorizontalOptions="FillAndExpand"
+                                    HorizontalOptions="Fill"
                                     IsChecked="{Binding IsSelected}"
                                     VerticalOptions="Center">
                                     <RadioButton.Behaviors>
                                         <toolkit:EventToCommandBehavior
                                             Command="{Binding BindingContext.SelectedProviderKeyChangedCommand, Source={x:Reference this}}"
-                                            CommandParameter="{Binding Key}"
+                                            CommandParameter="{Binding BindingContext.Key, Source={x:Reference sourceGrid}}"
                                             EventName="CheckedChanged" />
                                     </RadioButton.Behaviors>
                                 </RadioButton>
@@ -165,9 +162,9 @@
                 </CollectionView.ItemTemplate>
                 <CollectionView.EmptyView>
                     <Grid
-                        HorizontalOptions="FillAndExpand"
+                        HorizontalOptions="Fill"
                         IsVisible="False"
-                        VerticalOptions="FillAndExpand">
+                        VerticalOptions="Fill">
                         <Label
                             FontSize="16"
                             HorizontalOptions="Center"

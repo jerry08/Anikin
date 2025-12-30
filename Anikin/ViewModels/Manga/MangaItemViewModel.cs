@@ -312,7 +312,10 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
                 {
                     if (_settingsService.MangaChaptersDescending)
                     {
-                        MangaChapterChunks[i] = MangaChapterChunks[i].Reverse().ToArray();
+                        MangaChapterChunks[i] = MangaChapterChunks[i]
+                            .AsEnumerable()
+                            .Reverse()
+                            .ToArray();
                     }
 
                     endIndex = startIndex + MangaChapterChunks[i].Length - 1;
@@ -326,7 +329,10 @@ public partial class MangaItemViewModel : CollectionViewModel<IMangaChapter>, IQ
             {
                 if (_settingsService.MangaChaptersDescending)
                 {
-                    MangaChapterChunks[0] = MangaChapterChunks[0].Reverse().ToArray();
+                    MangaChapterChunks[0] = MangaChapterChunks[0]
+                        .AsEnumerable()
+                        .Reverse()
+                        .ToArray();
                 }
             }
 

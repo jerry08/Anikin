@@ -9,8 +9,6 @@ public partial class ExtensionsPopup
     {
         InitializeComponent();
         BindingContext = viewModel;
-
-        Size = new Microsoft.Maui.Graphics.Size(380, 280);
     }
 
     private void CancelButton_Clicked(object sender, EventArgs e) => CloseAsync(false);

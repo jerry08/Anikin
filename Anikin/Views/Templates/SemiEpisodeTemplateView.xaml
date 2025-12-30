@@ -32,7 +32,6 @@
                 LongPressCommandParameter="{Binding BindingContext, Source={x:Reference this}}"
                 NativeAnimation="True" />
         </Grid.Behaviors>
-
         <!--<Image
             effects:TouchEffect.Color="{StaticResource Primary}"
             Aspect="AspectFill"
@@ -44,14 +43,12 @@
             BackgroundColor="Transparent"
             Source="{Binding Image}"
             ZIndex="0" />
-
         <Grid
             BackgroundColor="Black"
-            HorizontalOptions="FillAndExpand"
+            HorizontalOptions="Fill"
             Opacity="0.4"
-            VerticalOptions="FillAndExpand"
+            VerticalOptions="Fill"
             ZIndex="1" />
-
         <!--  Display Progress  -->
         <Grid IsVisible="{Binding Progress, Converter={StaticResource IsWatchedEpisodeProgressVisibleConverter}}" ZIndex="2">
             <ProgressBar
@@ -65,7 +62,6 @@
                 Opacity="0.5"
                 VerticalOptions="End" />
         </Grid>
-
         <Label
             Padding="5"
             FontAttributes="Bold"

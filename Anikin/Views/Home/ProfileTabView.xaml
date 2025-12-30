@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentView
+<ContentPage
     x:Class="Anikin.Views.Home.ProfileTabView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -40,7 +40,6 @@
                             </Label.FormattedText>
                         </Label>
                     </VerticalStackLayout>
-
                     <Border
                         Grid.Column="1"
                         Stroke="{AppThemeBinding Light={StaticResource Tertiary},
@@ -63,7 +62,6 @@
                         </Border>
                     </Border>
                 </Grid>
-
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                     <Grid Grid.Column="0">
                         <Grid.Behaviors>
@@ -89,7 +87,6 @@
                                 </Grid>
                             </Border>
                         </Border>
-
                         <VerticalStackLayout
                             HorizontalOptions="Center"
                             Spacing="4"
@@ -100,14 +97,12 @@
                                 FontSize="15"
                                 Text="Anime List"
                                 TextTransform="Uppercase" />
-
                             <BoxView
                                 HeightRequest="1.8"
                                 WidthRequest="60"
                                 Color="{StaticResource Tertiary}" />
                         </VerticalStackLayout>
                     </Grid>
-
                     <Grid Grid.Column="1">
                         <Grid.Behaviors>
                             <berry:TouchBehavior Command="{Binding BindingContext.LoginWithAnilistCommand, Source={x:Reference this}}" NativeAnimation="True" />
@@ -132,7 +127,6 @@
                                 </Grid>
                             </Border>
                         </Border>
-
                         <VerticalStackLayout
                             HorizontalOptions="Center"
                             Spacing="4"
@@ -143,7 +137,6 @@
                                 FontSize="15"
                                 Text="Manga List"
                                 TextTransform="Uppercase" />
-
                             <BoxView
                                 HeightRequest="1.8"
                                 WidthRequest="60"
@@ -151,7 +144,6 @@
                         </VerticalStackLayout>
                     </Grid>
                 </Grid>
-
                 <Border Stroke="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="15" />
@@ -173,7 +165,6 @@
                             VerticalOptions="Center" />
                     </Grid>
                 </Border>
-
                 <!--<Border>
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="15" />
@@ -194,7 +185,6 @@
                             VerticalOptions="Center" />
                     </Grid>
                 </Border>-->
-
                 <!--  Show non-japanese anime  -->
                 <Grid
                     Padding="0,5"
@@ -212,7 +202,6 @@
                         Text="Disables Japanese-only filter. Shows Japanese anime, Korean anime, Chinese anime, etc." />
                     <Switch Grid.ColumnSpan="2" IsToggled="{Binding Settings.ShowNonJapaneseAnime}" />
                 </Grid>
-
                 <!--  Show non-japanese manga  -->
                 <Grid
                     Padding="0,5"
@@ -230,7 +219,6 @@
                         Text="Disables Japanese-only filter. Shows Japanese manga, Korean manga, Chinese manga, etc." />
                     <Switch Grid.ColumnSpan="2" IsToggled="{Binding Settings.ShowNonJapaneseManga}" />
                 </Grid>
-
                 <!--  Developers Mode  -->
                 <Grid
                     Padding="0,5"
@@ -248,7 +236,6 @@
                         Text="Enabling Developer Mode allows you to see exceptions when thrown" />
                     <Switch Grid.ColumnSpan="2" IsToggled="{Binding Settings.EnableDeveloperMode}" />
                 </Grid>
-
                 <!--  Theme  -->
                 <Grid
                     Margin="0,5,0,0"
@@ -275,20 +262,19 @@
                         </Picker.ItemsSource>
                         <Picker.Behaviors>
                             <toolkit:EventToCommandBehavior
-                                Command="{Binding ThemeSelectedCommand}"
+                                Command="{Binding BindingContext.ThemeSelectedCommand, Source={x:Reference this}}"
                                 CommandParameter="{Binding Source={x:Reference ThemePicker}, Path=SelectedIndex}"
                                 EventName="SelectedIndexChanged" />
                         </Picker.Behaviors>
                     </Picker>
                 </Grid>
             </VerticalStackLayout>
-
             <!--  Webview causing other views when navigating to lose touch effect color  -->
             <!--<WebView
                 x:Name="webView"
                 Grid.Row="1"
-                HorizontalOptions="FillAndExpand"
-                VerticalOptions="FillAndExpand" />-->
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill" />-->
         </Grid>
     </ScrollView>
-</ContentView>
+</ContentPage>

@@ -20,6 +20,8 @@ using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using Microsoft.Maui.LifecycleEvents;
 using Woka;
+using Microsoft.Maui.Graphics;
+
 
 #if ANDROID
 using Berry.Maui.Handlers.Slider;
@@ -35,11 +37,24 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
-            .UseMauiCommunityToolkit()
+            .UseMauiCommunityToolkit(static options =>
+            {
+                options.SetPopupDefaults(
+                    new DefaultPopupSettings { BackgroundColor = Colors.Transparent }
+                );
+                options.SetPopupOptionsDefaults(
+                    new DefaultPopupOptionsSettings
+                    {
+                        PageOverlayColor = Colors.Black.WithAlpha(0.3f),
+                        Shadow = null,
+                        Shape = null,
+                    }
+                );
+            })
             .UseMauiCommunityToolkitMarkup()
             .UseBerry()
             .UseBerryMediaElement()
-            .ConfigureWorkarounds()
+            //.ConfigureWorkarounds()
             .UseFFImageLoading()
             .ConfigureEffects(e => { })
             .ConfigureMauiHandlers(handlers =>
@@ -72,9 +87,11 @@ public static class MauiProgram
 
                 fonts.AddFont("bloodcrow.ttf", "BloodCrow");
 
-                //fonts.AddFont("MaterialIconsOutlined-Regular.otf", "Material");
-                fonts.AddFont("MaterialIconsRound-Regular.otf", "Material");
-                fonts.AddFont("fa-solid-900.ttf", "FaSolid");
+                fonts.AddFont("MaterialIconsOutlined-Regular.otf", "Material");
+                fonts.AddFont("MaterialIconsRound-Regular.otf", "MaterialRound");
+
+                fonts.AddFont("MaterialSymbolsRounded-Regular.ttf", "MaterialSymbolsRounded-Regular");
+                fonts.AddFont("MaterialSymbolsRounded_Filled-Regular.ttf", "MaterialSymbolsRounded_Filled-Regular");
             })
             .ConfigureLifecycleEvents(events =>
             {
@@ -116,7 +133,7 @@ public static class MauiProgram
 #endif
 
         // Views
-        builder.Services.AddTransient<HomeView>();
+        //builder.Services.AddTransient<HomeView>();
         builder.Services.AddTransient<SearchView>();
         builder.Services.AddTransient<MangaSearchView>();
         builder.Services.AddTransient<AnimeTabView>();
@@ -127,7 +144,7 @@ public static class MauiProgram
         builder.Services.AddTransient<AnilistLoginView>();
 
         // ViewModels
-        builder.Services.AddTransient<HomeViewModel>();
+        //builder.Services.AddTransient<HomeViewModel>();
         builder.Services.AddTransient<SearchViewModel>();
         builder.Services.AddTransient<MangaSearchViewModel>();
         builder.Services.AddTransient<AnimeHomeViewModel>();

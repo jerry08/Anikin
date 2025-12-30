@@ -18,7 +18,6 @@ using AndroidX.Core.View;
 using AndroidX.Media3.Common;
 using AndroidX.Media3.Common.Text;
 using AndroidX.Media3.ExoPlayer;
-using AndroidX.Media3.Session;
 using AndroidX.Media3.UI;
 using Anikin.Services;
 using Anikin.Utils.Extensions;
@@ -27,7 +26,7 @@ using Anikin.ViewModels;
 using Anikin.Views.BottomSheets;
 using Berry.Maui.Core;
 using Berry.Maui.Core.Handlers;
-using Berry.Maui.Core.Primitives;
+using Berry.Maui.Extensions;
 using Bumptech.Glide;
 using Google.Android.Material.Card;
 using Jita.AniList;
@@ -174,6 +173,8 @@ public class PlatformMediaController : Java.Lang.Object, IPlayerListener
     {
         base.Dispose(disposing);
 
+        _handler.RemoveCallbacksAndMessages(null);
+
         if (exoPlayer is not null)
         {
             exoPlayer.Stop();
@@ -260,7 +261,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayerListener
             {
                 case AudioFocus.Loss:
                 case AudioFocus.LossTransient:
-                    if (exoPlayer?.IsPlaying == true)
+                    if (!exoPlayer.IsDisposed() && exoPlayer?.IsPlaying == true)
                     {
                         exoPlayer.Pause();
                     }
@@ -710,8 +711,8 @@ public class PlatformMediaController : Java.Lang.Object, IPlayerListener
         {
             forwardText.Text = $"+{(_playerSettings.SeekTime / 1000) * ++seekTimesF}";
 
-            _handler.Post(
-                () => exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime)
+            _handler.Post(() =>
+                exoPlayer.SeekTo(exoPlayer.CurrentPosition + _playerSettings.SeekTime)
             );
 
             card = fastForwardCard;
@@ -721,8 +722,8 @@ public class PlatformMediaController : Java.Lang.Object, IPlayerListener
         {
             rewindText.Text = $"-{(_playerSettings.SeekTime / 1000) * ++seekTimesR}";
 
-            _handler.Post(
-                () => exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime)
+            _handler.Post(() =>
+                exoPlayer.SeekTo(exoPlayer.CurrentPosition - _playerSettings.SeekTime)
             );
 
             card = fastRewindCard;

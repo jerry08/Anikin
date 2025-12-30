@@ -25,11 +25,11 @@
             Grid.Column="0"
             BackgroundColor="{AppThemeBinding Light={StaticResource Gray200},
                                               Dark={StaticResource Gray830}}"
-            HorizontalOptions="FillAndExpand"
+            HorizontalOptions="Fill"
             Stroke="{AppThemeBinding Light={StaticResource Gray300},
                                      Dark={StaticResource Gray800}}"
             StrokeThickness="1"
-            VerticalOptions="FillAndExpand">
+            VerticalOptions="Fill">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="14" />
             </Border.StrokeShape>
@@ -42,7 +42,6 @@
                         LongPressCommandParameter="{Binding BindingContext, Source={x:Reference this}}"
                         NativeAnimation="True" />
                 </Grid.Behaviors>
-
                 <!--  Display Progress  -->
                 <Grid IsVisible="{Binding Progress, Converter={StaticResource IsWatchedEpisodeProgressVisibleConverter}}">
                     <Grid.Background>
@@ -52,7 +51,6 @@
                         </LinearGradientBrush>
                     </Grid.Background>
                 </Grid>
-
                 <Label
                     Grid.Row="1"
                     Padding="10"

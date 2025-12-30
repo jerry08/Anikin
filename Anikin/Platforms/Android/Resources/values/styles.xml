@@ -1,52 +1,28 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-  <style name="Maui.MainTheme" parent="Theme.Material3.DayNight">
-    <!--<item name="android:navigationBarColor">@android:color/transparent</item>
-    <item name="android:navigationBarColor">@color/colorPrimary</item>-->
-    <!--<item name="android:statusBarColor">@color/colorPrimaryDark</item>-->
+  <!--<style name="Maui.MainTheme" parent="Theme.Material3.DayNight">-->
+  <style name="Maui.MainTheme" parent="Anikin.MainTheme"></style>
+  <style name="Anikin.MainTheme" parent="Theme.Anikin">
+    <!-- For .NET 9 we optout of edge to edge enforcement by default -->
+    <item name="maui_edgetoedge_optout">true</item>
+    <!--<item name="android:navigationBarColor">@android:color/transparent</item>-->
+    <item name="android:navigationBarColor">@color/colorPrimary</item>
+    <item name="android:statusBarColor">@color/colorPrimary</item>
+    <!--<item name="android:navigationBarColor">@color/navColor</item>-->
     <!--<item name="android:windowLightStatusBar">false</item>-->
-
-    <item name="android:navigationBarColor">
-      @android:color/transparent
-    </item>
-
-    <!-- Optional: set to transparent if your app is drawing behind the status bar. -->
-    <item name="android:statusBarColor">
-      @android:color/transparent
-    </item>
-
-    <!-- Optional: set for a light status bar with dark content. -->
-    <item name="android:windowLightStatusBar">
-      false
-    </item>
-
-    <item name="android:windowTranslucentStatus">true</item>
-    <item name="android:windowTranslucentNavigation">true</item>
-
-    <!--<item name="android:enforceStatusBarContrast" tools:targetApi="q">true</item>
-    <item name="android:enforceNavigationBarContrast" tools:targetApi="q">true</item>-->
-
-    <item name="elevationOverlayEnabled">false</item>
-    <item name="windowActionBar">false</item>
-    <item name="windowNoTitle">true</item>
-    <item name="android:windowContentTransitions">true</item>
-    <item name="android:windowBackground">@android:color/transparent</item>
-    <item name="android:ambientShadowAlpha">0.7</item>
-    <item name="android:spotShadowAlpha">0.7</item>
-    <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
-
     <!--<item name="colorPrimary">#d74c4c</item>-->
     <!--<item name="colorOnPrimary">#ffffff</item>-->
     <!--<item name="backgroundTint">#cd5</item>-->
-
     <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialogTheme</item>
-
     <!-- To change the background of options menu-->
     <!--<item name="android:itemBackground">@color/bottomSheetBg</item>-->
-
     <!-- To change the popup menu and app text color  -->
     <item name="android:textColor">@color/textColor</item>
-
+    <!-- Style to use for Snackbars in this theme. Override Material3 Snackbar theme. -->
+    <item name="snackbarStyle">@style/Widget.MaterialComponents.Snackbar</item>
+    <item name="textInputOutlinedStyle">@style/CustomOutlinedBox</item>
+    <item name="textInputFilledStyle">@style/CustomFilledBox</item>
+    <item name="materialCalendarTheme">@style/ThemeOverlay.App.DatePicker</item>
     <!--
     <item name="android:colorBackground">#cd5</item>
     <item name="colorOnBackground">@color/blue2</item>
@@ -57,63 +33,121 @@
     <item name="colorSurfaceInverse">@color/purple5</item>
     <item name="colorOnSurfaceInverse">@color/purple6</item>
     -->
-
+    <!-- To change enable/change background color in the49.maui.bottomsheet -->
+    <item name="android:elevation">0dp</item>
+    <item name="elevation">0dp</item>
+    <item name="elevationOverlayEnabled">false</item>
+    <item name="colorPrimary">@color/colorPrimary</item>
     <item name="colorSurface">@color/colorSurface</item>
-
     <item name="popupMenuStyle">@style/PopupMenu</item>
-
     <item name="alertDialogTheme">@style/DialogStyle</item>
-
+    <item name="bottomNavigationStyle">@style/Anikin.BottomNavigationView</item>
+    <item name="bottomNavigationViewStyle">@style/Anikin.BottomNavigationView</item>
     <item name="android:alertDialogTheme">@style/DialogStyle</item>
-    <item name="android:timePickerDialogTheme">@style/DialogStyle</item>
-    <item name="android:datePickerDialogTheme">@style/DialogStyle</item>
+    <!--<item name="android:timePickerDialogTheme">@style/DialogStyle</item>
+    <item name="android:datePickerDialogTheme">@style/DialogStyle</item>-->
   </style>
-
+  <style name="Anikin.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
+    <!--<item name="itemIconTint">@color/bottom_navigation_item_selector</item>
+    <item name="itemTextColor">@color/bottom_navigation_item_selector</item>-->
+    <!--<item name="colorSecondaryContainer">#256234</item>
+    <item name="materialThemeOverlay">@style/ThemeOverlay.App.BottomNavigationView</item>-->
+    <item name="itemTextAppearanceActive">@style/MyBottomNavigationView1.TextAppearance</item>
+    <item name="itemTextAppearanceInactive">@style/MyBottomNavigationView2.TextAppearance</item>
+  </style>
+  <style name="ThemeOverlay.App.BottomNavigationView" parent="">
+    <!--<item name="colorSurface">#256234</item>
+    <item name="colorOnSurfaceVariant">#256234</item>-->
+    <item name="colorSecondaryContainer">@color/colorPrimary</item>
+  </style>
+  <style
+    name="MyBottomNavigationView1.TextAppearance"
+    parent="TextAppearance.MaterialComponents.Caption"
+  >
+    <item name="android:textSize">15sp</item>
+    <!--<item name="fontFamily">@font/exo2_medium</item>-->
+  </style>
+  <style
+    name="MyBottomNavigationView2.TextAppearance"
+    parent="TextAppearance.MaterialComponents.Caption"
+  >
+    <item name="android:textSize">13sp</item>
+  </style>
   <style name="DialogStyle" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
     <!-- dialog_background is drawable shape with corner radius -->
-    <!--<item name="android:background">@drawable/dialog_background</item>-->
-
-    <!--<item name="backgroundTint">#bae</item>
-    <item name="rippleColor">#bae3</item>-->
-
-    <!--<item name="backgroundTint">@color/colorPrimaryDark</item>
-    <item name="rippleColor">@color/colorAccent</item>-->
-
+    <!--<item name="android:background">@drawable/dialog_background</item>
+    <item name="android:windowBackground">@android:color/transparent</item>-->
     <item name="android:windowBackground">@drawable/dialog_background</item>
-
     <item name="android:layout_width">wrap_content</item>
     <item name="android:layout_height">wrap_content</item>
   </style>
-
-  <style name="CustomBottomSheetDialogTheme" parent="@style/ThemeOverlay.Material3.BottomSheetDialog">
-    <item name="bottomSheetStyle">@style/Berry.BottomSheetDialog</item>
-
+  <style name="ThemeOverlay.App.DatePicker" parent="@style/ThemeOverlay.Material3.MaterialCalendar">
+    <!--<item name="android:backgroundTint">#f4f9ff</item>
+    <item name="colorOnPrimary">@color/colorPrimary</item>
+    <item name="colorPrimary">@color/colorPrimary</item>-->
+    <!--<item name="colorSurface">#006ee4</item>
+    <item name="elevationOverlayEnabled">false</item>-->
+    <item name="colorSurfaceContainerHigh">@color/colorSurfaceContainerHigh</item>
+  </style>
+  <style
+    name="CustomBottomSheetDialogTheme"
+    parent="@style/ThemeOverlay.Material3.BottomSheetDialog"
+  >
+    <item name="bottomSheetStyle">@style/Anikin.BottomSheetDialog</item>
     <item name="android:windowIsFloating">false</item>
-    <item name="android:navigationBarColor">@color/bottomSheetBg</item>
-    <item name="android:windowLightStatusBar">false</item>
-    <item name="android:windowLightNavigationBar">true</item>
+    <item name="android:navigationBarColor">@color/bottomSheet_navigationBar_Color</item>
+    <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+    <item name="android:windowLightNavigationBar" tools:targetApi="m">true</item>
     <!--<item name="android:statusBarColor">@android:color/transparent</item>-->
   </style>
-
-  <style name="Berry.BottomSheetDialog" parent="Widget.Material3.BottomSheet.Modal">
+  <style name="Anikin.BottomSheetDialog" parent="Widget.Material3.BottomSheet.Modal">
+    <item name="backgroundTint">@color/bottomSheetBg</item>
+    <item name="android:elevation">0dp</item>
+    <item name="elevation">0dp</item>
+    <!--<item name="behavior_peekHeight">350dp</item>
+    <item name="android:layout_margin">30dp</item>-->
+  </style>
+  <style name="Anikin.PopupMenu" parent="Widget.Material3.PopupMenu">
     <item name="backgroundTint">@color/bottomSheetBg</item>
     <item name="android:elevation">0dp</item>
     <item name="elevation">0dp</item>
   </style>
-
-  <style name="Berry.PopupMenu" parent="Widget.Material3.PopupMenu">
-    <item name="backgroundTint">@color/bottomSheetBg</item>
-    <item name="android:elevation">0dp</item>
-    <item name="elevation">0dp</item>
-  </style>
-
   <style name="PopupMenu" parent="Widget.AppCompat.PopupMenu">
     <!--<item name="android:popupBackground">@color/bottomSheetBg</item>-->
     <item name="android:popupBackground">@drawable/popupMenuBackground</item>
   </style>
-
-  <style name="VideoPlayerTheme" parent="Theme.Material3.Light.NoActionBar">
-    <item name="android:navigationBarColor">@color/colorPrimary</item>
-    <item name="colorControlHighlight">@color/colorAccent</item>
+  <style name="CustomTextInputLayout" parent="Widget.Design.TextInputLayout">
+    <!-- Use custom password toggle end icon that's inversed -->
+    <item name="passwordToggleDrawable">@drawable/end_icon_state</item>
+  </style>
+  <!-- Style for an M3 Outlined text field. -->
+  <style name="CustomOutlinedBox" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+    <!-- Use custom password toggle end icon that's inversed -->
+    <item name="passwordToggleDrawable">@drawable/end_icon_state</item>
+  </style>
+  <!-- Style for a M3 Filled text field. -->
+  <style name="CustomFilledBox" parent="Widget.Material3.TextInputLayout.FilledBox">
+    <!-- Use custom password toggle end icon that's inversed -->
+    <item name="passwordToggleDrawable">@drawable/end_icon_state</item>
+  </style>
+  <!--===========-->
+  <!--AlertDialog-->
+  <!--===========-->
+  <style
+    name="ThemeOverlay.Anikin.MaterialAlertDialog"
+    parent="ThemeOverlay.Material3.MaterialAlertDialog"
+  >
+    <item name="android:layout">@layout/m3_alert_dialog</item>
+    <item name="android:background">@drawable/material_popup_background</item>
+    <item name="dialogCornerRadius">@dimen/m3_alert_dialog_corner_size</item>
+  </style>
+  <!--==============-->
+  <!--Widgets.Switch-->
+  <!--==============-->
+  <style name="Widget.Anikin.Switch" parent="Widget.Material3.CompoundButton.Switch">
+    <item name="materialThemeOverlay">@style/ThemeOverlay.Anikin.Switch</item>
+  </style>
+  <style name="ThemeOverlay.Anikin.Switch" parent="">
+    <item name="elevationOverlayEnabled">@bool/elevationOverlayEnabled</item>
   </style>
 </resources>

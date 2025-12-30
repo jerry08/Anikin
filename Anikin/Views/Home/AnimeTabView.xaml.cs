@@ -12,80 +12,15 @@ namespace Anikin.Views.Home;
 
 public partial class AnimeTabView
 {
-    public AnimeTabView()
+    public AnimeTabView(AnimeHomeViewModel viewModel)
     {
         InitializeComponent();
-
-        SizeChanged += (_, _) => SetMargins();
-
-        //img1.Loaded += delegate
-        //{
-        //    img1.IsAnimationPlaying = false;
-        //
-        //    Task.Run(async () =>
-        //    {
-        //        await Task.Delay(500);
-        //        img1.IsAnimationPlaying = true;
-        //    });
-        //};
+        BindingContext = viewModel;
 
         SetupView();
-        //Loaded += (s, e) => SetupView();
 
         DeviceDisplay.Current.MainDisplayInfoChanged += (s, e) => SetupView();
     }
-
-    private void SetMargins()
-    {
-        var statusBarHeight =
-            ApplicationEx.GetStatusBarHeight() / DeviceDisplay.MainDisplayInfo.Density;
-        var navigationBarHeight =
-            ApplicationEx.GetNavigationBarHeight() / DeviceDisplay.MainDisplayInfo.Density;
-
-        var leftMargin = 15.0;
-        var rightMargin = 15.0;
-
-        if (DeviceDisplay.MainDisplayInfo.Orientation == DisplayOrientation.Landscape)
-        {
-            leftMargin += navigationBarHeight - 5.0;
-            rightMargin += navigationBarHeight - 5.0;
-        }
-
-        NavGrid.Margin = new Thickness(leftMargin, statusBarHeight + 10.0, rightMargin, 0);
-
-        if (navigationBarHeight > 0)
-            MainGrid.Margin = new Thickness(0, 0, 0, navigationBarHeight + 90);
-    }
-
-    /*public void SetupView()
-    {
-        //if (BindingContext is not AnimeHomeViewModel viewModel)
-        //    return;
-
-        var view = new CarouselView()
-        {
-            ItemTemplate = new MainDataTemplateSelector()
-            {
-                DataTemplate = new DataTemplate(() => new AnimeCarouselTemplateView())
-            },
-            //ItemsSource = viewModel.CurrentSeasonMedias,
-            IsBounceEnabled = false,
-            IsScrollAnimated = false,
-            IsSwipeEnabled = true,
-            ItemsUpdatingScrollMode = ItemsUpdatingScrollMode.KeepItemsInView,
-            PeekAreaInsets = 0,
-            ItemsLayout = new LinearItemsLayout(ItemsLayoutOrientation.Horizontal)
-            {
-                ItemSpacing = 0,
-                SnapPointsAlignment = SnapPointsAlignment.Start,
-                SnapPointsType = SnapPointsType.MandatorySingle
-            }
-        };
-
-        view.SetBinding(ItemsView.ItemsSourceProperty, nameof(AnimeHomeViewModel.CurrentSeasonMedias));
-
-        test2.Content = view;
-    }*/
 
     public void SetupView()
     {

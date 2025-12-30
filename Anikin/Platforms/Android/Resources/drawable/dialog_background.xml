@@ -5,18 +5,11 @@
       <solid android:color="@android:color/transparent" />
     </shape>
   </item>
-  <item
-      android:left="16dp"
-      android:right="16dp">
+  <item android:left="16dp" android:right="16dp">
     <shape>
-      <solid
-          android:color="?attr/colorSurface" />
-      <corners
-          android:radius="8dp" />
-
-      <padding
-          android:left="16dp"
-          android:right="16dp" />
+      <solid android:color="?attr/colorSurface" />
+      <corners android:radius="8dp" />
+      <padding android:left="16dp" android:right="16dp" />
     </shape>
   </item>
 </layer-list>

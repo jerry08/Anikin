@@ -44,7 +44,6 @@
                 BindingContext="{Binding MangaHomeViewModel}"
                 UseActivityIndicator="False" />
         </berry:ViewSwitcher>
-
         <Grid WidthRequest="225">
             <berry:TabHostView
                 x:Name="ViewContent"
@@ -79,7 +78,7 @@
                         FontSize="28"
                         HorizontalOptions="Center"
                         HorizontalTextAlignment="Center"
-                        Text="{x:Static materialDesign:MaterialDesignIcons.Movie}"
+                        Text="{x:Static materialDesign:MaterialIcons.Movie}"
                         TextColor="{AppThemeBinding Light={StaticResource Gray600},
                                                     Dark={StaticResource White}}"
                         VerticalOptions="Center"
@@ -96,7 +95,7 @@
                     <!--<berry:MaterialUnderlinedTabItem.IconImageSource>
                         <FontImageSource
                             FontFamily="Material"
-                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Movie}"
+                            Glyph="{x:Static materialDesign:MaterialIcons.Movie}"
                             Color="{AppThemeBinding Light={StaticResource Gray600},
                                                     Dark={StaticResource White}}" />
                     </berry:MaterialUnderlinedTabItem.IconImageSource>-->
@@ -111,7 +110,7 @@
                     <!--<berry:MaterialUnderlinedTabItem.IconImageSource>
                         <FontImageSource
                             FontFamily="Material"
-                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Person}"
+                            Glyph="{x:Static materialDesign:MaterialIcons.Person}"
                             Color="{AppThemeBinding Light={StaticResource Gray600},
                                                     Dark={StaticResource White}}" />
                     </berry:MaterialUnderlinedTabItem.IconImageSource>-->
@@ -120,7 +119,7 @@
                         FontSize="28"
                         HorizontalOptions="Center"
                         HorizontalTextAlignment="Center"
-                        Text="{x:Static materialDesign:MaterialDesignIcons.Person}"
+                        Text="{x:Static materialDesign:MaterialIcons.Person}"
                         TextColor="{AppThemeBinding Light={StaticResource Gray600},
                                                     Dark={StaticResource White}}"
                         VerticalOptions="Center"
@@ -145,7 +144,7 @@
                     <!--<berry:MaterialUnderlinedTabItem.IconImageSource>
                         <FontImageSource
                             FontFamily="Material"
-                            Glyph="{x:Static materialDesign:MaterialDesignIcons.Book}"
+                            Glyph="{x:Static materialDesign:MaterialIcons.Book}"
                             Color="{AppThemeBinding Light={StaticResource Gray600},
                                                     Dark={StaticResource White}}" />
                     </berry:MaterialUnderlinedTabItem.IconImageSource>-->
@@ -154,7 +153,7 @@
                         FontSize="28"
                         HorizontalOptions="Center"
                         HorizontalTextAlignment="Center"
-                        Text="{x:Static materialDesign:MaterialDesignIcons.Book}"
+                        Text="{x:Static materialDesign:MaterialIcons.Book}"
                         TextColor="{AppThemeBinding Light={StaticResource Gray600},
                                                     Dark={StaticResource White}}"
                         VerticalOptions="Center"

@@ -31,10 +31,10 @@
     </berry:BottomSheet.Detents>
     <Border
         Grid.Column="0"
-        HorizontalOptions="FillAndExpand"
+        HorizontalOptions="Fill"
         Stroke="{StaticResource Gray700}"
         StrokeThickness="0"
-        VerticalOptions="FillAndExpand">
+        VerticalOptions="Fill">
         <Border.StrokeShape>
             <RoundRectangle CornerRadius="22" />
         </Border.StrokeShape>
@@ -45,14 +45,12 @@
                 FontAttributes="Bold"
                 FontSize="20"
                 HeightRequest="60"
-                HorizontalOptions="CenterAndExpand"
+                HorizontalOptions="Center"
                 HorizontalTextAlignment="Center"
                 Text="Select source"
                 TextTransform="Uppercase"
                 VerticalTextAlignment="Center" />
-
             <BoxView Grid.Row="1" Style="{StaticResource SeparatorBoxView}" />
-
             <!--  Setting RadioButtonGroup property doesn't work in grouped CollectionView  -->
             <CollectionView
                 Grid.Row="2"
@@ -95,7 +93,7 @@
                                     FontAttributes="Bold"
                                     FontSize="18"
                                     GroupName="ProviderKeyRadio"
-                                    HorizontalOptions="FillAndExpand"
+                                    HorizontalOptions="Fill"
                                     IsChecked="{Binding IsSelected}"
                                     VerticalOptions="Center">
                                     <RadioButton.Behaviors>
@@ -111,9 +109,9 @@
                 </CollectionView.ItemTemplate>
                 <CollectionView.EmptyView>
                     <Grid
-                        HorizontalOptions="FillAndExpand"
+                        HorizontalOptions="Fill"
                         IsVisible="False"
-                        VerticalOptions="FillAndExpand">
+                        VerticalOptions="Fill">
                         <Label
                             FontSize="16"
                             HorizontalOptions="Center"
