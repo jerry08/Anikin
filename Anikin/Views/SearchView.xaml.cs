@@ -45,8 +45,6 @@ public partial class SearchView
 
         SizeChanged += (s, e) =>
         {
-            SetMargins();
-
             //var columns = 1 + (int)(Width / ItemWidth);
             var columns =
                 1
@@ -96,30 +94,6 @@ public partial class SearchView
 
             ((SearchViewModel?)BindingContext)?.QueryChanged();
         };
-    }
-
-    private void SetMargins()
-    {
-        var statusBarHeight =
-            ApplicationEx.GetStatusBarHeight() / DeviceDisplay.MainDisplayInfo.Density;
-        var navigationBarHeight =
-            ApplicationEx.GetNavigationBarHeight() / DeviceDisplay.MainDisplayInfo.Density;
-        //MainGrid.Margin = new Thickness(5, statusBarHeight + 10, 5, navigationBarHeight + 10);
-
-        var leftMargin = 5.0;
-        var rightMargin = 5.0;
-
-        if (DeviceDisplay.MainDisplayInfo.Orientation == DisplayOrientation.Landscape)
-        {
-            leftMargin += navigationBarHeight;
-            rightMargin += navigationBarHeight;
-        }
-
-        if (statusBarHeight > 0)
-            MainGrid.Margin = new Thickness(leftMargin, statusBarHeight + 10, rightMargin, 0);
-
-        if (navigationBarHeight > 0)
-            CollectionFooter.HeightRequest = navigationBarHeight + 10;
     }
 
     private Timer Timer = new();

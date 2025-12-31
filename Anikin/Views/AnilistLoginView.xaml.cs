@@ -15,10 +15,6 @@ public partial class AnilistLoginView
     public AnilistLoginView()
     {
         InitializeComponent();
-
-        SetMargins();
-
-        DeviceDisplay.Current.MainDisplayInfoChanged += (_, _) => SetMargins();
     }
 
     protected override void OnAppearing()
@@ -60,39 +56,6 @@ public partial class AnilistLoginView
         base.OnDisappearing();
 
         App.ApplyTheme(true);
-    }
-
-    private void SetMargins()
-    {
-        var statusBarHeight =
-            ApplicationEx.GetStatusBarHeight() / DeviceDisplay.MainDisplayInfo.Density;
-
-        var navigationBarHeight = (int)(
-            ApplicationEx.GetNavigationBarHeight() / DeviceDisplay.MainDisplayInfo.Density
-        );
-
-        var marginTop = 0.0;
-        var marginBottom = 0.0;
-        var marginLeft = 0.0;
-        var marginRight = 0.0;
-
-        if (statusBarHeight > 0)
-            marginTop = statusBarHeight;
-
-        if (navigationBarHeight > 0)
-        {
-            if (DeviceDisplay.Current.MainDisplayInfo.Orientation == DisplayOrientation.Portrait)
-            {
-                marginBottom = navigationBarHeight;
-            }
-            else
-            {
-                marginLeft = navigationBarHeight;
-                marginRight = navigationBarHeight;
-            }
-        }
-
-        Content.Margin = new(marginLeft, marginTop, marginRight, marginBottom);
     }
 
     private async void CloseButton_Clicked(object sender, EventArgs e)

@@ -17,33 +17,9 @@ public partial class MangaTabView
         InitializeComponent();
         BindingContext = viewModel;
 
-        SizeChanged += (_, _) => SetMargins();
-
         SetupView();
 
         DeviceDisplay.Current.MainDisplayInfoChanged += (s, e) => SetupView();
-    }
-
-    private void SetMargins()
-    {
-        var statusBarHeight =
-            ApplicationEx.GetStatusBarHeight() / DeviceDisplay.MainDisplayInfo.Density;
-        var navigationBarHeight =
-            ApplicationEx.GetNavigationBarHeight() / DeviceDisplay.MainDisplayInfo.Density;
-
-        var leftMargin = 15.0;
-        var rightMargin = 15.0;
-
-        if (DeviceDisplay.MainDisplayInfo.Orientation == DisplayOrientation.Landscape)
-        {
-            leftMargin += navigationBarHeight - 5.0;
-            rightMargin += navigationBarHeight - 5.0;
-        }
-
-        NavGrid.Margin = new Thickness(leftMargin, statusBarHeight + 10.0, rightMargin, 0);
-
-        if (navigationBarHeight > 0)
-            MainGrid.Margin = new Thickness(0, 0, 0, navigationBarHeight + 90);
     }
 
     public void SetupView()
