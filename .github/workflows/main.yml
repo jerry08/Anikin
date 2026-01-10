@@ -140,51 +140,53 @@ jobs:
 
   deploy:
     if: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
-
+    
     needs: [build-android, build-windows]
     runs-on: ubuntu-latest
-
+    
     permissions:
       actions: read
       contents: write
-
+    
     steps:
-      # Checkout required for running git commands, etc.
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # 4.2.1
-
+    
       - name: Set variables
         run: |
           TAG_NAME="${{ github.ref_name }}"
           echo $TAG_NAME
           VERSION="$(echo $TAG_NAME | tr -d v)"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "PACKAGE_NAME=${{ github.event.repository.name }}-$TAG_NAME" >> $GITHUB_ENV
-          echo "WINDOWS_PACKAGE_NAME=${{ github.event.repository.name }}-windows-$TAG_NAME" >> $GITHUB_ENV
           Prerelease_Param=""
           if [[ $TAG_NAME == *"-pre"* || $TAG_NAME == *"-beta"* || $TAG_NAME == *"-alpha"* ]]; then
             Prerelease_Param="--prerelease"
           fi
           echo $Prerelease_Param
           echo "Prerelease_Param=$Prerelease_Param" >> $GITHUB_ENV
-
-      - name: Download Android artifact
+    
+      - name: Download Android artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # 4.1.8
         with:
-          name: android-build
-          path: Anikin/Android/
-
+          pattern: Anikin-android*
+          path: artifacts/android/
+          merge-multiple: true
+    
       - name: Download Windows artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # 4.1.8
         with:
-          name: windows-ci-build
-          path: build/windows/
-
-      - name: Create package
-        # Change into the artifacts directory to avoid including the directory itself in the zip archive
-        working-directory: build/windows/
-        run: zip -r ../../${{ env.WINDOWS_PACKAGE_NAME }}.zip .
-
+          pattern: Anikin-win10-*
+          path: artifacts/windows/
+    
+      - name: Create Windows zip packages
+        run: |
+          set -e
+          cd artifacts/windows
+          for dir in */; do
+            dirname="${dir%/}"
+            zip -r "../../${dirname}.zip" "$dir"
+          done
+    
       - name: Set body
         run: |
           git fetch --depth=1 origin +refs/tags/*:refs/tags/*
@@ -192,26 +194,20 @@ jobs:
           echo "TAG_MESSAGE2<<EOF" >> $GITHUB_ENV
           echo "$TAG_MESSAGE" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-
-      - name: Clean up downloaded artifacts
-        run: |
-          set -e
-
-          mv Anikin/Android/Anikin.apk ${{ env.PACKAGE_NAME }}.apk
-
+    
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           gh release create "${{ github.ref_name }}"
-          "${{ env.PACKAGE_NAME }}.apk"
-          "${{ env.WINDOWS_PACKAGE_NAME }}.zip"
+          artifacts/android/*.apk
+          Anikin-win10-*.zip
           --repo "${{ github.event.repository.full_name }}"
           --title "${{ env.VERSION }}"
           --notes "${{ env.TAG_MESSAGE2 }}"
           --verify-tag
           ${{ env.Prerelease_Param }}
-
+    
       - name: Delete Old Pre-Releases
         id: delete-pre-releases
         uses: sgpublic/delete-release-action@master
@@ -231,13 +227,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # 4.2.1
-
-      - name: Set variables
-        run: |
-          TAG_NAME="${{ github.ref_name }}"
-          echo "$TAG_NAME"
-          echo "PACKAGE_NAME=${{ github.event.repository.name }}-$TAG_NAME" >> $GITHUB_ENV
-          echo "WINDOWS_PACKAGE_NAME=${{ github.event.repository.name }}-windows-$TAG_NAME" >> $GITHUB_ENV
 
       - name: Set variables 2
         run: |
@@ -264,5 +253,5 @@ jobs:
             {
               "username": "Notifications",
               "avatar_url": "https://raw.githubusercontent.com/${{ github.event.repository.full_name }}/master/favicon.png",
-              "content": "**${{ github.event.repository.name }}** new version released!\nVersion: `${{ github.ref_name }}`\n\n${{ env.RELEASE_BODY }}\n\nDownload for Android: <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/${{ env.PACKAGE_NAME }}.apk>\nDownload for Windows: <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/${{ env.WINDOWS_PACKAGE_NAME }}.zip>"
+              "content": "**${{ github.event.repository.name }}** new version released!\nVersion: `${{ github.ref_name }}`\n\n${{ env.RELEASE_BODY }}\n\n**All downloads:** <${{ github.event.repository.html_url }}/releases/tag/${{ github.ref_name }}>\n\n**Quick links:**\nAndroid (universal): <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/Anikin-android.apk>\nWindows x64: <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/Anikin-win10-x64.zip>"
             }
