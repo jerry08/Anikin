@@ -110,8 +110,12 @@ public partial class ProfileViewModel : BaseViewModel
 
         App.ApplyTheme();
 
-        if (Application.Current is not null)
-            Application.Current.MainPage = new AppShell();
+        App.IsChangingTheme = true;
+#if ANDROID
+        Platform.CurrentActivity?.Recreate();
+#endif
+
+        App.RefreshCurrentPageBehaviors();
     }
 
     [RelayCommand]

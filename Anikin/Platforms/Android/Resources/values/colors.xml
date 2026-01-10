@@ -5,14 +5,14 @@
   <!-- colorPrimaryDark is used for the status bar (in dark mode only?) -->
   <!--<color name="colorPrimaryDark">#2B0B98</color>-->
   <!--<color name="colorPrimaryDark">#54EEEEEE</color>-->
-  <color name="colorPrimaryDark">#006ee4</color>
+  <color name="colorPrimaryDark">#212121</color>
   <!--<color name="colorPrimaryDark">@android:color/transparent</color>-->
   <!-- colorAccent is used as the default value for colorControlActivated
       which is used to tint widgets -->
   <color name="colorAccent">#2B0B98</color>
   <!--<color name="status">#54EEEEEE</color>-->
   <color name="colorActionMenuTextColor">#d74c4c</color>
-  <color name="maui_splash_color">@color/colorPrimary</color>
+  <color name="maui_splash_color">@color/colorPrimaryDark</color>
   <color name="bottomSheetBg">#fff</color>
   <color name="bottomSheet_navigationBar_Color" tools:targetApi="o_mr1">#54000000</color>
   <color name="textColor">#000</color>

@@ -6,8 +6,8 @@
     <!-- For .NET 9 we optout of edge to edge enforcement by default -->
     <item name="maui_edgetoedge_optout">true</item>
     <!--<item name="android:navigationBarColor">@android:color/transparent</item>-->
-    <item name="android:navigationBarColor">@color/colorPrimary</item>
-    <item name="android:statusBarColor">@color/colorPrimary</item>
+    <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
+    <item name="android:statusBarColor">@color/colorPrimaryDark</item>
     <!--<item name="android:navigationBarColor">@color/navColor</item>-->
     <!--<item name="android:windowLightStatusBar">false</item>-->
     <!--<item name="colorPrimary">#d74c4c</item>-->
