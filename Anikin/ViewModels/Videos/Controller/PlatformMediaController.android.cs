@@ -119,7 +119,7 @@ public class PlatformMediaController : Java.Lang.Object, IPlayerListener
 
         _playerSettings.Load();
 
-        WindowCompat.SetDecorFitsSystemWindows(Platform.CurrentActivity!.Window!, false);
+        //WindowCompat.SetDecorFitsSystemWindows(Platform.CurrentActivity!.Window!, false);
         Platform.CurrentActivity.HideSystemBars();
 
         if (
