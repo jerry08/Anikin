@@ -1,10 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Anikin.Utils.Subtitles;
 
-public class SubtitleItem
+public partial class SubtitleItem
 {
+    /// <summary>
+    /// Strips formatting tags (curly braces and angle brackets) from subtitle text.
+    /// Handles SRT/VTT styles like {bold}, &lt;i&gt;, etc.
+    /// </summary>
+    [GeneratedRegex(@"\{.*?\}|<.*?>")]
+    private static partial Regex FormattingTagsRegex();
+
+    public static string StripFormattingTags(string text) =>
+        FormattingTagsRegex().Replace(text, string.Empty);
     /// <summary>
     /// Start time in milliseconds.
     /// </summary>

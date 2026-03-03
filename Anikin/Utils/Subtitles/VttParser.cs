@@ -87,6 +87,7 @@ public class VttParser : ISubtitlesParser
                 {
                     // we found the timecode, now we get the text
                     item.Lines.Add(line);
+                    item.PlaintextLines.Add(SubtitleItem.StripFormattingTags(line));
                 }
             }
 
@@ -150,6 +151,7 @@ public class VttParser : ISubtitlesParser
                 {
                     // we found the timecode, now we get the text
                     item.Lines.Add(line);
+                    item.PlaintextLines.Add(SubtitleItem.StripFormattingTags(line));
                 }
             }
 

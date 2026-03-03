@@ -403,7 +403,11 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
                 if (currentSubtitle is not null)
                 {
-                    CurrentSubtitle = string.Join(Environment.NewLine, currentSubtitle.Lines);
+                    CurrentSubtitle = string.Join(Environment.NewLine, currentSubtitle.PlaintextLines);
+                }
+                else
+                {
+                    CurrentSubtitle = null;
                 }
 
                 await Task.Delay(50);
