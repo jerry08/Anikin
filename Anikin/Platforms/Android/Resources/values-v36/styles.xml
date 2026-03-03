@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <style name="Maui.MainTheme" parent="Anikin.MainTheme">
+    <!-- Android 16 enforces edge-to-edge; windowOptOutEdgeToEdgeEnforcement is ignored.
+         Override opt-out so MAUI handles edge-to-edge insets properly. -->
+    <item name="maui_edgetoedge_optout">false</item>
+  </style>
+</resources>
