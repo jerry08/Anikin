@@ -260,7 +260,7 @@ public partial class VideoPlayerViewModel : BaseViewModel
         var speeds = _playerSettings.GetSpeeds();
         var speedsName = speeds.Select(speed => $"{speed}x").ToList();
 
-        var speedName = await Shell.Current.DisplayActionSheet(
+        var speedName = await Shell.Current.DisplayActionSheetAsync(
             "Playback Speed",
             "",
             "",
@@ -403,7 +403,10 @@ public partial class VideoPlayerViewModel : BaseViewModel
 
                 if (currentSubtitle is not null)
                 {
-                    CurrentSubtitle = string.Join(Environment.NewLine, currentSubtitle.PlaintextLines);
+                    CurrentSubtitle = string.Join(
+                        Environment.NewLine,
+                        currentSubtitle.PlaintextLines
+                    );
                 }
                 else
                 {

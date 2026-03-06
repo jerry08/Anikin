@@ -15,6 +15,7 @@ public partial class SubtitleItem
 
     public static string StripFormattingTags(string text) =>
         FormattingTagsRegex().Replace(text, string.Empty);
+
     /// <summary>
     /// Start time in milliseconds.
     /// </summary>

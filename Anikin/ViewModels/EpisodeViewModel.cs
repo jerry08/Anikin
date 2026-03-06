@@ -161,7 +161,7 @@ public partial class EpisodeViewModel : CollectionViewModel<Episode>, IQueryAttr
         var providers = ProviderGroups.SelectMany(x => x).ToList();
         var providersName = providers.Select(x => x.Name).ToList();
 
-        var result = await Shell.Current.DisplayActionSheet(
+        var result = await Shell.Current.DisplayActionSheetAsync(
             $"Select Provider ({_settingsService.LastAnimeProviderKey ?? "??"})",
             "Cancel",
             "Ok",
