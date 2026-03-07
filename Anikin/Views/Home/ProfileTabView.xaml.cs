@@ -1,4 +1,5 @@
-﻿using Microsoft.Maui.Controls;
+﻿using Anikin.ViewModels;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Layouts;
 using Microsoft.Maui.Platform;
@@ -7,9 +8,10 @@ namespace Anikin.Views.Home;
 
 public partial class ProfileTabView
 {
-    public ProfileTabView()
+    public ProfileTabView(ProfileViewModel viewModel)
     {
         InitializeComponent();
+        BindingContext = viewModel;
 
         Loaded += (s, e) => { };
 
