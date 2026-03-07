@@ -18,9 +18,9 @@
     <ApplicationId>com.oneb.anikin</ApplicationId>
     <ApplicationIdGuid>c9293998-a5d0-4219-85dc-3c69b19ca380</ApplicationIdGuid>
     <!-- Versions -->
-    <ApplicationDisplayVersion>3.0.0</ApplicationDisplayVersion>
-    <ApplicationVersion>45</ApplicationVersion>
-    <Version>3.0.0</Version>
+    <ApplicationDisplayVersion>3.0.2</ApplicationDisplayVersion>
+    <ApplicationVersion>46</ApplicationVersion>
+    <Version>3.0.2</Version>
     <SupportedOSPlatformVersion
       Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'"
       >15.0</SupportedOSPlatformVersion
