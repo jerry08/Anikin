@@ -1,4 +1,5 @@
 ﻿using System;
+using Android;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
@@ -8,6 +9,8 @@ using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Views.InputMethods;
+using AndroidX.Core.App;
+using AndroidX.Core.Content;
 using AndroidX.Core.View;
 using Anikin.Utils;
 using Microsoft.Maui;
@@ -34,6 +37,9 @@ public class MainActivity
         IOnApplyWindowInsetsListener,
         View.IOnTouchListener
 {
+    private const int PostNotificationsRequestCode = 1009;
+    private const int TakeCardUriPermissionRequestCode = 1010;
+
     public AndroidStoragePermission? AndroidStoragePermission { get; set; }
 
     public PackageInstallPermission? PackageInstallPermission { get; set; }
@@ -43,6 +49,23 @@ public class MainActivity
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
+
+        if (Build.VERSION.SdkInt > BuildVersionCodes.S)
+        {
+            if (
+                ContextCompat.CheckSelfPermission(this, Manifest.Permission.PostNotifications)
+                is not Permission.Granted
+            )
+            {
+                ActivityCompat.RequestPermissions(
+                    this,
+                    [Manifest.Permission.PostNotifications],
+                    PostNotificationsRequestCode
+                );
+            }
+        }
+
+        CreateNotificationChannelIfNeeded();
 
         //Window.DecorView.ViewTreeObserver.GlobalFocusChange += FocusChanged;
 
@@ -115,6 +138,27 @@ public class MainActivity
 
         var view = FindViewById(Android.Resource.Id.Content);
         view.SetBackgroundColor(Color.Red);
+    }
+
+    private void CreateNotificationChannelIfNeeded()
+    {
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
+        {
+            CreateNotificationChannel();
+        }
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Interoperability",
+        "CA1416:Validate platform compatibility",
+        Justification = "<Pending>"
+    )]
+    private void CreateNotificationChannel()
+    {
+        var channelId = $"{PackageName}.general";
+        var notificationManager = (NotificationManager?)GetSystemService(NotificationService);
+        var channel = new NotificationChannel(channelId, "General", NotificationImportance.Low);
+        notificationManager?.CreateNotificationChannel(channel);
     }
 
     void FocusChanged(object? sender, ViewTreeObserver.GlobalFocusChangeEventArgs e)

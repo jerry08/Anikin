@@ -51,6 +51,23 @@ public static partial class NotificationHelper
         service.StartForeground(NotificationId, builder.Build());
     }
 
+    public static void UpdateProgress(string title, int progress, int max = 100)
+    {
+        var context = Platform.AppContext;
+        var channelId = $"{context.PackageName}.general";
+
+        var builder = new NotificationCompat.Builder(context, channelId)
+            .SetSmallIcon(Resource.Drawable.logo_notification)
+            .SetOngoing(true)
+            .SetContentTitle(title)
+            .SetContentText($"{progress}%")
+            .SetProgress(max, progress, false)
+            .SetPriority(NotificationCompat.PriorityLow);
+
+        var notificationManager = NotificationManagerCompat.From(context);
+        notificationManager.Notify(NotificationId, builder.Build());
+    }
+
     public static void ShowCompletedNotification(string contentText = "Completed")
     {
         var context = Platform.AppContext;
@@ -62,7 +79,7 @@ public static partial class NotificationHelper
         var builder = new NotificationCompat.Builder(context, channelId)
             .SetSmallIcon(Resource.Drawable.logo_notification)
             //.SetOngoing(true)
-            .SetContentTitle("Yosu")
+            .SetContentTitle("Anikin")
             .SetContentText(contentText)
             .SetPriority(NotificationCompat.PriorityLow);
 

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup
+    x:Class="Anikin.Views.Popups.DownloadProgressPopup"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:system="clr-namespace:System;assembly=mscorlib"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:viewModels="clr-namespace:Anikin.ViewModels.Popups"
+    x:Name="this"
+    x:DataType="viewModels:DownloadProgressPopupViewModel"
+    x:TypeArguments="system:Boolean"
+    BackgroundColor="Transparent"
+    CanBeDismissedByTappingOutsideOfPopup="False">
+    <Border
+        BackgroundColor="{AppThemeBinding Light={StaticResource White},
+                                          Dark={StaticResource Gray900}}"
+        StrokeThickness="0">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="20" />
+        </Border.StrokeShape>
+        <Grid Margin="20,15" RowDefinitions="*,auto">
+            <VerticalStackLayout Grid.Row="0" Spacing="8">
+                <Label
+                    Margin="0,5,0,0"
+                    FontAttributes="Bold"
+                    FontSize="18"
+                    HorizontalOptions="Start"
+                    Text="Downloading" />
+                <Label
+                    FontSize="14"
+                    HorizontalOptions="Start"
+                    Text="{Binding Title}"
+                    MaxLines="2"
+                    LineBreakMode="TailTruncation" />
+                <ProgressBar
+                    Margin="0,10,0,0"
+                    HeightRequest="6"
+                    Progress="{Binding Progress}"
+                    ProgressColor="{StaticResource Primary}" />
+                <Label
+                    FontSize="14"
+                    HorizontalOptions="Start"
+                    Text="{Binding ProgressText}" />
+            </VerticalStackLayout>
+            <HorizontalStackLayout
+                Grid.Row="1"
+                Margin="0,5,0,0"
+                HorizontalOptions="End"
+                Spacing="5">
+                <Button
+                    BackgroundColor="Transparent"
+                    Command="{Binding CancelCommand}"
+                    CornerRadius="12"
+                    FontAttributes="Bold"
+                    FontSize="16"
+                    Text="Cancel"
+                    TextColor="{StaticResource Primary}" />
+            </HorizontalStackLayout>
+        </Grid>
+    </Border>
+</toolkit:Popup>

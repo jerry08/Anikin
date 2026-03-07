@@ -41,12 +41,14 @@
     android:maxSdkVersion="29"
     tools:ignore="ScopedStorage"
   />
-  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-  <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
   <!-- For managing extensions -->
   <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
   <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />

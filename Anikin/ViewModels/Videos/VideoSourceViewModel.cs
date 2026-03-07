@@ -9,10 +9,13 @@ using Anikin.Utils;
 using Anikin.Utils.Extensions;
 using Anikin.ViewModels.Components;
 using Anikin.ViewModels.Framework;
+using Anikin.ViewModels.Popups;
 using Anikin.Views;
 using Anikin.Views.BottomSheets;
+using Anikin.Views.Popups;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
+using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Mvvm.Input;
 using Gress;
 using Httpz;
@@ -173,11 +176,16 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
         {
             try
             {
+                await Toast.Make("Fetching qualities...").Show();
+                IsLoading = true;
+
                 var qualities = await hlsDownloader.GetQualitiesAsync(
                     video.VideoUrl,
                     video.Headers,
                     CancellationToken
                 );
+
+                IsLoading = false;
 
                 if (qualities.Count == 0)
                 {
@@ -208,6 +216,8 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
             }
             catch (Exception ex)
             {
+                IsLoading = false;
+
                 if (App.IsInDeveloperMode)
                     await App.AlertService.ShowAlertAsync("Error", $"{ex}");
 
@@ -256,6 +266,10 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
 
 #if ANDROID
         NotificationHelper.StartForeground();
+#else
+        var popupVm = new DownloadProgressPopupViewModel(title, download.CancellationTokenSource);
+        var popup = new DownloadProgressPopup(popupVm);
+        _ = Shell.Current.CurrentPage!.ShowPopupAsync(popup);
 #endif
 
         _ = Task.Run(async () =>
@@ -269,8 +283,14 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
                 download.Status = DownloadStatus.Started;
 
                 var progress = new Progress<double>(p =>
-                    download.PercentageProgress = Percentage.FromFraction(p)
-                );
+                {
+                    download.PercentageProgress = Percentage.FromFraction(p);
+#if ANDROID
+                    NotificationHelper.UpdateProgress(title, (int)(p * 100));
+#else
+                    popupVm.Report(p);
+#endif
+                });
 
                 download.IsProgressIndeterminate = false;
 
@@ -310,6 +330,10 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
 #endif
 
                 download.Status = DownloadStatus.Completed;
+
+#if !ANDROID
+                await MainThread.InvokeOnMainThreadAsync(async () => await popupVm.CompleteAsync());
+#endif
             }
             catch (Exception ex)
             {
@@ -331,6 +355,14 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
                 {
                     // Ignore
                 }
+
+#if !ANDROID
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                    await popupVm.FailAsync(
+                        ex is OperationCanceledException ? "Canceled" : "Download failed"
+                    )
+                );
+#endif
             }
             finally
             {
@@ -360,7 +392,9 @@ public partial class VideoSourceViewModel : CollectionViewModel<ListGroup<VideoS
             }
         });
 
+#if ANDROID
         await Toast.Make($"Downloading {title}").Show();
+#endif
     }
 
     public void Cancel() => _cancellationTokenSource.Cancel();
