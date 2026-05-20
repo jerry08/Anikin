@@ -1,0 +1,323 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_NAME: Anikin
+  FALLBACK_JURO_API_BASE_URL: https://example.invalid/api
+
+jobs:
+  build-android:
+    name: Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      JURO_API_BASE_URL: ${{ secrets.JURO_API_BASE_URL || secrets.API_URL || 'https://example.invalid/api' }}
+      ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 || secrets.KEYSTORE_B64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || secrets.PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'DrMedia' }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD || secrets.PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate release secrets
+        if: ${{ github.ref_type == 'tag' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$JURO_API_BASE_URL" || "$JURO_API_BASE_URL" == "$FALLBACK_JURO_API_BASE_URL" ]]; then
+            echo "JURO_API_BASE_URL or API_URL secret is required for tagged releases." >&2
+            exit 1
+          fi
+          if [[ -z "$ANDROID_KEYSTORE_B64" || -z "$ANDROID_KEYSTORE_PASSWORD" || -z "$ANDROID_KEY_PASSWORD" ]]; then
+            echo "Android signing secrets are required for tagged releases." >&2
+            echo "Set ANDROID_KEYSTORE_B64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD." >&2
+            echo "Legacy KEYSTORE_B64 and PASSWORD are also supported." >&2
+            exit 1
+          fi
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Configure Android signing
+        if: ${{ env.ANDROID_KEYSTORE_B64 != '' && env.ANDROID_KEYSTORE_PASSWORD != '' && env.ANDROID_KEY_PASSWORD != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "$ANDROID_KEYSTORE_B64" | base64 --decode > android/app/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storeFile=app/upload-keystore.jks
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          EOF
+
+      - name: Restore dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build universal APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build apk \
+            --release \
+            --dart-define=JURO_API_BASE_URL="$JURO_API_BASE_URL"
+          mkdir -p artifacts/android
+          cp build/app/outputs/flutter-apk/app-release.apk "artifacts/android/${APP_NAME}-android-universal.apk"
+
+      - name: Build split ABI APKs
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build apk \
+            --release \
+            --split-per-abi \
+            --dart-define=JURO_API_BASE_URL="$JURO_API_BASE_URL"
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk "artifacts/android/${APP_NAME}-android-armeabi-v7a.apk"
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk "artifacts/android/${APP_NAME}-android-arm64-v8a.apk"
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk "artifacts/android/${APP_NAME}-android-x86_64.apk"
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-android
+          path: artifacts/android/*.apk
+          if-no-files-found: error
+
+  build-windows:
+    name: Windows ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-latest
+            bundle-path: build/windows/x64/runner/Release
+          - arch: arm64
+            runner: windows-11-arm
+            bundle-path: build/windows/arm64/runner/Release
+
+    env:
+      JURO_API_BASE_URL: ${{ secrets.JURO_API_BASE_URL || secrets.API_URL || 'https://example.invalid/api' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate release secrets
+        if: ${{ github.ref_type == 'tag' }}
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:JURO_API_BASE_URL) -or $env:JURO_API_BASE_URL -eq $env:FALLBACK_JURO_API_BASE_URL) {
+            throw "JURO_API_BASE_URL or API_URL secret is required for tagged releases."
+          }
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Restore dependencies
+        run: flutter pub get
+
+      - name: Build Windows
+        shell: pwsh
+        run: |
+          flutter config --enable-windows-desktop
+          flutter build windows --release --dart-define=JURO_API_BASE_URL="$env:JURO_API_BASE_URL"
+
+      - name: Package Windows
+        shell: pwsh
+        run: |
+          $source = "${{ matrix.bundle-path }}"
+          if (-not (Test-Path $source)) {
+            $source = "build/windows/runner/Release"
+          }
+          if (-not (Test-Path $source)) {
+            throw "Windows bundle directory was not found."
+          }
+          $packageName = "${env:APP_NAME}-windows-${{ matrix.arch }}"
+          $packageDir = "artifacts/windows/$packageName"
+          New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+          Copy-Item -Recurse -Path "$source/*" -Destination $packageDir
+          Compress-Archive -Path "$packageDir/*" -DestinationPath "artifacts/windows/$packageName.zip" -Force
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-windows-${{ matrix.arch }}
+          path: artifacts/windows/*.zip
+          if-no-files-found: error
+
+  build-linux:
+    name: Linux ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-24.04
+            flutter-arch: x64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            flutter-arch: arm64
+
+    env:
+      JURO_API_BASE_URL: ${{ secrets.JURO_API_BASE_URL || secrets.API_URL || 'https://example.invalid/api' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate release secrets
+        if: ${{ github.ref_type == 'tag' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$JURO_API_BASE_URL" || "$JURO_API_BASE_URL" == "$FALLBACK_JURO_API_BASE_URL" ]]; then
+            echo "JURO_API_BASE_URL or API_URL secret is required for tagged releases." >&2
+            exit 1
+          fi
+
+      - name: Install Linux build dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev zip
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Restore Linux runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter config --enable-linux-desktop
+          if [[ ! -d linux ]]; then
+            flutter create --platforms=linux --no-pub .
+          fi
+
+      - name: Restore dependencies
+        run: flutter pub get
+
+      - name: Build Linux
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build linux \
+            --release \
+            --dart-define=JURO_API_BASE_URL="$JURO_API_BASE_URL"
+
+      - name: Package Linux
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle="build/linux/${{ matrix.flutter-arch }}/release/bundle"
+          if [[ ! -d "$bundle" ]]; then
+            bundle="build/linux/x64/release/bundle"
+          fi
+          if [[ ! -d "$bundle" ]]; then
+            echo "Linux bundle directory was not found." >&2
+            exit 1
+          fi
+          package="${APP_NAME}-linux-${{ matrix.arch }}"
+          mkdir -p artifacts/linux
+          cp -R "$bundle" "$package"
+          zip -r "artifacts/linux/$package.zip" "$package"
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-linux-${{ matrix.arch }}
+          path: artifacts/linux/*.zip
+          if-no-files-found: error
+
+  release:
+    name: GitHub release
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
+    needs:
+      - build-android
+      - build-windows
+      - build-linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      actions: read
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ env.APP_NAME }}-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#v}"
+          prerelease_arg=()
+          if [[ "$tag" == *"-pre"* || "$tag" == *"-beta"* || "$tag" == *"-alpha"* || "$tag" == *"-rc"* ]]; then
+            prerelease_arg=(--prerelease)
+          fi
+          notes="$(git tag -l --format='%(contents)' "$tag")"
+          if [[ -z "$notes" ]]; then
+            notes="Release $tag"
+          fi
+          gh release create "$tag" release-assets/* \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "$version" \
+            --notes "$notes" \
+            --verify-tag \
+            "${prerelease_arg[@]}"
