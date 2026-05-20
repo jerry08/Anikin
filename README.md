@@ -1,53 +1,56 @@
-# anikin
+<h1 align="center">
+   Anikin
+</h1>
 
-A new Flutter project.
+<p align="center">
+   <a href="https://discord.com/invite/U7XweVubJN"><img src="https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white"></a>
+   <a href="https://github.com/jerry08/Anikin/releases"><img src="https://img.shields.io/github/downloads/jerry08/Anikin/total?color=%233DDC84&logo=android&logoColor=%23fff&style=for-the-badge"></a>
+</p>
 
-## Local configuration
+<p align="center"><a href="https://github.com/jerry08/Anikin/releases"><img src="/.assets/download.png"></a></p>
 
-The Juro API base URL is intentionally provided outside git. Create a local
-`env/juro.local.json` file shaped like:
+Anikin is a multi-platform application to stream/download media. 
 
-```json
-{
-  "JURO_API_BASE_URL": "https://your-juro-host.example/api"
-}
-```
+<p align="center">
+	<a href="https://www.buymeacoffee.com/jerry08"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=jerry08&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff" /></a>
+</p>
 
-Run the app with:
+<br>
 
-```powershell
-flutter run --dart-define-from-file=env/juro.local.json
-```
+### 🌟STAR THIS REPOSITORY TO SUPPORT THE DEVELOPER AND ENCOURAGE THE DEVELOPMENT OF THE APPLICATION!
 
-## Releases
+## Description
 
-The GitHub release workflow builds Android, Windows, and Linux. Tagged pushes
-like `v3.0.2` create a release.
+Anikin parses website data and filter required info, thus It removes the ads for seamless experience. The app doesn't require account creation to use it.
 
-Required release secret:
+### Features
 
-- `JURO_API_BASE_URL` for the compiled app API URL. The legacy `API_URL` secret
-  is also accepted.
+* Search
+* Recently Added
+* Popular
+* Movies
+* Add To Favourites
+* Auto Quality for Video Playback
+* Ads Free Video Playback
+* Online syncing of Favourite list & watched progress (requires login)
 
-Required Android signing secrets:
+## 💻 Install 
 
-- `ANDROID_KEYSTORE_B64`
-- `ANDROID_KEYSTORE_PASSWORD`
-- `ANDROID_KEY_ALIAS`
-- `ANDROID_KEY_PASSWORD`
+| Platform | Download | Status |
+|----------|----------|--------|
+| Android    |[![Download Button](https://img.shields.io/github/v/release/jerry08/Anikin?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](https://github.com/jerry08/Anikin/releases/download/v2.0.2/Anikin-v2.0.2.apk)| ✅ Stable |
+| Windows    |[![Download Button](https://img.shields.io/github/v/release/jerry08/Anikin?color=00A8E8&label=Windows-Zip&logo=windows&style=for-the-badge)](https://github.com/jerry08/Anikin/releases/download/v2.0.2/Anikin-windows-v2.0.2.zip)| ✅ Stable |
 
-The legacy `KEYSTORE_B64` and `PASSWORD` secrets are also accepted.
+## WANT TO CONTRIBUTE?
 
-## Getting Started
+- All contributions are welcome, from code to documentation to graphics to design suggestions to bug reports. Please use GitHub to its fullest; contribute Pull Requests, contribute tutorials or other content- whatever you have to offer, we can use it!
 
-This project is a starting point for a Flutter application.
+- You can come hang out with our awesome community and request new features and report any bugs or issue at our discord server too.
 
-A few resources to get you started if this is your first Flutter project:
+### Official Discord Server
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<p align="center">
+ <a href="https://discord.com/invite/U7XweVubJN">
+  <img src="https://invidget.switchblade.xyz/mhxsSMy2Nf">
+ </a>
+</p>
