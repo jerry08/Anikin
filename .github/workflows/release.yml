@@ -61,6 +61,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          architecture: x64
           cache: true
 
       - name: Configure Android signing
@@ -149,6 +150,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          architecture: x64
           cache: true
 
       - name: Restore dependencies
@@ -195,9 +197,6 @@ jobs:
           - arch: x64
             runner: ubuntu-24.04
             flutter-arch: x64
-          - arch: arm64
-            runner: ubuntu-24.04-arm
-            flutter-arch: arm64
 
     env:
       JURO_API_BASE_URL: ${{ secrets.JURO_API_BASE_URL || secrets.API_URL || 'https://example.invalid/api' }}
@@ -220,12 +219,13 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev zip
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libmpv-dev libstdc++-12-dev zip
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          architecture: x64
           cache: true
 
       - name: Restore Linux runner
