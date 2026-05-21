@@ -108,11 +108,32 @@ jobs:
           cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk "artifacts/android/${APP_NAME}-android-arm64-v8a.apk"
           cp build/app/outputs/flutter-apk/app-x86_64-release.apk "artifacts/android/${APP_NAME}-android-x86_64.apk"
 
-      - name: Upload Android artifacts
+      - name: Upload Android universal APK
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}-android
-          path: artifacts/android/*.apk
+          name: ${{ env.APP_NAME }}-android-universal
+          path: artifacts/android/${{ env.APP_NAME }}-android-universal.apk
+          if-no-files-found: error
+
+      - name: Upload Android armeabi-v7a APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-android-armeabi-v7a
+          path: artifacts/android/${{ env.APP_NAME }}-android-armeabi-v7a.apk
+          if-no-files-found: error
+
+      - name: Upload Android arm64-v8a APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-android-arm64-v8a
+          path: artifacts/android/${{ env.APP_NAME }}-android-arm64-v8a.apk
+          if-no-files-found: error
+
+      - name: Upload Android x86_64 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-android-x86_64
+          path: artifacts/android/${{ env.APP_NAME }}-android-x86_64.apk
           if-no-files-found: error
 
   build-windows:
@@ -127,9 +148,6 @@ jobs:
           - arch: x64
             runner: windows-latest
             bundle-path: build/windows/x64/runner/Release
-          - arch: arm64
-            runner: windows-11-arm
-            bundle-path: build/windows/arm64/runner/Release
 
     env:
       JURO_API_BASE_URL: ${{ secrets.JURO_API_BASE_URL || secrets.API_URL || 'https://example.invalid/api' }}
@@ -145,6 +163,13 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:JURO_API_BASE_URL) -or $env:JURO_API_BASE_URL -eq $env:FALLBACK_JURO_API_BASE_URL) {
             throw "JURO_API_BASE_URL or API_URL secret is required for tagged releases."
           }
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          architecture: x64
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
