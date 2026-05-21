@@ -7,6 +7,7 @@ import 'package:anikin/core/app_theme.dart';
 import 'package:anikin/models/anilist_media.dart';
 import 'package:anikin/models/downloaded_episode.dart';
 import 'package:anikin/models/juro_models.dart';
+import 'package:anikin/models/tracking.dart';
 import 'package:anikin/screens/detail_screen.dart';
 import 'package:anikin/screens/downloads_screen.dart';
 import 'package:anikin/screens/home_screen.dart';
@@ -17,6 +18,7 @@ import 'package:anikin/services/download_service.dart';
 import 'package:anikin/services/juro_service.dart';
 import 'package:anikin/services/manga_download_service.dart';
 import 'package:anikin/services/preferences_service.dart';
+import 'package:anikin/services/tracking_service.dart';
 import 'package:anikin/services/watch_history_service.dart';
 import 'package:anikin/widgets/app_error_view.dart';
 import 'package:anikin/widgets/media_poster_card.dart';
@@ -199,6 +201,103 @@ https://cdn.example.com/720/index.m3u8
     expect(requested, isFalse);
   });
 
+  test('AniList favorite toggle only sends anime id for anime', () async {
+    SharedPreferences.setMockInitialValues({
+      'tracking.account.anilist': jsonEncode({
+        'provider': 'anilist',
+        'accessToken': 'token',
+      }),
+    });
+
+    Map<String, dynamic>? postedBody;
+    final service = TrackingService(
+      listenForLinks: false,
+      client: MockClient((request) async {
+        expect(request.headers['Authorization'], 'Bearer token');
+        postedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          jsonEncode({
+            'data': {
+              'ToggleFavourite': {
+                'anime': {
+                  'nodes': [
+                    {'id': 42},
+                  ],
+                },
+              },
+            },
+          }),
+          200,
+        );
+      }),
+    );
+    addTearDown(service.dispose);
+    await service.load();
+
+    final favorite = await service.toggleAniListFavorite(
+      media: const AniListMedia(
+        id: 42,
+        title: MediaTitle(english: 'Frieren'),
+        cover: MediaCover(),
+      ),
+      kind: TrackingMediaKind.anime,
+    );
+
+    expect(favorite, isTrue);
+    final body = postedBody!;
+    expect(body['query'], contains('ToggleFavourite(animeId:'));
+    expect(body['query'], isNot(contains('mangaId')));
+    expect(body['variables'], {'animeId': 42});
+  });
+
+  test('AniList favorite toggle only sends manga id for manga', () async {
+    SharedPreferences.setMockInitialValues({
+      'tracking.account.anilist': jsonEncode({
+        'provider': 'anilist',
+        'accessToken': 'token',
+      }),
+    });
+
+    Map<String, dynamic>? postedBody;
+    final service = TrackingService(
+      listenForLinks: false,
+      client: MockClient((request) async {
+        postedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          jsonEncode({
+            'data': {
+              'ToggleFavourite': {
+                'manga': {
+                  'nodes': [
+                    {'id': 99},
+                  ],
+                },
+              },
+            },
+          }),
+          200,
+        );
+      }),
+    );
+    addTearDown(service.dispose);
+    await service.load();
+
+    final favorite = await service.toggleAniListFavorite(
+      media: const AniListMedia(
+        id: 99,
+        title: MediaTitle(english: 'Yotsuba&!'),
+        cover: MediaCover(),
+      ),
+      kind: TrackingMediaKind.manga,
+    );
+
+    expect(favorite, isTrue);
+    final body = postedBody!;
+    expect(body['query'], contains('ToggleFavourite(mangaId:'));
+    expect(body['query'], isNot(contains('animeId')));
+    expect(body['variables'], {'mangaId': 99});
+  });
+
   testWidgets('renders the migrated app shell', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     final preferences = PreferencesService();
@@ -217,7 +316,7 @@ https://cdn.example.com/720/index.m3u8
     expect(find.text('Search'), findsOneWidget);
     expect(find.byIcon(Icons.live_tv_outlined), findsOneWidget);
     expect(find.byIcon(Icons.menu_book_outlined), findsOneWidget);
-    expect(find.text('Downloads'), findsOneWidget);
+    expect(find.text('Library'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
     expect(find.byType(NavigationDestination), findsNWidgets(4));
     expect(find.byKey(const ValueKey('top-status-bar-shade')), findsOneWidget);
@@ -245,7 +344,7 @@ https://cdn.example.com/720/index.m3u8
     expect(find.text('App'), findsOneWidget);
     expect(find.text('Playback'), findsOneWidget);
     expect(find.text('Subtitles'), findsOneWidget);
-    expect(find.text('Sources and library'), findsOneWidget);
+    expect(find.text('Tracking and sync'), findsOneWidget);
 
     await tester.tap(find.text('App'));
     await tester.pumpAndSettle();
@@ -260,6 +359,12 @@ https://cdn.example.com/720/index.m3u8
     await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
 
+    await tester.drag(find.byType(ListView), const Offset(0, -320));
+    await tester.pumpAndSettle();
+    expect(find.text('Sources and library'), findsOneWidget);
+
+    await tester.drag(find.byType(ListView), const Offset(0, 320));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Playback'));
     await tester.pumpAndSettle();
 
@@ -300,13 +405,15 @@ https://cdn.example.com/720/index.m3u8
             watchHistoryService: WatchHistoryService(),
             downloadService: DownloadService(),
             mangaDownloadService: MangaDownloadService(),
+            trackingService: TrackingService(),
           ),
         ),
       ),
     );
 
-    expect(find.text('Tags'), findsOneWidget);
+    expect(find.text('Tags'), findsNothing);
     expect(find.text('Shounen'), findsOneWidget);
+    expect(find.text('Pick one or more'), findsNothing);
 
     await tester.tap(find.text('Shounen'));
     await tester.pumpAndSettle();
@@ -323,7 +430,7 @@ https://cdn.example.com/720/index.m3u8
     await tester.tap(find.text('Clear'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Pick one or more'), findsOneWidget);
+    expect(find.text('Pick one or more'), findsNothing);
     expect(find.text('Search Result'), findsNothing);
   });
 
@@ -345,6 +452,7 @@ https://cdn.example.com/720/index.m3u8
             watchHistoryService: WatchHistoryService(),
             downloadService: DownloadService(),
             mangaDownloadService: MangaDownloadService(),
+            trackingService: TrackingService(),
           ),
         ),
       ),
@@ -406,6 +514,7 @@ https://cdn.example.com/720/index.m3u8
               watchHistoryService: WatchHistoryService(),
               downloadService: DownloadService(),
               mangaDownloadService: MangaDownloadService(),
+              trackingService: TrackingService(),
             ),
           ),
         ),
@@ -445,6 +554,7 @@ https://cdn.example.com/720/index.m3u8
             watchHistoryService: WatchHistoryService(),
             downloadService: DownloadService(),
             mangaDownloadService: MangaDownloadService(),
+            trackingService: TrackingService(),
           ),
         ),
       ),
@@ -526,6 +636,7 @@ https://cdn.example.com/720/index.m3u8
             watchHistoryService: WatchHistoryService(),
             downloadService: DownloadService(),
             mangaDownloadService: MangaDownloadService(),
+            trackingService: TrackingService(),
             onSearchRequested: () {},
             onSettingsRequested: () {},
           ),
@@ -568,6 +679,7 @@ https://cdn.example.com/720/index.m3u8
             watchHistoryService: WatchHistoryService(),
             downloadService: DownloadService(),
             mangaDownloadService: MangaDownloadService(),
+            trackingService: TrackingService(),
             onSearchRequested: () {},
             onSettingsRequested: () {},
           ),
@@ -606,6 +718,7 @@ https://cdn.example.com/720/index.m3u8
           juroService: _EpisodeOptionsJuroService(),
           watchHistoryService: WatchHistoryService(),
           downloadService: DownloadService(),
+          trackingService: TrackingService(),
         ),
       ),
     );
@@ -646,10 +759,13 @@ https://cdn.example.com/720/index.m3u8
           preferences: preferences,
           juroService: _FakeJuroService(),
           watchHistoryService: WatchHistoryService(),
+          trackingService: TrackingService(),
         ),
       ),
     );
     await tester.pump();
+    await tester.tap(find.text('Downloads'));
+    await tester.pumpAndSettle();
 
     expect(find.text('50% • 512.0 KB / 1.0 MB'), findsOneWidget);
     expect(find.byTooltip('Pause download'), findsOneWidget);
@@ -695,6 +811,7 @@ https://cdn.example.com/720/index.m3u8
           juroService: _HlsEpisodeOptionsJuroService(),
           watchHistoryService: WatchHistoryService(),
           downloadService: downloadService,
+          trackingService: TrackingService(),
         ),
       ),
     );
@@ -769,6 +886,7 @@ https://cdn.example.com/720/index.m3u8
           preferences: preferences,
           juroService: _MangaReaderJuroService(),
           mangaDownloadService: _NoopMangaDownloadService(),
+          trackingService: TrackingService(),
         ),
       ),
     );
@@ -814,6 +932,7 @@ https://cdn.example.com/720/index.m3u8
             juroService: _MultiSourceEpisodeOptionsJuroService(),
             watchHistoryService: WatchHistoryService(),
             downloadService: downloadService,
+            trackingService: TrackingService(),
           ),
         ),
       );

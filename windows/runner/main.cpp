@@ -1,9 +1,11 @@
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
+#include <string>
 #include <windows.h>
 
 #include "flutter_window.h"
 #include "utils.h"
+#include "app_links/app_links_plugin_c_api.h"
 
 namespace {
 
@@ -38,10 +40,59 @@ void CenterWindow(HWND window) {
                  SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
+bool SendAppLinkToInstance(const std::wstring& title) {
+  HWND hwnd = ::FindWindow(L"FLUTTER_RUNNER_WIN32_WINDOW", title.c_str());
+  if (hwnd == nullptr) {
+    return false;
+  }
+
+  SendAppLink(hwnd);
+
+  WINDOWPLACEMENT placement = {sizeof(WINDOWPLACEMENT)};
+  GetWindowPlacement(hwnd, &placement);
+  if (placement.showCmd == SW_SHOWMINIMIZED) {
+    ShowWindow(hwnd, SW_RESTORE);
+  } else {
+    ShowWindow(hwnd, SW_NORMAL);
+  }
+  SetForegroundWindow(hwnd);
+  return true;
+}
+
+void RegisterProtocol(const wchar_t* scheme) {
+  wchar_t executable[MAX_PATH];
+  if (GetModuleFileNameW(nullptr, executable, MAX_PATH) == 0) {
+    return;
+  }
+
+  std::wstring key = L"Software\\Classes\\";
+  key += scheme;
+  std::wstring description = L"URL:";
+  description += scheme;
+  std::wstring command = L"\"";
+  command += executable;
+  command += L"\" \"%1\"";
+
+  RegSetKeyValueW(HKEY_CURRENT_USER, key.c_str(), nullptr, REG_SZ,
+                  description.c_str(),
+                  static_cast<DWORD>((description.size() + 1) * sizeof(wchar_t)));
+  RegSetKeyValueW(HKEY_CURRENT_USER, key.c_str(), L"URL Protocol", REG_SZ,
+                  L"", sizeof(wchar_t));
+
+  key += L"\\shell\\open\\command";
+  RegSetKeyValueW(HKEY_CURRENT_USER, key.c_str(), nullptr, REG_SZ,
+                  command.c_str(),
+                  static_cast<DWORD>((command.size() + 1) * sizeof(wchar_t)));
+}
+
 }  // namespace
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
+  if (SendAppLinkToInstance(L"anikin")) {
+    return EXIT_SUCCESS;
+  }
+
   // Attach to console when present (e.g., 'flutter run') or create a
   // new console when running with a debugger.
   if (!::AttachConsole(ATTACH_PARENT_PROCESS) && ::IsDebuggerPresent()) {
@@ -51,6 +102,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // Initialize COM, so that it is available for use in the library and/or
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+  RegisterProtocol(L"anistream");
+  RegisterProtocol(L"anikin");
+  RegisterProtocol(L"tachiyomi");
+  RegisterProtocol(L"anizen");
 
   flutter::DartProject project(L"data");
 

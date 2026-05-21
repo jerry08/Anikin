@@ -7,6 +7,7 @@ import '../services/anilist_service.dart';
 import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
+import '../services/tracking_service.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/media_poster_card.dart';
 import 'manga_detail_screen.dart';
@@ -17,6 +18,7 @@ class MangaScreen extends StatefulWidget {
     required this.aniListService,
     required this.juroService,
     required this.mangaDownloadService,
+    required this.trackingService,
     super.key,
   });
 
@@ -24,6 +26,7 @@ class MangaScreen extends StatefulWidget {
   final AniListService aniListService;
   final JuroService juroService;
   final MangaDownloadService mangaDownloadService;
+  final TrackingService trackingService;
 
   @override
   State<MangaScreen> createState() => _MangaScreenState();
@@ -160,6 +163,7 @@ class _MangaScreenState extends State<MangaScreen> {
           preferences: widget.preferences,
           juroService: widget.juroService,
           mangaDownloadService: widget.mangaDownloadService,
+          trackingService: widget.trackingService,
         ),
       ),
     );

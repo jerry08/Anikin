@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../core/app_theme.dart';
 import '../models/juro_models.dart';
+import '../models/tracking.dart';
 import '../services/juro_service.dart';
 import '../services/preferences_service.dart';
+import '../services/tracking_service.dart';
 
 const _settingsTileShape = RoundedRectangleBorder(
   borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -13,11 +17,13 @@ class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     required this.preferences,
     required this.juroService,
+    required this.trackingService,
     super.key,
   });
 
   final PreferencesService preferences;
   final JuroService juroService;
+  final TrackingService trackingService;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -38,7 +44,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: AnimatedBuilder(
-        animation: widget.preferences,
+        animation: Listenable.merge([
+          widget.preferences,
+          widget.trackingService,
+        ]),
         builder: (context, _) {
           final prefs = widget.preferences;
           return ListTileTheme.merge(
@@ -81,6 +90,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () => _openSettingsPage(
                     context,
                     _SubtitleSettingsPage(preferences: widget.preferences),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const _SectionTitle('Accounts'),
+                _SettingsNavigationTile(
+                  icon: Icons.sync_outlined,
+                  title: 'Tracking and sync',
+                  subtitle: _trackingSummary(widget.trackingService),
+                  onTap: () => _openSettingsPage(
+                    context,
+                    _TrackingSettingsPage(
+                      trackingService: widget.trackingService,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -280,6 +302,255 @@ class _SubtitleSettingsPage extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _TrackingSettingsPage extends StatelessWidget {
+  const _TrackingSettingsPage({required this.trackingService});
+
+  final TrackingService trackingService;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Tracking and sync')),
+      body: SafeArea(
+        child: AnimatedBuilder(
+          animation: trackingService,
+          builder: (context, _) {
+            return ListTileTheme.merge(
+              shape: _settingsTileShape,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+                children: [
+                  const _SectionTitle('Sync'),
+                  SwitchListTile(
+                    secondary: const Icon(Icons.cloud_sync_outlined),
+                    title: const Text('Sync completed episodes'),
+                    value: trackingService.progressSyncEnabled,
+                    onChanged: (value) => unawaited(
+                      trackingService.setProgressSyncEnabled(value),
+                    ),
+                  ),
+                  _DropdownTile<TrackingProvider>(
+                    icon: Icons.account_tree_outlined,
+                    title: 'Primary provider',
+                    value: trackingService.primaryProvider,
+                    values: TrackingProvider.values,
+                    labelBuilder: (provider) => provider.label,
+                    onChanged: (provider) {
+                      if (provider != null) {
+                        unawaited(trackingService.setPrimaryProvider(provider));
+                      }
+                    },
+                  ),
+                  _DropdownTile<TrackingSyncStrategy>(
+                    icon: Icons.alt_route,
+                    title: 'Sync behavior',
+                    value: trackingService.syncStrategy,
+                    values: TrackingSyncStrategy.values,
+                    labelBuilder: (strategy) => strategy.label,
+                    onChanged: (strategy) {
+                      if (strategy != null) {
+                        unawaited(trackingService.setSyncStrategy(strategy));
+                      }
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.pending_actions_outlined),
+                    title: Text(
+                      'Queued updates: ${trackingService.pendingUpdateCount}',
+                    ),
+                    subtitle: trackingService.lastMessage == null
+                        ? null
+                        : Text(trackingService.lastMessage!),
+                    trailing: IconButton(
+                      tooltip: 'Retry queued sync',
+                      onPressed: trackingService.pendingUpdateCount == 0
+                          ? null
+                          : () => unawaited(
+                              _retryPending(context, trackingService),
+                            ),
+                      icon: const Icon(Icons.refresh),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const _SectionTitle('Services'),
+                  for (final provider in TrackingProvider.values)
+                    _TrackingProviderTile(
+                      provider: provider,
+                      trackingService: trackingService,
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _retryPending(
+    BuildContext context,
+    TrackingService service,
+  ) async {
+    await service.retryPendingUpdates();
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Tracker sync retried')));
+    }
+  }
+}
+
+class _TrackingProviderTile extends StatelessWidget {
+  const _TrackingProviderTile({
+    required this.provider,
+    required this.trackingService,
+  });
+
+  final TrackingProvider provider;
+  final TrackingService trackingService;
+
+  @override
+  Widget build(BuildContext context) {
+    final account = trackingService.accountFor(provider);
+    final loggedIn = trackingService.isLoggedIn(provider);
+    return ListTile(
+      leading: Icon(_providerIcon(provider)),
+      title: Text(provider.label),
+      subtitle: Text(
+        loggedIn
+            ? 'Logged in as ${account?.username ?? account?.userId ?? 'account'}'
+            : account?.authExpired == true
+            ? 'Login expired'
+            : 'Not logged in',
+      ),
+      trailing: loggedIn
+          ? TextButton(
+              onPressed: () => _confirmLogout(context),
+              child: const Text('Logout'),
+            )
+          : FilledButton(
+              onPressed: () => _login(context),
+              child: const Text('Login'),
+            ),
+    );
+  }
+
+  Future<void> _login(BuildContext context) async {
+    try {
+      if (provider == TrackingProvider.kitsu) {
+        await _showKitsuLogin(context);
+      } else {
+        await trackingService.loginWithBrowser(provider);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Continue ${provider.label} login in browser'),
+            ),
+          );
+        }
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    }
+  }
+
+  Future<void> _showKitsuLogin(BuildContext context) async {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    try {
+      final submitted = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Kitsu login'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.email_outlined),
+                  labelText: 'Email',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.lock_outline),
+                  labelText: 'Password',
+                ),
+                onSubmitted: (_) => Navigator.of(context).pop(true),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Login'),
+            ),
+          ],
+        ),
+      );
+      if (submitted != true) {
+        return;
+      }
+      await trackingService.loginKitsu(
+        username: emailController.text.trim(),
+        password: passwordController.text,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Logged in to Kitsu')));
+      }
+    } finally {
+      emailController.dispose();
+      passwordController.dispose();
+    }
+  }
+
+  Future<void> _confirmLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Logout of ${provider.label}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await trackingService.logout(provider);
+    }
+  }
+
+  IconData _providerIcon(TrackingProvider provider) {
+    return switch (provider) {
+      TrackingProvider.anilist => Icons.hub_outlined,
+      TrackingProvider.myAnimeList => Icons.list_alt_outlined,
+      TrackingProvider.kitsu => Icons.auto_awesome_outlined,
+    };
   }
 }
 
@@ -867,6 +1138,16 @@ String _sourcesSummary(PreferencesService prefs) {
     name: prefs.lastMangaProviderName,
   );
   return 'Anime: $anime, manga: $manga';
+}
+
+String _trackingSummary(TrackingService trackingService) {
+  final loggedIn = TrackingProvider.values
+      .where(trackingService.isLoggedIn)
+      .map((provider) => provider.label)
+      .join(', ');
+  final sync = trackingService.progressSyncEnabled ? 'sync on' : 'sync off';
+  final provider = loggedIn.isEmpty ? 'no accounts' : loggedIn;
+  return '${trackingService.primaryProvider.label}, $sync, $provider';
 }
 
 String _providerLabel({required String key, required String? name}) {

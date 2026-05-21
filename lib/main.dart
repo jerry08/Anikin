@@ -8,6 +8,7 @@ import 'services/download_service.dart';
 import 'services/juro_service.dart';
 import 'services/manga_download_service.dart';
 import 'services/preferences_service.dart';
+import 'services/tracking_service.dart';
 
 Future<void> main() async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +27,8 @@ Future<void> main() async {
   final juroService = JuroService();
   final mangaDownloadService = MangaDownloadService(juroService: juroService);
   await mangaDownloadService.load();
+  final trackingService = TrackingService();
+  await trackingService.load();
 
   runApp(
     AnikinApp(
@@ -33,6 +36,7 @@ Future<void> main() async {
       juroService: juroService,
       downloadService: downloadService,
       mangaDownloadService: mangaDownloadService,
+      trackingService: trackingService,
     ),
   );
 }

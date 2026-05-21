@@ -10,6 +10,7 @@ import '../services/download_service.dart';
 import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
+import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/media_poster_card.dart';
@@ -24,6 +25,7 @@ class HomeScreen extends StatefulWidget {
     required this.watchHistoryService,
     required this.downloadService,
     required this.mangaDownloadService,
+    required this.trackingService,
     required this.onSearchRequested,
     required this.onSettingsRequested,
     super.key,
@@ -35,6 +37,7 @@ class HomeScreen extends StatefulWidget {
   final WatchHistoryService watchHistoryService;
   final DownloadService downloadService;
   final MangaDownloadService mangaDownloadService;
+  final TrackingService trackingService;
   final VoidCallback onSearchRequested;
   final VoidCallback onSettingsRequested;
 
@@ -158,6 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
               juroService: widget.juroService,
               watchHistoryService: widget.watchHistoryService,
               downloadService: widget.downloadService,
+              trackingService: widget.trackingService,
             ),
           ),
         );
@@ -169,6 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
               preferences: widget.preferences,
               juroService: widget.juroService,
               mangaDownloadService: widget.mangaDownloadService,
+              trackingService: widget.trackingService,
             ),
           ),
         );

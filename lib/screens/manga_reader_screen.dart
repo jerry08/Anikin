@@ -10,6 +10,7 @@ import '../models/juro_models.dart';
 import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
+import '../services/tracking_service.dart';
 import '../widgets/app_error_view.dart';
 
 class MangaReaderScreen extends StatefulWidget {
@@ -21,6 +22,7 @@ class MangaReaderScreen extends StatefulWidget {
     required this.preferences,
     required this.juroService,
     required this.mangaDownloadService,
+    required this.trackingService,
     super.key,
   });
 
@@ -31,6 +33,7 @@ class MangaReaderScreen extends StatefulWidget {
   final PreferencesService preferences;
   final JuroService juroService;
   final MangaDownloadService mangaDownloadService;
+  final TrackingService trackingService;
 
   @override
   State<MangaReaderScreen> createState() => _MangaReaderScreenState();

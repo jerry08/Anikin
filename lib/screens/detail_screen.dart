@@ -8,12 +8,15 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/anilist_media.dart';
 import '../models/downloaded_episode.dart';
 import '../models/juro_models.dart';
+import '../models/tracking.dart';
 import '../models/watch_history.dart';
 import '../services/download_service.dart';
 import '../services/juro_service.dart';
 import '../services/preferences_service.dart';
+import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
 import '../widgets/app_error_view.dart';
+import '../widgets/detail_media_tools.dart';
 import 'player_screen.dart';
 
 class DetailScreen extends StatefulWidget {
@@ -23,6 +26,7 @@ class DetailScreen extends StatefulWidget {
     required this.juroService,
     required this.watchHistoryService,
     required this.downloadService,
+    required this.trackingService,
     super.key,
   });
 
@@ -31,6 +35,7 @@ class DetailScreen extends StatefulWidget {
   final JuroService juroService;
   final WatchHistoryService watchHistoryService;
   final DownloadService downloadService;
+  final TrackingService trackingService;
 
   @override
   State<DetailScreen> createState() => _DetailScreenState();
@@ -43,6 +48,8 @@ class _DetailScreenState extends State<DetailScreen> {
   Map<String, WatchedEpisode> _history = {};
   bool _loading = true;
   bool _dub = false;
+  bool _isFavorite = false;
+  bool _favoriteLoading = false;
   String? _error;
   String? _status;
 
@@ -52,6 +59,7 @@ class _DetailScreenState extends State<DetailScreen> {
   void initState() {
     super.initState();
     _load();
+    _refreshFavorite();
   }
 
   Future<void> _load() async {
@@ -338,6 +346,7 @@ class _DetailScreenState extends State<DetailScreen> {
           preferences: widget.preferences,
           juroService: widget.juroService,
           watchHistoryService: widget.watchHistoryService,
+          trackingService: widget.trackingService,
         ),
       ),
     );
@@ -674,6 +683,70 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
+  Future<void> _refreshFavorite() async {
+    if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
+      return;
+    }
+    try {
+      final favorite = await widget.trackingService.isAniListFavorite(
+        media: widget.media,
+        kind: TrackingMediaKind.anime,
+      );
+      if (mounted) {
+        setState(() => _isFavorite = favorite);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_favoriteLoading) {
+      return;
+    }
+    if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login to AniList to sync favorites')),
+      );
+      return;
+    }
+    setState(() {
+      _favoriteLoading = true;
+      _isFavorite = !_isFavorite;
+    });
+    try {
+      final favorite = await widget.trackingService.toggleAniListFavorite(
+        media: widget.media,
+        kind: TrackingMediaKind.anime,
+      );
+      if (mounted) {
+        setState(() => _isFavorite = favorite);
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() => _isFavorite = !_isFavorite);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _favoriteLoading = false);
+      }
+    }
+  }
+
+  void _showImagePreview(String? imageUrl) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return;
+    }
+    unawaited(
+      showImagePreviewSheet(
+        context: context,
+        imageUrl: imageUrl,
+        title: widget.media.displayTitle,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final image = widget.media.bannerImage ?? widget.media.cover.best;
@@ -684,6 +757,13 @@ class _DetailScreenState extends State<DetailScreen> {
             pinned: true,
             expandedHeight: 340,
             actions: [
+              IconButton(
+                tooltip: _isFavorite ? 'Remove favorite' : 'Favorite',
+                onPressed: _favoriteLoading ? null : _toggleFavorite,
+                icon: Icon(
+                  _isFavorite ? Icons.favorite : Icons.favorite_border,
+                ),
+              ),
               IconButton(
                 tooltip: 'Provider',
                 onPressed: _providers.isEmpty ? null : _changeProvider,
@@ -704,7 +784,7 @@ class _DetailScreenState extends State<DetailScreen> {
               titlePadding: const EdgeInsetsDirectional.only(
                 start: 56,
                 bottom: 14,
-                end: 120,
+                end: 160,
               ),
               title: Text(
                 widget.media.displayTitle,
@@ -715,7 +795,13 @@ class _DetailScreenState extends State<DetailScreen> {
                 fit: StackFit.expand,
                 children: [
                   if (image != null)
-                    CachedNetworkImage(imageUrl: image, fit: BoxFit.cover),
+                    GestureDetector(
+                      onLongPress: () => _showImagePreview(image),
+                      child: CachedNetworkImage(
+                        imageUrl: image,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -732,7 +818,11 @@ class _DetailScreenState extends State<DetailScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          _Poster(url: widget.media.cover.best),
+                          _Poster(
+                            url: widget.media.cover.best,
+                            onLongPress: () =>
+                                _showImagePreview(widget.media.cover.best),
+                          ),
                           const SizedBox(width: 14),
                           Expanded(
                             child: Wrap(
@@ -817,6 +907,15 @@ class _DetailScreenState extends State<DetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SelectionArea(
+            child: Text(
+              widget.media.displayTitle,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
+          ),
+          const SizedBox(height: 12),
           if (genres.isNotEmpty)
             Wrap(
               spacing: 8,
@@ -831,10 +930,10 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
           if (widget.media.description.isNotEmpty) ...[
             const SizedBox(height: 14),
-            Text(
+            ExpandableSelectableText(
               widget.media.description,
-              maxLines: 5,
-              overflow: TextOverflow.ellipsis,
+              collapsedLines: 5,
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
           const SizedBox(height: 18),
@@ -1085,22 +1184,26 @@ class _SourceDownloadButtonState extends State<_SourceDownloadButton> {
 }
 
 class _Poster extends StatelessWidget {
-  const _Poster({required this.url});
+  const _Poster({required this.url, this.onLongPress});
 
   final String? url;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: SizedBox(
-        width: 90,
-        height: 132,
-        child: url == null
-            ? ColoredBox(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              )
-            : CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover),
+    return GestureDetector(
+      onLongPress: url == null ? null : onLongPress,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(
+          width: 90,
+          height: 132,
+          child: url == null
+              ? ColoredBox(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                )
+              : CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover),
+        ),
       ),
     );
   }

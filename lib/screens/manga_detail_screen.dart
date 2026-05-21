@@ -7,10 +7,13 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/anilist_media.dart';
 import '../models/downloaded_manga.dart';
 import '../models/juro_models.dart';
+import '../models/tracking.dart';
 import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
+import '../services/tracking_service.dart';
 import '../widgets/app_error_view.dart';
+import '../widgets/detail_media_tools.dart';
 import 'manga_reader_screen.dart';
 
 class MangaDetailScreen extends StatefulWidget {
@@ -19,6 +22,7 @@ class MangaDetailScreen extends StatefulWidget {
     required this.preferences,
     required this.juroService,
     required this.mangaDownloadService,
+    required this.trackingService,
     super.key,
   });
 
@@ -26,6 +30,7 @@ class MangaDetailScreen extends StatefulWidget {
   final PreferencesService preferences;
   final JuroService juroService;
   final MangaDownloadService mangaDownloadService;
+  final TrackingService trackingService;
 
   @override
   State<MangaDetailScreen> createState() => _MangaDetailScreenState();
@@ -37,6 +42,8 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
   MangaInfo? _mangaInfo;
   List<MangaChapter> _chapters = [];
   bool _loading = true;
+  bool _isFavorite = false;
+  bool _favoriteLoading = false;
   String? _error;
   String? _status;
 
@@ -55,6 +62,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
   void initState() {
     super.initState();
     _load();
+    _refreshFavorite();
   }
 
   Future<void> _load() async {
@@ -306,6 +314,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
           preferences: widget.preferences,
           juroService: widget.juroService,
           mangaDownloadService: widget.mangaDownloadService,
+          trackingService: widget.trackingService,
         ),
       ),
     );
@@ -376,6 +385,71 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
     }
   }
 
+  Future<void> _refreshFavorite() async {
+    if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
+      return;
+    }
+    try {
+      final favorite = await widget.trackingService.isAniListFavorite(
+        media: widget.media,
+        kind: TrackingMediaKind.manga,
+      );
+      if (mounted) {
+        setState(() => _isFavorite = favorite);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_favoriteLoading) {
+      return;
+    }
+    if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login to AniList to sync favorites')),
+      );
+      return;
+    }
+    setState(() {
+      _favoriteLoading = true;
+      _isFavorite = !_isFavorite;
+    });
+    try {
+      final favorite = await widget.trackingService.toggleAniListFavorite(
+        media: widget.media,
+        kind: TrackingMediaKind.manga,
+      );
+      if (mounted) {
+        setState(() => _isFavorite = favorite);
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() => _isFavorite = !_isFavorite);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _favoriteLoading = false);
+      }
+    }
+  }
+
+  void _showImagePreview(String? imageUrl, Map<String, String> headers) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return;
+    }
+    unawaited(
+      showImagePreviewSheet(
+        context: context,
+        imageUrl: imageUrl,
+        title: widget.media.displayTitle,
+        headers: headers,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -421,6 +495,13 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
             expandedHeight: 320,
             actions: [
               IconButton(
+                tooltip: _isFavorite ? 'Remove favorite' : 'Favorite',
+                onPressed: _favoriteLoading ? null : _toggleFavorite,
+                icon: Icon(
+                  _isFavorite ? Icons.favorite : Icons.favorite_border,
+                ),
+              ),
+              IconButton(
                 tooltip: 'Provider',
                 onPressed: _providers.isEmpty ? null : _changeProvider,
                 icon: const Icon(Icons.dns_outlined),
@@ -440,7 +521,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
               titlePadding: const EdgeInsetsDirectional.only(
                 start: 56,
                 bottom: 14,
-                end: 120,
+                end: 160,
               ),
               title: Text(
                 widget.media.displayTitle,
@@ -451,9 +532,15 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
                 fit: StackFit.expand,
                 children: [
                   if (widget.media.bannerImage != null)
-                    CachedNetworkImage(
-                      imageUrl: widget.media.bannerImage!,
-                      fit: BoxFit.cover,
+                    GestureDetector(
+                      onLongPress: () => _showImagePreview(
+                        widget.media.bannerImage,
+                        const <String, String>{},
+                      ),
+                      child: CachedNetworkImage(
+                        imageUrl: widget.media.bannerImage!,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   const DecoratedBox(
                     decoration: BoxDecoration(
@@ -471,7 +558,12 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          _Poster(url: cover, headers: headers),
+                          _Poster(
+                            url: cover,
+                            headers: headers,
+                            onLongPress: () =>
+                                _showImagePreview(cover, headers),
+                          ),
                           const SizedBox(width: 14),
                           Expanded(
                             child: Wrap(
@@ -523,19 +615,38 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
                   ],
                   if (_mangaInfo?.title != null &&
                       _mangaInfo!.title != widget.media.displayTitle) ...[
-                    Text(
-                      _mangaInfo!.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+                    SelectionArea(
+                      child: Text(
+                        widget.media.displayTitle,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SelectionArea(
+                      child: Text(
+                        _mangaInfo!.title,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ] else ...[
+                    SelectionArea(
+                      child: Text(
+                        widget.media.displayTitle,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
                   ],
                   if (description.isNotEmpty)
-                    Text(
+                    ExpandableSelectableText(
                       description,
-                      maxLines: 6,
-                      overflow: TextOverflow.ellipsis,
+                      collapsedLines: 6,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   if (_mangaInfo?.genres.isNotEmpty == true) ...[
@@ -716,19 +827,23 @@ class MangaChapterNumberLabel {
 }
 
 class _Poster extends StatelessWidget {
-  const _Poster({required this.url, required this.headers});
+  const _Poster({required this.url, required this.headers, this.onLongPress});
 
   final String? url;
   final Map<String, String> headers;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: SizedBox(
-        width: 116,
-        height: 172,
-        child: _CoverImage(url: url, headers: headers),
+    return GestureDetector(
+      onLongPress: url == null || url!.isEmpty ? null : onLongPress,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(
+          width: 116,
+          height: 172,
+          child: _CoverImage(url: url, headers: headers),
+        ),
       ),
     );
   }

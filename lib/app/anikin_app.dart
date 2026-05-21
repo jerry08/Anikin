@@ -12,6 +12,7 @@ import '../services/download_service.dart';
 import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
+import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
 
 class AnikinApp extends StatefulWidget {
@@ -22,6 +23,7 @@ class AnikinApp extends StatefulWidget {
     this.watchHistoryService,
     this.downloadService,
     this.mangaDownloadService,
+    this.trackingService,
     super.key,
   });
 
@@ -31,6 +33,7 @@ class AnikinApp extends StatefulWidget {
   final WatchHistoryService? watchHistoryService;
   final DownloadService? downloadService;
   final MangaDownloadService? mangaDownloadService;
+  final TrackingService? trackingService;
 
   @override
   State<AnikinApp> createState() => _AnikinAppState();
@@ -42,6 +45,7 @@ class _AnikinAppState extends State<AnikinApp> {
   late final WatchHistoryService _watchHistoryService;
   late final DownloadService _downloadService;
   late final MangaDownloadService _mangaDownloadService;
+  late final TrackingService _trackingService;
 
   @override
   void initState() {
@@ -53,6 +57,7 @@ class _AnikinAppState extends State<AnikinApp> {
     _mangaDownloadService =
         widget.mangaDownloadService ??
         MangaDownloadService(juroService: _juroService);
+    _trackingService = widget.trackingService ?? TrackingService();
   }
 
   @override
@@ -81,6 +86,7 @@ class _AnikinAppState extends State<AnikinApp> {
             watchHistoryService: _watchHistoryService,
             downloadService: _downloadService,
             mangaDownloadService: _mangaDownloadService,
+            trackingService: _trackingService,
           ),
         );
       },
@@ -96,6 +102,7 @@ class MainShell extends StatefulWidget {
     required this.watchHistoryService,
     required this.downloadService,
     required this.mangaDownloadService,
+    required this.trackingService,
     super.key,
   });
 
@@ -105,6 +112,7 @@ class MainShell extends StatefulWidget {
   final WatchHistoryService watchHistoryService;
   final DownloadService downloadService;
   final MangaDownloadService mangaDownloadService;
+  final TrackingService trackingService;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -123,6 +131,7 @@ class _MainShellState extends State<MainShell> {
         watchHistoryService: widget.watchHistoryService,
         downloadService: widget.downloadService,
         mangaDownloadService: widget.mangaDownloadService,
+        trackingService: widget.trackingService,
         onSearchRequested: () => setState(() => _selectedIndex = 1),
         onSettingsRequested: () => setState(() => _selectedIndex = 3),
       ),
@@ -133,17 +142,20 @@ class _MainShellState extends State<MainShell> {
         watchHistoryService: widget.watchHistoryService,
         downloadService: widget.downloadService,
         mangaDownloadService: widget.mangaDownloadService,
+        trackingService: widget.trackingService,
       ),
-      DownloadsScreen(
+      LibraryScreen(
         downloadService: widget.downloadService,
         mangaDownloadService: widget.mangaDownloadService,
         preferences: widget.preferences,
         juroService: widget.juroService,
         watchHistoryService: widget.watchHistoryService,
+        trackingService: widget.trackingService,
       ),
       SettingsScreen(
         preferences: widget.preferences,
         juroService: widget.juroService,
+        trackingService: widget.trackingService,
       ),
     ];
 
@@ -167,9 +179,9 @@ class _MainShellState extends State<MainShell> {
           ),
           NavigationDestination(icon: Icon(Icons.search), label: 'Search'),
           NavigationDestination(
-            icon: Icon(Icons.download_outlined),
-            selectedIcon: Icon(Icons.download),
-            label: 'Downloads',
+            icon: Icon(Icons.video_library_outlined),
+            selectedIcon: Icon(Icons.video_library),
+            label: 'Library',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),

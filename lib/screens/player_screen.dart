@@ -14,6 +14,7 @@ import '../models/watch_history.dart';
 import '../services/juro_service.dart';
 import '../services/preferences_service.dart';
 import '../services/subtitle_service.dart';
+import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
 import '../widgets/app_error_view.dart';
 
@@ -27,6 +28,7 @@ class PlayerScreen extends StatefulWidget {
     required this.preferences,
     required this.juroService,
     required this.watchHistoryService,
+    required this.trackingService,
     this.offlineFilePath,
     super.key,
   });
@@ -39,6 +41,7 @@ class PlayerScreen extends StatefulWidget {
   final PreferencesService preferences;
   final JuroService juroService;
   final WatchHistoryService watchHistoryService;
+  final TrackingService trackingService;
   final String? offlineFilePath;
 
   @override
@@ -279,6 +282,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
         animeName: widget.providerAnime.title,
         watchedDurationMs: controller.value.position.inMilliseconds,
         watchedPercentage: percentage.clamp(0, 100).toDouble(),
+      ),
+    );
+    unawaited(
+      widget.trackingService.syncEpisodeProgress(
+        media: widget.media,
+        episodeNumber: _episode.number,
+        watchedPercentage: percentage,
       ),
     );
   }

@@ -5,22 +5,41 @@ import 'package:flutter/material.dart';
 import '../models/downloaded_episode.dart';
 import '../models/downloaded_manga.dart';
 import '../models/juro_models.dart';
+import '../models/tracking.dart';
+import '../models/anilist_media.dart';
+import '../models/watch_history.dart';
 import '../services/download_service.dart';
 import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
+import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
 import '../widgets/app_error_view.dart';
+import 'detail_screen.dart';
+import 'manga_detail_screen.dart';
 import 'manga_reader_screen.dart';
 import 'player_screen.dart';
 
-class DownloadsScreen extends StatefulWidget {
+class DownloadsScreen extends LibraryScreen {
   const DownloadsScreen({
+    required super.downloadService,
+    required super.mangaDownloadService,
+    required super.preferences,
+    required super.juroService,
+    required super.watchHistoryService,
+    required super.trackingService,
+    super.key,
+  });
+}
+
+class LibraryScreen extends StatefulWidget {
+  const LibraryScreen({
     required this.downloadService,
     required this.mangaDownloadService,
     required this.preferences,
     required this.juroService,
     required this.watchHistoryService,
+    required this.trackingService,
     super.key,
   });
 
@@ -29,18 +48,21 @@ class DownloadsScreen extends StatefulWidget {
   final PreferencesService preferences;
   final JuroService juroService;
   final WatchHistoryService watchHistoryService;
+  final TrackingService trackingService;
 
   @override
-  State<DownloadsScreen> createState() => _DownloadsScreenState();
+  State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-class _DownloadsScreenState extends State<DownloadsScreen> {
+class _LibraryScreenState extends State<LibraryScreen> {
   late final Future<void> _loadFuture;
+  late Future<Map<String, WatchedEpisode>> _historyFuture;
 
   @override
   void initState() {
     super.initState();
     _loadFuture = _loadDownloads();
+    _historyFuture = widget.watchHistoryService.getAll();
   }
 
   Future<void> _loadDownloads() async {
@@ -83,10 +105,41 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           preferences: widget.preferences,
           juroService: widget.juroService,
           watchHistoryService: widget.watchHistoryService,
+          trackingService: widget.trackingService,
           offlineFilePath: download.localPath,
         ),
       ),
     );
+  }
+
+  Future<void> _refreshHistory() async {
+    setState(() => _historyFuture = widget.watchHistoryService.getAll());
+  }
+
+  Future<void> _openFavorite(AniListMedia media, TrackingMediaKind kind) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => kind == TrackingMediaKind.anime
+            ? DetailScreen(
+                media: media,
+                preferences: widget.preferences,
+                juroService: widget.juroService,
+                watchHistoryService: widget.watchHistoryService,
+                downloadService: widget.downloadService,
+                trackingService: widget.trackingService,
+              )
+            : MangaDetailScreen(
+                media: media,
+                preferences: widget.preferences,
+                juroService: widget.juroService,
+                mangaDownloadService: widget.mangaDownloadService,
+                trackingService: widget.trackingService,
+              ),
+      ),
+    );
+    if (kind == TrackingMediaKind.anime) {
+      await _refreshHistory();
+    }
   }
 
   Future<void> _openMangaDownload(DownloadedMangaChapter download) async {
@@ -125,6 +178,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           preferences: widget.preferences,
           juroService: widget.juroService,
           mangaDownloadService: widget.mangaDownloadService,
+          trackingService: widget.trackingService,
         ),
       ),
     );
@@ -143,22 +197,342 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
             return AppErrorView(message: snapshot.error.toString());
           }
 
-          return AnimatedBuilder(
-            animation: Listenable.merge([
-              widget.downloadService,
-              widget.mangaDownloadService,
-            ]),
-            builder: (context, _) => _DownloadsBody(
-              service: widget.downloadService,
-              mangaService: widget.mangaDownloadService,
-              onOpen: _openDownload,
-              onOpenManga: _openMangaDownload,
+          return DefaultTabController(
+            length: 4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                  child: Text(
+                    'Library',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return TabBar(
+                      isScrollable: constraints.maxWidth < 380,
+                      tabs: const [
+                        Tab(text: 'Continue', icon: Icon(Icons.play_arrow)),
+                        Tab(
+                          text: 'Favorites',
+                          icon: Icon(Icons.favorite_border),
+                        ),
+                        Tab(text: 'Downloads', icon: Icon(Icons.download)),
+                        Tab(
+                          text: 'Lists',
+                          icon: Icon(Icons.format_list_bulleted),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _ContinueTab(historyFuture: _historyFuture),
+                      _FavoritesTab(
+                        trackingService: widget.trackingService,
+                        onOpen: _openFavorite,
+                      ),
+                      AnimatedBuilder(
+                        animation: Listenable.merge([
+                          widget.downloadService,
+                          widget.mangaDownloadService,
+                        ]),
+                        builder: (context, _) => _DownloadsBody(
+                          service: widget.downloadService,
+                          mangaService: widget.mangaDownloadService,
+                          onOpen: _openDownload,
+                          onOpenManga: _openMangaDownload,
+                        ),
+                      ),
+                      _ListsTab(trackingService: widget.trackingService),
+                    ],
+                  ),
+                ),
+              ],
             ),
           );
         },
       ),
     );
   }
+}
+
+class _ContinueTab extends StatelessWidget {
+  const _ContinueTab({required this.historyFuture});
+
+  final Future<Map<String, WatchedEpisode>> historyFuture;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, WatchedEpisode>>(
+      future: historyFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return AppErrorView(message: snapshot.error.toString());
+        }
+        final items =
+            (snapshot.data ?? const <String, WatchedEpisode>{}).values
+                .where((item) => item.watchedPercentage > 0)
+                .toList()
+              ..sort(
+                (a, b) => b.watchedPercentage.compareTo(a.watchedPercentage),
+              );
+        if (items.isEmpty) {
+          return const EmptyState(
+            icon: Icons.play_circle_outline,
+            title: 'Nothing to continue',
+          );
+        }
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+          children: [
+            for (final item in items)
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.play_circle_outline),
+                  title: Text(
+                    item.animeName.isEmpty ? 'Unknown anime' : item.animeName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(
+                    '${item.watchedPercentage.clamp(0, 100).round()}% watched • ${_formatDuration(item.watchedDuration)}',
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _FavoritesTab extends StatefulWidget {
+  const _FavoritesTab({required this.trackingService, required this.onOpen});
+
+  final TrackingService trackingService;
+  final Future<void> Function(AniListMedia media, TrackingMediaKind kind)
+  onOpen;
+
+  @override
+  State<_FavoritesTab> createState() => _FavoritesTabState();
+}
+
+class _FavoritesTabState extends State<_FavoritesTab> {
+  late Future<_FavoriteBuckets> _favoritesFuture;
+  bool _loadedForLoggedInAccount = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _favoritesFuture = _loadFavorites();
+  }
+
+  Future<_FavoriteBuckets> _loadFavorites() async {
+    if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
+      return const _FavoriteBuckets();
+    }
+    final results = await Future.wait([
+      widget.trackingService.favoriteMedia(TrackingMediaKind.anime),
+      widget.trackingService.favoriteMedia(TrackingMediaKind.manga),
+    ]);
+    return _FavoriteBuckets(anime: results[0], manga: results[1]);
+  }
+
+  void _refresh() {
+    setState(() => _favoritesFuture = _loadFavorites());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: widget.trackingService,
+      builder: (context, _) {
+        final loggedIn = widget.trackingService.isLoggedIn(
+          TrackingProvider.anilist,
+        );
+        if (!loggedIn) {
+          _loadedForLoggedInAccount = false;
+          return const EmptyState(
+            icon: Icons.favorite_border,
+            title: 'Login to AniList for favorites',
+          );
+        }
+        if (!_loadedForLoggedInAccount) {
+          _loadedForLoggedInAccount = true;
+          _favoritesFuture = _loadFavorites();
+        }
+        return FutureBuilder<_FavoriteBuckets>(
+          future: _favoritesFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return AppErrorView(message: snapshot.error.toString());
+            }
+            final favorites = snapshot.data ?? const _FavoriteBuckets();
+            if (favorites.anime.isEmpty && favorites.manga.isEmpty) {
+              return RefreshIndicator(
+                onRefresh: () async => _refresh(),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                  children: const [
+                    SizedBox(height: 120),
+                    EmptyState(
+                      icon: Icons.favorite_border,
+                      title: 'No AniList favorites yet',
+                    ),
+                  ],
+                ),
+              );
+            }
+            return RefreshIndicator(
+              onRefresh: () async => _refresh(),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                children: [
+                  if (favorites.anime.isNotEmpty) ...[
+                    const _SectionTitle(title: 'Favorite anime'),
+                    for (final media in favorites.anime)
+                      _FavoriteMediaTile(
+                        media: media,
+                        kind: TrackingMediaKind.anime,
+                        onTap: () =>
+                            widget.onOpen(media, TrackingMediaKind.anime),
+                      ),
+                  ],
+                  if (favorites.manga.isNotEmpty) ...[
+                    const SizedBox(height: 14),
+                    const _SectionTitle(title: 'Favorite manga'),
+                    for (final media in favorites.manga)
+                      _FavoriteMediaTile(
+                        media: media,
+                        kind: TrackingMediaKind.manga,
+                        onTap: () =>
+                            widget.onOpen(media, TrackingMediaKind.manga),
+                      ),
+                  ],
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _ListsTab extends StatelessWidget {
+  const _ListsTab({required this.trackingService});
+
+  final TrackingService trackingService;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: trackingService,
+      builder: (context, _) {
+        final providers = TrackingProvider.values
+            .where(trackingService.isLoggedIn)
+            .map((provider) => provider.label)
+            .join(', ');
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+          children: [
+            if (providers.isEmpty)
+              const EmptyState(
+                icon: Icons.format_list_bulleted,
+                title: 'Login to sync lists',
+              )
+            else
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.sync_outlined),
+                  title: const Text('Synced providers'),
+                  subtitle: Text(providers),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _FavoriteMediaTile extends StatelessWidget {
+  const _FavoriteMediaTile({
+    required this.media,
+    required this.kind,
+    required this.onTap,
+  });
+
+  final AniListMedia media;
+  final TrackingMediaKind kind;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final image = media.cover.best;
+    return Card(
+      child: ListTile(
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: image == null
+              ? ColoredBox(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  child: const SizedBox(
+                    width: 44,
+                    height: 56,
+                    child: Icon(Icons.movie_outlined),
+                  ),
+                )
+              : Image.network(
+                  image,
+                  width: 44,
+                  height: 56,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) =>
+                      const Icon(Icons.broken_image_outlined),
+                ),
+        ),
+        title: Text(
+          media.displayTitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          [
+            kind == TrackingMediaKind.anime ? 'Anime' : 'Manga',
+            media.metadata,
+          ].where((part) => part.isNotEmpty).join(' • '),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+class _FavoriteBuckets {
+  const _FavoriteBuckets({
+    this.anime = const <AniListMedia>[],
+    this.manga = const <AniListMedia>[],
+  });
+
+  final List<AniListMedia> anime;
+  final List<AniListMedia> manga;
 }
 
 class _DownloadsBody extends StatelessWidget {
@@ -586,4 +960,17 @@ String _formatBytes(int bytes) {
   }
   final gb = mb / 1024;
   return '${gb.toStringAsFixed(1)} GB';
+}
+
+String _formatDuration(Duration duration) {
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  final seconds = duration.inSeconds.remainder(60);
+  if (hours > 0) {
+    return '${hours}h ${minutes}m';
+  }
+  if (minutes > 0) {
+    return '${minutes}m ${seconds}s';
+  }
+  return '${seconds}s';
 }

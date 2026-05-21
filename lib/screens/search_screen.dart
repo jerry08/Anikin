@@ -8,6 +8,7 @@ import '../services/download_service.dart';
 import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
+import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/media_poster_card.dart';
@@ -22,6 +23,7 @@ class SearchScreen extends StatefulWidget {
     required this.watchHistoryService,
     required this.downloadService,
     required this.mangaDownloadService,
+    required this.trackingService,
     super.key,
   });
 
@@ -31,6 +33,7 @@ class SearchScreen extends StatefulWidget {
   final WatchHistoryService watchHistoryService;
   final DownloadService downloadService;
   final MangaDownloadService mangaDownloadService;
+  final TrackingService trackingService;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -208,6 +211,7 @@ class _SearchScreenState extends State<SearchScreen> {
               juroService: widget.juroService,
               watchHistoryService: widget.watchHistoryService,
               downloadService: widget.downloadService,
+              trackingService: widget.trackingService,
             ),
           ),
         );
@@ -219,6 +223,7 @@ class _SearchScreenState extends State<SearchScreen> {
               preferences: widget.preferences,
               juroService: widget.juroService,
               mangaDownloadService: widget.mangaDownloadService,
+              trackingService: widget.trackingService,
             ),
           ),
         );
@@ -448,7 +453,6 @@ class _SearchTagsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final visibleTags = [
       ...selectedTags.toList()..sort(),
       for (final tag in _featuredSearchTags)
@@ -459,40 +463,24 @@ class _SearchTagsBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'Tags',
-                style: Theme.of(
-                  context,
-                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                selectedTags.isEmpty
-                    ? 'Pick one or more'
-                    : '${selectedTags.length} selected',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const Spacer(),
-              if (selectedTags.isNotEmpty)
-                TextButton(
-                  onPressed: onClearTags,
-                  style: TextButton.styleFrom(
-                    minimumSize: Size.zero,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          if (selectedTags.isNotEmpty) ...[
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: onClearTags,
+                style: TextButton.styleFrom(
+                  minimumSize: Size.zero,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
                   ),
-                  child: const Text('Clear'),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-            ],
-          ),
-          const SizedBox(height: 8),
+                child: const Text('Clear'),
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
           SizedBox(
             height: 42,
             child: ListView.separated(
