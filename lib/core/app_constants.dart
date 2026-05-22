@@ -2,7 +2,7 @@ class AppConstants {
   const AppConstants._();
 
   static const appName = 'Anikin';
-    static const appVersion = '3.0.4+48';
+    static const appVersion = '3.0.5+49';
   static const juroApiBaseUrl = String.fromEnvironment('JURO_API_BASE_URL');
   static const anilistGraphqlEndpoint = 'https://graphql.anilist.co';
   static const githubLatestReleaseEndpoint =

@@ -355,6 +355,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
+    env:
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+
     permissions:
       contents: read
 
@@ -380,10 +383,10 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Notify Discord
-        if: ${{ secrets.DISCORD_WEBHOOK != '' }}
+        if: ${{ env.DISCORD_WEBHOOK != '' }}
         uses: tyrrrz/action-http-request@v1
         with:
-          url: ${{ secrets.DISCORD_WEBHOOK }}
+          url: ${{ env.DISCORD_WEBHOOK }}
           method: POST
           headers: |
             Content-Type: application/json; charset=UTF-8
