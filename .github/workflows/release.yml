@@ -346,3 +346,50 @@ jobs:
             --notes "$notes" \
             --verify-tag \
             "${prerelease_arg[@]}"
+
+  notify:
+    name: Discord notification
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
+    needs:
+      - release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Collect release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+          notes="$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")"
+          if [[ -z "$notes" ]]; then
+            notes="Release $GITHUB_REF_NAME"
+          fi
+          {
+            echo 'RELEASE_BODY<<EOF'
+            echo "$notes"
+            echo EOF
+          } >> "$GITHUB_ENV"
+
+      - name: Notify Discord
+        if: ${{ secrets.DISCORD_WEBHOOK != '' }}
+        uses: tyrrrz/action-http-request@v1
+        with:
+          url: ${{ secrets.DISCORD_WEBHOOK }}
+          method: POST
+          headers: |
+            Content-Type: application/json; charset=UTF-8
+          body: |
+            {
+              "username": "Notifications",
+              "avatar_url": "https://raw.githubusercontent.com/${{ github.event.repository.full_name }}/${{ github.event.repository.default_branch }}/assets/branding/app_icon.png",
+              "content": "**${{ github.event.repository.name }}** new version released!\nVersion: `${{ github.ref_name }}`\n\n${{ env.RELEASE_BODY }}\n\n**All downloads:** <${{ github.event.repository.html_url }}/releases/tag/${{ github.ref_name }}>\n\n**Quick links:**\nAndroid (universal): <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/${{ env.APP_NAME }}-android-universal.apk>\nWindows x64: <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/${{ env.APP_NAME }}-windows-x64.zip>\nLinux x64: <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/${{ env.APP_NAME }}-linux-x64.zip>"
+            }
