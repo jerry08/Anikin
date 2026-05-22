@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:anikin/app/anikin_app.dart';
 import 'package:anikin/core/app_constants.dart';
@@ -8,10 +9,12 @@ import 'package:anikin/models/anilist_media.dart';
 import 'package:anikin/models/downloaded_episode.dart';
 import 'package:anikin/models/juro_models.dart';
 import 'package:anikin/models/tracking.dart';
+import 'package:anikin/models/watch_history.dart';
 import 'package:anikin/screens/detail_screen.dart';
 import 'package:anikin/screens/downloads_screen.dart';
 import 'package:anikin/screens/home_screen.dart';
 import 'package:anikin/screens/manga_reader_screen.dart';
+import 'package:anikin/screens/player_screen.dart';
 import 'package:anikin/screens/search_screen.dart';
 import 'package:anikin/services/anilist_service.dart';
 import 'package:anikin/services/download_service.dart';
@@ -19,10 +22,12 @@ import 'package:anikin/services/juro_service.dart';
 import 'package:anikin/services/manga_download_service.dart';
 import 'package:anikin/services/preferences_service.dart';
 import 'package:anikin/services/tracking_service.dart';
+import 'package:anikin/services/update_service.dart';
 import 'package:anikin/services/watch_history_service.dart';
 import 'package:anikin/widgets/app_error_view.dart';
 import 'package:anikin/widgets/media_poster_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -32,15 +37,71 @@ void main() {
   test('loads the saved theme color palette', () async {
     SharedPreferences.setMockInitialValues({
       'themeColorPalette': ThemeColorPalette.forest.index,
+      'automaticUpdateChecks': true,
     });
     final preferences = PreferencesService();
     await preferences.load();
 
     expect(preferences.themeColorPalette, ThemeColorPalette.forest);
+    expect(preferences.automaticUpdateChecks, isTrue);
 
     await preferences.setThemeColorPalette(ThemeColorPalette.ocean);
+    await preferences.setAutomaticUpdateChecks(false);
 
     expect(preferences.themeColorPalette, ThemeColorPalette.ocean);
+    expect(preferences.automaticUpdateChecks, isFalse);
+  });
+
+  test('app version constant matches pubspec version', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+
+    expect(pubspec, contains('version: ${AppConstants.appVersion}'));
+  });
+
+  test('watch history loads legacy entries', () async {
+    SharedPreferences.setMockInitialValues({
+      'player.watchedEpisodes': jsonEncode({
+        '42-1': {
+          'id': '42-1',
+          'animeName': 'Legacy Show',
+          'watchedDuration': 90000,
+          'watchedPercentage': 35,
+        },
+      }),
+    });
+    final service = WatchHistoryService();
+
+    final history = (await service.getAll())['42-1']!;
+
+    expect(history.animeName, 'Legacy Show');
+    expect(history.watchedDuration, const Duration(seconds: 90));
+    expect(history.watchedPercentage, 35);
+    expect(history.canResumeAnime, isFalse);
+  });
+
+  test('watch history loads enriched resume entries', () async {
+    SharedPreferences.setMockInitialValues({
+      'player.watchedEpisodes': jsonEncode({
+        '42-1': _watchHistoryJson(
+          id: '42-1',
+          animeName: 'Resume Show',
+          mediaId: 42,
+          providerAnimeId: 'provider-show-42',
+          episodeId: 'episode-1',
+          episodeNumber: 1,
+          providerKey: 'Anime',
+        ),
+      }),
+    });
+    final service = WatchHistoryService();
+
+    final history = (await service.getAll())['42-1']!;
+
+    expect(history.canResumeAnime, isTrue);
+    expect(history.resumeMedia.id, 42);
+    expect(history.resumeProviderAnime.id, 'provider-show-42');
+    expect(history.resumeEpisode.displayName, 'Ep 1 • Episode One');
+    expect(history.providerKey, 'Anime');
   });
 
   test('download service reads HLS master playlist qualities', () async {
@@ -75,6 +136,126 @@ https://cdn.example.com/720/index.m3u8
     );
     expect(variants.first.bitrateLabel, '3.5 Mbps');
   });
+
+  test('download service runs two episode downloads at a time', () async {
+    SharedPreferences.setMockInitialValues({});
+    final temp = await _mockApplicationSupportDirectory();
+    addTearDown(() async {
+      if (await temp.exists()) {
+        await temp.delete(recursive: true);
+      }
+    });
+
+    final completions = <String, Completer<http.Response>>{};
+    final requestedUrls = <String>[];
+    final service = DownloadService(
+      client: MockClient((request) {
+        requestedUrls.add(request.url.toString());
+        final completer = Completer<http.Response>();
+        completions[request.url.toString()] = completer;
+        return completer.future;
+      }),
+    );
+    await service.load();
+
+    final requests = [
+      _episodeDownloadRequest(1),
+      _episodeDownloadRequest(2),
+      _episodeDownloadRequest(3),
+    ];
+    for (final request in requests) {
+      await service.startDownload(request);
+    }
+
+    await _waitFor(() => requestedUrls.length == 2);
+    expect(
+      service.activeTasks.where(
+        (task) => task.status == DownloadTaskStatus.downloading,
+      ),
+      hasLength(2),
+    );
+    expect(
+      service.taskFor(requests[2].taskId)?.status,
+      DownloadTaskStatus.queued,
+    );
+
+    completions[requests[0].source.videoUrl]!.complete(
+      http.Response.bytes([1, 2, 3], 200),
+    );
+    await _waitFor(() => requestedUrls.length == 3);
+
+    expect(
+      service.taskFor(requests[2].taskId)?.status,
+      DownloadTaskStatus.downloading,
+    );
+
+    completions[requests[1].source.videoUrl]!.complete(
+      http.Response.bytes([4, 5, 6], 200),
+    );
+    completions[requests[2].source.videoUrl]!.complete(
+      http.Response.bytes([7, 8, 9], 200),
+    );
+    await _waitFor(() => service.activeTasks.isEmpty);
+  });
+
+  test(
+    'download service preserves pause resume and cancel with queued tasks',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final temp = await _mockApplicationSupportDirectory();
+      addTearDown(() async {
+        if (await temp.exists()) {
+          await temp.delete(recursive: true);
+        }
+      });
+
+      final completions = <String, Completer<http.Response>>{};
+      final requestedUrls = <String>[];
+      final service = DownloadService(
+        client: MockClient((request) {
+          requestedUrls.add(request.url.toString());
+          final completer = Completer<http.Response>();
+          completions[request.url.toString()] = completer;
+          return completer.future;
+        }),
+      );
+      await service.load();
+
+      final first = _episodeDownloadRequest(1);
+      final second = _episodeDownloadRequest(2);
+      final third = _episodeDownloadRequest(3);
+      await service.startDownload(first);
+      await service.startDownload(second);
+      await service.startDownload(third);
+      await _waitFor(() => requestedUrls.length == 2);
+
+      await service.pauseDownload(first.taskId);
+      expect(service.taskFor(first.taskId)?.status, DownloadTaskStatus.pausing);
+
+      completions[first.source.videoUrl]!.complete(
+        http.Response.bytes([1, 2, 3], 200),
+      );
+      await _waitFor(
+        () =>
+            service.taskFor(first.taskId)?.status == DownloadTaskStatus.paused,
+      );
+      await _waitFor(() => requestedUrls.length == 3);
+
+      await service.resumeDownload(first.taskId);
+      expect(service.taskFor(first.taskId)?.status, DownloadTaskStatus.queued);
+
+      await service.cancelDownload(first.taskId);
+      expect(service.taskFor(first.taskId), isNull);
+
+      completions[second.source.videoUrl]!.complete(
+        http.Response.bytes([4, 5, 6], 200),
+      );
+      completions[third.source.videoUrl]!.complete(
+        http.Response.bytes([7, 8, 9], 200),
+      );
+      await _waitFor(() => service.activeTasks.isEmpty);
+    },
+  );
 
   test('AniList search posts search text and tags to GraphQL', () async {
     final service = AniListService(
@@ -199,6 +380,54 @@ https://cdn.example.com/720/index.m3u8
       ),
     );
     expect(requested, isFalse);
+  });
+
+  test('update service reports newer GitHub releases', () async {
+    final service = UpdateService(
+      currentVersion: '3.0.2+46',
+      latestReleaseUri: Uri.parse('https://example.invalid/releases/latest'),
+      client: MockClient((request) async {
+        expect(
+          request.url.toString(),
+          'https://example.invalid/releases/latest',
+        );
+        expect(request.headers['Accept'], 'application/vnd.github+json');
+        return http.Response(
+          jsonEncode({
+            'tag_name': 'v3.0.3',
+            'name': '3.0.3',
+            'html_url': 'https://example.invalid/releases/v3.0.3',
+            'body': 'Bug fixes',
+          }),
+          200,
+        );
+      }),
+    );
+
+    final result = await service.checkForUpdate();
+
+    expect(result.isUpdateAvailable, isTrue);
+    expect(result.release.version, '3.0.3');
+  });
+
+  test('update service treats matching release versions as current', () async {
+    final service = UpdateService(
+      currentVersion: '3.0.2+46',
+      latestReleaseUri: Uri.parse('https://example.invalid/releases/latest'),
+      client: MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'tag_name': 'v3.0.2',
+            'html_url': 'https://example.invalid/releases/v3.0.2',
+          }),
+          200,
+        );
+      }),
+    );
+
+    final result = await service.checkForUpdate();
+
+    expect(result.isUpdateAvailable, isFalse);
   });
 
   test('AniList favorite toggle only sends anime id for anime', () async {
@@ -581,6 +810,7 @@ https://cdn.example.com/720/index.m3u8
       format: 'TV',
       seasonYear: 2026,
       episodes: 24,
+      meanScore: 86,
     );
 
     await tester.pumpWidget(
@@ -596,6 +826,7 @@ https://cdn.example.com/720/index.m3u8
     );
 
     expect(tester.takeException(), isNull);
+    expect(find.text('86%'), findsOneWidget);
   });
 
   testWidgets('home screen renders featured carousel', (
@@ -787,6 +1018,143 @@ https://cdn.example.com/720/index.m3u8
     await tester.pump();
 
     expect(downloadService.cancelledId, _ProgressDownloadService.requestTaskId);
+  });
+
+  testWidgets('continue tab opens enriched online history in the player', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'player.watchedEpisodes': jsonEncode({
+        '42-1': _watchHistoryJson(
+          id: '42-1',
+          animeName: 'Resume Show',
+          mediaId: 42,
+          providerAnimeId: 'provider-show-42',
+          episodeId: 'episode-1',
+          episodeNumber: 1,
+          providerKey: 'ResumeProvider',
+        ),
+      }),
+    });
+    final preferences = PreferencesService();
+    await preferences.load();
+    final juroService = _ResumeJuroService();
+    final navigatorObserver = _RecordingNavigatorObserver();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorObservers: [navigatorObserver],
+        home: LibraryScreen(
+          downloadService: DownloadService(),
+          mangaDownloadService: MangaDownloadService(),
+          preferences: preferences,
+          juroService: juroService,
+          watchHistoryService: WatchHistoryService(),
+          trackingService: TrackingService(listenForLinks: false),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.text('Resume Show'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(juroService.lastEpisodeProviderKey, 'ResumeProvider');
+    expect(juroService.lastVideoProviderKey, 'ResumeProvider');
+    expect(find.byType(PlayerScreen), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  test('continue tab prefers matching offline downloads', () async {
+    final temp = await Directory.systemTemp.createTemp('anikin_offline_test_');
+    addTearDown(() async {
+      if (await temp.exists()) {
+        await temp.delete(recursive: true);
+      }
+    });
+    final offlineFile = File('${temp.path}${Platform.pathSeparator}ep1.mp4');
+    await offlineFile.writeAsBytes([1, 2, 3]);
+
+    SharedPreferences.setMockInitialValues({
+      'player.watchedEpisodes': jsonEncode({
+        '42-1': _watchHistoryJson(
+          id: '42-1',
+          animeName: 'Resume Show',
+          mediaId: 42,
+          providerAnimeId: 'provider-show-42',
+          episodeId: 'episode-1',
+          episodeNumber: 1,
+          providerKey: 'ResumeProvider',
+        ),
+      }),
+      'downloads.episodes': [
+        jsonEncode(
+          _downloadedEpisodeJson(id: '42-1', localPath: offlineFile.path),
+        ),
+      ],
+    });
+
+    final downloadService = DownloadService();
+    await downloadService.load();
+    final history = WatchedEpisode.fromJson(
+      _watchHistoryJson(
+        id: '42-1',
+        animeName: 'Resume Show',
+        mediaId: 42,
+        providerAnimeId: 'provider-show-42',
+        episodeId: 'episode-1',
+        episodeNumber: 1,
+        providerKey: 'ResumeProvider',
+      ),
+    );
+
+    final download = await offlineResumeDownloadFor(downloadService, history);
+
+    expect(download?.localPath, offlineFile.path);
+  });
+
+  testWidgets('continue tab keeps legacy history display only', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'player.watchedEpisodes': jsonEncode({
+        '42-1': {
+          'id': '42-1',
+          'animeName': 'Legacy Show',
+          'watchedDuration': 90000,
+          'watchedPercentage': 35,
+        },
+      }),
+    });
+    final preferences = PreferencesService();
+    await preferences.load();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LibraryScreen(
+          downloadService: DownloadService(),
+          mangaDownloadService: MangaDownloadService(),
+          preferences: preferences,
+          juroService: _ResumeJuroService(),
+          watchHistoryService: WatchHistoryService(),
+          trackingService: TrackingService(listenForLinks: false),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Legacy Show'), findsOneWidget);
+    expect(find.textContaining('Open once to refresh resume'), findsOneWidget);
+
+    await tester.tap(find.text('Legacy Show'), warnIfMissed: false);
+    await tester.pump();
+
+    expect(find.byType(PlayerScreen), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('HLS master downloads prompt for quality', (
@@ -984,6 +1352,118 @@ https://cdn.example.com/720/index.m3u8
   });
 }
 
+Map<String, Object?> _watchHistoryJson({
+  required String id,
+  required String animeName,
+  required int mediaId,
+  required String providerAnimeId,
+  required String episodeId,
+  required double episodeNumber,
+  required String providerKey,
+}) {
+  return {
+    'id': id,
+    'animeName': animeName,
+    'watchedDuration': 90000,
+    'watchedPercentage': 35,
+    'mediaId': mediaId,
+    'mediaTitle': animeName,
+    'mediaCoverUrl': 'https://example.com/cover.jpg',
+    'providerAnimeId': providerAnimeId,
+    'providerAnimeTitle': animeName,
+    'providerAnimeImage': 'https://example.com/provider-cover.jpg',
+    'episodeId': episodeId,
+    'episodeName': 'Episode One',
+    'episodeNumber': episodeNumber,
+    'episodeImage': 'https://example.com/episode.jpg',
+    'providerKey': providerKey,
+    'providerName': 'Resume Provider',
+    'updatedAtMs': 123456,
+  };
+}
+
+Map<String, Object?> _downloadedEpisodeJson({
+  required String id,
+  required String localPath,
+}) {
+  return {
+    'id': id,
+    'mediaId': 42,
+    'mediaTitle': 'Resume Show',
+    'providerAnimeId': 'provider-show-42',
+    'providerAnimeTitle': 'Resume Show',
+    'episodeId': 'episode-1',
+    'episodeName': 'Episode One',
+    'episodeNumber': 1,
+    'coverUrl': 'https://example.com/cover.jpg',
+    'sourceTitle': 'Offline',
+    'serverName': 'Offline',
+    'localPath': localPath,
+    'fileName': 'ep1.mp4',
+    'bytes': 3,
+    'downloadedAt': DateTime(2026).toIso8601String(),
+  };
+}
+
+EpisodeDownloadRequest _episodeDownloadRequest(int number) {
+  return EpisodeDownloadRequest(
+    media: const AniListMedia(
+      id: 900,
+      title: MediaTitle(english: 'Queue Show'),
+      cover: MediaCover(),
+    ),
+    providerAnime: const JuroAnimeInfo(id: 'queue-show', title: 'Queue Show'),
+    episode: AnimeEpisode(
+      id: 'episode-$number',
+      name: 'Episode $number',
+      number: number.toDouble(),
+    ),
+    source: VideoSource(
+      title: '1080p',
+      videoUrl: 'https://example.com/video-$number.mp4',
+    ),
+  );
+}
+
+Future<Directory> _mockApplicationSupportDirectory() async {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  final directory = await Directory.systemTemp.createTemp('anikin_support_');
+  const channel = MethodChannel('plugins.flutter.io/path_provider');
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(channel, (call) async {
+        if (call.method == 'getApplicationSupportDirectory' ||
+            call.method == 'getTemporaryDirectory') {
+          return directory.path;
+        }
+        return null;
+      });
+  addTearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, null);
+  });
+  return directory;
+}
+
+Future<void> _waitFor(bool Function() predicate) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 3));
+  while (!predicate()) {
+    if (DateTime.now().isAfter(deadline)) {
+      fail('Timed out waiting for async condition.');
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
+}
+
+class _RecordingNavigatorObserver extends NavigatorObserver {
+  int pushCount = 0;
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    pushCount++;
+    super.didPush(route, previousRoute);
+  }
+}
+
 class _FakeAniListService extends AniListService {
   _FakeAniListService({
     this.currentSeason = const [],
@@ -1122,6 +1602,32 @@ class _FakeJuroService extends JuroService {
 
   @override
   Future<List<SourceProvider>> getMangaProviders() async => const [];
+}
+
+class _ResumeJuroService extends _FakeJuroService {
+  String? lastEpisodeProviderKey;
+  String? lastVideoProviderKey;
+
+  @override
+  Future<List<AnimeEpisode>> getEpisodes(
+    String animeId, {
+    required String providerKey,
+  }) async {
+    lastEpisodeProviderKey = providerKey;
+    return const [
+      AnimeEpisode(id: 'episode-1', name: 'Episode One', number: 1),
+      AnimeEpisode(id: 'episode-2', name: 'Episode Two', number: 2),
+    ];
+  }
+
+  @override
+  Future<VideoSource?> getPreferredVideo(
+    AnimeEpisode episode, {
+    required String providerKey,
+  }) async {
+    lastVideoProviderKey = providerKey;
+    return null;
+  }
 }
 
 class _EpisodeOptionsJuroService extends JuroService {

@@ -14,6 +14,7 @@ import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
+import '../widgets/app_dialogs.dart';
 import '../widgets/app_error_view.dart';
 import 'detail_screen.dart';
 import 'manga_detail_screen.dart';
@@ -75,8 +76,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _openDownload(DownloadedEpisode download) async {
     if (!await File(download.localPath).exists()) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Offline file is missing')),
+        await showErrorDialog(
+          context,
+          'Offline file is missing',
+          title: 'Unable to open download',
         );
       }
       return;
@@ -112,8 +115,83 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
+  Future<void> _openHistory(WatchedEpisode history) async {
+    if (!history.canResumeAnime) {
+      await showErrorDialog(
+        context,
+        'This continue item was saved before direct resume was available. '
+        'Open the show once to refresh its resume data.',
+        title: 'Unable to resume',
+      );
+      return;
+    }
+
+    final download = await offlineResumeDownloadFor(
+      widget.downloadService,
+      history,
+    );
+    if (download != null) {
+      await _openDownload(download);
+      return;
+    }
+
+    try {
+      final providerKey = history.providerKey!;
+      final providerAnime = history.resumeProviderAnime;
+      final media = history.resumeMedia;
+      final episodes = List<AnimeEpisode>.of(
+        await widget.juroService.getEpisodes(
+          providerAnime.id,
+          providerKey: providerKey,
+        ),
+      )..sort((a, b) => a.number.compareTo(b.number));
+
+      final preparedEpisodes = episodes
+          .map(
+            (episode) => episode.copyWith(
+              image: episode.image ?? providerAnime.image ?? media.cover.best,
+            ),
+          )
+          .toList();
+      final episode = _matchingEpisode(history, preparedEpisodes);
+      if (episode == null) {
+        throw const ResumeException(
+          'The saved episode could not be found from the current provider.',
+        );
+      }
+
+      if (!mounted) {
+        return;
+      }
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PlayerScreen(
+            media: media,
+            providerAnime: providerAnime,
+            episode: episode,
+            episodes: preparedEpisodes,
+            initialSource: null,
+            preferences: widget.preferences,
+            juroService: widget.juroService,
+            watchHistoryService: widget.watchHistoryService,
+            trackingService: widget.trackingService,
+            providerKey: providerKey,
+            providerName: history.providerName,
+          ),
+        ),
+      );
+      await _refreshHistory();
+    } catch (error) {
+      if (mounted) {
+        await showErrorDialog(context, error, title: 'Unable to resume');
+      }
+    }
+  }
+
   Future<void> _refreshHistory() async {
-    setState(() => _historyFuture = widget.watchHistoryService.getAll());
+    setState(() {
+      _historyFuture = widget.watchHistoryService.getAll();
+    });
   }
 
   Future<void> _openFavorite(AniListMedia media, TrackingMediaKind kind) async {
@@ -146,8 +224,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final pages = await widget.mangaDownloadService.pagesFor(download.id);
     if (pages == null || pages.isEmpty) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Offline manga pages are missing')),
+        await showErrorDialog(
+          context,
+          'Offline manga pages are missing',
+          title: 'Unable to open download',
         );
       }
       return;
@@ -234,7 +314,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      _ContinueTab(historyFuture: _historyFuture),
+                      _ContinueTab(
+                        historyFuture: _historyFuture,
+                        onOpen: _openHistory,
+                      ),
                       _FavoritesTab(
                         trackingService: widget.trackingService,
                         onOpen: _openFavorite,
@@ -251,7 +334,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           onOpenManga: _openMangaDownload,
                         ),
                       ),
-                      _ListsTab(trackingService: widget.trackingService),
+                      _ListsTab(
+                        trackingService: widget.trackingService,
+                        onOpen: _openFavorite,
+                      ),
                     ],
                   ),
                 ),
@@ -264,10 +350,39 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 }
 
+Future<DownloadedEpisode?> offlineResumeDownloadFor(
+  DownloadService service,
+  WatchedEpisode history,
+) async {
+  final download = service.getById(history.id);
+  if (download != null && await File(download.localPath).exists()) {
+    return download;
+  }
+  return null;
+}
+
+AnimeEpisode? _matchingEpisode(
+  WatchedEpisode history,
+  List<AnimeEpisode> episodes,
+) {
+  for (final episode in episodes) {
+    if (episode.id == history.episodeId) {
+      return episode;
+    }
+  }
+  for (final episode in episodes) {
+    if (episode.number == history.episodeNumber) {
+      return episode;
+    }
+  }
+  return null;
+}
+
 class _ContinueTab extends StatelessWidget {
-  const _ContinueTab({required this.historyFuture});
+  const _ContinueTab({required this.historyFuture, required this.onOpen});
 
   final Future<Map<String, WatchedEpisode>> historyFuture;
+  final ValueChanged<WatchedEpisode> onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -284,9 +399,15 @@ class _ContinueTab extends StatelessWidget {
             (snapshot.data ?? const <String, WatchedEpisode>{}).values
                 .where((item) => item.watchedPercentage > 0)
                 .toList()
-              ..sort(
-                (a, b) => b.watchedPercentage.compareTo(a.watchedPercentage),
-              );
+              ..sort((a, b) {
+                final updated = (b.updatedAtMs ?? 0).compareTo(
+                  a.updatedAtMs ?? 0,
+                );
+                if (updated != 0) {
+                  return updated;
+                }
+                return b.watchedPercentage.compareTo(a.watchedPercentage);
+              });
         if (items.isEmpty) {
           return const EmptyState(
             icon: Icons.play_circle_outline,
@@ -299,15 +420,30 @@ class _ContinueTab extends StatelessWidget {
             for (final item in items)
               Card(
                 child: ListTile(
-                  leading: const Icon(Icons.play_circle_outline),
+                  enabled: item.canResumeAnime,
+                  leading: Icon(
+                    item.canResumeAnime
+                        ? Icons.play_circle_outline
+                        : Icons.history_toggle_off,
+                  ),
                   title: Text(
-                    item.animeName.isEmpty ? 'Unknown anime' : item.animeName,
+                    item.displayAnimeName.isEmpty
+                        ? 'Unknown anime'
+                        : item.displayAnimeName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   subtitle: Text(
-                    '${item.watchedPercentage.clamp(0, 100).round()}% watched • ${_formatDuration(item.watchedDuration)}',
+                    [
+                      if (item.canResumeAnime) item.displayEpisodeName,
+                      '${item.watchedPercentage.clamp(0, 100).round()}% watched',
+                      _formatDuration(item.watchedDuration),
+                      if (!item.canResumeAnime) 'Open once to refresh resume',
+                    ].join(' • '),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  onTap: item.canResumeAnime ? () => onOpen(item) : null,
                 ),
               ),
           ],
@@ -315,6 +451,15 @@ class _ContinueTab extends StatelessWidget {
       },
     );
   }
+}
+
+class ResumeException implements Exception {
+  const ResumeException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }
 
 class _FavoritesTab extends StatefulWidget {
@@ -350,7 +495,9 @@ class _FavoritesTabState extends State<_FavoritesTab> {
   }
 
   void _refresh() {
-    setState(() => _favoritesFuture = _loadFavorites());
+    setState(() {
+      _favoritesFuture = _loadFavorites();
+    });
   }
 
   @override
@@ -433,39 +580,279 @@ class _FavoritesTabState extends State<_FavoritesTab> {
   }
 }
 
-class _ListsTab extends StatelessWidget {
-  const _ListsTab({required this.trackingService});
+class _ListsTab extends StatefulWidget {
+  const _ListsTab({required this.trackingService, required this.onOpen});
 
   final TrackingService trackingService;
+  final Future<void> Function(AniListMedia media, TrackingMediaKind kind)
+  onOpen;
+
+  @override
+  State<_ListsTab> createState() => _ListsTabState();
+}
+
+class _ListsTabState extends State<_ListsTab> {
+  late Future<AniListMediaListCollection> _listsFuture;
+  bool _loadedForLoggedInAccount = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _listsFuture = _loadLists();
+  }
+
+  Future<AniListMediaListCollection> _loadLists() async {
+    if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
+      return const AniListMediaListCollection();
+    }
+    return widget.trackingService.aniListMediaListCollection();
+  }
+
+  Future<void> _refresh() async {
+    final next = _loadLists();
+    setState(() {
+      _listsFuture = next;
+    });
+    try {
+      await next;
+    } catch (_) {}
+  }
+
+  Future<void> _openAndRefresh(
+    AniListMedia media,
+    TrackingMediaKind kind,
+  ) async {
+    await widget.onOpen(media, kind);
+    if (mounted) {
+      await _refresh();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: trackingService,
+      animation: widget.trackingService,
       builder: (context, _) {
-        final providers = TrackingProvider.values
-            .where(trackingService.isLoggedIn)
-            .map((provider) => provider.label)
-            .join(', ');
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-          children: [
-            if (providers.isEmpty)
-              const EmptyState(
-                icon: Icons.format_list_bulleted,
-                title: 'Login to sync lists',
-              )
-            else
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.sync_outlined),
-                  title: const Text('Synced providers'),
-                  subtitle: Text(providers),
+        final loggedIn = widget.trackingService.isLoggedIn(
+          TrackingProvider.anilist,
+        );
+        if (!loggedIn) {
+          _loadedForLoggedInAccount = false;
+          return const EmptyState(
+            icon: Icons.format_list_bulleted,
+            title: 'Login to AniList for lists',
+          );
+        }
+        if (!_loadedForLoggedInAccount) {
+          _loadedForLoggedInAccount = true;
+          _listsFuture = _loadLists();
+        }
+        return FutureBuilder<AniListMediaListCollection>(
+          future: _listsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return AppErrorView(
+                message: snapshot.error.toString(),
+                onRetry: () {
+                  _refresh();
+                },
+              );
+            }
+            final lists = snapshot.data ?? const AniListMediaListCollection();
+            if (lists.isEmpty) {
+              return RefreshIndicator(
+                onRefresh: _refresh,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                  children: const [
+                    SizedBox(height: 120),
+                    EmptyState(
+                      icon: Icons.format_list_bulleted,
+                      title: 'No AniList list entries yet',
+                    ),
+                  ],
                 ),
+              );
+            }
+            return RefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'AniList lists',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Refresh AniList lists',
+                        onPressed: () {
+                          _refresh();
+                        },
+                        icon: const Icon(Icons.refresh),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  if (lists.anime.isNotEmpty) ...[
+                    _ListKindTitle(
+                      icon: Icons.movie_filter_outlined,
+                      title: 'Anime',
+                      count: lists.anime.length,
+                    ),
+                    _MediaListStatusSections(
+                      entries: lists.anime,
+                      onOpen: _openAndRefresh,
+                    ),
+                  ],
+                  if (lists.manga.isNotEmpty) ...[
+                    if (lists.anime.isNotEmpty) const SizedBox(height: 18),
+                    _ListKindTitle(
+                      icon: Icons.menu_book_outlined,
+                      title: 'Manga',
+                      count: lists.manga.length,
+                    ),
+                    _MediaListStatusSections(
+                      entries: lists.manga,
+                      onOpen: _openAndRefresh,
+                    ),
+                  ],
+                ],
               ),
-          ],
+            );
+          },
         );
       },
+    );
+  }
+}
+
+class _ListKindTitle extends StatelessWidget {
+  const _ListKindTitle({
+    required this.icon,
+    required this.title,
+    required this.count,
+  });
+
+  final IconData icon;
+  final String title;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Theme.of(context).colorScheme.secondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '$title ($count)',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MediaListStatusSections extends StatelessWidget {
+  const _MediaListStatusSections({required this.entries, required this.onOpen});
+
+  final List<AniListMediaListEntry> entries;
+  final Future<void> Function(AniListMedia media, TrackingMediaKind kind)
+  onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final status in AniListMediaListStatus.values)
+          if (entries.any((entry) => entry.status == status)) ...[
+            _SectionTitle(
+              title:
+                  '${status.label} (${entries.where((entry) => entry.status == status).length})',
+            ),
+            for (final entry in entries.where(
+              (entry) => entry.status == status,
+            ))
+              _MediaListEntryTile(
+                entry: entry,
+                onTap: () => onOpen(entry.media, entry.kind),
+              ),
+            const SizedBox(height: 8),
+          ],
+      ],
+    );
+  }
+}
+
+class _MediaListEntryTile extends StatelessWidget {
+  const _MediaListEntryTile({required this.entry, required this.onTap});
+
+  final AniListMediaListEntry entry;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final image = entry.media.cover.best;
+    final details = [
+      entry.media.metadata,
+      entry.progressLabel,
+      entry.scoreLabel,
+      if (entry.startedAt?.label.isNotEmpty == true)
+        'Started ${entry.startedAt!.label}',
+      if (entry.completedAt?.label.isNotEmpty == true)
+        'Finished ${entry.completedAt!.label}',
+    ].where((part) => part.isNotEmpty).join(' • ');
+    return Card(
+      child: ListTile(
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: image == null
+              ? ColoredBox(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  child: SizedBox(
+                    width: 44,
+                    height: 56,
+                    child: Icon(
+                      entry.kind == TrackingMediaKind.anime
+                          ? Icons.movie_outlined
+                          : Icons.menu_book_outlined,
+                    ),
+                  ),
+                )
+              : Image.network(
+                  image,
+                  width: 44,
+                  height: 56,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) =>
+                      const Icon(Icons.broken_image_outlined),
+                ),
+        ),
+        title: Text(
+          entry.media.displayTitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: details.isEmpty
+            ? null
+            : Text(details, maxLines: 2, overflow: TextOverflow.ellipsis),
+        onTap: onTap,
+      ),
     );
   }
 }

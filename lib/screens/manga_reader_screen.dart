@@ -11,6 +11,7 @@ import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
+import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_error_view.dart';
 
 class MangaReaderScreen extends StatefulWidget {
@@ -262,12 +263,13 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
       : Colors.white70;
 
   Future<void> _showReaderSettings() async {
-    await showModalBottomSheet<void>(
+    await showAppBottomSheet<void>(
       context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => _ReaderSettingsSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.38,
+      builder: (context, scrollController) => _ReaderSettingsSheet(
         preferences: widget.preferences,
+        scrollController: scrollController,
         onChanged: () {
           setState(() {});
           _syncWakelock();
@@ -455,19 +457,22 @@ class _ReaderPageError extends StatelessWidget {
 class _ReaderSettingsSheet extends StatelessWidget {
   const _ReaderSettingsSheet({
     required this.preferences,
+    required this.scrollController,
     required this.onChanged,
   });
 
   final PreferencesService preferences;
+  final ScrollController scrollController;
   final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+      top: false,
       child: AnimatedBuilder(
         animation: preferences,
         builder: (context, _) => ListView(
-          shrinkWrap: true,
+          controller: scrollController,
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
           children: [
             Text(

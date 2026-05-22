@@ -24,6 +24,29 @@ enum TrackingProvider {
 
 enum TrackingMediaKind { anime, manga }
 
+enum AniListMediaListStatus {
+  current('CURRENT', 'Current'),
+  planning('PLANNING', 'Planning'),
+  completed('COMPLETED', 'Completed'),
+  paused('PAUSED', 'Paused'),
+  dropped('DROPPED', 'Dropped'),
+  repeating('REPEATING', 'Repeating');
+
+  const AniListMediaListStatus(this.graphqlName, this.label);
+
+  final String graphqlName;
+  final String label;
+
+  static AniListMediaListStatus? fromGraphql(String? value) {
+    for (final status in values) {
+      if (status.graphqlName == value) {
+        return status;
+      }
+    }
+    return null;
+  }
+}
+
 enum TrackingSyncStrategy {
   primaryThenFallback('Primary, then fallback'),
   allLoggedIn('All logged-in providers');
@@ -31,6 +54,65 @@ enum TrackingSyncStrategy {
   const TrackingSyncStrategy(this.label);
 
   final String label;
+}
+
+class AniListFuzzyDate {
+  const AniListFuzzyDate({this.year, this.month, this.day});
+
+  final int? year;
+  final int? month;
+  final int? day;
+
+  bool get isEmpty => year == null && month == null && day == null;
+
+  DateTime? get dateTime {
+    final yearValue = year;
+    final monthValue = month;
+    final dayValue = day;
+    if (yearValue == null || monthValue == null || dayValue == null) {
+      return null;
+    }
+    return DateTime(yearValue, monthValue, dayValue);
+  }
+
+  String get label {
+    final yearValue = year;
+    final monthValue = month;
+    final dayValue = day;
+    if (yearValue == null) {
+      return '';
+    }
+    if (monthValue == null) {
+      return yearValue.toString();
+    }
+    final monthText = monthValue.toString().padLeft(2, '0');
+    if (dayValue == null) {
+      return '$yearValue-$monthText';
+    }
+    final dayText = dayValue.toString().padLeft(2, '0');
+    return '$yearValue-$monthText-$dayText';
+  }
+
+  Map<String, dynamic> toJson() => {'year': year, 'month': month, 'day': day};
+
+  static AniListFuzzyDate? fromDateTime(DateTime? date) {
+    if (date == null) {
+      return null;
+    }
+    return AniListFuzzyDate(year: date.year, month: date.month, day: date.day);
+  }
+
+  static AniListFuzzyDate? fromJson(Object? json) {
+    if (json is! Map) {
+      return null;
+    }
+    final date = AniListFuzzyDate(
+      year: (json['year'] as num?)?.toInt(),
+      month: (json['month'] as num?)?.toInt(),
+      day: (json['day'] as num?)?.toInt(),
+    );
+    return date.isEmpty ? null : date;
+  }
 }
 
 class TrackingAccount {
@@ -144,6 +226,138 @@ class TrackingProgressRequest {
       total: (json['total'] as num?)?.toInt(),
     );
   }
+}
+
+class AniListMediaListEntry {
+  const AniListMediaListEntry({
+    required this.id,
+    required this.media,
+    required this.kind,
+    required this.status,
+    this.progress,
+    this.progressVolumes,
+    this.score,
+    this.repeat,
+    this.private = false,
+    this.notes,
+    this.startedAt,
+    this.completedAt,
+    this.updatedAtMs,
+  });
+
+  final int id;
+  final AniListMedia media;
+  final TrackingMediaKind kind;
+  final AniListMediaListStatus status;
+  final int? progress;
+  final int? progressVolumes;
+  final double? score;
+  final int? repeat;
+  final bool private;
+  final String? notes;
+  final AniListFuzzyDate? startedAt;
+  final AniListFuzzyDate? completedAt;
+  final int? updatedAtMs;
+
+  String get progressLabel {
+    final progressValue = progress;
+    if (progressValue == null || progressValue <= 0) {
+      return '';
+    }
+    if (kind == TrackingMediaKind.anime) {
+      return '$progressValue eps';
+    }
+    final volumeValue = progressVolumes;
+    if (volumeValue != null && volumeValue > 0) {
+      return '$progressValue ch / $volumeValue vol';
+    }
+    return '$progressValue ch';
+  }
+
+  String get scoreLabel {
+    final scoreValue = score;
+    if (scoreValue == null || scoreValue <= 0) {
+      return '';
+    }
+    final rounded = scoreValue.roundToDouble();
+    final display = scoreValue == rounded
+        ? rounded.toInt().toString()
+        : scoreValue.toStringAsFixed(1);
+    return 'Score $display';
+  }
+
+  static AniListMediaListEntry? fromJson(
+    Map<String, dynamic> json,
+    TrackingMediaKind kind, {
+    AniListMedia? fallbackMedia,
+  }) {
+    final status = AniListMediaListStatus.fromGraphql(
+      json['status']?.toString(),
+    );
+    final mediaJson = json['media'];
+    final media = mediaJson is Map
+        ? AniListMedia.fromJson(mediaJson.cast<String, dynamic>())
+        : fallbackMedia;
+    if (status == null || media == null) {
+      return null;
+    }
+    final updatedAtSeconds = (json['updatedAt'] as num?)?.toInt();
+    return AniListMediaListEntry(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      media: media,
+      kind: kind,
+      status: status,
+      progress: (json['progress'] as num?)?.toInt(),
+      progressVolumes: (json['progressVolumes'] as num?)?.toInt(),
+      score: (json['score'] as num?)?.toDouble(),
+      repeat: (json['repeat'] as num?)?.toInt(),
+      private: json['private'] == true,
+      notes: json['notes']?.toString(),
+      startedAt: AniListFuzzyDate.fromJson(json['startedAt']),
+      completedAt: AniListFuzzyDate.fromJson(json['completedAt']),
+      updatedAtMs: updatedAtSeconds == null ? null : updatedAtSeconds * 1000,
+    );
+  }
+}
+
+class AniListMediaListSaveRequest {
+  const AniListMediaListSaveRequest({
+    required this.media,
+    required this.kind,
+    required this.status,
+    this.progress,
+    this.progressVolumes,
+    this.score,
+    this.repeat,
+    this.private = false,
+    this.notes,
+    this.startedAt,
+    this.completedAt,
+  });
+
+  final AniListMedia media;
+  final TrackingMediaKind kind;
+  final AniListMediaListStatus status;
+  final int? progress;
+  final int? progressVolumes;
+  final double? score;
+  final int? repeat;
+  final bool private;
+  final String? notes;
+  final DateTime? startedAt;
+  final DateTime? completedAt;
+}
+
+class AniListMediaListCollection {
+  const AniListMediaListCollection({
+    this.anime = const <AniListMediaListEntry>[],
+    this.manga = const <AniListMediaListEntry>[],
+  });
+
+  final List<AniListMediaListEntry> anime;
+  final List<AniListMediaListEntry> manga;
+
+  bool get isEmpty => anime.isEmpty && manga.isEmpty;
 }
 
 class PendingTrackingUpdate {

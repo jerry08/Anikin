@@ -15,12 +15,15 @@ class DownloadService extends ChangeNotifier {
   DownloadService({http.Client? client}) : _client = client ?? http.Client();
 
   static const _storageKey = 'downloads.episodes';
+  static const _maxConcurrentDownloads = 2;
 
   final http.Client _client;
   final List<DownloadedEpisode> _items = [];
   final Map<String, EpisodeDownloadProgress> _tasks = {};
   final Set<String> _cancelledTaskIds = {};
   final Set<String> _pausedTaskIds = {};
+  final Set<String> _runningTaskIds = {};
+  final Set<String> _resumeTaskIds = {};
 
   SharedPreferences? _prefs;
   bool _loaded = false;
@@ -138,6 +141,7 @@ class DownloadService extends ChangeNotifier {
         return;
       }
       _tasks.remove(request.taskId);
+      _resumeTaskIds.remove(request.taskId);
     }
 
     final task = EpisodeDownloadProgress(
@@ -146,7 +150,7 @@ class DownloadService extends ChangeNotifier {
     );
     _tasks[task.id] = task;
     notifyListeners();
-    unawaited(_runDownload(task));
+    _pumpQueue();
   }
 
   Future<void> delete(String id) async {
@@ -160,6 +164,7 @@ class DownloadService extends ChangeNotifier {
     _tasks.remove(id);
     _cancelledTaskIds.remove(id);
     _pausedTaskIds.remove(id);
+    _resumeTaskIds.remove(id);
     final item = getById(id);
     if (item != null) {
       _items.removeWhere((download) => download.id == id);
@@ -177,15 +182,27 @@ class DownloadService extends ChangeNotifier {
     }
     if (task.status == DownloadTaskStatus.failed) {
       _tasks.remove(id);
+      _resumeTaskIds.remove(id);
       notifyListeners();
+      return;
+    }
+    if (task.status == DownloadTaskStatus.queued) {
+      _tasks.remove(id);
+      _cancelledTaskIds.remove(id);
+      _pausedTaskIds.remove(id);
+      _resumeTaskIds.remove(id);
+      notifyListeners();
+      _pumpQueue();
       return;
     }
     if (task.status == DownloadTaskStatus.paused) {
       _tasks.remove(id);
       _pausedTaskIds.remove(id);
       _cancelledTaskIds.remove(id);
+      _resumeTaskIds.remove(id);
       await _deleteDownloadDirectory(id);
       notifyListeners();
+      _pumpQueue();
       return;
     }
 
@@ -205,7 +222,14 @@ class DownloadService extends ChangeNotifier {
     }
 
     _pausedTaskIds.add(id);
-    _setTask(task.copyWith(status: DownloadTaskStatus.pausing));
+    _setTask(
+      task.copyWith(
+        status: task.status == DownloadTaskStatus.queued
+            ? DownloadTaskStatus.paused
+            : DownloadTaskStatus.pausing,
+      ),
+    );
+    _pumpQueue();
   }
 
   Future<void> resumeDownload(String id) async {
@@ -217,9 +241,10 @@ class DownloadService extends ChangeNotifier {
 
     _pausedTaskIds.remove(id);
     _cancelledTaskIds.remove(id);
+    _resumeTaskIds.add(id);
     final resumed = task.copyWith(status: DownloadTaskStatus.queued);
     _setTask(resumed);
-    unawaited(_runDownload(resumed, resume: true));
+    _pumpQueue();
   }
 
   Future<void> cancelAllDownloads() async {
@@ -249,6 +274,7 @@ class DownloadService extends ChangeNotifier {
   }) async {
     final request = task.request;
     try {
+      _runningTaskIds.add(task.id);
       _throwIfCancelled(task.id);
       _setTask(task.copyWith(status: DownloadTaskStatus.downloading));
       final stored = await _storeVideo(request, resume: resume);
@@ -280,15 +306,18 @@ class DownloadService extends ChangeNotifier {
       _tasks.remove(task.id);
       _cancelledTaskIds.remove(task.id);
       _pausedTaskIds.remove(task.id);
+      _resumeTaskIds.remove(task.id);
       notifyListeners();
     } on DownloadPausedException {
       final current = _tasks[task.id] ?? task;
       _pausedTaskIds.add(task.id);
+      _resumeTaskIds.add(task.id);
       _setTask(current.copyWith(status: DownloadTaskStatus.paused));
     } on DownloadCancelledException {
       _tasks.remove(task.id);
       _cancelledTaskIds.remove(task.id);
       _pausedTaskIds.remove(task.id);
+      _resumeTaskIds.remove(task.id);
       await _deleteDownloadDirectory(task.id);
       notifyListeners();
     } catch (error) {
@@ -296,10 +325,12 @@ class DownloadService extends ChangeNotifier {
         _tasks.remove(task.id);
         _cancelledTaskIds.remove(task.id);
         _pausedTaskIds.remove(task.id);
+        _resumeTaskIds.remove(task.id);
         await _deleteDownloadDirectory(task.id);
         notifyListeners();
         return;
       }
+      _resumeTaskIds.remove(task.id);
       await _deleteDownloadDirectory(task.id);
       _setTask(
         (_tasks[task.id] ?? task).copyWith(
@@ -307,12 +338,34 @@ class DownloadService extends ChangeNotifier {
           error: error.toString(),
         ),
       );
+    } finally {
+      _runningTaskIds.remove(task.id);
+      _pumpQueue();
     }
   }
 
   void _setTask(EpisodeDownloadProgress task) {
     _tasks[task.id] = task;
     notifyListeners();
+  }
+
+  void _pumpQueue() {
+    while (_runningTaskIds.length < _maxConcurrentDownloads) {
+      EpisodeDownloadProgress? nextTask;
+      for (final task in _tasks.values) {
+        if (task.status == DownloadTaskStatus.queued &&
+            !_runningTaskIds.contains(task.id)) {
+          nextTask = task;
+          break;
+        }
+      }
+      if (nextTask == null) {
+        return;
+      }
+      _runningTaskIds.add(nextTask.id);
+      final resume = _resumeTaskIds.remove(nextTask.id);
+      unawaited(_runDownload(nextTask, resume: resume));
+    }
   }
 
   Future<_StoredVideo> _storeVideo(

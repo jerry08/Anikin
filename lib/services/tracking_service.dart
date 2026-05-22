@@ -35,6 +35,43 @@ class TrackingService extends ChangeNotifier {
   static const _pendingUpdatesKey = 'tracking.pendingUpdates';
   static const _malCodeVerifierKey = 'tracking.malCodeVerifier';
 
+  static const _aniListMediaFields = r'''
+id
+idMal
+title { romaji english native userPreferred }
+coverImage { extraLarge large color }
+bannerImage
+description(asHtml: false)
+genres
+meanScore
+popularity
+episodes
+chapters
+volumes
+duration
+status
+season
+seasonYear
+format
+countryOfOrigin
+siteUrl
+''';
+
+  static const _aniListMediaListEntryFields = r'''
+id
+status
+score
+progress
+progressVolumes
+repeat
+private
+notes
+startedAt { year month day }
+completedAt { year month day }
+updatedAt
+media { MEDIA_FIELDS }
+''';
+
   final http.Client _client;
   final AppLinks _appLinks;
   final bool _listenForLinks;
@@ -356,6 +393,200 @@ query FavoriteManga {
         .whereType<Map>()
         .map((item) => AniListMedia.fromJson(item.cast<String, dynamic>()))
         .toList();
+  }
+
+  Future<AniListMediaListCollection> aniListMediaListCollection() async {
+    final results = await Future.wait([
+      aniListMediaList(TrackingMediaKind.anime),
+      aniListMediaList(TrackingMediaKind.manga),
+    ]);
+    return AniListMediaListCollection(anime: results[0], manga: results[1]);
+  }
+
+  Future<List<AniListMediaListEntry>> aniListMediaList(
+    TrackingMediaKind kind,
+  ) async {
+    final account = _requireAccount(TrackingProvider.anilist);
+    final userId = int.tryParse(account.userId ?? '');
+    final userName = account.username;
+    if (userId == null && (userName == null || userName.isEmpty)) {
+      throw const TrackingException('AniList account is missing a user id');
+    }
+
+    final data = await _postAniList(
+      account,
+      r'''
+query UserMediaList($userId: Int, $userName: String, $type: MediaType) {
+  MediaListCollection(
+    userId: $userId,
+    userName: $userName,
+    type: $type,
+    forceSingleCompletedList: true
+  ) {
+    lists {
+      entries {
+        id
+        status
+        score
+        progress
+        progressVolumes
+        repeat
+        private
+        notes
+        startedAt { year month day }
+        completedAt { year month day }
+        updatedAt
+        media { MEDIA_FIELDS }
+      }
+    }
+  }
+}
+'''
+          .replaceAll('MEDIA_FIELDS', _aniListMediaFields),
+      {
+        'userId': userId,
+        'userName': userName,
+        'type': kind == TrackingMediaKind.anime ? 'ANIME' : 'MANGA',
+      },
+    );
+
+    final listGroups = data['MediaListCollection']?['lists'];
+    if (listGroups is! List) {
+      return const [];
+    }
+
+    final entries = <AniListMediaListEntry>[];
+    for (final group in listGroups.whereType<Map>()) {
+      final groupEntries = group['entries'];
+      if (groupEntries is! List) {
+        continue;
+      }
+      for (final entryJson in groupEntries.whereType<Map>()) {
+        final entry = AniListMediaListEntry.fromJson(
+          entryJson.cast<String, dynamic>(),
+          kind,
+        );
+        if (entry != null) {
+          entries.add(entry);
+        }
+      }
+    }
+    entries.sort((a, b) => (b.updatedAtMs ?? 0).compareTo(a.updatedAtMs ?? 0));
+    return entries;
+  }
+
+  Future<AniListMediaListEntry?> aniListMediaListEntry({
+    required AniListMedia media,
+    required TrackingMediaKind kind,
+  }) async {
+    final account = _requireAccount(TrackingProvider.anilist);
+    final data = await _postAniList(
+      account,
+      r'''
+query MediaListEntry($mediaId: Int) {
+  Media(id: $mediaId) {
+    mediaListEntry { ENTRY_FIELDS }
+  }
+}
+'''
+          .replaceAll('ENTRY_FIELDS', _aniListMediaListEntryFields)
+          .replaceAll('MEDIA_FIELDS', _aniListMediaFields),
+      {'mediaId': media.id},
+    );
+    final entryJson = data['Media']?['mediaListEntry'];
+    if (entryJson is! Map) {
+      return null;
+    }
+    return AniListMediaListEntry.fromJson(
+      entryJson.cast<String, dynamic>(),
+      kind,
+      fallbackMedia: media,
+    );
+  }
+
+  Future<AniListMediaListEntry> saveAniListMediaListEntry(
+    AniListMediaListSaveRequest request,
+  ) async {
+    final account = _requireAccount(TrackingProvider.anilist);
+    final data = await _postAniList(
+      account,
+      r'''
+mutation SaveListEntry(
+  $mediaId: Int,
+  $status: MediaListStatus,
+  $progress: Int,
+  $progressVolumes: Int,
+  $score: Float,
+  $repeat: Int,
+  $private: Boolean,
+  $notes: String,
+  $startedAt: FuzzyDateInput,
+  $completedAt: FuzzyDateInput
+) {
+  SaveMediaListEntry(
+    mediaId: $mediaId,
+    status: $status,
+    progress: $progress,
+    progressVolumes: $progressVolumes,
+    score: $score,
+    repeat: $repeat,
+    private: $private,
+    notes: $notes,
+    startedAt: $startedAt,
+    completedAt: $completedAt
+  ) { ENTRY_FIELDS }
+}
+'''
+          .replaceAll('ENTRY_FIELDS', _aniListMediaListEntryFields)
+          .replaceAll('MEDIA_FIELDS', _aniListMediaFields),
+      {
+        'mediaId': request.media.id,
+        'status': request.status.graphqlName,
+        'progress': request.progress,
+        'progressVolumes': request.progressVolumes,
+        'score': request.score,
+        'repeat': request.repeat,
+        'private': request.private,
+        'notes': _blankToNull(request.notes),
+        'startedAt': AniListFuzzyDate.fromDateTime(request.startedAt)?.toJson(),
+        'completedAt': AniListFuzzyDate.fromDateTime(
+          request.completedAt,
+        )?.toJson(),
+      },
+    );
+    final entryJson = data['SaveMediaListEntry'];
+    if (entryJson is! Map) {
+      throw const TrackingException('AniList did not return a saved entry');
+    }
+    final entry = AniListMediaListEntry.fromJson(
+      entryJson.cast<String, dynamic>(),
+      request.kind,
+      fallbackMedia: request.media,
+    );
+    if (entry == null) {
+      throw const TrackingException('AniList returned an invalid list entry');
+    }
+    lastMessage = 'Updated ${request.media.displayTitle} on AniList';
+    notifyListeners();
+    return entry;
+  }
+
+  Future<void> deleteAniListMediaListEntry(int entryId) async {
+    final account = _requireAccount(TrackingProvider.anilist);
+    final data = await _postAniList(
+      account,
+      r'''
+mutation DeleteListEntry($id: Int) {
+  DeleteMediaListEntry(id: $id) { deleted }
+}
+''',
+      {'id': entryId},
+    );
+    if (data['DeleteMediaListEntry']?['deleted'] != true) {
+      throw const TrackingException('AniList did not delete the list entry');
+    }
+    lastMessage = 'Removed AniList list entry';
+    notifyListeners();
   }
 
   Future<bool> toggleAniListFavorite({
@@ -750,6 +981,13 @@ mutation SyncProgress($mediaId: Int, $progress: Int, $status: MediaListStatus) {
       },
       body: _formEncode(fields),
     );
+  }
+
+  static String? _blankToNull(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    return value.trim();
   }
 
   Future<TrackingAccount> _ensureMyAnimeListToken() async {

@@ -9,6 +9,7 @@ class MediaPosterCard extends StatelessWidget {
     required this.onTap,
     this.width = 132,
     this.showMetadata = true,
+    this.showRating = true,
     super.key,
   });
 
@@ -16,66 +17,88 @@ class MediaPosterCard extends StatelessWidget {
   final VoidCallback onTap;
   final double width;
   final bool showMetadata;
+  final bool showRating;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final defaultTextStyle = DefaultTextStyle.of(context).style;
+    final cardRadius = BorderRadius.circular(8);
     final titleStyle = (theme.textTheme.bodyMedium ?? defaultTextStyle)
         .copyWith(fontWeight: FontWeight.w700);
     final metadataStyle = (theme.textTheme.bodySmall ?? defaultTextStyle)
         .copyWith(color: theme.colorScheme.onSurfaceVariant);
     final hasMetadata = showMetadata && media.metadata.isNotEmpty;
+    final showRatingBadge = showRating && media.meanScore != null;
 
     return SizedBox(
       width: width,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final cardWidth = constraints.hasBoundedWidth
-                ? constraints.maxWidth
-                : width;
-            final posterHeight = _posterHeightFor(
-              context: context,
-              constraints: constraints,
-              cardWidth: cardWidth,
-              titleStyle: titleStyle,
-              metadataStyle: metadataStyle,
-              hasMetadata: hasMetadata,
-            );
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: cardRadius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          borderRadius: cardRadius,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final cardWidth = constraints.hasBoundedWidth
+                    ? constraints.maxWidth
+                    : width;
+                final posterHeight = _posterHeightFor(
+                  context: context,
+                  constraints: constraints,
+                  cardWidth: cardWidth,
+                  titleStyle: titleStyle,
+                  metadataStyle: metadataStyle,
+                  hasMetadata: hasMetadata,
+                );
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: SizedBox(
-                    width: cardWidth,
-                    height: posterHeight,
-                    child: _PosterImage(url: media.cover.best),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  media.displayTitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: titleStyle,
-                ),
-                if (hasMetadata) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    media.metadata,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: metadataStyle,
-                  ),
-                ],
-              ],
-            );
-          },
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: cardRadius,
+                      child: SizedBox(
+                        width: cardWidth,
+                        height: posterHeight,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            _PosterImage(url: media.cover.best),
+                            if (showRatingBadge)
+                              Positioned(
+                                right: 7,
+                                bottom: 7,
+                                child: _RatingBadge(score: media.meanScore!),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      media.displayTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: titleStyle,
+                    ),
+                    if (hasMetadata) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        media.metadata,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: metadataStyle,
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -136,6 +159,42 @@ class MediaPosterCard extends StatelessWidget {
     )..layout(maxWidth: maxWidth);
 
     return textPainter.height;
+  }
+}
+
+class _RatingBadge extends StatelessWidget {
+  const _RatingBadge({required this.score});
+
+  final int score;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xD9000000),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.star_rounded, size: 14, color: Color(0xFFFFD166)),
+            const SizedBox(width: 3),
+            Text(
+              '$score%',
+              maxLines: 1,
+              overflow: TextOverflow.clip,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

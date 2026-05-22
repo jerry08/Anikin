@@ -45,6 +45,7 @@ class PreferencesService extends ChangeNotifier {
   bool timeStampsEnabled = true;
   bool showTimeStampButton = true;
   bool developerMode = false;
+  bool automaticUpdateChecks = false;
 
   List<double> get playbackSpeeds => cursedSpeeds
       ? const [1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 10, 25, 50]
@@ -116,6 +117,7 @@ class PreferencesService extends ChangeNotifier {
     timeStampsEnabled = prefs.getBool('timeStampsEnabled') ?? true;
     showTimeStampButton = prefs.getBool('showTimeStampButton') ?? true;
     developerMode = prefs.getBool('developerMode') ?? false;
+    automaticUpdateChecks = prefs.getBool('automaticUpdateChecks') ?? false;
   }
 
   Future<void> setThemeMode(ThemeMode value) async {
@@ -283,6 +285,12 @@ class PreferencesService extends ChangeNotifier {
   Future<void> setDeveloperMode(bool value) async {
     developerMode = value;
     await _prefs!.setBool('developerMode', value);
+    notifyListeners();
+  }
+
+  Future<void> setAutomaticUpdateChecks(bool value) async {
+    automaticUpdateChecks = value;
+    await _prefs!.setBool('automaticUpdateChecks', value);
     notifyListeners();
   }
 }

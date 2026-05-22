@@ -709,7 +709,7 @@ class MediaSection extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: items.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              separatorBuilder: (_, _) => const SizedBox(width: 6),
               itemBuilder: (context, index) => MediaPosterCard(
                 media: items[index],
                 onTap: () => onItemTap(items[index]),

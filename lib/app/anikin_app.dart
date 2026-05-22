@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -13,7 +15,9 @@ import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
+import '../services/update_service.dart';
 import '../services/watch_history_service.dart';
+import '../widgets/update_dialogs.dart';
 
 class AnikinApp extends StatefulWidget {
   const AnikinApp({
@@ -24,6 +28,7 @@ class AnikinApp extends StatefulWidget {
     this.downloadService,
     this.mangaDownloadService,
     this.trackingService,
+    this.updateService,
     super.key,
   });
 
@@ -34,6 +39,7 @@ class AnikinApp extends StatefulWidget {
   final DownloadService? downloadService;
   final MangaDownloadService? mangaDownloadService;
   final TrackingService? trackingService;
+  final UpdateService? updateService;
 
   @override
   State<AnikinApp> createState() => _AnikinAppState();
@@ -46,6 +52,7 @@ class _AnikinAppState extends State<AnikinApp> {
   late final DownloadService _downloadService;
   late final MangaDownloadService _mangaDownloadService;
   late final TrackingService _trackingService;
+  late final UpdateService _updateService;
 
   @override
   void initState() {
@@ -58,6 +65,7 @@ class _AnikinAppState extends State<AnikinApp> {
         widget.mangaDownloadService ??
         MangaDownloadService(juroService: _juroService);
     _trackingService = widget.trackingService ?? TrackingService();
+    _updateService = widget.updateService ?? UpdateService();
   }
 
   @override
@@ -87,6 +95,7 @@ class _AnikinAppState extends State<AnikinApp> {
             downloadService: _downloadService,
             mangaDownloadService: _mangaDownloadService,
             trackingService: _trackingService,
+            updateService: _updateService,
           ),
         );
       },
@@ -103,6 +112,7 @@ class MainShell extends StatefulWidget {
     required this.downloadService,
     required this.mangaDownloadService,
     required this.trackingService,
+    required this.updateService,
     super.key,
   });
 
@@ -113,6 +123,7 @@ class MainShell extends StatefulWidget {
   final DownloadService downloadService;
   final MangaDownloadService mangaDownloadService;
   final TrackingService trackingService;
+  final UpdateService updateService;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -120,6 +131,30 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_checkForStartupUpdate());
+    });
+  }
+
+  Future<void> _checkForStartupUpdate() async {
+    if (!mounted || !widget.preferences.automaticUpdateChecks) {
+      return;
+    }
+
+    try {
+      final result = await widget.updateService.checkForUpdate();
+      if (!mounted || !result.isUpdateAvailable) {
+        return;
+      }
+      await showUpdateAvailableDialog(context, result);
+    } catch (error) {
+      debugPrint('Update check failed: $error');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -156,6 +191,7 @@ class _MainShellState extends State<MainShell> {
         preferences: widget.preferences,
         juroService: widget.juroService,
         trackingService: widget.trackingService,
+        updateService: widget.updateService,
       ),
     ];
 

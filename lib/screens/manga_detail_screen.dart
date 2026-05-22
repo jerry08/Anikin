@@ -12,6 +12,9 @@ import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
+import '../widgets/anilist_list_entry_sheet.dart';
+import '../widgets/app_bottom_sheet.dart';
+import '../widgets/app_dialogs.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/detail_media_tools.dart';
 import 'manga_reader_screen.dart';
@@ -44,6 +47,9 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
   bool _loading = true;
   bool _isFavorite = false;
   bool _favoriteLoading = false;
+  AniListMediaListEntry? _listEntry;
+  bool _listEntryLoading = false;
+  bool _listEntrySaving = false;
   String? _error;
   String? _status;
 
@@ -63,6 +69,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
     super.initState();
     _load();
     _refreshFavorite();
+    _refreshAniListListEntry();
   }
 
   Future<void> _load() async {
@@ -144,11 +151,12 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
   }
 
   Future<void> _changeProvider() async {
-    final provider = await showModalBottomSheet<SourceProvider>(
+    final provider = await showAppBottomSheet<SourceProvider>(
       context: context,
-      showDragHandle: true,
-      builder: (context) => ListView(
-        shrinkWrap: true,
+      initialChildSize: 0.42,
+      minChildSize: 0.28,
+      builder: (context, scrollController) => ListView(
+        controller: scrollController,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
@@ -185,117 +193,31 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
   }
 
   Future<void> _manualMatch() async {
-    final query = await showDialog<String>(
+    final match = await showAppBottomSheet<MangaResult>(
       context: context,
-      builder: (context) {
-        final controller = TextEditingController(
-          text: widget.media.displayTitle,
-        );
-        return AlertDialog(
-          title: const Text('Search provider'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.search),
-              hintText: 'Provider manga title',
-            ),
-            onSubmitted: (value) => Navigator.of(context).pop(value),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text),
-              child: const Text('Search'),
-            ),
-          ],
-        );
-      },
+      initialChildSize: 0.72,
+      minChildSize: 0.34,
+      maxChildSize: 1,
+      builder: (context, scrollController) => _ManualMangaSearchSheet(
+        initialQuery: widget.media.displayTitle,
+        providerKey: _providerKey,
+        juroService: widget.juroService,
+        scrollController: scrollController,
+      ),
     );
 
-    if (query == null || query.trim().isEmpty) {
+    if (match == null) {
       return;
     }
 
-    setState(() => _status = 'Searching provider');
     try {
-      final results = await widget.juroService.searchManga(
-        query,
-        providerKey: _providerKey,
-      );
-      if (!mounted) return;
-      final match = await _chooseProviderManga(results);
-      if (match != null) {
-        await _loadChapters(match);
-      }
+      await _loadChapters(match);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
-      }
-    } finally {
-      if (mounted) {
         setState(() => _status = null);
+        await showErrorDialog(context, error, title: 'Provider search failed');
       }
     }
-  }
-
-  Future<MangaResult?> _chooseProviderManga(List<MangaResult> results) {
-    return showModalBottomSheet<MangaResult>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) {
-        if (results.isEmpty) {
-          return const SizedBox(
-            height: 260,
-            child: EmptyState(
-              icon: Icons.search_off,
-              title: 'No provider results',
-            ),
-          );
-        }
-        return ListView.separated(
-          shrinkWrap: true,
-          itemCount: results.length + 1,
-          separatorBuilder: (_, _) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                child: Text(
-                  'Select source match',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-                ),
-              );
-            }
-
-            final item = results[index - 1];
-            return ListTile(
-              leading: _SmallCover(url: item.image, headers: item.headers),
-              title: Text(
-                item.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: item.displaySubtitle.isEmpty
-                  ? null
-                  : Text(
-                      item.displaySubtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-              onTap: () => Navigator.of(context).pop(item),
-            );
-          },
-        );
-      },
-    );
   }
 
   void _openChapter(MangaChapter chapter) {
@@ -339,11 +261,17 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
     if (request == null) {
       return;
     }
-    await widget.mangaDownloadService.startDownload(request);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Downloading ${chapter.displayTitle}')),
-      );
+    try {
+      await widget.mangaDownloadService.startDownload(request);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Downloading ${chapter.displayTitle}')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        await showErrorDialog(context, error, title: 'Chapter download failed');
+      }
     }
   }
 
@@ -357,20 +285,35 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
     );
 
     var queued = 0;
+    var failed = 0;
+    Object? firstError;
     for (final chapter in chapters) {
-      final request = _downloadRequestFor(chapter);
-      if (request == null ||
-          widget.mangaDownloadService.isDownloaded(request.id)) {
-        continue;
+      try {
+        final request = _downloadRequestFor(chapter);
+        if (request == null ||
+            widget.mangaDownloadService.isDownloaded(request.id)) {
+          continue;
+        }
+        await widget.mangaDownloadService.startDownload(request);
+        queued++;
+      } catch (error) {
+        firstError ??= error;
+        failed++;
       }
-      await widget.mangaDownloadService.startDownload(request);
-      queued++;
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Queued $queued chapters')));
+      if (failed == 0) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Queued $queued chapters')));
+      } else {
+        await showErrorDialog(
+          context,
+          firstError ?? 'Queued $queued chapters, $failed failed.',
+          title: 'Some chapters failed',
+        );
+      }
     }
   }
 
@@ -425,15 +368,149 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
     } catch (error) {
       if (mounted) {
         setState(() => _isFavorite = !_isFavorite);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        await showErrorDialog(context, error, title: 'Favorite sync failed');
       }
     } finally {
       if (mounted) {
         setState(() => _favoriteLoading = false);
       }
     }
+  }
+
+  Future<void> _refreshAniListListEntry({bool showErrors = false}) async {
+    if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
+      if (mounted) {
+        setState(() => _listEntry = null);
+      }
+      return;
+    }
+    if (mounted) {
+      setState(() => _listEntryLoading = true);
+    }
+    try {
+      final entry = await widget.trackingService.aniListMediaListEntry(
+        media: widget.media,
+        kind: TrackingMediaKind.manga,
+      );
+      if (mounted) {
+        setState(() => _listEntry = entry);
+      }
+    } catch (error) {
+      if (mounted && showErrors) {
+        await showErrorDialog(
+          context,
+          error,
+          title: 'AniList list sync failed',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _listEntryLoading = false);
+      }
+    }
+  }
+
+  Future<void> _editAniListListEntry() async {
+    if (_listEntryLoading || _listEntrySaving) {
+      return;
+    }
+    if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login to AniList to edit lists')),
+      );
+      return;
+    }
+
+    setState(() => _listEntryLoading = true);
+    AniListMediaListEntry? entry;
+    try {
+      entry = await widget.trackingService.aniListMediaListEntry(
+        media: widget.media,
+        kind: TrackingMediaKind.manga,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() => _listEntry = entry);
+    } catch (error) {
+      if (mounted) {
+        await showErrorDialog(
+          context,
+          error,
+          title: 'AniList list sync failed',
+        );
+      }
+      return;
+    } finally {
+      if (mounted) {
+        setState(() => _listEntryLoading = false);
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+    final result = await showAniListListEntrySheet(
+      context: context,
+      media: widget.media,
+      kind: TrackingMediaKind.manga,
+      entry: entry,
+    );
+    if (!mounted || result == null) {
+      return;
+    }
+
+    setState(() => _listEntrySaving = true);
+    try {
+      switch (result.action) {
+        case AniListListEntryEditAction.save:
+          final saved = await widget.trackingService.saveAniListMediaListEntry(
+            result.request!,
+          );
+          if (mounted) {
+            setState(() => _listEntry = saved);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Updated AniList list entry')),
+            );
+          }
+        case AniListListEntryEditAction.delete:
+          final entryId = entry?.id;
+          if (entryId != null) {
+            await widget.trackingService.deleteAniListMediaListEntry(entryId);
+          }
+          if (mounted) {
+            setState(() => _listEntry = null);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Removed AniList list entry')),
+            );
+          }
+      }
+    } catch (error) {
+      if (mounted) {
+        await showErrorDialog(
+          context,
+          error,
+          title: 'AniList list update failed',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _listEntrySaving = false);
+      }
+    }
+  }
+
+  Widget _aniListListIcon() {
+    if (_listEntryLoading || _listEntrySaving) {
+      return const SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+    return Icon(
+      _listEntry == null ? Icons.playlist_add : Icons.playlist_add_check,
+    );
   }
 
   void _showImagePreview(String? imageUrl, Map<String, String> headers) {
@@ -502,6 +579,15 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
                 ),
               ),
               IconButton(
+                tooltip: _listEntry == null
+                    ? 'Add to AniList list'
+                    : 'Edit ${_listEntry!.status.label}',
+                onPressed: _listEntryLoading || _listEntrySaving
+                    ? null
+                    : _editAniListListEntry,
+                icon: _aniListListIcon(),
+              ),
+              IconButton(
                 tooltip: 'Provider',
                 onPressed: _providers.isEmpty ? null : _changeProvider,
                 icon: const Icon(Icons.dns_outlined),
@@ -521,7 +607,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
               titlePadding: const EdgeInsetsDirectional.only(
                 start: 56,
                 bottom: 14,
-                end: 160,
+                end: 200,
               ),
               title: Text(
                 widget.media.displayTitle,
@@ -748,11 +834,16 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
                 );
               },
             ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          SliverToBoxAdapter(
+            child: SizedBox(height: _detailBottomPadding(context)),
+          ),
         ],
       ),
     );
   }
+
+  double _detailBottomPadding(BuildContext context) =>
+      24 + MediaQuery.viewPaddingOf(context).bottom;
 }
 
 class _MangaChapterDownloadStatus extends StatelessWidget {
@@ -813,6 +904,297 @@ class _MangaChapterDownloadStatus extends StatelessWidget {
           icon: const Icon(Icons.download),
         );
       },
+    );
+  }
+}
+
+class _ManualMangaSearchSheet extends StatefulWidget {
+  const _ManualMangaSearchSheet({
+    required this.initialQuery,
+    required this.providerKey,
+    required this.juroService,
+    required this.scrollController,
+  });
+
+  final String initialQuery;
+  final String providerKey;
+  final JuroService juroService;
+  final ScrollController scrollController;
+
+  @override
+  State<_ManualMangaSearchSheet> createState() =>
+      _ManualMangaSearchSheetState();
+}
+
+class _ManualMangaSearchSheetState extends State<_ManualMangaSearchSheet> {
+  late final TextEditingController _controller;
+  Timer? _debounce;
+  List<MangaResult> _results = [];
+  bool _loading = false;
+  String? _error;
+  int _generation = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialQuery);
+    _controller.addListener(_onQueryChanged);
+    _loading = _controller.text.trim().isNotEmpty;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(_runSearch());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.removeListener(_onQueryChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onQueryChanged() {
+    _debounce?.cancel();
+    final query = _controller.text.trim();
+    setState(() {
+      if (query.isEmpty) {
+        _generation++;
+        _results = [];
+        _error = null;
+        _loading = false;
+      }
+    });
+
+    if (query.isEmpty) {
+      return;
+    }
+
+    _debounce = Timer(const Duration(milliseconds: 450), () {
+      unawaited(_runSearch());
+    });
+  }
+
+  Future<void> _runSearch() async {
+    _debounce?.cancel();
+    final query = _controller.text.trim();
+    final generation = ++_generation;
+
+    if (query.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _results = [];
+          _error = null;
+          _loading = false;
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final results = await widget.juroService.searchManga(
+        query,
+        providerKey: widget.providerKey,
+      );
+      if (!mounted || generation != _generation) {
+        return;
+      }
+      setState(() {
+        _results = results;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted || generation != _generation) {
+        return;
+      }
+      setState(() {
+        _results = [];
+        _error = error.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  void _clearQuery() {
+    _controller.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _controller.text.trim();
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          0,
+          20,
+          MediaQuery.viewInsetsOf(context).bottom + 20,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Search provider',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => unawaited(_runSearch()),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'Provider manga title',
+                suffixIcon: _controller.text.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Clear search',
+                        icon: const Icon(Icons.close),
+                        onPressed: _clearQuery,
+                      ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (_loading)
+              const LinearProgressIndicator()
+            else
+              const SizedBox(height: 4),
+            const SizedBox(height: 8),
+            Expanded(
+              child: CustomScrollView(
+                controller: widget.scrollController,
+                slivers: [
+                  if (query.isEmpty)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _ProviderSearchMessage(
+                        icon: Icons.manage_search,
+                        title: 'Search provider titles',
+                        message: 'Type to find a source match.',
+                      ),
+                    )
+                  else if (_error != null)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _ProviderSearchMessage(
+                        icon: Icons.cloud_off_outlined,
+                        title: 'Provider search failed',
+                        message: _error,
+                        action: FilledButton.icon(
+                          onPressed: () => unawaited(_runSearch()),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ),
+                    )
+                  else if (!_loading && _results.isEmpty)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _ProviderSearchMessage(
+                        icon: Icons.search_off,
+                        title: 'No provider results',
+                      ),
+                    )
+                  else if (_results.isEmpty)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: SizedBox.shrink(),
+                    )
+                  else
+                    SliverList.builder(
+                      itemCount: _results.length * 2 - 1,
+                      itemBuilder: (context, index) {
+                        if (index.isOdd) {
+                          return const Divider(height: 1);
+                        }
+
+                        final item = _results[index ~/ 2];
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: _SmallCover(
+                            url: item.image,
+                            headers: item.headers,
+                          ),
+                          title: Text(
+                            item.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: item.displaySubtitle.isEmpty
+                              ? null
+                              : Text(
+                                  item.displaySubtitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                          onTap: () => Navigator.of(context).pop(item),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProviderSearchMessage extends StatelessWidget {
+  const _ProviderSearchMessage({
+    required this.icon,
+    required this.title,
+    this.message,
+    this.action,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? message;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 42,
+              color: Theme.of(context).colorScheme.secondary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            if (message != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                message!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+            if (action != null) ...[const SizedBox(height: 16), action!],
+          ],
+        ),
+      ),
     );
   }
 }

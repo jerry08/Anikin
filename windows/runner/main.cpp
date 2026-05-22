@@ -12,7 +12,7 @@ namespace {
 //constexpr int kWindowWidth = 300;
 //constexpr int kWindowHeight = 400;
 constexpr int kWindowWidth = 1152;
-constexpr int kWindowHeight = 300;
+constexpr int kWindowHeight = 700;
 
 void CenterWindow(HWND window) {
   RECT window_rect;

@@ -299,8 +299,8 @@ class _MangaScreenState extends State<MangaScreen> {
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 16,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 12,
             childAspectRatio: 0.52,
           ),
           itemCount: _items.length + (_isLoading ? columns : 0),
@@ -372,7 +372,7 @@ class _MangaMediaSection extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: items.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              separatorBuilder: (_, _) => const SizedBox(width: 6),
               itemBuilder: (context, index) => MediaPosterCard(
                 media: items[index],
                 onTap: () => onItemTap(items[index]),

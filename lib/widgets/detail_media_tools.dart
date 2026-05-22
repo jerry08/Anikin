@@ -4,6 +4,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'app_bottom_sheet.dart';
+import 'app_dialogs.dart';
+
 class ExpandableSelectableText extends StatefulWidget {
   const ExpandableSelectableText(
     this.text, {
@@ -80,13 +83,17 @@ Future<void> showImagePreviewSheet({
   required String title,
   Map<String, String> headers = const {},
 }) {
-  return showModalBottomSheet<void>(
+  return showAppBottomSheet<void>(
     context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    showDragHandle: true,
-    builder: (sheetContext) =>
-        _ImagePreviewSheet(imageUrl: imageUrl, title: title, headers: headers),
+    initialChildSize: 0.82,
+    minChildSize: 0.42,
+    maxChildSize: 0.94,
+    builder: (sheetContext, scrollController) => _ImagePreviewSheet(
+      imageUrl: imageUrl,
+      title: title,
+      headers: headers,
+      scrollController: scrollController,
+    ),
   );
 }
 
@@ -95,11 +102,13 @@ class _ImagePreviewSheet extends StatefulWidget {
     required this.imageUrl,
     required this.title,
     required this.headers,
+    required this.scrollController,
   });
 
   final String imageUrl;
   final String title;
   final Map<String, String> headers;
+  final ScrollController scrollController;
 
   @override
   State<_ImagePreviewSheet> createState() => _ImagePreviewSheetState();
@@ -110,88 +119,86 @@ class _ImagePreviewSheetState extends State<_ImagePreviewSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.86;
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      child: Padding(
+    final imageHeight = MediaQuery.sizeOf(context).height * 0.58;
+    return SafeArea(
+      top: false,
+      child: ListView(
+        controller: widget.scrollController,
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SelectionArea(
-              child: Text(
-                widget.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-              ),
+        children: [
+          SelectionArea(
+            child: Text(
+              widget.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 12),
-            Flexible(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: InteractiveViewer(
-                  minScale: 1,
-                  maxScale: 4,
-                  child: CachedNetworkImage(
-                    imageUrl: widget.imageUrl,
-                    httpHeaders: widget.headers,
-                    fit: BoxFit.contain,
-                    placeholder: (context, _) =>
-                        const Center(child: CircularProgressIndicator()),
-                    errorWidget: (context, _, _) =>
-                        const Center(child: Icon(Icons.broken_image_outlined)),
-                  ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: imageHeight,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: InteractiveViewer(
+                minScale: 1,
+                maxScale: 4,
+                child: CachedNetworkImage(
+                  imageUrl: widget.imageUrl,
+                  httpHeaders: widget.headers,
+                  fit: BoxFit.contain,
+                  placeholder: (context, _) =>
+                      const Center(child: CircularProgressIndicator()),
+                  errorWidget: (context, _, _) =>
+                      const Center(child: Icon(Icons.broken_image_outlined)),
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: OutlinedButton.icon(
-                      onPressed: _downloading ? null : () => _download(context),
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: _downloading ? null : () => _download(context),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      icon: _downloading
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.download),
-                      label: Text(_downloading ? 'Downloading' : 'Download'),
                     ),
+                    icon: _downloading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.download),
+                    label: Text(_downloading ? 'Downloading' : 'Download'),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: FilledButton.icon(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: FilledButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: FilledButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      icon: const Icon(Icons.close),
-                      label: const Text('Close'),
                     ),
+                    icon: const Icon(Icons.close),
+                    label: const Text('Close'),
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -211,9 +218,7 @@ class _ImagePreviewSheetState extends State<_ImagePreviewSheet> {
       }
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        await showErrorDialog(context, error, title: 'Image download failed');
       }
     } finally {
       if (mounted) {

@@ -10,6 +10,7 @@ import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
+import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/media_poster_card.dart';
 import 'detail_screen.dart';
@@ -123,10 +124,26 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _onQueryChanged(String value) {
     _debounce?.cancel();
+    setState(() {});
+    if (!_hasSearchInput) {
+      _runSearch(reset: true);
+      return;
+    }
     _debounce = Timer(
       const Duration(milliseconds: 450),
       () => _runSearch(reset: true),
     );
+  }
+
+  void _clearQuery() {
+    if (_controller.text.isEmpty) {
+      return;
+    }
+
+    _debounce?.cancel();
+    _controller.clear();
+    setState(() {});
+    _runSearch(reset: true);
   }
 
   Future<void> _runSearch({required bool reset}) async {
@@ -278,11 +295,15 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _showTagSheet() async {
-    final selectedTags = await showModalBottomSheet<Set<String>>(
+    final selectedTags = await showAppBottomSheet<Set<String>>(
       context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => _TagFilterSheet(selectedTags: _selectedTags),
+      initialChildSize: 0.74,
+      minChildSize: 0.38,
+      maxChildSize: 1,
+      builder: (context, scrollController) => _TagFilterSheet(
+        selectedTags: _selectedTags,
+        scrollController: scrollController,
+      ),
     );
 
     if (selectedTags == null) {
@@ -368,11 +389,13 @@ class _SearchScreenState extends State<SearchScreen> {
               decoration: InputDecoration(
                 hintText: _searchHint,
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  tooltip: 'Search',
-                  icon: const Icon(Icons.arrow_forward),
-                  onPressed: () => _runSearch(reset: true),
-                ),
+                suffixIcon: _controller.text.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Clear search',
+                        icon: const Icon(Icons.close),
+                        onPressed: _clearQuery,
+                      ),
               ),
             ),
           ),
@@ -417,8 +440,8 @@ class _SearchScreenState extends State<SearchScreen> {
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 16,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 12,
             childAspectRatio: 0.52,
           ),
           itemCount: _items.length + (_isLoading ? 1 : 0),
@@ -565,9 +588,13 @@ class _SearchEmptyState extends StatelessWidget {
 }
 
 class _TagFilterSheet extends StatefulWidget {
-  const _TagFilterSheet({required this.selectedTags});
+  const _TagFilterSheet({
+    required this.selectedTags,
+    required this.scrollController,
+  });
 
   final Set<String> selectedTags;
+  final ScrollController scrollController;
 
   @override
   State<_TagFilterSheet> createState() => _TagFilterSheetState();
@@ -585,72 +612,75 @@ class _TagFilterSheetState extends State<_TagFilterSheet> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+      top: false,
       child: Padding(
         padding: EdgeInsets.only(
           left: 20,
           right: 20,
           bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Search tags',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Search tags',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Tags are applied to AniList search results.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Tags are applied to AniList search results.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: widget.scrollController,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final tag in _allSearchTags)
+                      FilterChip(
+                        selected: _selectedTags.contains(tag),
+                        label: Text(tag),
+                        onSelected: (_) {
+                          setState(() {
+                            if (!_selectedTags.remove(tag)) {
+                              _selectedTags.add(tag);
+                            }
+                          });
+                        },
+                      ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final tag in _allSearchTags)
-                    FilterChip(
-                      selected: _selectedTags.contains(tag),
-                      label: Text(tag),
-                      onSelected: (_) {
-                        setState(() {
-                          if (!_selectedTags.remove(tag)) {
-                            _selectedTags.add(tag);
-                          }
-                        });
-                      },
-                    ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  TextButton(
-                    onPressed: _selectedTags.isEmpty
-                        ? null
-                        : () => setState(_selectedTags.clear),
-                    child: const Text('Clear'),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: () => Navigator.of(context).pop(_selectedTags),
-                    child: const Text('Apply'),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                TextButton(
+                  onPressed: _selectedTags.isEmpty
+                      ? null
+                      : () => setState(_selectedTags.clear),
+                  child: const Text('Clear'),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(_selectedTags),
+                  child: const Text('Apply'),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

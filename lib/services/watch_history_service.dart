@@ -60,4 +60,16 @@ class WatchHistoryService {
       jsonEncode(all.map((key, value) => MapEntry(key, value.toJson()))),
     );
   }
+
+  Future<void> remove(String id) async {
+    final prefs = await _store;
+    final all = await getAll();
+    if (all.remove(id) == null) {
+      return;
+    }
+    await prefs.setString(
+      _storageKey,
+      jsonEncode(all.map((key, value) => MapEntry(key, value.toJson()))),
+    );
+  }
 }

@@ -8,6 +8,9 @@ import '../models/tracking.dart';
 import '../services/juro_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
+import '../services/update_service.dart';
+import '../widgets/app_dialogs.dart';
+import '../widgets/update_dialogs.dart';
 
 const _settingsTileShape = RoundedRectangleBorder(
   borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -18,12 +21,14 @@ class SettingsScreen extends StatefulWidget {
     required this.preferences,
     required this.juroService,
     required this.trackingService,
+    required this.updateService,
     super.key,
   });
 
   final PreferencesService preferences;
   final JuroService juroService;
   final TrackingService trackingService;
+  final UpdateService updateService;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -69,7 +74,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: _appSummary(prefs),
                   onTap: () => _openSettingsPage(
                     context,
-                    _AppSettingsPage(preferences: widget.preferences),
+                    _AppSettingsPage(
+                      preferences: widget.preferences,
+                      updateService: widget.updateService,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -134,9 +142,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 }
 
 class _AppSettingsPage extends StatelessWidget {
-  const _AppSettingsPage({required this.preferences});
+  const _AppSettingsPage({
+    required this.preferences,
+    required this.updateService,
+  });
 
   final PreferencesService preferences;
+  final UpdateService updateService;
 
   @override
   Widget build(BuildContext context) {
@@ -167,7 +179,74 @@ class _AppSettingsPage extends StatelessWidget {
           value: prefs.developerMode,
           onChanged: prefs.setDeveloperMode,
         ),
+        const SizedBox(height: 10),
+        const _SectionTitle('Updates'),
+        SwitchListTile(
+          secondary: const Icon(Icons.update),
+          title: const Text('Check on startup'),
+          subtitle: const Text('Look for new GitHub releases automatically'),
+          value: prefs.automaticUpdateChecks,
+          onChanged: prefs.setAutomaticUpdateChecks,
+        ),
+        _UpdateCheckTile(updateService: updateService),
       ],
+    );
+  }
+}
+
+class _UpdateCheckTile extends StatefulWidget {
+  const _UpdateCheckTile({required this.updateService});
+
+  final UpdateService updateService;
+
+  @override
+  State<_UpdateCheckTile> createState() => _UpdateCheckTileState();
+}
+
+class _UpdateCheckTileState extends State<_UpdateCheckTile> {
+  bool _checking = false;
+
+  Future<void> _checkForUpdates() async {
+    if (_checking) {
+      return;
+    }
+
+    setState(() => _checking = true);
+    try {
+      final result = await widget.updateService.checkForUpdate();
+      if (!mounted) {
+        return;
+      }
+      if (result.isUpdateAvailable) {
+        await showUpdateAvailableDialog(context, result);
+      } else {
+        await showNoUpdateDialog(context, result);
+      }
+    } catch (error) {
+      if (mounted) {
+        await showErrorDialog(context, error, title: 'Update check failed');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _checking = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: _checking
+          ? const SizedBox.square(
+              dimension: 24,
+              child: CircularProgressIndicator(strokeWidth: 2.4),
+            )
+          : const Icon(Icons.system_update_alt),
+      title: const Text('Check for updates'),
+      subtitle: Text('Current version ${widget.updateService.currentVersion}'),
+      trailing: const Icon(Icons.chevron_right),
+      enabled: !_checking,
+      onTap: _checking ? null : () => unawaited(_checkForUpdates()),
     );
   }
 }
@@ -454,9 +533,11 @@ class _TrackingProviderTile extends StatelessWidget {
       }
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
+        await showErrorDialog(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+          error,
+          title: '${provider.label} login failed',
+        );
       }
     }
   }
@@ -1111,7 +1192,10 @@ String _appSummary(PreferencesService prefs) {
   final diagnostics = prefs.developerMode
       ? 'developer details on'
       : 'developer details off';
-  return '$theme theme, $palette palette, $diagnostics';
+  final updates = prefs.automaticUpdateChecks
+      ? 'startup updates on'
+      : 'startup updates off';
+  return '$theme theme, $palette palette, $diagnostics, $updates';
 }
 
 String _playbackSummary(PreferencesService prefs) {
