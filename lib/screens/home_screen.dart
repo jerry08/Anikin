@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -26,8 +27,6 @@ class HomeScreen extends StatefulWidget {
     required this.downloadService,
     required this.mangaDownloadService,
     required this.trackingService,
-    required this.onSearchRequested,
-    required this.onSettingsRequested,
     super.key,
   });
 
@@ -38,8 +37,6 @@ class HomeScreen extends StatefulWidget {
   final DownloadService downloadService;
   final MangaDownloadService mangaDownloadService;
   final TrackingService trackingService;
-  final VoidCallback onSearchRequested;
-  final VoidCallback onSettingsRequested;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -79,8 +76,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return _BrowseData(
       featured: _BrowseData.featuredFrom([currentSeason, trending, popular]),
       sections: [
-        _BrowseSection(title: 'Top Airing', items: popular),
         _BrowseSection(title: 'Recently Updated', items: recentlyUpdated),
+        _BrowseSection(title: 'Top Airing', items: popular),
         _BrowseSection(title: 'Current Season', items: currentSeason),
         _BrowseSection(title: 'Trending', items: trending),
       ],
@@ -111,9 +108,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return _BrowseData(
       featured: _BrowseData.featuredFrom([trending, popular, topRated]),
       sections: [
+        _BrowseSection(title: 'Recently Updated', items: recentlyUpdated),
         _BrowseSection(title: 'Popular Manga', items: popular),
         _BrowseSection(title: 'Trending', items: trending),
-        _BrowseSection(title: 'Recently Updated', items: recentlyUpdated),
         _BrowseSection(title: 'Top Rated', items: topRated),
       ],
     );
@@ -235,8 +232,6 @@ class _HomeScreenState extends State<HomeScreen> {
             _HomeTopBar(
               contentType: _contentType,
               onContentTypeChanged: _setContentType,
-              onSearchRequested: widget.onSearchRequested,
-              onSettingsRequested: widget.onSettingsRequested,
             ),
           ],
         );
@@ -274,38 +269,22 @@ class _HomeTopBar extends StatelessWidget {
   const _HomeTopBar({
     required this.contentType,
     required this.onContentTypeChanged,
-    required this.onSearchRequested,
-    required this.onSettingsRequested,
   });
 
   final _HomeContentType contentType;
   final ValueChanged<_HomeContentType> onContentTypeChanged;
-  final VoidCallback onSearchRequested;
-  final VoidCallback onSettingsRequested;
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       bottom: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 10, 8),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
         child: Row(
           children: [
             Image.asset('assets/images/tori_gate.png', width: 34, height: 34),
-            const SizedBox(width: 8),
-            _ContentSwitch(value: contentType, onChanged: onContentTypeChanged),
             const Spacer(),
-            _HeaderIconButton(
-              tooltip: 'Search',
-              icon: Icons.search,
-              onPressed: onSearchRequested,
-            ),
-            const SizedBox(width: 4),
-            _HeaderIconButton(
-              tooltip: 'Settings',
-              icon: Icons.settings_outlined,
-              onPressed: onSettingsRequested,
-            ),
+            _ContentSwitch(value: contentType, onChanged: onContentTypeChanged),
           ],
         ),
       ),
@@ -322,35 +301,6 @@ class _TopChromeSpacer extends StatelessWidget {
   }
 }
 
-class _HeaderIconButton extends StatelessWidget {
-  const _HeaderIconButton({
-    required this.tooltip,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton.filledTonal(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      icon: Icon(icon),
-      style: IconButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: const Color(0x66000000),
-        fixedSize: const Size.square(40),
-        minimumSize: const Size.square(40),
-        padding: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
-  }
-}
-
 class _ContentSwitch extends StatelessWidget {
   const _ContentSwitch({required this.value, required this.onChanged});
 
@@ -359,30 +309,37 @@ class _ContentSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: const Color(0x66000000),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ContentSwitchButton(
-            label: 'Anime',
-            icon: Icons.live_tv_outlined,
-            selected: value == _HomeContentType.anime,
-            onPressed: () => onChanged(_HomeContentType.anime),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: const Color(0x26000000),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x26FFFFFF)),
           ),
-          const SizedBox(width: 2),
-          _ContentSwitchButton(
-            label: 'Manga',
-            icon: Icons.menu_book_outlined,
-            selected: value == _HomeContentType.manga,
-            onPressed: () => onChanged(_HomeContentType.manga),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ContentSwitchButton(
+                label: 'Anime',
+                icon: Icons.live_tv_outlined,
+                selected: value == _HomeContentType.anime,
+                onPressed: () => onChanged(_HomeContentType.anime),
+              ),
+              const SizedBox(width: 2),
+              _ContentSwitchButton(
+                label: 'Manga',
+                icon: Icons.menu_book_outlined,
+                selected: value == _HomeContentType.manga,
+                onPressed: () => onChanged(_HomeContentType.manga),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -403,7 +360,7 @@ class _ContentSwitchButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foregroundColor = selected ? Colors.black : Colors.white;
+    const foregroundColor = Colors.white;
     return Tooltip(
       message: label,
       child: Semantics(
@@ -414,13 +371,16 @@ class _ContentSwitchButton extends StatelessWidget {
           width: selected ? 92 : 40,
           height: 36,
           decoration: BoxDecoration(
-            color: selected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(7),
+            color: selected ? const Color(0x30FFFFFF) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected ? const Color(0x42FFFFFF) : Colors.transparent,
+            ),
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(7),
+              borderRadius: BorderRadius.circular(10),
               onTap: onPressed,
               child: Center(
                 child: Row(

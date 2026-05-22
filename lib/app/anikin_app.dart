@@ -57,21 +57,26 @@ class _AnikinAppState extends State<AnikinApp> {
   @override
   void initState() {
     super.initState();
-    _aniListService = widget.aniListService ?? AniListService();
+    _trackingService = widget.trackingService ?? TrackingService();
+    _aniListService =
+        widget.aniListService ??
+        AniListService(
+          includeAdultContentResolver: () =>
+              _trackingService.aniListAdultContentEnabled,
+        );
     _juroService = widget.juroService ?? JuroService();
     _watchHistoryService = widget.watchHistoryService ?? WatchHistoryService();
     _downloadService = widget.downloadService ?? DownloadService();
     _mangaDownloadService =
         widget.mangaDownloadService ??
         MangaDownloadService(juroService: _juroService);
-    _trackingService = widget.trackingService ?? TrackingService();
     _updateService = widget.updateService ?? UpdateService();
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: widget.preferences,
+      animation: Listenable.merge([widget.preferences, _trackingService]),
       builder: (context, _) {
         return MaterialApp(
           title: AppConstants.appName,
@@ -88,6 +93,7 @@ class _AnikinAppState extends State<AnikinApp> {
             );
           },
           home: MainShell(
+            key: ValueKey(_trackingService.aniListAdultContentEnabled),
             preferences: widget.preferences,
             aniListService: _aniListService,
             juroService: _juroService,
@@ -167,8 +173,6 @@ class _MainShellState extends State<MainShell> {
         downloadService: widget.downloadService,
         mangaDownloadService: widget.mangaDownloadService,
         trackingService: widget.trackingService,
-        onSearchRequested: () => setState(() => _selectedIndex = 1),
-        onSettingsRequested: () => setState(() => _selectedIndex = 3),
       ),
       SearchScreen(
         preferences: widget.preferences,

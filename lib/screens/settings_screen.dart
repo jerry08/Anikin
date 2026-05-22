@@ -157,7 +157,7 @@ class _AppSettingsPage extends StatelessWidget {
       preferences: preferences,
       childrenBuilder: (context, prefs) => [
         const _SectionTitle('Display'),
-        _DropdownTile<ThemeMode>(
+        _SelectionTile<ThemeMode>(
           icon: Icons.brightness_4_outlined,
           title: 'Theme',
           value: prefs.themeMode,
@@ -263,7 +263,7 @@ class _PlaybackSettingsPage extends StatelessWidget {
       preferences: preferences,
       childrenBuilder: (context, prefs) => [
         const _SectionTitle('Defaults'),
-        _DropdownTile<double>(
+        _SelectionTile<double>(
           icon: Icons.slow_motion_video,
           title: 'Default speed',
           value: prefs.defaultPlaybackSpeed,
@@ -280,7 +280,7 @@ class _PlaybackSettingsPage extends StatelessWidget {
           value: prefs.cursedSpeeds,
           onChanged: prefs.setCursedSpeeds,
         ),
-        _DropdownTile<ResizeModeSetting>(
+        _SelectionTile<ResizeModeSetting>(
           icon: Icons.fullscreen,
           title: 'Resize mode',
           value: prefs.resizeMode,
@@ -411,7 +411,7 @@ class _TrackingSettingsPage extends StatelessWidget {
                       trackingService.setProgressSyncEnabled(value),
                     ),
                   ),
-                  _DropdownTile<TrackingProvider>(
+                  _SelectionTile<TrackingProvider>(
                     icon: Icons.account_tree_outlined,
                     title: 'Primary provider',
                     value: trackingService.primaryProvider,
@@ -423,7 +423,7 @@ class _TrackingSettingsPage extends StatelessWidget {
                       }
                     },
                   ),
-                  _DropdownTile<TrackingSyncStrategy>(
+                  _SelectionTile<TrackingSyncStrategy>(
                     icon: Icons.alt_route,
                     title: 'Sync behavior',
                     value: trackingService.syncStrategy,
@@ -682,7 +682,7 @@ class _SourcesSettingsPage extends StatelessWidget {
           value: prefs.episodesDescending,
           onChanged: prefs.setEpisodesDescending,
         ),
-        _DropdownTile<EpisodeLayoutMode>(
+        _SelectionTile<EpisodeLayoutMode>(
           icon: Icons.grid_view,
           title: 'Episode layout',
           value: prefs.episodeLayoutMode,
@@ -831,7 +831,7 @@ class _ProviderDropdownTile extends StatelessWidget {
         ? (providers.isEmpty ? selectedKey : providers.first.key)
         : selectedKey;
 
-    return _DropdownTile<String>(
+    return _SelectionTile<String>(
       icon: icon,
       title: title,
       value: selectedValue,
@@ -1140,8 +1140,8 @@ class _PalettePreviewDot extends StatelessWidget {
   }
 }
 
-class _DropdownTile<T> extends StatelessWidget {
-  const _DropdownTile({
+class _SelectionTile<T> extends StatelessWidget {
+  const _SelectionTile({
     required this.icon,
     required this.title,
     required this.value,
@@ -1157,32 +1157,70 @@ class _DropdownTile<T> extends StatelessWidget {
   final String Function(T value) labelBuilder;
   final ValueChanged<T?>? onChanged;
 
+  bool get _enabled => onChanged != null && values.isNotEmpty;
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          SizedBox(width: 56, child: Icon(icon)),
-          Expanded(
-            child: DropdownButtonFormField<T>(
-              initialValue: values.contains(value) ? value : null,
-              isExpanded: true,
-              decoration: InputDecoration(labelText: title),
-              items: values
-                  .map(
-                    (item) => DropdownMenuItem<T>(
+    final selectedValue = values.contains(value)
+        ? value
+        : (values.isEmpty ? null : values.first);
+
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(
+        selectedValue == null
+            ? 'No options available'
+            : labelBuilder(selectedValue),
+      ),
+      trailing: const Icon(Icons.unfold_more),
+      enabled: _enabled,
+      onTap: _enabled
+          ? () => unawaited(_showSelectionDialog(context, selectedValue))
+          : null,
+    );
+  }
+
+  Future<void> _showSelectionDialog(BuildContext context, T? selectedValue) async {
+    final selected = await showDialog<T>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        contentPadding: const EdgeInsets.only(top: 8, bottom: 12),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360, maxHeight: 420),
+          child: SingleChildScrollView(
+            child: RadioGroup<T>(
+              groupValue: selectedValue,
+              onChanged: (value) => Navigator.of(context).pop(value),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final item in values)
+                    RadioListTile<T>(
                       value: item,
-                      child: Text(labelBuilder(item)),
+                      title: Text(labelBuilder(item)),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                      ),
                     ),
-                  )
-                  .toList(),
-              onChanged: onChanged,
+                ],
+              ),
             ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
           ),
         ],
       ),
     );
+
+    if (selected != null && selected != value) {
+      onChanged?.call(selected);
+    }
   }
 }
 

@@ -14,9 +14,7 @@ Future<void> main() async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
-    AppTheme.edgeToEdgeOverlayStyle(
-      binding.platformDispatcher.platformBrightness,
-    ),
+    AppTheme.edgeToEdgeOverlayStyle(Brightness.dark),
   );
   VideoPlayerMediaKit.ensureInitialized(windows: true, linux: true);
 

@@ -34,6 +34,8 @@ class TrackingService extends ChangeNotifier {
   static const _progressSyncEnabledKey = 'tracking.progressSyncEnabled';
   static const _pendingUpdatesKey = 'tracking.pendingUpdates';
   static const _malCodeVerifierKey = 'tracking.malCodeVerifier';
+  static const _aniListAdultContentKey =
+      'tracking.anilist.displayAdultContent';
 
   static const _aniListMediaFields = r'''
 id
@@ -83,6 +85,7 @@ media { MEDIA_FIELDS }
   TrackingProvider primaryProvider = TrackingProvider.anilist;
   TrackingSyncStrategy syncStrategy = TrackingSyncStrategy.primaryThenFallback;
   bool progressSyncEnabled = true;
+  bool aniListAdultContentEnabled = false;
   String? lastMessage;
 
   bool get hasLoggedInProvider => _accounts.values.any((account) {
@@ -129,11 +132,20 @@ media { MEDIA_FIELDS }
             .clamp(0, TrackingSyncStrategy.values.length - 1)
             .toInt()];
     progressSyncEnabled = prefs.getBool(_progressSyncEnabledKey) ?? true;
+    aniListAdultContentEnabled =
+        prefs.getBool(_aniListAdultContentKey) ?? false;
     _pendingUpdates
       ..clear()
       ..addAll(
         decodePendingTrackingUpdates(prefs.getString(_pendingUpdatesKey)),
       );
+
+    if (isLoggedIn(TrackingProvider.anilist) &&
+        !prefs.containsKey(_aniListAdultContentKey)) {
+      try {
+        await _refreshAniListAdultContentPreference();
+      } catch (_) {}
+    }
 
     if (_listenForLinks) {
       _linkSubscription ??= _appLinks.uriLinkStream.listen(
@@ -300,6 +312,10 @@ media { MEDIA_FIELDS }
   Future<void> logout(TrackingProvider provider) async {
     _accounts.remove(provider);
     await _prefs!.remove('$_accountPrefix${provider.key}');
+    if (provider == TrackingProvider.anilist) {
+      aniListAdultContentEnabled = false;
+      await _prefs!.remove(_aniListAdultContentKey);
+    }
     lastMessage = 'Logged out of ${provider.label}';
     notifyListeners();
   }
@@ -728,7 +744,11 @@ mutation ToggleMangaFavorite($mangaId: Int) {
       TrackingAccount(provider: TrackingProvider.anilist, accessToken: token),
       r'''
 query ViewerName {
-  Viewer { id name }
+  Viewer {
+    id
+    name
+    options { displayAdultContent }
+  }
 }
 ''',
       const {},
@@ -745,7 +765,33 @@ query ViewerName {
             : DateTime.now().millisecondsSinceEpoch + expiresInSeconds * 1000,
       ),
     );
+    aniListAdultContentEnabled =
+        viewer?['options']?['displayAdultContent'] == true;
+    await _prefs!.setBool(
+      _aniListAdultContentKey,
+      aniListAdultContentEnabled,
+    );
     lastMessage = 'Logged in to AniList';
+    notifyListeners();
+  }
+
+  Future<void> _refreshAniListAdultContentPreference() async {
+    final account = _requireAccount(TrackingProvider.anilist);
+    final data = await _postAniList(
+      account,
+      r'''
+query ViewerAdultContentPreference {
+  Viewer {
+    options { displayAdultContent }
+  }
+}
+''',
+      const {},
+    );
+    aniListAdultContentEnabled =
+        data['Viewer']?['options']?['displayAdultContent'] == true;
+    await _prefs!.setBool(_aniListAdultContentKey, aniListAdultContentEnabled);
+    notifyListeners();
   }
 
   Future<void> _saveAccount(TrackingAccount account) async {

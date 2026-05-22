@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -15,9 +16,14 @@ enum AniListMediaType {
 }
 
 class AniListService {
-  AniListService({http.Client? client}) : _client = client ?? http.Client();
+  AniListService({
+    http.Client? client,
+    FutureOr<bool> Function()? includeAdultContentResolver,
+  }) : _client = client ?? http.Client(),
+       _includeAdultContentResolver = includeAdultContentResolver;
 
   final http.Client _client;
+  final FutureOr<bool> Function()? _includeAdultContentResolver;
 
   static const _mediaFields = r'''
 id
@@ -39,6 +45,7 @@ seasonYear
 format
 countryOfOrigin
 siteUrl
+isAdult
 ''';
 
   Future<List<AniListMedia>> searchMedia({
@@ -52,6 +59,7 @@ siteUrl
     AniListMediaType mediaType = AniListMediaType.anime,
     required bool includeNonJapanese,
   }) async {
+    final includeAdultContent = await _resolveIncludeAdultContent();
     final tagIn = tags == null || tags.isEmpty ? null : tags;
     final variableDefinitions = [
       r'$page: Int!',
@@ -64,7 +72,7 @@ siteUrl
     ].join(',\n  ');
     final mediaArguments = [
       'type: MEDIA_TYPE',
-      'isAdult: false',
+      if (!includeAdultContent) 'isAdult: false',
       r'search: $search',
       r'sort: $sort',
       if (season != null) r'season: $season',
@@ -109,7 +117,13 @@ query MediaSearch(
     final media = ((data['Page']?['media'] as List?) ?? [])
         .whereType<Map<String, dynamic>>()
         .map(AniListMedia.fromJson)
-        .where((item) => includeNonJapanese || item.countryOfOrigin == 'JP')
+        .where(
+          (item) => _matchesMediaFilters(
+            item,
+            includeNonJapanese: includeNonJapanese,
+            includeAdultContent: includeAdultContent,
+          ),
+        )
         .toList();
     return media;
   }
@@ -143,6 +157,7 @@ query MediaSearch(
   Future<List<AniListMedia>> getRecentlyUpdated({
     required bool includeNonJapanese,
   }) async {
+    final includeAdultContent = await _resolveIncludeAdultContent();
     final now = DateTime.now();
     final start =
         now.subtract(const Duration(days: 7)).millisecondsSinceEpoch ~/ 1000;
@@ -173,7 +188,13 @@ query RecentlyUpdated($start: Int!, $end: Int!) {
         .map((item) => item['media'])
         .whereType<Map<String, dynamic>>()
         .map(AniListMedia.fromJson)
-        .where((item) => includeNonJapanese || item.countryOfOrigin == 'JP')
+        .where(
+          (item) => _matchesMediaFilters(
+            item,
+            includeNonJapanese: includeNonJapanese,
+            includeAdultContent: includeAdultContent,
+          ),
+        )
         .where((item) => seen.add(item.id))
         .toList();
   }
@@ -277,6 +298,31 @@ query RecentlyUpdated($start: Int!, $end: Int!) {
       7 || 8 || 9 => 'SUMMER',
       _ => 'FALL',
     };
+  }
+
+  Future<bool> _resolveIncludeAdultContent() async {
+    final resolver = _includeAdultContentResolver;
+    if (resolver == null) {
+      return false;
+    }
+
+    return await resolver();
+  }
+
+  static bool _matchesMediaFilters(
+    AniListMedia item, {
+    required bool includeNonJapanese,
+    required bool includeAdultContent,
+  }) {
+    if (!includeNonJapanese && item.countryOfOrigin != 'JP') {
+      return false;
+    }
+
+    if (!includeAdultContent && item.isAdult) {
+      return false;
+    }
+
+    return true;
   }
 }
 

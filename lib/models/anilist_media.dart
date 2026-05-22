@@ -80,6 +80,7 @@ class AniListMedia {
     this.format,
     this.countryOfOrigin,
     this.siteUrl,
+    this.isAdult = false,
   });
 
   final int id;
@@ -101,6 +102,7 @@ class AniListMedia {
   final String? format;
   final String? countryOfOrigin;
   final String? siteUrl;
+  final bool isAdult;
 
   String get displayTitle => title.preferred;
 
@@ -140,6 +142,7 @@ class AniListMedia {
       format: readString(json, 'format'),
       countryOfOrigin: readString(json, 'countryOfOrigin'),
       siteUrl: readString(json, 'siteUrl'),
+      isAdult: json['isAdult'] == true,
     );
   }
 }
