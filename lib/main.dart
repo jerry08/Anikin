@@ -11,7 +11,7 @@ import 'services/preferences_service.dart';
 import 'services/tracking_service.dart';
 
 Future<void> main() async {
-  final binding = WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     AppTheme.edgeToEdgeOverlayStyle(Brightness.dark),
