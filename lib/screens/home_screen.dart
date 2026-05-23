@@ -588,6 +588,7 @@ class _FeatureBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final image = media.bannerImage ?? media.cover.best;
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     return InkWell(
       onTap: onTap,
       child: Stack(
@@ -605,6 +606,21 @@ class _FeatureBanner extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [Color(0x22000000), Color(0xF0000000)],
+              ),
+            ),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0, 0.58, 0.86, 1],
+                colors: [
+                  backgroundColor.withAlpha(0),
+                  backgroundColor.withAlpha(0),
+                  backgroundColor.withAlpha(212),
+                  backgroundColor,
+                ],
               ),
             ),
           ),
