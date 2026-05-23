@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../core/app_constants.dart';
+import '../core/json_utils.dart';
+import '../models/anilist_airing_schedule.dart';
 import '../models/anilist_media.dart';
 
 enum AniListMediaType {
@@ -56,11 +58,13 @@ isAdult
     String? season,
     int? seasonYear,
     List<String>? tags,
+    List<String>? genres,
     AniListMediaType mediaType = AniListMediaType.anime,
     required bool includeNonJapanese,
   }) async {
     final includeAdultContent = await _resolveIncludeAdultContent();
     final tagIn = tags == null || tags.isEmpty ? null : tags;
+    final genreIn = genres == null || genres.isEmpty ? null : genres;
     final variableDefinitions = [
       r'$page: Int!',
       r'$perPage: Int!',
@@ -69,6 +73,7 @@ isAdult
       if (season != null) r'$season: MediaSeason',
       if (seasonYear != null) r'$seasonYear: Int',
       if (tagIn != null) r'$tagIn: [String]',
+      if (genreIn != null) r'$genreIn: [String]',
     ].join(',\n  ');
     final mediaArguments = [
       'type: MEDIA_TYPE',
@@ -78,6 +83,7 @@ isAdult
       if (season != null) r'season: $season',
       if (seasonYear != null) r'seasonYear: $seasonYear',
       if (tagIn != null) r'tag_in: $tagIn',
+      if (genreIn != null) r'genre_in: $genreIn',
     ].join(',\n      ');
     final variables = <String, dynamic>{
       'page': page,
@@ -93,6 +99,9 @@ isAdult
     }
     if (tagIn != null) {
       variables['tagIn'] = tagIn;
+    }
+    if (genreIn != null) {
+      variables['genreIn'] = genreIn;
     }
 
     final data = await _post(
@@ -205,6 +214,7 @@ query RecentlyUpdated($start: Int!, $end: Int!) {
     int perPage = 50,
     List<String>? sort,
     List<String>? tags,
+    List<String>? genres,
     required bool includeNonJapanese,
   }) {
     return searchMedia(
@@ -213,9 +223,26 @@ query RecentlyUpdated($start: Int!, $end: Int!) {
       perPage: perPage,
       sort: sort,
       tags: tags,
+      genres: genres,
       mediaType: AniListMediaType.manga,
       includeNonJapanese: includeNonJapanese,
     );
+  }
+
+  Future<List<String>> getGenreCollection() async {
+    final includeAdultContent = await _resolveIncludeAdultContent();
+    final data = await _post(r'''
+query GenreCollection {
+  GenreCollection
+}
+''', const {});
+
+    return readStringList(data['GenreCollection'])
+        .where((item) => item.trim().isNotEmpty)
+        .where((item) => includeAdultContent || !_isAdultGenreLabel(item))
+        .toSet()
+        .toList()
+      ..sort();
   }
 
   Future<List<AniListMedia>> getPopularManga({
@@ -252,6 +279,52 @@ query RecentlyUpdated($start: Int!, $end: Int!) {
       sort: const ['SCORE_DESC'],
       includeNonJapanese: includeNonJapanese,
     );
+  }
+
+  Future<List<AniListAiringSchedule>> getAiringCalendar({
+    required DateTime start,
+    required int days,
+    required bool includeNonJapanese,
+  }) async {
+    final includeAdultContent = await _resolveIncludeAdultContent();
+    final startTime = start.toUtc();
+    final endTime = startTime.add(Duration(days: days));
+    final startSeconds = startTime.millisecondsSinceEpoch ~/ 1000;
+    final endSeconds = endTime.millisecondsSinceEpoch ~/ 1000;
+
+    final data = await _post(
+      r'''
+query AiringCalendar($start: Int!, $end: Int!) {
+  Page(page: 1, perPage: 100) {
+    airingSchedules(
+      airingAt_greater: $start,
+      airingAt_lesser: $end,
+      sort: TIME
+      notYetAired: true
+    ) {
+      id
+      airingAt
+      episode
+      media { MEDIA_FIELDS }
+    }
+  }
+}
+'''
+          .replaceAll('MEDIA_FIELDS', _mediaFields),
+      {'start': startSeconds, 'end': endSeconds},
+    );
+
+    return ((data['Page']?['airingSchedules'] as List?) ?? [])
+        .whereType<Map<String, dynamic>>()
+        .map(AniListAiringSchedule.fromJson)
+        .where(
+          (item) => _matchesMediaFilters(
+            item.media,
+            includeNonJapanese: includeNonJapanese,
+            includeAdultContent: includeAdultContent,
+          ),
+        )
+        .toList();
   }
 
   Future<Map<String, dynamic>> _post(
@@ -323,6 +396,13 @@ query RecentlyUpdated($start: Int!, $end: Int!) {
     }
 
     return true;
+  }
+
+  static bool _isAdultGenreLabel(String genre) {
+    return switch (genre.trim().toLowerCase()) {
+      'hentai' || 'erotica' => true,
+      _ => false,
+    };
   }
 }
 

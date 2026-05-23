@@ -16,6 +16,7 @@ import '../services/watch_history_service.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/media_poster_card.dart';
 import 'detail_screen.dart';
+import 'home_discovery_screen.dart';
 import 'manga_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -184,16 +185,72 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _contentType = contentType);
   }
 
+  void _openSection(_BrowseSection section) {
+    final contentLabel = switch (_contentType) {
+      _HomeContentType.anime => 'anime',
+      _HomeContentType.manga => 'manga',
+    };
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => HomeMediaCollectionScreen(
+          title: section.title,
+          subtitle:
+              'A fuller $contentLabel shelf for ${section.title.toLowerCase()}.',
+          loader: () async => section.items,
+          onItemTap: _openMedia,
+          emptyTitle: 'Nothing to show',
+          emptyMessage: 'This shelf does not have any titles right now.',
+        ),
+      ),
+    );
+  }
+
+  void _openGenres() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => GenreBrowseScreen(
+          mediaType: switch (_contentType) {
+            _HomeContentType.anime => AniListMediaType.anime,
+            _HomeContentType.manga => AniListMediaType.manga,
+          },
+          preferences: widget.preferences,
+          aniListService: widget.aniListService,
+          onItemTap: _openMedia,
+        ),
+      ),
+    );
+  }
+
+  void _openCalendar() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AiringCalendarScreen(
+          preferences: widget.preferences,
+          aniListService: widget.aniListService,
+          onItemTap: _openMedia,
+        ),
+      ),
+    );
+  }
+
   List<Widget> _contentWidgets(_BrowseData data) {
     return [
       if (data.featured.isNotEmpty)
         _FeatureCarousel(items: data.featured, onItemTap: _openMedia),
       if (data.featured.isEmpty) const _TopChromeSpacer(),
+      _HomeShortcutStrip(
+        contentType: _contentType,
+        onGenres: _openGenres,
+        onCalendar: _contentType == _HomeContentType.anime
+            ? _openCalendar
+            : null,
+      ),
       for (final section in data.sections)
         MediaSection(
           title: section.title,
           items: section.items,
           onItemTap: _openMedia,
+          onMoreTap: () => _openSection(section),
         ),
     ];
   }
@@ -635,12 +692,14 @@ class MediaSection extends StatelessWidget {
     required this.title,
     required this.items,
     required this.onItemTap,
+    required this.onMoreTap,
     super.key,
   });
 
   final String title;
   final List<AniListMedia> items;
   final ValueChanged<AniListMedia> onItemTap;
+  final VoidCallback onMoreTap;
 
   @override
   Widget build(BuildContext context) {
@@ -654,12 +713,23 @@ class MediaSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'View all',
+                  onPressed: onMoreTap,
+                  icon: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
@@ -677,6 +747,148 @@ class MediaSection extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HomeShortcutStrip extends StatelessWidget {
+  const _HomeShortcutStrip({
+    required this.contentType,
+    required this.onGenres,
+    required this.onCalendar,
+  });
+
+  static const _genreImageUrl =
+      'https://s4.anilist.co/file/anilistcdn/media/anime/banner/16498-8jpFCOcDmneX.jpg';
+  static const _calendarImageUrl =
+      'https://s4.anilist.co/file/anilistcdn/media/anime/banner/125367-hGPJLSNfprO3.jpg';
+
+  final _HomeContentType contentType;
+  final VoidCallback onGenres;
+  final VoidCallback? onCalendar;
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = [
+      _HomeShortcutAction(
+        label: 'Genres',
+        icon: Icons.category_outlined,
+        imageUrl: _genreImageUrl,
+        onTap: onGenres,
+      ),
+      if (onCalendar != null)
+        _HomeShortcutAction(
+          label: 'Calendar',
+          icon: Icons.calendar_month_outlined,
+          imageUrl: _calendarImageUrl,
+          onTap: onCalendar!,
+        ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 22),
+      child: Row(
+        children: [
+          for (var index = 0; index < actions.length; index++) ...[
+            Expanded(child: actions[index]),
+            if (index < actions.length - 1) const SizedBox(width: 12),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeShortcutAction extends StatelessWidget {
+  const _HomeShortcutAction({
+    required this.label,
+    required this.icon,
+    required this.imageUrl,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final String imageUrl;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: colorScheme.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0.46,
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, _) =>
+                      ColoredBox(color: colorScheme.surfaceContainerHighest),
+                  errorWidget: (context, _, _) =>
+                      ColoredBox(color: colorScheme.surfaceContainerHighest),
+                ),
+              ),
+            ),
+            const Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0x8A000000), Color(0xB8000000)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0x33FFFFFF),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0x26FFFFFF)),
+                    ),
+                    child: Icon(icon, color: Colors.white),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        shadows: const [
+                          Shadow(color: Color(0x99000000), blurRadius: 10),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 16,
+                    color: Colors.white70,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

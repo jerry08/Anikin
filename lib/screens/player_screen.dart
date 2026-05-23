@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,7 +18,6 @@ import '../services/preferences_service.dart';
 import '../services/subtitle_service.dart';
 import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
-import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_error_view.dart';
 
 class PlayerScreen extends StatefulWidget {
@@ -70,6 +70,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _completedHandled = false;
   bool _playerModeExited = false;
   bool _closeInProgress = false;
+  bool _seekBarActive = false;
+  bool _resumeAfterSeekBar = false;
   Timer? _uiTimer;
   Timer? _hideTimer;
   Timer? _seekFeedbackTimer;
@@ -399,6 +401,56 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _scheduleControlsHide();
   }
 
+  Future<void> _seekTo(Duration position) async {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) {
+      return;
+    }
+    final clampedMs = position.inMilliseconds.clamp(
+      0,
+      controller.value.duration.inMilliseconds,
+    );
+    await controller.seekTo(Duration(milliseconds: clampedMs.toInt()));
+    if (mounted) {
+      setState(() {});
+    }
+    if (!_seekBarActive) {
+      _scheduleControlsHide();
+    }
+  }
+
+  void _beginSeekBarInteraction() {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) {
+      return;
+    }
+
+    _seekBarActive = true;
+    _resumeAfterSeekBar = controller.value.isPlaying;
+    _hideTimer?.cancel();
+    if (_resumeAfterSeekBar) {
+      unawaited(controller.pause());
+    }
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _endSeekBarInteraction() async {
+    final controller = _controller;
+    final shouldResume = _resumeAfterSeekBar;
+    _seekBarActive = false;
+    _resumeAfterSeekBar = false;
+
+    if (shouldResume && controller != null && controller.value.isInitialized) {
+      await controller.play();
+    }
+    if (mounted) {
+      setState(() {});
+    }
+    _scheduleControlsHide();
+  }
+
   void _showSeekFeedback(int seconds) {
     final direction = seconds < 0
         ? _SeekFeedbackDirection.backward
@@ -464,76 +516,83 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _episode.id,
       providerKey: _providerKey,
     );
-    final source = await showAppBottomSheet<VideoSource>(
+    final source = await showModalBottomSheet<VideoSource>(
       context: context,
-      initialChildSize: 0.72,
-      minChildSize: 0.34,
-      maxChildSize: 0.92,
-      builder: (context, scrollController) => FutureBuilder<List<VideoSource>>(
-        future: future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return AppErrorView(message: snapshot.error.toString());
-          }
-          final sources = snapshot.data ?? const <VideoSource>[];
-          if (sources.isEmpty) {
-            return const EmptyState(
-              icon: Icons.videocam_off_outlined,
-              title: 'No video sources',
-            );
-          }
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.72,
+        minChildSize: 0.34,
+        maxChildSize: 0.92,
+        builder: (context, scrollController) =>
+            FutureBuilder<List<VideoSource>>(
+              future: future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return AppErrorView(message: snapshot.error.toString());
+                }
+                final sources = snapshot.data ?? const <VideoSource>[];
+                if (sources.isEmpty) {
+                  return const EmptyState(
+                    icon: Icons.videocam_off_outlined,
+                    title: 'No video sources',
+                  );
+                }
 
-          final grouped = <String, List<VideoSource>>{};
-          for (final source in sources) {
-            grouped.putIfAbsent(source.serverName, () => []).add(source);
-          }
+                final grouped = <String, List<VideoSource>>{};
+                for (final source in sources) {
+                  grouped.putIfAbsent(source.serverName, () => []).add(source);
+                }
 
-          return ListView(
-            controller: scrollController,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                child: Text(
-                  'Sources',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-                ),
-              ),
-              for (final entry in grouped.entries) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
-                  child: Text(
-                    entry.key,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.secondary,
+                return ListView(
+                  controller: scrollController,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                      child: Text(
+                        'Sources',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                for (final source in entry.value)
-                  ListTile(
-                    leading: Icon(
-                      source.videoUrl == _source?.videoUrl
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
-                    ),
-                    title: Text(source.displayTitle),
-                    subtitle: Text(
-                      [
-                        source.resolution,
-                        source.fileType,
-                        source.extraNote,
-                      ].whereType<String>().join(' • '),
-                    ),
-                    onTap: () => Navigator.of(context).pop(source),
-                  ),
-              ],
-            ],
-          );
-        },
+                    for (final entry in grouped.entries) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+                        child: Text(
+                          entry.key,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                        ),
+                      ),
+                      for (final source in entry.value)
+                        ListTile(
+                          leading: Icon(
+                            source.videoUrl == _source?.videoUrl
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off,
+                          ),
+                          title: Text(source.displayTitle),
+                          subtitle: Text(
+                            [
+                              source.resolution,
+                              source.fileType,
+                              source.extraNote,
+                            ].whereType<String>().join(' • '),
+                          ),
+                          onTap: () => Navigator.of(context).pop(source),
+                        ),
+                    ],
+                  ],
+                );
+              },
+            ),
       ),
     );
 
@@ -552,12 +611,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
       return;
     }
 
-    final speed = await showAppBottomSheet<double>(
+    final speed = await showModalBottomSheet<double>(
       context: context,
-      initialChildSize: 0.46,
-      minChildSize: 0.28,
-      builder: (context, scrollController) => ListView(
-        controller: scrollController,
+      showDragHandle: true,
+      builder: (context) => ListView(
+        shrinkWrap: true,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
@@ -589,12 +647,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   Future<void> _selectResizeMode() async {
-    final mode = await showAppBottomSheet<ResizeModeSetting>(
+    final mode = await showModalBottomSheet<ResizeModeSetting>(
       context: context,
-      initialChildSize: 0.42,
-      minChildSize: 0.28,
-      builder: (context, scrollController) => ListView(
-        controller: scrollController,
+      showDragHandle: true,
+      builder: (context) => ListView(
+        shrinkWrap: true,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
@@ -651,20 +708,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
         body: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: _toggleControls,
-          onDoubleTapDown: (details) {
-            if (!widget.preferences.doubleTapSeek || _locked) {
-              return;
-            }
-            final width = MediaQuery.sizeOf(context).width;
-            unawaited(
-              _seekBy(
-                details.localPosition.dx < width / 2
-                    ? -widget.preferences.seekTimeSeconds
-                    : widget.preferences.seekTimeSeconds,
-                showFeedback: true,
-              ),
-            );
-          },
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -672,6 +715,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 _VideoSurface(controller: controller, fit: _videoFit)
               else
                 const ColoredBox(color: Colors.black),
+              if (widget.preferences.doubleTapSeek && !_locked)
+                _PlayerDoubleTapSeekZones(
+                  seekSeconds: widget.preferences.seekTimeSeconds,
+                  onSeekBackward: () => _seekBy(
+                    -widget.preferences.seekTimeSeconds,
+                    showFeedback: true,
+                  ),
+                  onSeekForward: () => _seekBy(
+                    widget.preferences.seekTimeSeconds,
+                    showFeedback: true,
+                  ),
+                ),
               _SeekFeedbackLayer(feedback: _seekFeedback),
               if (_caption != null && !_locked)
                 Positioned(
@@ -758,6 +813,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       _seekBy(-widget.preferences.seekTimeSeconds),
                   onSeekForward: () =>
                       _seekBy(widget.preferences.seekTimeSeconds),
+                  onSeek: _seekTo,
+                  onSeekStart: _beginSeekBarInteraction,
+                  onSeekEnd: _endSeekBarInteraction,
                   onPrevious: _playPrevious,
                   onNext: _playNext,
                   onSource: _isOffline ? null : _selectSource,
@@ -772,6 +830,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   currentSpeed: controller.value.playbackSpeed,
                   resizeMode: widget.preferences.resizeMode,
                   seekSeconds: widget.preferences.seekTimeSeconds,
+                  showRemainingDuration:
+                      widget.preferences.showRemainingDuration,
                 ),
               if ((_loading || _error != null) && !playerControlsVisible)
                 Positioned(
@@ -882,6 +942,75 @@ class _SeekFeedbackPulse extends StatelessWidget {
   }
 }
 
+class _PlayerDoubleTapSeekZones extends StatelessWidget {
+  const _PlayerDoubleTapSeekZones({
+    required this.seekSeconds,
+    required this.onSeekBackward,
+    required this.onSeekForward,
+  });
+
+  final int seekSeconds;
+  final Future<void> Function() onSeekBackward;
+  final Future<void> Function() onSeekForward;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: ExcludeSemantics(
+        child: SafeArea(
+          child: Align(
+            alignment: Alignment.center,
+            child: FractionallySizedBox(
+              widthFactor: 1,
+              heightFactor: 0.58,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _DoubleTapSeekRegion(
+                      tooltip: 'Rewind ${seekSeconds}s',
+                      onDoubleTap: onSeekBackward,
+                    ),
+                  ),
+                  const SizedBox(width: 140),
+                  Expanded(
+                    child: _DoubleTapSeekRegion(
+                      tooltip: 'Forward ${seekSeconds}s',
+                      onDoubleTap: onSeekForward,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DoubleTapSeekRegion extends StatelessWidget {
+  const _DoubleTapSeekRegion({
+    required this.tooltip,
+    required this.onDoubleTap,
+  });
+
+  final String tooltip;
+  final Future<void> Function() onDoubleTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onDoubleTap: () => unawaited(onDoubleTap()),
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        child: const SizedBox.expand(),
+      ),
+    );
+  }
+}
+
 class _VideoSurface extends StatelessWidget {
   const _VideoSurface({required this.controller, required this.fit});
 
@@ -921,6 +1050,9 @@ class _PlayerControls extends StatelessWidget {
     required this.onTogglePlay,
     required this.onSeekBackward,
     required this.onSeekForward,
+    required this.onSeek,
+    required this.onSeekStart,
+    required this.onSeekEnd,
     required this.onPrevious,
     required this.onNext,
     required this.onSource,
@@ -932,6 +1064,7 @@ class _PlayerControls extends StatelessWidget {
     required this.currentSpeed,
     required this.resizeMode,
     required this.seekSeconds,
+    required this.showRemainingDuration,
   });
 
   final VideoPlayerController controller;
@@ -944,6 +1077,9 @@ class _PlayerControls extends StatelessWidget {
   final VoidCallback onTogglePlay;
   final VoidCallback onSeekBackward;
   final VoidCallback onSeekForward;
+  final Future<void> Function(Duration) onSeek;
+  final VoidCallback onSeekStart;
+  final Future<void> Function() onSeekEnd;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final VoidCallback? onSource;
@@ -955,23 +1091,24 @@ class _PlayerControls extends StatelessWidget {
   final double currentSpeed;
   final ResizeModeSetting resizeMode;
   final int seekSeconds;
+  final bool showRemainingDuration;
 
   @override
   Widget build(BuildContext context) {
+    final controller = this.controller;
     final value = controller.value;
     final duration = value.duration;
     final position = value.position > duration ? duration : value.position;
-    final durationMs = duration.inMilliseconds <= 0
-        ? 1
-        : duration.inMilliseconds;
-    final positionMs = position.inMilliseconds.clamp(0, durationMs).toDouble();
+    final displayedPosition = position;
+    final remaining = duration > displayedPosition
+        ? duration - displayedPosition
+        : Duration.zero;
     final currentSource = source;
     final compact = MediaQuery.sizeOf(context).width < 430;
-    final controlGap = compact ? 2.0 : 8.0;
-    final seekButtonSize = compact ? 48.0 : 58.0;
-    final playButtonSize = compact ? 62.0 : 74.0;
-    final seekIconSize = compact ? 28.0 : 34.0;
-    final playIconSize = compact ? 40.0 : 48.0;
+    final controlGap = compact ? 12.0 : 24.0;
+    final transportButtonSize = compact ? 56.0 : 66.0;
+    final transportIconSize = compact ? 30.0 : 36.0;
+    final playIconSize = compact ? 34.0 : 40.0;
     final seekbarColor = Theme.of(context).colorScheme.primary;
 
     return Stack(
@@ -1095,8 +1232,8 @@ class _PlayerControls extends StatelessWidget {
                           tooltip: 'Previous episode',
                           onPressed: hasPrevious ? onPrevious : null,
                           filled: true,
-                          buttonSize: seekButtonSize,
-                          iconSize: seekIconSize,
+                          buttonSize: transportButtonSize,
+                          iconSize: transportIconSize,
                         ),
                         SizedBox(width: controlGap),
                         _ControlButton(
@@ -1104,8 +1241,8 @@ class _PlayerControls extends StatelessWidget {
                           tooltip: 'Rewind ${seekSeconds}s',
                           onPressed: onSeekBackward,
                           filled: true,
-                          buttonSize: seekButtonSize,
-                          iconSize: seekIconSize,
+                          buttonSize: transportButtonSize,
+                          iconSize: transportIconSize,
                         ),
                         SizedBox(width: controlGap),
                         _ControlButton(
@@ -1115,7 +1252,7 @@ class _PlayerControls extends StatelessWidget {
                           tooltip: value.isPlaying ? 'Pause' : 'Play',
                           onPressed: onTogglePlay,
                           filled: true,
-                          buttonSize: playButtonSize,
+                          buttonSize: transportButtonSize,
                           iconSize: playIconSize,
                         ),
                         SizedBox(width: controlGap),
@@ -1124,8 +1261,8 @@ class _PlayerControls extends StatelessWidget {
                           tooltip: 'Forward ${seekSeconds}s',
                           onPressed: onSeekForward,
                           filled: true,
-                          buttonSize: seekButtonSize,
-                          iconSize: seekIconSize,
+                          buttonSize: transportButtonSize,
+                          iconSize: transportIconSize,
                         ),
                         SizedBox(width: controlGap),
                         _ControlButton(
@@ -1133,8 +1270,8 @@ class _PlayerControls extends StatelessWidget {
                           tooltip: 'Next episode',
                           onPressed: hasNext ? onNext : null,
                           filled: true,
-                          buttonSize: seekButtonSize,
-                          iconSize: seekIconSize,
+                          buttonSize: transportButtonSize,
+                          iconSize: transportIconSize,
                         ),
                       ],
                     ),
@@ -1147,35 +1284,21 @@ class _PlayerControls extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          trackHeight: 3,
-                          activeTrackColor: seekbarColor,
-                          inactiveTrackColor: const Color(0x66FFFFFF),
-                          thumbColor: seekbarColor,
-                          overlayColor: seekbarColor.withAlpha(0x33),
-                          thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 6,
-                          ),
-                          overlayShape: const RoundSliderOverlayShape(
-                            overlayRadius: 16,
-                          ),
-                        ),
-                        child: Slider(
-                          min: 0,
-                          max: durationMs.toDouble(),
-                          value: positionMs,
-                          onChanged: (value) => controller.seekTo(
-                            Duration(milliseconds: value.round()),
-                          ),
-                        ),
+                      _VideoSeekBar(
+                        duration: duration,
+                        position: position,
+                        buffered: value.buffered,
+                        color: seekbarColor,
+                        onSeek: onSeek,
+                        onSeekStart: onSeekStart,
+                        onSeekEnd: onSeekEnd,
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: Row(
                           children: [
                             Text(
-                              '${formatDuration(position)} / ${formatDuration(duration)}',
+                              formatDuration(displayedPosition),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 13,
@@ -1183,6 +1306,17 @@ class _PlayerControls extends StatelessWidget {
                               ),
                             ),
                             const Spacer(),
+                            Text(
+                              showRemainingDuration
+                                  ? '-${formatDuration(remaining)} / ${formatDuration(duration)}'
+                                  : formatDuration(duration),
+                              style: const TextStyle(
+                                color: Color(0xCCFFFFFF),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
                             Text(
                               resizeMode.name,
                               style: const TextStyle(
@@ -1233,6 +1367,292 @@ class _PlayerControls extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _VideoSeekBar extends StatefulWidget {
+  const _VideoSeekBar({
+    required this.duration,
+    required this.position,
+    required this.buffered,
+    required this.color,
+    required this.onSeek,
+    required this.onSeekStart,
+    required this.onSeekEnd,
+  });
+
+  final Duration duration;
+  final Duration position;
+  final List<DurationRange> buffered;
+  final Color color;
+  final Future<void> Function(Duration) onSeek;
+  final VoidCallback onSeekStart;
+  final Future<void> Function() onSeekEnd;
+
+  @override
+  State<_VideoSeekBar> createState() => _VideoSeekBarState();
+}
+
+class _VideoSeekBarState extends State<_VideoSeekBar> {
+  bool _isDragging = false;
+  double? _dragPositionMs;
+
+  @override
+  void didUpdateWidget(covariant _VideoSeekBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.duration != widget.duration && !_isDragging) {
+      _dragPositionMs = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final durationMs = math.max(widget.duration.inMilliseconds, 1).toDouble();
+    final positionMs = widget.position.inMilliseconds
+        .clamp(0, durationMs.round())
+        .toDouble();
+    final displayedPositionMs = (_dragPositionMs ?? positionMs)
+        .clamp(0, durationMs)
+        .toDouble();
+    const tooltipWidth = 76.0;
+    const trackInset = 14.0;
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: _isDragging ? 1 : 0),
+      duration: const Duration(milliseconds: 160),
+      curve: Curves.easeOutCubic,
+      builder: (context, expansion, child) {
+        final thumbRadius = 5.0 + 3.0 * expansion;
+        final trackHeight = 3.0 + 2.0 * expansion;
+        final barHeight = 28.0 + 20.0 * expansion;
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final trackWidth = math.max(0.0, width - trackInset * 2);
+            final fraction = durationMs <= 0
+                ? 0.0
+                : displayedPositionMs / durationMs;
+            final thumbCenterX = trackInset + trackWidth * fraction;
+            final tooltipLeft = math
+                .min(
+                  math.max(thumbCenterX - tooltipWidth / 2, 0),
+                  math.max(width - tooltipWidth, 0),
+                )
+                .toDouble();
+
+            return SizedBox(
+              height: barHeight,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: SizedBox(
+                      height: 28,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: CustomPaint(
+                                painter: _SeekBarTrackPainter(
+                                  durationMs: durationMs,
+                                  positionMs: displayedPositionMs,
+                                  buffered: widget.buffered,
+                                  activeColor: widget.color,
+                                  trackHeight: trackHeight,
+                                  trackInset: trackInset,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              trackHeight: trackHeight,
+                              activeTrackColor: Colors.transparent,
+                              inactiveTrackColor: Colors.transparent,
+                              secondaryActiveTrackColor: Colors.transparent,
+                              disabledActiveTrackColor: Colors.transparent,
+                              disabledInactiveTrackColor: Colors.transparent,
+                              thumbColor: widget.color,
+                              overlayColor: widget.color.withAlpha(0x14),
+                              thumbShape: RoundSliderThumbShape(
+                                enabledThumbRadius: thumbRadius,
+                              ),
+                              overlayShape: const RoundSliderOverlayShape(
+                                overlayRadius: trackInset,
+                              ),
+                            ),
+                            child: Slider(
+                              min: 0,
+                              max: durationMs,
+                              value: displayedPositionMs,
+                              onChangeStart: _handleStart,
+                              onChanged: _handleChanged,
+                              onChangeEnd: _handleEnd,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: tooltipLeft,
+                    bottom: 24,
+                    child: IgnorePointer(
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 120),
+                        opacity: _isDragging ? 1 : 0,
+                        child: Container(
+                          width: tooltipWidth,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xE6000000),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            formatDuration(
+                              Duration(
+                                milliseconds: displayedPositionMs.round(),
+                              ),
+                            ),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _handleStart(double value) {
+    widget.onSeekStart();
+    setState(() {
+      _isDragging = true;
+      _dragPositionMs = value;
+    });
+    unawaited(widget.onSeek(_positionFor(value)));
+  }
+
+  void _handleChanged(double value) {
+    setState(() => _dragPositionMs = value);
+    unawaited(widget.onSeek(_positionFor(value)));
+  }
+
+  void _handleEnd(double value) {
+    final position = _positionFor(value);
+    setState(() {
+      _isDragging = false;
+      _dragPositionMs = null;
+    });
+    unawaited(_finishSeek(position));
+  }
+
+  Duration _positionFor(double value) {
+    return Duration(milliseconds: value.round());
+  }
+
+  Future<void> _finishSeek(Duration position) async {
+    try {
+      await widget.onSeek(position);
+    } finally {
+      await widget.onSeekEnd();
+    }
+  }
+}
+
+class _SeekBarTrackPainter extends CustomPainter {
+  const _SeekBarTrackPainter({
+    required this.durationMs,
+    required this.positionMs,
+    required this.buffered,
+    required this.activeColor,
+    required this.trackHeight,
+    required this.trackInset,
+  });
+
+  final double durationMs;
+  final double positionMs;
+  final List<DurationRange> buffered;
+  final Color activeColor;
+  final double trackHeight;
+  final double trackInset;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final left = trackInset;
+    final right = math.max(left, size.width - trackInset);
+    final top = (size.height - trackHeight) / 2;
+    final bottom = top + trackHeight;
+    final radius = Radius.circular(trackHeight / 2);
+
+    final backgroundPaint = Paint()..color = const Color(0x52FFFFFF);
+    canvas.drawRRect(
+      RRect.fromLTRBR(left, top, right, bottom, radius),
+      backgroundPaint,
+    );
+
+    if (durationMs <= 0 || right <= left) {
+      return;
+    }
+
+    final trackWidth = right - left;
+    final bufferPaint = Paint()..color = const Color(0x80FFFFFF);
+    for (final range in buffered) {
+      final startFraction = (range.start.inMilliseconds / durationMs).clamp(
+        0.0,
+        1.0,
+      );
+      final endFraction = (range.end.inMilliseconds / durationMs).clamp(
+        0.0,
+        1.0,
+      );
+      final startX = left + trackWidth * startFraction;
+      final endX = left + trackWidth * endFraction;
+      if (endX <= startX) {
+        continue;
+      }
+      canvas.drawRRect(
+        RRect.fromLTRBR(startX, top, endX, bottom, radius),
+        bufferPaint,
+      );
+    }
+
+    final playedFraction = (positionMs / durationMs).clamp(0.0, 1.0);
+    final playedRight = left + trackWidth * playedFraction;
+    if (playedRight > left) {
+      canvas.drawRRect(
+        RRect.fromLTRBR(left, top, playedRight, bottom, radius),
+        Paint()..color = activeColor,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SeekBarTrackPainter oldDelegate) {
+    return durationMs != oldDelegate.durationMs ||
+        positionMs != oldDelegate.positionMs ||
+        buffered != oldDelegate.buffered ||
+        activeColor != oldDelegate.activeColor ||
+        trackHeight != oldDelegate.trackHeight ||
+        trackInset != oldDelegate.trackInset;
   }
 }
 

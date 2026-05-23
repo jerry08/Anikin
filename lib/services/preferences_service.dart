@@ -42,6 +42,7 @@ class PreferencesService extends ChangeNotifier {
   int subtitleFontSize = 20;
   bool autoPlayNext = true;
   bool doubleTapSeek = true;
+  bool showRemainingDuration = true;
   bool timeStampsEnabled = true;
   bool showTimeStampButton = true;
   bool developerMode = false;
@@ -114,6 +115,7 @@ class PreferencesService extends ChangeNotifier {
     subtitleFontSize = prefs.getInt('subtitleFontSize') ?? 20;
     autoPlayNext = prefs.getBool('autoPlayNext') ?? true;
     doubleTapSeek = prefs.getBool('doubleTapSeek') ?? true;
+    showRemainingDuration = prefs.getBool('showRemainingDuration') ?? true;
     timeStampsEnabled = prefs.getBool('timeStampsEnabled') ?? true;
     showTimeStampButton = prefs.getBool('showTimeStampButton') ?? true;
     developerMode = prefs.getBool('developerMode') ?? false;
@@ -267,6 +269,12 @@ class PreferencesService extends ChangeNotifier {
   Future<void> setDoubleTapSeek(bool value) async {
     doubleTapSeek = value;
     await _prefs!.setBool('doubleTapSeek', value);
+    notifyListeners();
+  }
+
+  Future<void> setShowRemainingDuration(bool value) async {
+    showRemainingDuration = value;
+    await _prefs!.setBool('showRemainingDuration', value);
     notifyListeners();
   }
 

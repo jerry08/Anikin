@@ -10,6 +10,7 @@ class MediaPosterCard extends StatelessWidget {
     this.width = 132,
     this.showMetadata = true,
     this.showRating = true,
+    this.posterOverlay,
     super.key,
   });
 
@@ -18,6 +19,7 @@ class MediaPosterCard extends StatelessWidget {
   final double width;
   final bool showMetadata;
   final bool showRating;
+  final Widget? posterOverlay;
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +76,7 @@ class MediaPosterCard extends StatelessWidget {
                                 bottom: 7,
                                 child: _RatingBadge(score: media.meanScore!),
                               ),
+                            ?posterOverlay,
                           ],
                         ),
                       ),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../core/list_ranges.dart';
 import '../models/anilist_media.dart';
 import '../models/downloaded_episode.dart';
 import '../models/juro_models.dart';
@@ -20,6 +21,7 @@ import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_dialogs.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/detail_media_tools.dart';
+import '../widgets/list_range_selector.dart';
 import 'player_screen.dart';
 
 class DetailScreen extends StatefulWidget {
@@ -56,6 +58,7 @@ class _DetailScreenState extends State<DetailScreen> {
   AniListMediaListEntry? _listEntry;
   bool _listEntryLoading = false;
   bool _listEntrySaving = false;
+  int _episodeRangeIndex = 0;
   String? _error;
   String? _status;
 
@@ -75,6 +78,7 @@ class _DetailScreenState extends State<DetailScreen> {
       _error = null;
       _status = 'Loading providers';
       _episodes = [];
+      _episodeRangeIndex = 0;
     });
 
     try {
@@ -121,6 +125,7 @@ class _DetailScreenState extends State<DetailScreen> {
       setState(() {
         _providerAnime = null;
         _episodes = [];
+        _episodeRangeIndex = 0;
         _status = 'No source match found';
       });
       return;
@@ -149,6 +154,7 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
           )
           .toList();
+      _episodeRangeIndex = 0;
       _status = episodes.isEmpty ? 'No episodes found' : null;
     });
   }
@@ -160,6 +166,12 @@ class _DetailScreenState extends State<DetailScreen> {
     }
     return episodes;
   }
+
+  List<ListRange> get _episodeRanges =>
+      buildNumberedListRanges(_displayEpisodes, (episode) => episode.number);
+
+  List<AnimeEpisode> get _visibleEpisodes =>
+      applyListRange(_displayEpisodes, _episodeRanges, _episodeRangeIndex);
 
   Future<void> _refreshHistory() async {
     final history = await widget.watchHistoryService.getAll();
@@ -1043,9 +1055,14 @@ class _DetailScreenState extends State<DetailScreen> {
                 tooltip: widget.preferences.episodesDescending
                     ? 'Descending'
                     : 'Ascending',
-                onPressed: () => widget.preferences.setEpisodesDescending(
-                  !widget.preferences.episodesDescending,
-                ),
+                onPressed: () async {
+                  await widget.preferences.setEpisodesDescending(
+                    !widget.preferences.episodesDescending,
+                  );
+                  if (mounted) {
+                    setState(() => _episodeRangeIndex = 0);
+                  }
+                },
                 icon: Icon(
                   widget.preferences.episodesDescending
                       ? Icons.south
@@ -1056,7 +1073,12 @@ class _DetailScreenState extends State<DetailScreen> {
                 tooltip: 'Layout',
                 icon: const Icon(Icons.grid_view),
                 initialValue: widget.preferences.episodeLayoutMode,
-                onSelected: widget.preferences.setEpisodeLayoutMode,
+                onSelected: (value) async {
+                  await widget.preferences.setEpisodeLayoutMode(value);
+                  if (mounted) {
+                    setState(() {});
+                  }
+                },
                 itemBuilder: (context) => const [
                   PopupMenuItem(
                     value: EpisodeLayoutMode.semi,
@@ -1083,6 +1105,14 @@ class _DetailScreenState extends State<DetailScreen> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
+          if (_episodeRanges.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ListRangeSelector(
+              ranges: _episodeRanges,
+              selectedIndex: _episodeRangeIndex,
+              onSelected: (index) => setState(() => _episodeRangeIndex = index),
+            ),
+          ],
           const SizedBox(height: 10),
         ],
       ),
@@ -1090,7 +1120,7 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Widget _buildEpisodeSliver() {
-    final episodes = _displayEpisodes;
+    final episodes = _visibleEpisodes;
     if (widget.preferences.episodeLayoutMode == EpisodeLayoutMode.list) {
       return SliverList.builder(
         itemCount: episodes.length,

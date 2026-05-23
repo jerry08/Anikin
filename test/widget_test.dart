@@ -1481,6 +1481,7 @@ class _FakeAniListService extends AniListService {
     int page = 1,
     int perPage = 50,
     List<String>? sort,
+    List<String>? genres,
     String? season,
     int? seasonYear,
     List<String>? tags,
@@ -1500,6 +1501,7 @@ class _FakeAniListService extends AniListService {
     int page = 1,
     int perPage = 50,
     List<String>? sort,
+    List<String>? genres,
     List<String>? tags,
     required bool includeNonJapanese,
   }) async {
@@ -1564,6 +1566,7 @@ class _DelayedSearchAniListService extends AniListService {
     int page = 1,
     int perPage = 50,
     List<String>? sort,
+    List<String>? genres,
     String? season,
     int? seasonYear,
     List<String>? tags,

@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../core/list_ranges.dart';
 import '../models/anilist_media.dart';
 import '../models/downloaded_manga.dart';
 import '../models/juro_models.dart';
@@ -17,6 +18,7 @@ import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_dialogs.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/detail_media_tools.dart';
+import '../widgets/list_range_selector.dart';
 import 'manga_reader_screen.dart';
 
 class MangaDetailScreen extends StatefulWidget {
@@ -50,6 +52,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
   AniListMediaListEntry? _listEntry;
   bool _listEntryLoading = false;
   bool _listEntrySaving = false;
+  int _chapterRangeIndex = 0;
   String? _error;
   String? _status;
 
@@ -63,6 +66,12 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
     }
     return chapters;
   }
+
+  List<ListRange> get _chapterRanges =>
+      buildNumberedListRanges(_displayChapters, (chapter) => chapter.number);
+
+  List<MangaChapter> get _visibleChapters =>
+      applyListRange(_displayChapters, _chapterRanges, _chapterRangeIndex);
 
   @override
   void initState() {
@@ -78,6 +87,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
       _error = null;
       _status = 'Loading manga providers';
       _chapters = [];
+      _chapterRangeIndex = 0;
     });
 
     try {
@@ -123,6 +133,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
         _providerManga = null;
         _mangaInfo = null;
         _chapters = [];
+        _chapterRangeIndex = 0;
         _status = 'No source match found';
       });
       return;
@@ -146,6 +157,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
     setState(() {
       _mangaInfo = info;
       _chapters = info.chapters;
+      _chapterRangeIndex = 0;
       _status = info.chapters.isEmpty ? 'No chapters found' : null;
     });
   }
@@ -563,6 +575,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
     final description = _mangaInfo?.description?.isNotEmpty == true
         ? _mangaInfo!.description!
         : widget.media.description;
+    final visibleChapters = _visibleChapters;
 
     return Scaffold(
       body: CustomScrollView(
@@ -767,11 +780,13 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
                         tooltip: widget.preferences.mangaChaptersDescending
                             ? 'Descending'
                             : 'Ascending',
-                        onPressed: () {
-                          widget.preferences.setMangaChaptersDescending(
+                        onPressed: () async {
+                          await widget.preferences.setMangaChaptersDescending(
                             !widget.preferences.mangaChaptersDescending,
                           );
-                          setState(() {});
+                          if (mounted) {
+                            setState(() => _chapterRangeIndex = 0);
+                          }
                         },
                         icon: Icon(
                           widget.preferences.mangaChaptersDescending
@@ -781,6 +796,15 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
                       ),
                     ],
                   ),
+                  if (_chapterRanges.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    ListRangeSelector(
+                      ranges: _chapterRanges,
+                      selectedIndex: _chapterRangeIndex,
+                      onSelected: (index) =>
+                          setState(() => _chapterRangeIndex = index),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -797,10 +821,10 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
             )
           else
             SliverList.separated(
-              itemCount: _displayChapters.length,
+              itemCount: visibleChapters.length,
               separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (context, index) {
-                final chapter = _displayChapters[index];
+                final chapter = visibleChapters[index];
                 final request = _downloadRequestFor(chapter);
                 return ListTile(
                   leading: CircleAvatar(

@@ -330,6 +330,13 @@ class _PlaybackSettingsPage extends StatelessWidget {
           value: prefs.doubleTapSeek,
           onChanged: prefs.setDoubleTapSeek,
         ),
+        SwitchListTile(
+          secondary: const Icon(Icons.timer_outlined),
+          title: const Text('Show remaining time'),
+          subtitle: const Text('Show time left beside total duration'),
+          value: prefs.showRemainingDuration,
+          onChanged: prefs.setShowRemainingDuration,
+        ),
       ],
     );
   }
@@ -1181,7 +1188,10 @@ class _SelectionTile<T> extends StatelessWidget {
     );
   }
 
-  Future<void> _showSelectionDialog(BuildContext context, T? selectedValue) async {
+  Future<void> _showSelectionDialog(
+    BuildContext context,
+    T? selectedValue,
+  ) async {
     final selected = await showDialog<T>(
       context: context,
       builder: (context) => AlertDialog(
@@ -1239,7 +1249,10 @@ String _appSummary(PreferencesService prefs) {
 String _playbackSummary(PreferencesService prefs) {
   final speed = '${_formatSpeed(prefs.defaultPlaybackSpeed)}x';
   final resize = _formatEnumLabel(prefs.resizeMode.name).toLowerCase();
-  return '$speed default, $resize resize';
+  final remaining = prefs.showRemainingDuration
+      ? 'remaining time on'
+      : 'remaining time off';
+  return '$speed default, $resize resize, $remaining';
 }
 
 String _subtitlesSummary(PreferencesService prefs) {
