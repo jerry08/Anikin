@@ -23,7 +23,7 @@ class MangaScreen extends StatefulWidget {
   });
 
   final PreferencesService preferences;
-  final AniListService aniListService;
+  final MediaCatalogService aniListService;
   final JuroService juroService;
   final MangaDownloadService mangaDownloadService;
   final TrackingService trackingService;
@@ -43,22 +43,46 @@ class _MangaScreenState extends State<MangaScreen> {
   bool _isLoading = false;
   bool _canLoadMore = false;
   String? _error;
+  late String _catalogProviderKey;
 
   bool get _isSearching => _controller.text.trim().isNotEmpty;
 
   @override
   void initState() {
     super.initState();
+    _catalogProviderKey = widget.trackingService.primaryProvider.key;
+    widget.trackingService.addListener(_handleCatalogProviderChanged);
     _future = _loadHome();
     _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    widget.trackingService.removeListener(_handleCatalogProviderChanged);
     _debounce?.cancel();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _handleCatalogProviderChanged() {
+    final providerKey = widget.trackingService.primaryProvider.key;
+    if (providerKey == _catalogProviderKey) {
+      return;
+    }
+    _catalogProviderKey = providerKey;
+    _debounce?.cancel();
+    setState(() {
+      _future = _loadHome();
+      _page = 1;
+      _items.clear();
+      _error = null;
+      _canLoadMore = false;
+      _isLoading = false;
+    });
+    if (_isSearching) {
+      unawaited(_runSearch(reset: true));
+    }
   }
 
   Future<MangaHomeData> _loadHome() async {
@@ -87,8 +111,11 @@ class _MangaScreenState extends State<MangaScreen> {
   }
 
   Future<void> _refresh() async {
-    setState(() => _future = _loadHome());
-    await _future;
+    final future = _loadHome();
+    setState(() {
+      _future = future;
+    });
+    await future;
   }
 
   void _onScroll() {
@@ -235,7 +262,11 @@ class _MangaScreenState extends State<MangaScreen> {
         if (snapshot.hasError) {
           return AppErrorView(
             message: snapshot.error.toString(),
-            onRetry: () => setState(() => _future = _loadHome()),
+            onRetry: () {
+              setState(() {
+                _future = _loadHome();
+              });
+            },
           );
         }
 

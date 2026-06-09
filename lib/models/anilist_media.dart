@@ -1,3 +1,4 @@
+import '../core/image_url_utils.dart';
 import '../core/json_utils.dart';
 import '../core/text_utils.dart';
 
@@ -44,7 +45,7 @@ class MediaCover {
   final String? large;
   final String? color;
 
-  String? get best => firstNonBlank([extraLarge, large]);
+  String? get best => normalizeImageUrl(firstNonBlank([extraLarge, large]));
 
   factory MediaCover.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -52,8 +53,8 @@ class MediaCover {
     }
 
     return MediaCover(
-      extraLarge: readString(json, 'extraLarge'),
-      large: readString(json, 'large'),
+      extraLarge: normalizeImageUrl(readString(json, 'extraLarge')),
+      large: normalizeImageUrl(readString(json, 'large')),
       color: readString(json, 'color'),
     );
   }
@@ -81,6 +82,7 @@ class AniListMedia {
     this.countryOfOrigin,
     this.siteUrl,
     this.isAdult = false,
+    this.catalogProviderKey = 'anilist',
   });
 
   final int id;
@@ -103,8 +105,11 @@ class AniListMedia {
   final String? countryOfOrigin;
   final String? siteUrl;
   final bool isAdult;
+  final String catalogProviderKey;
 
   String get displayTitle => title.preferred;
+
+  bool get hasAniListId => catalogProviderKey == 'anilist';
 
   String get metadata {
     final parts = [
@@ -127,7 +132,7 @@ class AniListMedia {
       cover: MediaCover.fromJson(
         readJson(json, 'coverImage') as Map<String, dynamic>?,
       ),
-      bannerImage: readString(json, 'bannerImage'),
+      bannerImage: normalizeImageUrl(readString(json, 'bannerImage')),
       description: stripHtml(readString(json, 'description')),
       genres: readStringList(readJson(json, 'genres')),
       meanScore: readInt(json, 'meanScore'),
@@ -143,6 +148,7 @@ class AniListMedia {
       countryOfOrigin: readString(json, 'countryOfOrigin'),
       siteUrl: readString(json, 'siteUrl'),
       isAdult: json['isAdult'] == true,
+      catalogProviderKey: readString(json, 'catalogProviderKey') ?? 'anilist',
     );
   }
 }

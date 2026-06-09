@@ -17,6 +17,7 @@ import 'package:anikin/screens/manga_reader_screen.dart';
 import 'package:anikin/screens/player_screen.dart';
 import 'package:anikin/screens/search_screen.dart';
 import 'package:anikin/services/anilist_service.dart';
+import 'package:anikin/services/aniyomi_extension_service.dart';
 import 'package:anikin/services/download_service.dart';
 import 'package:anikin/services/juro_service.dart';
 import 'package:anikin/services/manga_download_service.dart';
@@ -50,12 +51,6 @@ void main() {
 
     expect(preferences.themeColorPalette, ThemeColorPalette.ocean);
     expect(preferences.automaticUpdateChecks, isFalse);
-  });
-
-  test('app version constant matches pubspec version', () {
-    final pubspec = File('pubspec.yaml').readAsStringSync();
-
-    expect(pubspec, contains('version: ${AppConstants.appVersion}'));
   });
 
   test('watch history loads legacy entries', () async {
@@ -382,6 +377,135 @@ https://cdn.example.com/720/index.m3u8
     expect(requested, isFalse);
   });
 
+  test('Juro service appends Aniyomi extension providers', () async {
+    final service = JuroService(
+      baseUrl: 'https://example.invalid/api',
+      aniyomiExtensionService: _FakeAniyomiExtensionService(),
+      client: MockClient((request) async {
+        expect(
+          request.url.toString(),
+          'https://example.invalid/api/Providers?type=0',
+        );
+        return http.Response(
+          jsonEncode([
+            {'key': 'Anime', 'name': 'Anime'},
+          ]),
+          200,
+        );
+      }),
+    );
+
+    final providers = await service.getProviders();
+
+    expect(providers.map((provider) => provider.key), [
+      'Anime',
+      AniyomiExtensionService.providerKeyForSourceId(123),
+    ]);
+  });
+
+  test('Juro service appends Aniyomi manga extension providers', () async {
+    final service = JuroService(
+      baseUrl: 'https://example.invalid/api',
+      aniyomiExtensionService: _FakeAniyomiExtensionService(),
+      client: MockClient((request) async {
+        expect(
+          request.url.toString(),
+          'https://example.invalid/api/Providers?type=1',
+        );
+        return http.Response(
+          jsonEncode([
+            {'key': 'Manga', 'name': 'Manga'},
+          ]),
+          200,
+        );
+      }),
+    );
+
+    final providers = await service.getMangaProviders();
+
+    expect(providers.map((provider) => provider.key), [
+      'Manga',
+      AniyomiExtensionService.providerKeyForSourceId(456, type: 1),
+    ]);
+  });
+
+  test(
+    'Juro service routes Aniyomi provider calls to extension service',
+    () async {
+      var requestedBackend = false;
+      final extensions = _FakeAniyomiExtensionService();
+      final service = JuroService(
+        baseUrl: '',
+        aniyomiExtensionService: extensions,
+        client: MockClient((request) async {
+          requestedBackend = true;
+          return http.Response('[]', 200);
+        }),
+      );
+      final providerKey = AniyomiExtensionService.providerKeyForSourceId(123);
+
+      final results = await service.searchAnime(
+        'frieren',
+        providerKey: providerKey,
+      );
+      final episodes = await service.getEpisodes(
+        results.single.id,
+        providerKey: providerKey,
+      );
+      final source = await service.getPreferredVideo(
+        episodes.single,
+        providerKey: providerKey,
+      );
+
+      expect(requestedBackend, isFalse);
+      expect(results.single.title, 'Frieren');
+      expect(episodes.single.name, 'The Journey Begins');
+      expect(source?.videoUrl, 'https://example.com/frieren.m3u8');
+      expect(extensions.lastSearchQuery, 'frieren');
+      expect(extensions.lastProviderKey, providerKey);
+    },
+  );
+
+  test(
+    'Juro service routes Aniyomi manga calls to extension service',
+    () async {
+      var requestedBackend = false;
+      final extensions = _FakeAniyomiExtensionService();
+      final service = JuroService(
+        baseUrl: '',
+        aniyomiExtensionService: extensions,
+        client: MockClient((request) async {
+          requestedBackend = true;
+          return http.Response('[]', 200);
+        }),
+      );
+      final providerKey = AniyomiExtensionService.providerKeyForSourceId(
+        456,
+        type: 1,
+      );
+
+      final results = await service.searchManga(
+        'dungeon',
+        providerKey: providerKey,
+      );
+      final info = await service.getMangaInfo(
+        results.single.id,
+        providerKey: providerKey,
+      );
+      final pages = await service.getChapterPages(
+        info.chapters.single.id,
+        providerKey: providerKey,
+      );
+
+      expect(requestedBackend, isFalse);
+      expect(results.single.title, 'Dungeon Meshi');
+      expect(info.chapters.single.displayTitle, 'Ch 1 • Hot Pot');
+      expect(pages.single.image, 'https://example.com/page-1.jpg');
+      expect(extensions.lastSearchQuery, 'dungeon');
+      expect(extensions.lastProviderKey, providerKey);
+    },
+  );
+
   test('update service reports newer GitHub releases', () async {
     final service = UpdateService(
       currentVersion: '3.0.2+46',
@@ -538,6 +662,7 @@ https://cdn.example.com/720/index.m3u8
         aniListService: _FakeAniListService(),
         juroService: _FakeJuroService(),
         watchHistoryService: WatchHistoryService(),
+        updateService: UpdateService(currentVersion: '0.0.0'),
       ),
     );
 
@@ -564,6 +689,7 @@ https://cdn.example.com/720/index.m3u8
         aniListService: _FakeAniListService(),
         juroService: _FakeJuroService(),
         watchHistoryService: WatchHistoryService(),
+        updateService: UpdateService(currentVersion: '0.0.0'),
       ),
     );
 
@@ -967,6 +1093,112 @@ https://cdn.example.com/720/index.m3u8
     expect(find.text('1080p'), findsWidgets);
     expect(find.byTooltip('Download episode'), findsOneWidget);
     expect(find.byTooltip('Copy link'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('anime provider sheet groups Juro and Aniyomi sources', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = PreferencesService();
+    await preferences.load();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) {
+          return MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(viewPadding: const EdgeInsets.only(bottom: 34)),
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+        home: DetailScreen(
+          media: const AniListMedia(
+            id: 42,
+            title: MediaTitle(english: 'Provider Sheet Show'),
+            cover: MediaCover(),
+          ),
+          preferences: preferences,
+          juroService: _ProviderPickerJuroService(),
+          watchHistoryService: WatchHistoryService(),
+          downloadService: DownloadService(),
+          trackingService: TrackingService(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Provider'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Anime Provider'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(ListView),
+        matching: find.text('Anime Provider'),
+      ),
+      findsNothing,
+    );
+    expect(find.text('Juro providers'), findsOneWidget);
+    expect(find.text('Aniyomi extensions'), findsOneWidget);
+    expect(find.text('Juro Anime'), findsOneWidget);
+    expect(find.text('Aniyomi Demo'), findsOneWidget);
+    expect(
+      tester.widget<ListView>(find.byType(ListView)).padding,
+      const EdgeInsets.only(bottom: 46),
+    );
+    expect(
+      tester.getTopLeft(find.text('Juro providers')).dy,
+      lessThan(tester.getTopLeft(find.text('Aniyomi extensions')).dy),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Aniyomi episode failures show empty detail state', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = PreferencesService();
+    await preferences.load();
+    final provider = SourceProvider(
+      key: AniyomiExtensionService.providerKeyForSourceId(123),
+      name: 'Aniyomi Demo',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DetailScreen(
+          media: const AniListMedia(
+            id: 42,
+            title: MediaTitle(english: 'Broken Provider Show'),
+            cover: MediaCover(),
+          ),
+          preferences: preferences,
+          juroService: _FailingAniyomiEpisodesJuroService(),
+          watchHistoryService: WatchHistoryService(),
+          downloadService: DownloadService(),
+          trackingService: TrackingService(),
+          initialProvider: provider,
+          initialProviderAnime: const JuroAnimeInfo(
+            id: 'extension-anime',
+            title: 'Broken Provider Show',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+
+    expect(find.text('Provider failed to load episodes'), findsOneWidget);
+    expect(
+      find.text('Try another provider or search the source manually.'),
+      findsOneWidget,
+    );
+    expect(find.byType(AppErrorView), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -1595,12 +1827,151 @@ class _DelayedSearchRequest {
   final Completer<List<AniListMedia>> completer;
 }
 
+class _FakeAniyomiExtensionService extends AniyomiExtensionService {
+  String? lastProviderKey;
+  String? lastSearchQuery;
+
+  @override
+  Future<List<SourceProvider>> getAnimeProviders() async => [
+    SourceProvider(
+      key: AniyomiExtensionService.providerKeyForSourceId(123),
+      name: 'Aniyomi Demo',
+      language: 'en',
+    ),
+  ];
+
+  @override
+  Future<List<SourceProvider>> getMangaProviders() async => [
+    SourceProvider(
+      key: AniyomiExtensionService.providerKeyForSourceId(456, type: 1),
+      name: 'Aniyomi Manga Demo',
+      language: 'en',
+    ),
+  ];
+
+  @override
+  Future<List<JuroAnimeInfo>> searchAnime(
+    String query, {
+    required String providerKey,
+  }) async {
+    lastProviderKey = providerKey;
+    lastSearchQuery = query;
+    return const [JuroAnimeInfo(id: 'extension-anime', title: 'Frieren')];
+  }
+
+  @override
+  Future<List<AnimeEpisode>> getEpisodes(
+    String animeId, {
+    required String providerKey,
+  }) async {
+    lastProviderKey = providerKey;
+    return const [
+      AnimeEpisode(
+        id: 'extension-episode',
+        name: 'The Journey Begins',
+        number: 1,
+      ),
+    ];
+  }
+
+  @override
+  Future<List<VideoServer>> getVideoServers(
+    String episodeId, {
+    required String providerKey,
+  }) async {
+    lastProviderKey = providerKey;
+    return const [];
+  }
+
+  @override
+  Future<List<VideoSource>> getVideos(
+    String query, {
+    required String providerKey,
+  }) async {
+    lastProviderKey = providerKey;
+    return const [
+      VideoSource(
+        title: 'Auto',
+        videoUrl: 'https://example.com/frieren.m3u8',
+        format: VideoFormat.hls,
+      ),
+    ];
+  }
+
+  @override
+  Future<List<MangaResult>> searchManga(
+    String query, {
+    required String providerKey,
+  }) async {
+    lastProviderKey = providerKey;
+    lastSearchQuery = query;
+    return const [MangaResult(id: 'extension-manga', title: 'Dungeon Meshi')];
+  }
+
+  @override
+  Future<MangaInfo?> getMangaInfo(
+    String mangaId, {
+    required String providerKey,
+  }) async {
+    lastProviderKey = providerKey;
+    return const MangaInfo(
+      id: 'extension-manga',
+      title: 'Dungeon Meshi',
+      chapters: [
+        MangaChapter(id: 'extension-chapter', title: 'Hot Pot', number: 1),
+      ],
+    );
+  }
+
+  @override
+  Future<List<MangaChapterPage>> getChapterPages(
+    String chapterId, {
+    required String providerKey,
+  }) async {
+    lastProviderKey = providerKey;
+    return const [
+      MangaChapterPage(image: 'https://example.com/page-1.jpg', page: 1),
+    ];
+  }
+}
+
 class _FakeJuroService extends JuroService {
   @override
   Future<List<SourceProvider>> getProviders() async => const [];
 
   @override
   Future<List<SourceProvider>> getMangaProviders() async => const [];
+}
+
+class _FailingAniyomiEpisodesJuroService extends _FakeJuroService {
+  @override
+  Future<List<AnimeEpisode>> getEpisodes(
+    String animeId, {
+    required String providerKey,
+  }) async {
+    throw PlatformException(
+      code: AniyomiExtensionService.extensionErrorCode,
+      message:
+          'Unexpected JSON token at offset 179: Expected start of the object',
+    );
+  }
+}
+
+class _ProviderPickerJuroService extends _FakeJuroService {
+  @override
+  Future<List<SourceProvider>> getProviders() async => [
+    const SourceProvider(key: 'Anime', name: 'Juro Anime'),
+    SourceProvider(
+      key: AniyomiExtensionService.providerKeyForSourceId(123),
+      name: 'Aniyomi Demo',
+    ),
+  ];
+
+  @override
+  Future<List<JuroAnimeInfo>> searchAnime(
+    String query, {
+    required String providerKey,
+  }) async => const [];
 }
 
 class _ResumeJuroService extends _FakeJuroService {

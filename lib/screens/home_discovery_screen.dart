@@ -46,7 +46,9 @@ class _HomeMediaCollectionScreenState extends State<HomeMediaCollectionScreen> {
 
   Future<void> _refresh() async {
     final future = widget.loader();
-    setState(() => _future = future);
+    setState(() {
+      _future = future;
+    });
     await future;
   }
 
@@ -171,7 +173,7 @@ class GenreBrowseScreen extends StatefulWidget {
 
   final AniListMediaType mediaType;
   final PreferencesService preferences;
-  final AniListService aniListService;
+  final MediaCatalogService aniListService;
   final ValueChanged<AniListMedia> onItemTap;
 
   @override
@@ -226,7 +228,9 @@ class _GenreBrowseScreenState extends State<GenreBrowseScreen> {
 
   Future<void> _refresh() async {
     final future = _loadGenres();
-    setState(() => _future = future);
+    setState(() {
+      _future = future;
+    });
     await future;
   }
 
@@ -280,7 +284,7 @@ class _GenreBrowseScreenState extends State<GenreBrowseScreen> {
             return const EmptyState(
               icon: Icons.category_outlined,
               title: 'No genres available',
-              message: 'AniList did not return any genres to browse right now.',
+              message: 'No genres were returned to browse right now.',
             );
           }
 
@@ -328,7 +332,7 @@ class AiringCalendarScreen extends StatefulWidget {
   });
 
   final PreferencesService preferences;
-  final AniListService aniListService;
+  final MediaCatalogService aniListService;
   final ValueChanged<AniListMedia> onItemTap;
 
   @override
@@ -356,7 +360,9 @@ class _AiringCalendarScreenState extends State<AiringCalendarScreen> {
 
   Future<void> _refresh() async {
     final future = _loadCalendar();
-    setState(() => _future = future);
+    setState(() {
+      _future = future;
+    });
     await future;
   }
 

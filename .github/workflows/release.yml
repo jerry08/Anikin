@@ -19,8 +19,35 @@ env:
   FALLBACK_JURO_API_BASE_URL: https://example.invalid/api
 
 jobs:
+  validate-version:
+    name: Validate version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate pubspec version and release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(awk '$1 == "version:" { print $2; exit }' pubspec.yaml)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?\+[0-9]+$ ]]; then
+            echo "pubspec.yaml version must use release-name+build-number, for example 3.0.9+52." >&2
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            expected_tag="v${version%%+*}"
+            if [[ "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
+              echo "Release tag $GITHUB_REF_NAME does not match pubspec.yaml version $version; expected $expected_tag." >&2
+              exit 1
+            fi
+          fi
+
   build-android:
     name: Android
+    needs: validate-version
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -138,6 +165,7 @@ jobs:
 
   build-windows:
     name: Windows ${{ matrix.arch }}
+    needs: validate-version
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
 
@@ -212,6 +240,7 @@ jobs:
 
   build-linux:
     name: Linux ${{ matrix.arch }}
+    needs: validate-version
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
 

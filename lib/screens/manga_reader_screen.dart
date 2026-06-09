@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../models/anilist_media.dart';
@@ -11,6 +12,7 @@ import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
+import '../services/window_service.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_error_view.dart';
 
@@ -24,6 +26,8 @@ class MangaReaderScreen extends StatefulWidget {
     required this.juroService,
     required this.mangaDownloadService,
     required this.trackingService,
+    this.providerKey,
+    this.providerName,
     super.key,
   });
 
@@ -35,6 +39,8 @@ class MangaReaderScreen extends StatefulWidget {
   final JuroService juroService;
   final MangaDownloadService mangaDownloadService;
   final TrackingService trackingService;
+  final String? providerKey;
+  final String? providerName;
 
   @override
   State<MangaReaderScreen> createState() => _MangaReaderScreenState();
@@ -44,7 +50,10 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
   late MangaChapter _chapter;
   late Future<List<MangaChapterPage>> _pagesFuture;
   final _pageController = PageController();
+  final _webtoonController = ScrollController();
+  final _keyboardFocusNode = FocusNode(debugLabel: 'Reader shortcuts');
   int _pageIndex = 0;
+  int _pageCount = 0;
   bool _chromeVisible = true;
   bool _readerWakelockEnabled = false;
 
@@ -55,6 +64,14 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
 
   bool get _canGoNext =>
       _chapterIndex >= 0 && _chapterIndex < widget.chapters.length - 1;
+
+  String get _providerKey =>
+      widget.providerKey ?? widget.preferences.lastMangaProviderKey;
+
+  String get _providerName =>
+      widget.providerName ??
+      widget.preferences.lastMangaProviderName ??
+      _providerKey;
 
   @override
   void initState() {
@@ -67,6 +84,9 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _webtoonController.dispose();
+    _keyboardFocusNode.dispose();
+    WindowService.setFullscreen(false);
     if (_readerWakelockEnabled) {
       WakelockPlus.disable();
     }
@@ -82,7 +102,7 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
 
     return widget.juroService.getChapterPages(
       chapter.id,
-      providerKey: widget.preferences.lastMangaProviderKey,
+      providerKey: _providerKey,
     );
   }
 
@@ -91,10 +111,8 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
       media: widget.media,
       manga: widget.mangaInfo,
       chapter: chapter,
-      providerKey: widget.preferences.lastMangaProviderKey,
-      providerName:
-          widget.preferences.lastMangaProviderName ??
-          widget.preferences.lastMangaProviderKey,
+      providerKey: _providerKey,
+      providerName: _providerName,
     );
   }
 
@@ -106,6 +124,9 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
     });
     if (_pageController.hasClients) {
       _pageController.jumpToPage(0);
+    }
+    if (_webtoonController.hasClients) {
+      _webtoonController.jumpTo(0);
     }
   }
 
@@ -131,6 +152,106 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
     _openChapter(widget.chapters[nextIndex]);
   }
 
+  void _goPageRelative(int offset) {
+    if (widget.preferences.mangaReadingMode == MangaReadingMode.webtoon) {
+      _scrollWebtoonRelative(offset > 0 ? 560 : -560);
+      return;
+    }
+
+    if (!_pageController.hasClients || _pageCount == 0) {
+      return;
+    }
+
+    final currentPage = (_pageController.page ?? _pageIndex).round();
+    final nextPage = (currentPage + offset).clamp(0, _pageCount - 1).toInt();
+    if (nextPage == currentPage) {
+      return;
+    }
+
+    _pageController.animateToPage(
+      nextPage,
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _goVisualPageRelative(int offset) {
+    final adjustedOffset =
+        widget.preferences.mangaReadingMode == MangaReadingMode.rightToLeft
+        ? -offset
+        : offset;
+    _goPageRelative(adjustedOffset);
+  }
+
+  void _scrollWebtoonRelative(double offset) {
+    if (!_webtoonController.hasClients) {
+      return;
+    }
+
+    final position = _webtoonController.position;
+    final target = (position.pixels + offset).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    _webtoonController.animateTo(
+      target.toDouble(),
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _handleKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return;
+    }
+
+    final key = event.logicalKey;
+    final repeating = event is KeyRepeatEvent;
+
+    if (!repeating &&
+        (key == LogicalKeyboardKey.keyF ||
+            (key == LogicalKeyboardKey.enter &&
+                HardwareKeyboard.instance.isAltPressed))) {
+      WindowService.toggleFullscreen();
+      return;
+    }
+
+    if (!repeating && key == LogicalKeyboardKey.escape) {
+      if (!_chromeVisible) {
+        setState(() => _chromeVisible = true);
+        return;
+      }
+      WindowService.setFullscreen(false);
+      Navigator.of(context).maybePop();
+      return;
+    }
+
+    if (!repeating && key == LogicalKeyboardKey.space) {
+      setState(() => _chromeVisible = !_chromeVisible);
+      return;
+    }
+
+    if (key == LogicalKeyboardKey.arrowRight ||
+        key == LogicalKeyboardKey.keyL) {
+      _goVisualPageRelative(1);
+      return;
+    }
+
+    if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.keyJ) {
+      _goVisualPageRelative(-1);
+      return;
+    }
+
+    if (key == LogicalKeyboardKey.arrowDown) {
+      _goPageRelative(1);
+      return;
+    }
+
+    if (key == LogicalKeyboardKey.arrowUp || key == LogicalKeyboardKey.keyK) {
+      _goPageRelative(-1);
+    }
+  }
+
   Widget _buildPages(List<MangaChapterPage> pages) {
     return switch (widget.preferences.mangaReadingMode) {
       MangaReadingMode.webtoon => _buildWebtoonPages(pages),
@@ -142,6 +263,7 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
   Widget _buildWebtoonPages(List<MangaChapterPage> pages) {
     final gap = widget.preferences.mangaPageGap;
     return ListView.builder(
+      controller: _webtoonController,
       padding: EdgeInsets.only(
         top: _chromeVisible ? 8 : MediaQuery.paddingOf(context).top + 8,
         bottom: MediaQuery.paddingOf(context).bottom + 18,
@@ -297,8 +419,7 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    widget.preferences.lastMangaProviderName ??
-                        widget.preferences.lastMangaProviderKey,
+                    _providerName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(
@@ -339,8 +460,11 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
             if (snapshot.hasError) {
               return AppErrorView(
                 message: snapshot.error.toString(),
-                onRetry: () =>
-                    setState(() => _pagesFuture = _loadPages(_chapter)),
+                onRetry: () {
+                  setState(() {
+                    _pagesFuture = _loadPages(_chapter);
+                  });
+                },
               );
             }
 
@@ -352,6 +476,7 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
               );
             }
 
+            _pageCount = pages.length;
             return _buildPages(pages);
           },
         ),
@@ -364,7 +489,12 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
           context,
         ).colorScheme.copyWith(surface: Colors.black, onSurface: Colors.white),
       ),
-      child: scaffold,
+      child: KeyboardListener(
+        focusNode: _keyboardFocusNode,
+        autofocus: true,
+        onKeyEvent: _handleKeyEvent,
+        child: scaffold,
+      ),
     );
   }
 }

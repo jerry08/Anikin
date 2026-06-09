@@ -10,6 +10,7 @@ import '../screens/home_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/settings_screen.dart';
 import '../services/anilist_service.dart';
+import '../services/aniyomi_extension_service.dart';
 import '../services/download_service.dart';
 import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
@@ -22,24 +23,26 @@ import '../widgets/update_dialogs.dart';
 class AnikinApp extends StatefulWidget {
   const AnikinApp({
     required this.preferences,
+    required this.updateService,
     this.aniListService,
+    this.aniyomiExtensionService,
     this.juroService,
     this.watchHistoryService,
     this.downloadService,
     this.mangaDownloadService,
     this.trackingService,
-    this.updateService,
     super.key,
   });
 
   final PreferencesService preferences;
   final AniListService? aniListService;
+  final AniyomiExtensionService? aniyomiExtensionService;
   final JuroService? juroService;
   final WatchHistoryService? watchHistoryService;
   final DownloadService? downloadService;
   final MangaDownloadService? mangaDownloadService;
   final TrackingService? trackingService;
-  final UpdateService? updateService;
+  final UpdateService updateService;
 
   @override
   State<AnikinApp> createState() => _AnikinAppState();
@@ -47,6 +50,7 @@ class AnikinApp extends StatefulWidget {
 
 class _AnikinAppState extends State<AnikinApp> {
   late final AniListService _aniListService;
+  late final AniyomiExtensionService _aniyomiExtensionService;
   late final JuroService _juroService;
   late final WatchHistoryService _watchHistoryService;
   late final DownloadService _downloadService;
@@ -64,13 +68,17 @@ class _AnikinAppState extends State<AnikinApp> {
           includeAdultContentResolver: () =>
               _trackingService.aniListAdultContentEnabled,
         );
-    _juroService = widget.juroService ?? JuroService();
+    _aniyomiExtensionService =
+        widget.aniyomiExtensionService ?? AniyomiExtensionService();
+    _juroService =
+        widget.juroService ??
+        JuroService(aniyomiExtensionService: _aniyomiExtensionService);
     _watchHistoryService = widget.watchHistoryService ?? WatchHistoryService();
     _downloadService = widget.downloadService ?? DownloadService();
     _mangaDownloadService =
         widget.mangaDownloadService ??
         MangaDownloadService(juroService: _juroService);
-    _updateService = widget.updateService ?? UpdateService();
+    _updateService = widget.updateService;
   }
 
   @override
@@ -96,6 +104,7 @@ class _AnikinAppState extends State<AnikinApp> {
             key: ValueKey(_trackingService.aniListAdultContentEnabled),
             preferences: widget.preferences,
             aniListService: _aniListService,
+            aniyomiExtensionService: _aniyomiExtensionService,
             juroService: _juroService,
             watchHistoryService: _watchHistoryService,
             downloadService: _downloadService,
@@ -113,6 +122,7 @@ class MainShell extends StatefulWidget {
   const MainShell({
     required this.preferences,
     required this.aniListService,
+    required this.aniyomiExtensionService,
     required this.juroService,
     required this.watchHistoryService,
     required this.downloadService,
@@ -124,6 +134,7 @@ class MainShell extends StatefulWidget {
 
   final PreferencesService preferences;
   final AniListService aniListService;
+  final AniyomiExtensionService aniyomiExtensionService;
   final JuroService juroService;
   final WatchHistoryService watchHistoryService;
   final DownloadService downloadService;
@@ -194,6 +205,10 @@ class _MainShellState extends State<MainShell> {
       SettingsScreen(
         preferences: widget.preferences,
         juroService: widget.juroService,
+        aniyomiExtensionService: widget.aniyomiExtensionService,
+        watchHistoryService: widget.watchHistoryService,
+        downloadService: widget.downloadService,
+        mangaDownloadService: widget.mangaDownloadService,
         trackingService: widget.trackingService,
         updateService: widget.updateService,
       ),

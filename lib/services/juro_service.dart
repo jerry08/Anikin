@@ -5,37 +5,55 @@ import 'package:http/http.dart' as http;
 import '../core/app_constants.dart';
 import '../models/juro_models.dart';
 import 'anilist_service.dart';
+import 'aniyomi_extension_service.dart';
 
 class JuroService {
-  JuroService({http.Client? client, String? baseUrl})
-    : _client = client ?? http.Client(),
-      _baseUrl = _normalizeBaseUrl(baseUrl ?? AppConstants.juroApiBaseUrl);
+  JuroService({
+    http.Client? client,
+    String? baseUrl,
+    AniyomiExtensionService? aniyomiExtensionService,
+  }) : _client = client ?? http.Client(),
+       _baseUrl = _normalizeBaseUrl(baseUrl ?? AppConstants.juroApiBaseUrl),
+       _aniyomiExtensionService = aniyomiExtensionService;
 
   final http.Client _client;
   final String? _baseUrl;
+  final AniyomiExtensionService? _aniyomiExtensionService;
 
   Future<List<SourceProvider>> getProviders() async {
     final uri = _uri('Providers', queryParameters: {'type': '0'});
     final json = await _getList(uri);
-    return json
+    final providers = json
         .whereType<Map<String, dynamic>>()
         .map(SourceProvider.fromJson)
         .toList();
+    final extensionProviders = await _getAniyomiProviders();
+    return [...providers, ...extensionProviders];
   }
 
   Future<List<SourceProvider>> getMangaProviders() async {
     final uri = _uri('Providers', queryParameters: {'type': '1'});
     final json = await _getList(uri);
-    return json
+    final providers = json
         .whereType<Map<String, dynamic>>()
         .map(SourceProvider.fromJson)
         .toList();
+    final extensionProviders = await _getAniyomiMangaProviders();
+    return [...providers, ...extensionProviders];
   }
 
   Future<List<JuroAnimeInfo>> searchAnime(
     String query, {
     required String providerKey,
   }) async {
+    if (_isAniyomiProvider(providerKey)) {
+      return _aniyomiExtensionService?.searchAnime(
+            query,
+            providerKey: providerKey,
+          ) ??
+          const [];
+    }
+
     final uri = _uri('$providerKey/Search', queryParameters: {'query': query});
     final json = await _getList(uri);
     return json
@@ -48,6 +66,14 @@ class JuroService {
     String animeId, {
     required String providerKey,
   }) async {
+    if (_isAniyomiProvider(providerKey)) {
+      return _aniyomiExtensionService?.getEpisodes(
+            animeId,
+            providerKey: providerKey,
+          ) ??
+          const [];
+    }
+
     final uri = _uri('$providerKey/Episodes/${Uri.encodeComponent(animeId)}');
     final json = await _getList(uri);
     return json
@@ -60,6 +86,14 @@ class JuroService {
     String episodeId, {
     required String providerKey,
   }) async {
+    if (_isAniyomiProvider(providerKey)) {
+      return _aniyomiExtensionService?.getVideoServers(
+            episodeId,
+            providerKey: providerKey,
+          ) ??
+          const [];
+    }
+
     final uri = _uri(
       '$providerKey/VideoServers/${Uri.encodeComponent(episodeId)}',
     );
@@ -74,6 +108,14 @@ class JuroService {
     String query, {
     required String providerKey,
   }) async {
+    if (_isAniyomiProvider(providerKey)) {
+      return _aniyomiExtensionService?.getVideos(
+            query,
+            providerKey: providerKey,
+          ) ??
+          const [];
+    }
+
     final uri = _uri('$providerKey/Videos', queryParameters: {'q': query});
     final json = await _getList(uri);
     return json
@@ -108,6 +150,14 @@ class JuroService {
     String query, {
     required String providerKey,
   }) async {
+    if (_isAniyomiMangaProvider(providerKey)) {
+      return _aniyomiExtensionService?.searchManga(
+            query,
+            providerKey: providerKey,
+          ) ??
+          const [];
+    }
+
     final uri = _uri('$providerKey/Search', queryParameters: {'q': query});
     final json = await _getList(uri);
     return json
@@ -121,6 +171,15 @@ class JuroService {
     String mangaId, {
     required String providerKey,
   }) async {
+    if (_isAniyomiMangaProvider(providerKey)) {
+      final info = await _aniyomiExtensionService?.getMangaInfo(
+        mangaId,
+        providerKey: providerKey,
+      );
+      if (info != null) return info;
+      throw const ApiException('Manga extension returned no details');
+    }
+
     final uri = _uri('$providerKey/${Uri.encodeComponent(mangaId)}');
     final json = await _getMap(uri);
     return MangaInfo.fromJson(json);
@@ -130,6 +189,14 @@ class JuroService {
     String chapterId, {
     required String providerKey,
   }) async {
+    if (_isAniyomiMangaProvider(providerKey)) {
+      return _aniyomiExtensionService?.getChapterPages(
+            chapterId,
+            providerKey: providerKey,
+          ) ??
+          const [];
+    }
+
     final uri = _uri(
       '$providerKey/ChapterPages/${Uri.encodeComponent(chapterId)}',
     );
@@ -164,6 +231,38 @@ class JuroService {
     return trimmed.endsWith('/')
         ? trimmed.substring(0, trimmed.length - 1)
         : trimmed;
+  }
+
+  bool _isAniyomiProvider(String providerKey) {
+    return AniyomiExtensionService.isAnimeProviderKey(providerKey);
+  }
+
+  bool _isAniyomiMangaProvider(String providerKey) {
+    return AniyomiExtensionService.isMangaProviderKey(providerKey);
+  }
+
+  Future<List<SourceProvider>> _getAniyomiProviders() async {
+    final service = _aniyomiExtensionService;
+    if (service == null) {
+      return const [];
+    }
+    try {
+      return await service.getAnimeProviders();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<SourceProvider>> _getAniyomiMangaProviders() async {
+    final service = _aniyomiExtensionService;
+    if (service == null) {
+      return const [];
+    }
+    try {
+      return await service.getMangaProviders();
+    } catch (_) {
+      return const [];
+    }
   }
 
   Future<List<Object?>> _getList(Uri uri) async {

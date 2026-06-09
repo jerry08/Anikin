@@ -5,10 +5,16 @@ import 'package:flutter/material.dart';
 import '../core/app_theme.dart';
 import '../models/juro_models.dart';
 import '../models/tracking.dart';
+import '../services/aniyomi_extension_service.dart';
+import '../services/download_service.dart';
 import '../services/juro_service.dart';
+import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
 import '../services/update_service.dart';
+import '../services/watch_history_service.dart';
+import 'aniyomi_extensions_screen.dart';
+import 'aniyomi_sources_screen.dart';
 import '../widgets/app_dialogs.dart';
 import '../widgets/update_dialogs.dart';
 
@@ -20,6 +26,10 @@ class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     required this.preferences,
     required this.juroService,
+    required this.aniyomiExtensionService,
+    required this.watchHistoryService,
+    required this.downloadService,
+    required this.mangaDownloadService,
     required this.trackingService,
     required this.updateService,
     super.key,
@@ -27,6 +37,10 @@ class SettingsScreen extends StatefulWidget {
 
   final PreferencesService preferences;
   final JuroService juroService;
+  final AniyomiExtensionService aniyomiExtensionService;
+  final WatchHistoryService watchHistoryService;
+  final DownloadService downloadService;
+  final MangaDownloadService mangaDownloadService;
   final TrackingService trackingService;
   final UpdateService updateService;
 
@@ -125,6 +139,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       preferences: widget.preferences,
                       providersFuture: _providersFuture,
                       mangaProvidersFuture: _mangaProvidersFuture,
+                    ),
+                  ),
+                ),
+                _SettingsNavigationTile(
+                  icon: Icons.travel_explore_outlined,
+                  title: 'Browse Aniyomi sources',
+                  subtitle: 'Open installed extension sources',
+                  onTap: () => _openSettingsPage(
+                    context,
+                    AniyomiSourcesScreen(
+                      extensionService: widget.aniyomiExtensionService,
+                      preferences: widget.preferences,
+                      juroService: widget.juroService,
+                      watchHistoryService: widget.watchHistoryService,
+                      downloadService: widget.downloadService,
+                      mangaDownloadService: widget.mangaDownloadService,
+                      trackingService: widget.trackingService,
+                    ),
+                  ),
+                ),
+                _SettingsNavigationTile(
+                  icon: Icons.extension_outlined,
+                  title: 'Aniyomi extensions',
+                  subtitle: 'Android extension sources',
+                  onTap: () => _openSettingsPage(
+                    context,
+                    AniyomiExtensionsScreen(
+                      extensionService: widget.aniyomiExtensionService,
                     ),
                   ),
                 ),

@@ -1,3 +1,4 @@
+import '../core/image_url_utils.dart';
 import 'anilist_media.dart';
 import 'juro_models.dart';
 
@@ -75,14 +76,16 @@ class WatchedEpisode {
     title:
         _firstText([providerAnimeTitle, mediaTitle, animeName]) ??
         'Unknown anime',
-    image: providerAnimeImage ?? mediaCoverUrl,
+    image: normalizeImageUrl(providerAnimeImage ?? mediaCoverUrl),
   );
 
   AnimeEpisode get resumeEpisode => AnimeEpisode(
     id: episodeId!,
     name: episodeName,
     number: episodeNumber!,
-    image: episodeImage ?? providerAnimeImage ?? mediaCoverUrl,
+    image: normalizeImageUrl(
+      episodeImage ?? providerAnimeImage ?? mediaCoverUrl,
+    ),
   );
 
   Map<String, dynamic> toJson() => {
@@ -113,14 +116,16 @@ class WatchedEpisode {
       watchedPercentage: (json['watchedPercentage'] as num?)?.toDouble() ?? 0,
       mediaId: (json['mediaId'] as num?)?.toInt(),
       mediaTitle: json['mediaTitle']?.toString(),
-      mediaCoverUrl: json['mediaCoverUrl']?.toString(),
+      mediaCoverUrl: normalizeImageUrl(json['mediaCoverUrl']?.toString()),
       providerAnimeId: json['providerAnimeId']?.toString(),
       providerAnimeTitle: json['providerAnimeTitle']?.toString(),
-      providerAnimeImage: json['providerAnimeImage']?.toString(),
+      providerAnimeImage: normalizeImageUrl(
+        json['providerAnimeImage']?.toString(),
+      ),
       episodeId: json['episodeId']?.toString(),
       episodeName: json['episodeName']?.toString(),
       episodeNumber: (json['episodeNumber'] as num?)?.toDouble(),
-      episodeImage: json['episodeImage']?.toString(),
+      episodeImage: normalizeImageUrl(json['episodeImage']?.toString()),
       providerKey: json['providerKey']?.toString(),
       providerName: json['providerName']?.toString(),
       updatedAtMs: (json['updatedAtMs'] as num?)?.toInt(),

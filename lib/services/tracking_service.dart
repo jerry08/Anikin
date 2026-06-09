@@ -23,6 +23,7 @@ class TrackingService extends ChangeNotifier {
 
   static const _anikinAniListClientId = '14733';
   static const _myAnimeListClientId = 'aeba28135e9a1c1e2dc92113e75fa318';
+  static const myAnimeListClientId = _myAnimeListClientId;
   static const _kitsuClientId =
       'dd031b32d2f56c990b1425efe6c42ad847e7fe3ab46bf1299f05ecd856bdb7dd';
   static const _kitsuClientSecret =
@@ -558,10 +559,10 @@ mutation SaveListEntry(
       {
         'mediaId': request.media.id,
         'status': request.status.graphqlName,
-        'progress': request.progress,
-        'progressVolumes': request.progressVolumes,
-        'score': request.score,
-        'repeat': request.repeat,
+        'progress': request.progress ?? 0,
+        'progressVolumes': request.progressVolumes ?? 0,
+        'score': request.score ?? 0,
+        'repeat': request.repeat ?? 0,
         'private': request.private,
         'notes': _blankToNull(request.notes),
         'startedAt': AniListFuzzyDate.fromDateTime(request.startedAt)?.toJson(),

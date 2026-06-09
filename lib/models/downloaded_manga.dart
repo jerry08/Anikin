@@ -1,3 +1,4 @@
+import '../core/image_url_utils.dart';
 import 'anilist_media.dart';
 import 'juro_models.dart';
 
@@ -86,7 +87,7 @@ class DownloadedMangaChapter {
   MangaInfo get mangaInfo => MangaInfo(
     id: mangaId,
     title: mangaTitle,
-    image: mangaImage ?? coverUrl,
+    image: normalizeImageUrl(mangaImage ?? coverUrl),
     description: mangaDescription,
     chapters: [chapter],
   );
@@ -136,9 +137,9 @@ class DownloadedMangaChapter {
       providerName: json['providerName']?.toString() ?? 'Manga',
       chapterId: json['chapterId']?.toString() ?? '',
       chapterNumber: (json['chapterNumber'] as num?)?.toDouble() ?? 0,
-      coverUrl: json['coverUrl']?.toString(),
+      coverUrl: normalizeImageUrl(json['coverUrl']?.toString()),
       chapterTitle: json['chapterTitle']?.toString(),
-      mangaImage: json['mangaImage']?.toString(),
+      mangaImage: normalizeImageUrl(json['mangaImage']?.toString()),
       mangaDescription: json['mangaDescription']?.toString(),
       pages: rawPages is List
           ? rawPages

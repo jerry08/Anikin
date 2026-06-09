@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +33,7 @@ class HomeScreen extends StatefulWidget {
   });
 
   final PreferencesService preferences;
-  final AniListService aniListService;
+  final MediaCatalogService aniListService;
   final JuroService juroService;
   final WatchHistoryService watchHistoryService;
   final DownloadService downloadService;
@@ -45,16 +46,40 @@ class HomeScreen extends StatefulWidget {
 
 enum _HomeContentType { anime, manga }
 
+const double _desktopBreakpoint = 900;
+const double _desktopContentMaxWidth = 1280;
+
 class _HomeScreenState extends State<HomeScreen> {
   Future<_BrowseData>? _animeFuture;
   Future<_BrowseData>? _mangaFuture;
   _HomeContentType _contentType = _HomeContentType.anime;
+  late String _catalogProviderKey;
 
   @override
   void initState() {
     super.initState();
+    _catalogProviderKey = widget.trackingService.primaryProvider.key;
+    widget.trackingService.addListener(_handleCatalogProviderChanged);
     _animeFuture = _loadAnime();
     _mangaFuture = _loadManga();
+  }
+
+  @override
+  void dispose() {
+    widget.trackingService.removeListener(_handleCatalogProviderChanged);
+    super.dispose();
+  }
+
+  void _handleCatalogProviderChanged() {
+    final providerKey = widget.trackingService.primaryProvider.key;
+    if (providerKey == _catalogProviderKey) {
+      return;
+    }
+    _catalogProviderKey = providerKey;
+    setState(() {
+      _animeFuture = _loadAnime();
+      _mangaFuture = _loadManga();
+    });
   }
 
   Future<_BrowseData> _loadAnime() async {
@@ -260,37 +285,64 @@ class _HomeScreenState extends State<HomeScreen> {
     return FutureBuilder<_BrowseData>(
       future: _activeFuture,
       builder: (context, snapshot) {
-        return Stack(
-          children: [
-            RefreshIndicator(
-              onRefresh: _refresh,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 24),
-                children: [
-                  if (snapshot.connectionState == ConnectionState.waiting)
-                    const SizedBox(
-                      height: 360,
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (snapshot.hasError)
-                    SizedBox(
-                      height: 360,
-                      child: AppErrorView(
-                        message: snapshot.error.toString(),
-                        onRetry: _retry,
-                      ),
-                    )
-                  else
-                    ..._contentWidgets(snapshot.data!),
-                ],
-              ),
-            ),
-            _HomeTopBar(
-              contentType: _contentType,
-              onContentTypeChanged: _setContentType,
-            ),
-          ],
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
+            final content = <Widget>[
+              if (snapshot.connectionState == ConnectionState.waiting)
+                const SizedBox(
+                  height: 360,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (snapshot.hasError)
+                SizedBox(
+                  height: 360,
+                  child: AppErrorView(
+                    message: snapshot.error.toString(),
+                    onRetry: _retry,
+                  ),
+                )
+              else
+                ..._contentWidgets(snapshot.data!),
+            ];
+
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                Positioned.fill(
+                  child: RefreshIndicator(
+                    onRefresh: _refresh,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(bottom: 24),
+                      children: [
+                        if (isDesktop)
+                          Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: _desktopContentMaxWidth,
+                              ),
+                              child: Column(children: content),
+                            ),
+                          )
+                        else
+                          ...content,
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  child: _HomeTopBar(
+                    contentType: _contentType,
+                    onContentTypeChanged: _setContentType,
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -335,14 +387,28 @@ class _HomeTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-        child: Row(
-          children: [
-            Image.asset('assets/images/tori_gate.png', width: 34, height: 34),
-            const Spacer(),
-            _ContentSwitch(value: contentType, onChanged: onContentTypeChanged),
-          ],
+      child: Align(
+        alignment: Alignment.topCenter,
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _desktopContentMaxWidth),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Row(
+              children: [
+                Image.asset(
+                  'assets/images/tori_gate.png',
+                  width: 34,
+                  height: 34,
+                ),
+                const Spacer(),
+                _ContentSwitch(
+                  value: contentType,
+                  onChanged: onContentTypeChanged,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -438,6 +504,7 @@ class _ContentSwitchButton extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(10),
+              mouseCursor: SystemMouseCursors.click,
               onTap: onPressed,
               child: Center(
                 child: Row(
@@ -529,52 +596,62 @@ class _FeatureCarouselState extends State<_FeatureCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final height = (width * 0.78).clamp(390.0, 440.0);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 22),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            height: height,
-            child: PageView.builder(
-              controller: _controller,
-              itemCount: widget.items.length,
-              onPageChanged: (index) => setState(() => _index = index),
-              itemBuilder: (context, index) {
-                final media = widget.items[index];
-                return _FeatureBanner(
-                  media: media,
-                  onTap: () => widget.onItemTap(media),
-                );
-              },
-            ),
-          ),
-          if (widget.items.length > 1) ...[
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var index = 0; index < widget.items.length; index++)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
-                    width: index == _index ? 18 : 7,
-                    height: 7,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    decoration: BoxDecoration(
-                      color: index == _index
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final isDesktop = width >= _desktopBreakpoint;
+        final height = isDesktop
+            ? (width * 0.34).clamp(340.0, 420.0).toDouble()
+            : (width * 0.78).clamp(390.0, 440.0).toDouble();
+
+        return Padding(
+          padding: EdgeInsets.only(bottom: isDesktop ? 26 : 22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: height,
+                child: PageView.builder(
+                  controller: _controller,
+                  itemCount: widget.items.length,
+                  onPageChanged: (index) => setState(() => _index = index),
+                  itemBuilder: (context, index) {
+                    final media = widget.items[index];
+                    return _FeatureBanner(
+                      media: media,
+                      onTap: () => widget.onItemTap(media),
+                    );
+                  },
+                ),
+              ),
+              if (widget.items.length > 1) ...[
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (var index = 0; index < widget.items.length; index++)
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        width: index == _index ? 18 : 7,
+                        height: 7,
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        decoration: BoxDecoration(
+                          color: index == _index
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                  ],
+                ),
               ],
-            ),
-          ],
-        ],
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -588,8 +665,10 @@ class _FeatureBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final image = media.bannerImage ?? media.cover.best;
-    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     return InkWell(
+      mouseCursor: SystemMouseCursors.click,
+      focusColor: Colors.white.withValues(alpha: 0.08),
+      hoverColor: Colors.white.withValues(alpha: 0.06),
       onTap: onTap,
       child: Stack(
         fit: StackFit.expand,
@@ -606,21 +685,6 @@ class _FeatureBanner extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [Color(0x22000000), Color(0xF0000000)],
-              ),
-            ),
-          ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: const [0, 0.58, 0.86, 1],
-                colors: [
-                  backgroundColor.withAlpha(0),
-                  backgroundColor.withAlpha(0),
-                  backgroundColor.withAlpha(212),
-                  backgroundColor,
-                ],
               ),
             ),
           ),
@@ -723,47 +787,99 @@ class MediaSection extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
+        final horizontalPadding = isDesktop ? 20.0 : 12.0;
+
+        return Padding(
+          padding: EdgeInsets.only(bottom: isDesktop ? 30 : 22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'View all',
+                      onPressed: onMoreTap,
+                      icon: const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (isDesktop)
+                _DesktopMediaSectionGrid(items: items, onItemTap: onItemTap)
+              else
+                SizedBox(
+                  height: 252,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: items.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 6),
+                    itemBuilder: (context, index) => MediaPosterCard(
+                      media: items[index],
+                      onTap: () => onItemTap(items[index]),
                     ),
                   ),
                 ),
-                IconButton(
-                  tooltip: 'View all',
-                  onPressed: onMoreTap,
-                  icon: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
-                ),
-              ],
-            ),
+            ],
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 252,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: items.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 6),
-              itemBuilder: (context, index) => MediaPosterCard(
-                media: items[index],
-                onTap: () => onItemTap(items[index]),
-              ),
-            ),
+        );
+      },
+    );
+  }
+}
+
+class _DesktopMediaSectionGrid extends StatelessWidget {
+  const _DesktopMediaSectionGrid({
+    required this.items,
+    required this.onItemTap,
+  });
+
+  final List<AniListMedia> items;
+  final ValueChanged<AniListMedia> onItemTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = (constraints.maxWidth / 158)
+            .floor()
+            .clamp(4, 8)
+            .toInt();
+        final visibleCount = math.min(items.length, columns * 2);
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          itemCount: visibleCount,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 14,
+            crossAxisSpacing: 10,
+            childAspectRatio: 0.54,
           ),
-        ],
-      ),
+          itemBuilder: (context, index) => MediaPosterCard(
+            media: items[index],
+            width: double.infinity,
+            onTap: () => onItemTap(items[index]),
+          ),
+        );
+      },
     );
   }
 }
@@ -838,6 +954,7 @@ class _HomeShortcutAction extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
+        mouseCursor: SystemMouseCursors.click,
         onTap: onTap,
         child: Stack(
           children: [

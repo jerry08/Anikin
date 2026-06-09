@@ -29,7 +29,7 @@ class SearchScreen extends StatefulWidget {
   });
 
   final PreferencesService preferences;
-  final AniListService aniListService;
+  final MediaCatalogService aniListService;
   final JuroService juroService;
   final WatchHistoryService watchHistoryService;
   final DownloadService downloadService;
@@ -95,6 +95,7 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isLoading = false;
   bool _canLoadMore = false;
   String? _error;
+  late String _catalogProviderKey;
 
   bool get _hasSearchInput =>
       _controller.text.trim().isNotEmpty || _selectedTags.isNotEmpty;
@@ -102,15 +103,38 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
+    _catalogProviderKey = widget.trackingService.primaryProvider.key;
+    widget.trackingService.addListener(_handleCatalogProviderChanged);
     _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    widget.trackingService.removeListener(_handleCatalogProviderChanged);
     _debounce?.cancel();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _handleCatalogProviderChanged() {
+    final providerKey = widget.trackingService.primaryProvider.key;
+    if (providerKey == _catalogProviderKey) {
+      return;
+    }
+    _catalogProviderKey = providerKey;
+    _debounce?.cancel();
+    setState(() {
+      _searchGeneration++;
+      _page = 1;
+      _items.clear();
+      _error = null;
+      _canLoadMore = false;
+      _isLoading = false;
+    });
+    if (_hasSearchInput) {
+      unawaited(_runSearch(reset: true));
+    }
   }
 
   void _onScroll() {
@@ -303,6 +327,7 @@ class _SearchScreenState extends State<SearchScreen> {
       builder: (context, scrollController) => _TagFilterSheet(
         selectedTags: _selectedTags,
         scrollController: scrollController,
+        providerLabel: widget.aniListService.providerLabel,
       ),
     );
 
@@ -333,7 +358,8 @@ class _SearchScreenState extends State<SearchScreen> {
       return 'No results';
     }
     return switch (_contentType) {
-      _SearchContentType.anime => 'Search AniList',
+      _SearchContentType.anime =>
+        'Search ${widget.aniListService.providerLabel}',
       _SearchContentType.manga => 'Search manga',
     };
   }
@@ -591,10 +617,12 @@ class _TagFilterSheet extends StatefulWidget {
   const _TagFilterSheet({
     required this.selectedTags,
     required this.scrollController,
+    required this.providerLabel,
   });
 
   final Set<String> selectedTags;
   final ScrollController scrollController;
+  final String providerLabel;
 
   @override
   State<_TagFilterSheet> createState() => _TagFilterSheetState();
@@ -630,7 +658,7 @@ class _TagFilterSheetState extends State<_TagFilterSheet> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Tags are applied to AniList search results.',
+              'Tags are applied to ${widget.providerLabel} search results when supported.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),

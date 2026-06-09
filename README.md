@@ -38,8 +38,17 @@ Anikin parses website data and filter required info, thus It removes the ads for
 
 | Platform | Download | Status |
 |----------|----------|--------|
-| Android    |[![Download Button](https://img.shields.io/github/v/release/jerry08/Anikin?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](https://github.com/jerry08/Anikin/releases/download/v2.0.2/Anikin-v2.0.2.apk)| ✅ Stable |
-| Windows    |[![Download Button](https://img.shields.io/github/v/release/jerry08/Anikin?color=00A8E8&label=Windows-Zip&logo=windows&style=for-the-badge)](https://github.com/jerry08/Anikin/releases/download/v2.0.2/Anikin-windows-v2.0.2.zip)| ✅ Stable |
+| Android    |[![Download Button](https://img.shields.io/github/v/release/jerry08/Anikin?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](https://github.com/jerry08/Anikin/releases/latest/download/Anikin-android-universal.apk)| ✅ Stable |
+| Windows    |[![Download Button](https://img.shields.io/github/v/release/jerry08/Anikin?color=00A8E8&label=Windows-Zip&logo=windows&style=for-the-badge)](https://github.com/jerry08/Anikin/releases/latest/download/Anikin-windows-x64.zip)| ✅ Stable |
+
+## RELEASING
+
+Update the `version:` value in `pubspec.yaml`. The part before `+` is the
+public release version, and the numeric part after `+` is the build number,
+which must increase for each published build.
+
+Create and push a tag matching the public version, such as `v3.0.9` for
+`version: 3.0.9+52`. The release workflow rejects tags that do not match.
 
 ## WANT TO CONTRIBUTE?
 

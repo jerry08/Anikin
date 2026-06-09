@@ -1,3 +1,4 @@
+import '../core/image_url_utils.dart';
 import 'anilist_media.dart';
 import 'juro_models.dart';
 
@@ -47,14 +48,14 @@ class DownloadedEpisode {
   JuroAnimeInfo get providerAnime => JuroAnimeInfo(
     id: providerAnimeId,
     title: providerAnimeTitle,
-    image: coverUrl,
+    image: normalizeImageUrl(coverUrl),
   );
 
   AnimeEpisode get episode => AnimeEpisode(
     id: episodeId,
     name: episodeName,
     number: episodeNumber,
-    image: coverUrl,
+    image: normalizeImageUrl(coverUrl),
   );
 
   Map<String, Object?> toJson() => {
@@ -86,7 +87,7 @@ class DownloadedEpisode {
       episodeId: json['episodeId']?.toString() ?? '',
       episodeName: json['episodeName']?.toString(),
       episodeNumber: (json['episodeNumber'] as num?)?.toDouble() ?? 0,
-      coverUrl: json['coverUrl']?.toString(),
+      coverUrl: normalizeImageUrl(json['coverUrl']?.toString()),
       sourceTitle: json['sourceTitle']?.toString() ?? 'Offline',
       serverName: json['serverName']?.toString() ?? 'Offline',
       localPath: json['localPath']?.toString() ?? '',

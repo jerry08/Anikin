@@ -17,7 +17,9 @@ import '../services/juro_service.dart';
 import '../services/preferences_service.dart';
 import '../services/subtitle_service.dart';
 import '../services/tracking_service.dart';
+import '../services/window_service.dart';
 import '../services/watch_history_service.dart';
+import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_error_view.dart';
 
 class PlayerScreen extends StatefulWidget {
@@ -56,6 +58,7 @@ class PlayerScreen extends StatefulWidget {
 
 class _PlayerScreenState extends State<PlayerScreen> {
   final _subtitleService = SubtitleService();
+  final _keyboardFocusNode = FocusNode(debugLabel: 'Player shortcuts');
 
   VideoPlayerController? _controller;
   VideoSource? _source;
@@ -110,6 +113,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _controller?.removeListener(_onControllerChanged);
     _controller?.dispose();
     unawaited(_exitPlayerMode());
+    _keyboardFocusNode.dispose();
     super.dispose();
   }
 
@@ -144,6 +148,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     await SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    await WindowService.setFullscreen(false);
     await WakelockPlus.disable();
   }
 
@@ -507,6 +512,53 @@ class _PlayerScreenState extends State<PlayerScreen> {
     setState(() {});
   }
 
+  Future<void> _toggleFullscreen() async {
+    await WindowService.toggleFullscreen();
+    _scheduleControlsHide();
+  }
+
+  void _handleKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return;
+    }
+
+    final key = event.logicalKey;
+    final repeating = event is KeyRepeatEvent;
+
+    if (!repeating &&
+        (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.keyK)) {
+      unawaited(_togglePlay());
+      return;
+    }
+
+    if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.keyJ) {
+      unawaited(
+        _seekBy(-widget.preferences.seekTimeSeconds, showFeedback: true),
+      );
+      return;
+    }
+
+    if (key == LogicalKeyboardKey.arrowRight ||
+        key == LogicalKeyboardKey.keyL) {
+      unawaited(
+        _seekBy(widget.preferences.seekTimeSeconds, showFeedback: true),
+      );
+      return;
+    }
+
+    if (!repeating &&
+        (key == LogicalKeyboardKey.keyF ||
+            (key == LogicalKeyboardKey.enter &&
+                HardwareKeyboard.instance.isAltPressed))) {
+      unawaited(_toggleFullscreen());
+      return;
+    }
+
+    if (!repeating && key == LogicalKeyboardKey.escape) {
+      unawaited(_closePlayer());
+    }
+  }
+
   Future<void> _selectSource() async {
     if (_isOffline) {
       return;
@@ -516,83 +568,76 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _episode.id,
       providerKey: _providerKey,
     );
-    final source = await showModalBottomSheet<VideoSource>(
+    final source = await showAppBottomSheet<VideoSource>(
       context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.72,
-        minChildSize: 0.34,
-        maxChildSize: 0.92,
-        builder: (context, scrollController) =>
-            FutureBuilder<List<VideoSource>>(
-              future: future,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return AppErrorView(message: snapshot.error.toString());
-                }
-                final sources = snapshot.data ?? const <VideoSource>[];
-                if (sources.isEmpty) {
-                  return const EmptyState(
-                    icon: Icons.videocam_off_outlined,
-                    title: 'No video sources',
-                  );
-                }
+      initialChildSize: 0.72,
+      minChildSize: 0.34,
+      maxChildSize: 0.92,
+      builder: (context, scrollController) => FutureBuilder<List<VideoSource>>(
+        future: future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return AppErrorView(message: snapshot.error.toString());
+          }
+          final sources = snapshot.data ?? const <VideoSource>[];
+          if (sources.isEmpty) {
+            return const EmptyState(
+              icon: Icons.videocam_off_outlined,
+              title: 'No video sources',
+            );
+          }
 
-                final grouped = <String, List<VideoSource>>{};
-                for (final source in sources) {
-                  grouped.putIfAbsent(source.serverName, () => []).add(source);
-                }
+          final grouped = <String, List<VideoSource>>{};
+          for (final source in sources) {
+            grouped.putIfAbsent(source.serverName, () => []).add(source);
+          }
 
-                return ListView(
-                  controller: scrollController,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                      child: Text(
-                        'Sources',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+          return ListView(
+            controller: scrollController,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                child: Text(
+                  'Sources',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+              for (final entry in grouped.entries) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+                  child: Text(
+                    entry.key,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.secondary,
                     ),
-                    for (final entry in grouped.entries) ...[
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
-                        child: Text(
-                          entry.key,
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.secondary,
-                              ),
-                        ),
-                      ),
-                      for (final source in entry.value)
-                        ListTile(
-                          leading: Icon(
-                            source.videoUrl == _source?.videoUrl
-                                ? Icons.radio_button_checked
-                                : Icons.radio_button_off,
-                          ),
-                          title: Text(source.displayTitle),
-                          subtitle: Text(
-                            [
-                              source.resolution,
-                              source.fileType,
-                              source.extraNote,
-                            ].whereType<String>().join(' • '),
-                          ),
-                          onTap: () => Navigator.of(context).pop(source),
-                        ),
-                    ],
-                  ],
-                );
-              },
-            ),
+                  ),
+                ),
+                for (final source in entry.value)
+                  ListTile(
+                    leading: Icon(
+                      source.videoUrl == _source?.videoUrl
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                    ),
+                    title: Text(source.displayTitle),
+                    subtitle: Text(
+                      [
+                        source.resolution,
+                        source.fileType,
+                        source.extraNote,
+                      ].whereType<String>().join(' • '),
+                    ),
+                    onTap: () => Navigator.of(context).pop(source),
+                  ),
+              ],
+            ],
+          );
+        },
       ),
     );
 
@@ -611,10 +656,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
       return;
     }
 
-    final speed = await showModalBottomSheet<double>(
+    final speed = await showAppBottomSheet<double>(
       context: context,
-      showDragHandle: true,
-      builder: (context) => ListView(
+      builder: (context, scrollController) => ListView(
+        controller: scrollController,
         shrinkWrap: true,
         children: [
           Padding(
@@ -647,10 +692,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   Future<void> _selectResizeMode() async {
-    final mode = await showModalBottomSheet<ResizeModeSetting>(
+    final mode = await showAppBottomSheet<ResizeModeSetting>(
       context: context,
-      showDragHandle: true,
-      builder: (context) => ListView(
+      builder: (context, scrollController) => ListView(
+        controller: scrollController,
         shrinkWrap: true,
         children: [
           Padding(
@@ -703,148 +748,153 @@ class _PlayerScreenState extends State<PlayerScreen> {
           unawaited(_closePlayer());
         }
       },
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _toggleControls,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (controller != null && controller.value.isInitialized)
-                _VideoSurface(controller: controller, fit: _videoFit)
-              else
-                const ColoredBox(color: Colors.black),
-              if (widget.preferences.doubleTapSeek && !_locked)
-                _PlayerDoubleTapSeekZones(
-                  seekSeconds: widget.preferences.seekTimeSeconds,
-                  onSeekBackward: () => _seekBy(
-                    -widget.preferences.seekTimeSeconds,
-                    showFeedback: true,
+      child: KeyboardListener(
+        focusNode: _keyboardFocusNode,
+        autofocus: true,
+        onKeyEvent: _handleKeyEvent,
+        child: Scaffold(
+          backgroundColor: Colors.black,
+          body: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _toggleControls,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (controller != null && controller.value.isInitialized)
+                  _VideoSurface(controller: controller, fit: _videoFit)
+                else
+                  const ColoredBox(color: Colors.black),
+                if (widget.preferences.doubleTapSeek && !_locked)
+                  _PlayerDoubleTapSeekZones(
+                    seekSeconds: widget.preferences.seekTimeSeconds,
+                    onSeekBackward: () => _seekBy(
+                      -widget.preferences.seekTimeSeconds,
+                      showFeedback: true,
+                    ),
+                    onSeekForward: () => _seekBy(
+                      widget.preferences.seekTimeSeconds,
+                      showFeedback: true,
+                    ),
                   ),
-                  onSeekForward: () => _seekBy(
-                    widget.preferences.seekTimeSeconds,
-                    showFeedback: true,
-                  ),
-                ),
-              _SeekFeedbackLayer(feedback: _seekFeedback),
-              if (_caption != null && !_locked)
-                Positioned(
-                  left: 24,
-                  right: 24,
-                  bottom: _showControls ? 112 : 38,
-                  child: Center(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: const Color(0x99000000),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7,
+                _SeekFeedbackLayer(feedback: _seekFeedback),
+                if (_caption != null && !_locked)
+                  Positioned(
+                    left: 24,
+                    right: 24,
+                    bottom: _showControls ? 112 : 38,
+                    child: Center(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: const Color(0x99000000),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(
-                          _caption!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: widget.preferences.subtitleFontSize
-                                .toDouble(),
-                            fontWeight: FontWeight.w700,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+                          child: Text(
+                            _caption!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: widget.preferences.subtitleFontSize
+                                  .toDouble(),
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              if (_loading)
-                ColoredBox(
-                  color: const Color(0xAA000000),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const CircularProgressIndicator(color: Colors.white),
-                        if (_status != null) ...[
-                          const SizedBox(height: 14),
-                          Text(
-                            _status!,
-                            style: const TextStyle(color: Colors.white),
-                          ),
+                if (_loading)
+                  ColoredBox(
+                    color: const Color(0xAA000000),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(color: Colors.white),
+                          if (_status != null) ...[
+                            const SizedBox(height: 14),
+                            Text(
+                              _status!,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              if (_error != null)
-                ColoredBox(
-                  color: const Color(0xE6000000),
-                  child: AppErrorView(
-                    message: _error!,
-                    onRetry: _loadSourceAndPlay,
+                if (_error != null)
+                  ColoredBox(
+                    color: const Color(0xE6000000),
+                    child: AppErrorView(
+                      message: _error!,
+                      onRetry: _loadSourceAndPlay,
+                    ),
                   ),
-                ),
-              if (_locked && _showControls)
-                Positioned(
-                  right: 14,
-                  top: 14 + MediaQuery.paddingOf(context).top,
-                  child: _ControlButton(
-                    icon: Icons.lock,
-                    tooltip: 'Unlock controls',
-                    onPressed: () => setState(() => _locked = false),
-                    filled: true,
+                if (_locked && _showControls)
+                  Positioned(
+                    right: 14,
+                    top: 14 + MediaQuery.paddingOf(context).top,
+                    child: _ControlButton(
+                      icon: Icons.lock,
+                      tooltip: 'Unlock controls',
+                      onPressed: () => setState(() => _locked = false),
+                      filled: true,
+                    ),
+                  )
+                else if (playerControlsVisible)
+                  _PlayerControls(
+                    controller: controller,
+                    source: _source,
+                    episode: _episode,
+                    animeTitle: widget.providerAnime.title,
+                    hasPrevious: !_isOffline && _episodeIndex > 0,
+                    hasNext:
+                        !_isOffline &&
+                        _episodeIndex >= 0 &&
+                        _episodeIndex < widget.episodes.length - 1,
+                    onBack: _closePlayer,
+                    onTogglePlay: _togglePlay,
+                    onSeekBackward: () =>
+                        _seekBy(-widget.preferences.seekTimeSeconds),
+                    onSeekForward: () =>
+                        _seekBy(widget.preferences.seekTimeSeconds),
+                    onSeek: _seekTo,
+                    onSeekStart: _beginSeekBarInteraction,
+                    onSeekEnd: _endSeekBarInteraction,
+                    onPrevious: _playPrevious,
+                    onNext: _playNext,
+                    onSource: _isOffline ? null : _selectSource,
+                    onSpeed: _selectSpeed,
+                    onResize: _selectResizeMode,
+                    onLock: () => setState(() {
+                      _locked = true;
+                      _showControls = true;
+                    }),
+                    onEpisodeSelected: _playEpisode,
+                    episodes: widget.episodes,
+                    currentSpeed: controller.value.playbackSpeed,
+                    resizeMode: widget.preferences.resizeMode,
+                    seekSeconds: widget.preferences.seekTimeSeconds,
+                    showRemainingDuration:
+                        widget.preferences.showRemainingDuration,
                   ),
-                )
-              else if (playerControlsVisible)
-                _PlayerControls(
-                  controller: controller,
-                  source: _source,
-                  episode: _episode,
-                  animeTitle: widget.providerAnime.title,
-                  hasPrevious: !_isOffline && _episodeIndex > 0,
-                  hasNext:
-                      !_isOffline &&
-                      _episodeIndex >= 0 &&
-                      _episodeIndex < widget.episodes.length - 1,
-                  onBack: _closePlayer,
-                  onTogglePlay: _togglePlay,
-                  onSeekBackward: () =>
-                      _seekBy(-widget.preferences.seekTimeSeconds),
-                  onSeekForward: () =>
-                      _seekBy(widget.preferences.seekTimeSeconds),
-                  onSeek: _seekTo,
-                  onSeekStart: _beginSeekBarInteraction,
-                  onSeekEnd: _endSeekBarInteraction,
-                  onPrevious: _playPrevious,
-                  onNext: _playNext,
-                  onSource: _isOffline ? null : _selectSource,
-                  onSpeed: _selectSpeed,
-                  onResize: _selectResizeMode,
-                  onLock: () => setState(() {
-                    _locked = true;
-                    _showControls = true;
-                  }),
-                  onEpisodeSelected: _playEpisode,
-                  episodes: widget.episodes,
-                  currentSpeed: controller.value.playbackSpeed,
-                  resizeMode: widget.preferences.resizeMode,
-                  seekSeconds: widget.preferences.seekTimeSeconds,
-                  showRemainingDuration:
-                      widget.preferences.showRemainingDuration,
-                ),
-              if ((_loading || _error != null) && !playerControlsVisible)
-                Positioned(
-                  left: 8 + MediaQuery.paddingOf(context).left,
-                  top: 6 + MediaQuery.paddingOf(context).top,
-                  child: _ControlButton(
-                    icon: Icons.arrow_back_ios_new,
-                    tooltip: 'Back',
-                    onPressed: _closePlayer,
-                    filled: true,
+                if ((_loading || _error != null) && !playerControlsVisible)
+                  Positioned(
+                    left: 8 + MediaQuery.paddingOf(context).left,
+                    top: 6 + MediaQuery.paddingOf(context).top,
+                    child: _ControlButton(
+                      icon: Icons.arrow_back_ios_new,
+                      tooltip: 'Back',
+                      onPressed: _closePlayer,
+                      filled: true,
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1700,29 +1750,36 @@ class _ControlButton extends StatelessWidget {
     final hasBackground = filled;
     return Tooltip(
       message: tooltip,
-      child: SizedBox.square(
-        dimension: resolvedButtonSize,
-        child: IconButton(
-          onPressed: onPressed,
-          padding: EdgeInsets.zero,
-          constraints: BoxConstraints.tightFor(
-            width: resolvedButtonSize,
-            height: resolvedButtonSize,
+      child: MouseRegion(
+        cursor: onPressed == null
+            ? SystemMouseCursors.basic
+            : SystemMouseCursors.click,
+        child: SizedBox.square(
+          dimension: resolvedButtonSize,
+          child: IconButton(
+            onPressed: onPressed,
+            padding: EdgeInsets.zero,
+            constraints: BoxConstraints.tightFor(
+              width: resolvedButtonSize,
+              height: resolvedButtonSize,
+            ),
+            splashRadius: resolvedButtonSize / 2,
+            iconSize: resolvedIconSize,
+            color: Colors.white,
+            disabledColor: const Color(0x66FFFFFF),
+            style: IconButton.styleFrom(
+              backgroundColor: hasBackground
+                  ? const Color(0x59000000)
+                  : Colors.transparent,
+              disabledBackgroundColor: hasBackground
+                  ? const Color(0x26000000)
+                  : Colors.transparent,
+              focusColor: const Color(0x24FFFFFF),
+              hoverColor: const Color(0x20FFFFFF),
+              shape: const CircleBorder(),
+            ),
+            icon: Icon(icon),
           ),
-          splashRadius: resolvedButtonSize / 2,
-          iconSize: resolvedIconSize,
-          color: Colors.white,
-          disabledColor: const Color(0x66FFFFFF),
-          style: IconButton.styleFrom(
-            backgroundColor: hasBackground
-                ? const Color(0x59000000)
-                : Colors.transparent,
-            disabledBackgroundColor: hasBackground
-                ? const Color(0x26000000)
-                : Colors.transparent,
-            shape: const CircleBorder(),
-          ),
-          icon: Icon(icon),
         ),
       ),
     );

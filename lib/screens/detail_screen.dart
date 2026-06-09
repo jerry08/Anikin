@@ -12,6 +12,7 @@ import '../models/juro_models.dart';
 import '../models/tracking.dart';
 import '../models/watch_history.dart';
 import '../services/download_service.dart';
+import '../services/aniyomi_extension_service.dart';
 import '../services/juro_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
@@ -32,6 +33,8 @@ class DetailScreen extends StatefulWidget {
     required this.watchHistoryService,
     required this.downloadService,
     required this.trackingService,
+    this.initialProvider,
+    this.initialProviderAnime,
     super.key,
   });
 
@@ -41,6 +44,8 @@ class DetailScreen extends StatefulWidget {
   final WatchHistoryService watchHistoryService;
   final DownloadService downloadService;
   final TrackingService trackingService;
+  final SourceProvider? initialProvider;
+  final JuroAnimeInfo? initialProviderAnime;
 
   @override
   State<DetailScreen> createState() => _DetailScreenState();
@@ -61,12 +66,29 @@ class _DetailScreenState extends State<DetailScreen> {
   int _episodeRangeIndex = 0;
   String? _error;
   String? _status;
+  SourceProviderChoice? _localProviderChoice;
 
-  String get _providerKey => widget.preferences.lastAnimeProviderKey;
+  bool get _usesLocalProvider =>
+      widget.initialProvider != null || widget.initialProviderAnime != null;
+
+  String get _providerKey =>
+      _localProviderChoice?.key ?? widget.preferences.lastAnimeProviderKey;
+
+  String get _providerName =>
+      _localProviderChoice?.name ??
+      widget.preferences.lastAnimeProviderName ??
+      _providerKey;
 
   @override
   void initState() {
     super.initState();
+    final provider = widget.initialProvider;
+    if (provider != null) {
+      _localProviderChoice = SourceProviderChoice(
+        key: provider.key,
+        name: provider.name,
+      );
+    }
     _load();
     _refreshFavorite();
     _refreshAniListListEntry();
@@ -83,7 +105,13 @@ class _DetailScreenState extends State<DetailScreen> {
 
     try {
       _providers = await widget.juroService.getProviders();
-      if (_providers.isNotEmpty &&
+      if (_usesLocalProvider) {
+        final initialProvider = widget.initialProvider;
+        if (initialProvider != null &&
+            !_providers.any((item) => item.key == initialProvider.key)) {
+          _providers = [initialProvider, ..._providers];
+        }
+      } else if (_providers.isNotEmpty &&
           !_providers.any((item) => item.key == _providerKey)) {
         final provider = _providers.first;
         await widget.preferences.setLastAnimeProvider(
@@ -92,17 +120,35 @@ class _DetailScreenState extends State<DetailScreen> {
       }
 
       _history = await widget.watchHistoryService.getAll();
-      await _autoMatchAndLoadEpisodes();
+      final initialAnime = widget.initialProviderAnime;
+      final initialProvider = widget.initialProvider;
+      final stillUsingInitialProvider =
+          initialProvider == null || _providerKey == initialProvider.key;
+      if (initialAnime != null &&
+          _usesLocalProvider &&
+          stillUsingInitialProvider) {
+        await _loadEpisodes(initialAnime);
+      } else {
+        await _autoMatchAndLoadEpisodes();
+      }
     } catch (error) {
       _error = error.toString();
     } finally {
       if (mounted) {
         setState(() {
           _loading = false;
-          _status = null;
+          if (_error != null || _isTransientStatus(_status)) {
+            _status = null;
+          }
         });
       }
     }
+  }
+
+  bool _isTransientStatus(String? status) {
+    return status == 'Loading providers' ||
+        status == 'Loading episodes from $_providerName' ||
+        (status?.startsWith('Searching ') ?? false);
   }
 
   Future<void> _autoMatchAndLoadEpisodes() async {
@@ -137,13 +183,29 @@ class _DetailScreenState extends State<DetailScreen> {
   Future<void> _loadEpisodes(JuroAnimeInfo anime) async {
     setState(() {
       _providerAnime = anime;
-      _status =
-          'Loading episodes from ${widget.preferences.lastAnimeProviderName ?? _providerKey}';
+      _status = 'Loading episodes from $_providerName';
     });
 
-    final episodes = List<AnimeEpisode>.of(
-      await widget.juroService.getEpisodes(anime.id, providerKey: _providerKey),
-    );
+    final List<AnimeEpisode> episodes;
+    try {
+      episodes = List<AnimeEpisode>.of(
+        await widget.juroService.getEpisodes(
+          anime.id,
+          providerKey: _providerKey,
+        ),
+      );
+    } catch (error) {
+      if (!AniyomiExtensionService.isExtensionError(error)) {
+        rethrow;
+      }
+      if (!mounted) return;
+      setState(() {
+        _episodes = [];
+        _episodeRangeIndex = 0;
+        _status = 'Provider failed to load episodes';
+      });
+      return;
+    }
     episodes.sort((a, b) => a.number.compareTo(b.number));
 
     setState(() {
@@ -185,30 +247,10 @@ class _DetailScreenState extends State<DetailScreen> {
       context: context,
       initialChildSize: 0.42,
       minChildSize: 0.28,
-      builder: (context, scrollController) => ListView(
-        controller: scrollController,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
-            child: Text(
-              'Anime provider',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-            ),
-          ),
-          for (final provider in _providers)
-            ListTile(
-              leading: Icon(
-                provider.key == _providerKey
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_off,
-              ),
-              title: Text(provider.name),
-              subtitle: Text(provider.language),
-              onTap: () => Navigator.of(context).pop(provider),
-            ),
-        ],
+      builder: (context, scrollController) => _AnimeProviderSheet(
+        providers: _providers,
+        selectedProviderKey: _providerKey,
+        scrollController: scrollController,
       ),
     );
 
@@ -216,9 +258,16 @@ class _DetailScreenState extends State<DetailScreen> {
       return;
     }
 
-    await widget.preferences.setLastAnimeProvider(
-      SourceProviderChoice(key: provider.key, name: provider.name),
-    );
+    if (_usesLocalProvider) {
+      _localProviderChoice = SourceProviderChoice(
+        key: provider.key,
+        name: provider.name,
+      );
+    } else {
+      await widget.preferences.setLastAnimeProvider(
+        SourceProviderChoice(key: provider.key, name: provider.name),
+      );
+    }
     await _load();
   }
 
@@ -281,6 +330,8 @@ class _DetailScreenState extends State<DetailScreen> {
           juroService: widget.juroService,
           watchHistoryService: widget.watchHistoryService,
           trackingService: widget.trackingService,
+          providerKey: _providerKey,
+          providerName: _providerName,
         ),
       ),
     );
@@ -626,6 +677,9 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<void> _refreshFavorite() async {
+    if (!widget.media.hasAniListId) {
+      return;
+    }
     if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
       return;
     }
@@ -642,6 +696,9 @@ class _DetailScreenState extends State<DetailScreen> {
 
   Future<void> _toggleFavorite() async {
     if (_favoriteLoading) {
+      return;
+    }
+    if (!widget.media.hasAniListId) {
       return;
     }
     if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
@@ -675,6 +732,12 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<void> _refreshAniListListEntry({bool showErrors = false}) async {
+    if (!widget.media.hasAniListId) {
+      if (mounted) {
+        setState(() => _listEntry = null);
+      }
+      return;
+    }
     if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
       if (mounted) {
         setState(() => _listEntry = null);
@@ -709,6 +772,9 @@ class _DetailScreenState extends State<DetailScreen> {
 
   Future<void> _editAniListListEntry() async {
     if (_listEntryLoading || _listEntrySaving) {
+      return;
+    }
+    if (!widget.media.hasAniListId) {
       return;
     }
     if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
@@ -826,7 +892,7 @@ class _DetailScreenState extends State<DetailScreen> {
   @override
   Widget build(BuildContext context) {
     final image = widget.media.bannerImage ?? widget.media.cover.best;
-    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final canUseAniList = widget.media.hasAniListId;
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -836,7 +902,9 @@ class _DetailScreenState extends State<DetailScreen> {
             actions: [
               IconButton(
                 tooltip: _isFavorite ? 'Remove favorite' : 'Favorite',
-                onPressed: _favoriteLoading ? null : _toggleFavorite,
+                onPressed: !canUseAniList || _favoriteLoading
+                    ? null
+                    : _toggleFavorite,
                 icon: Icon(
                   _isFavorite ? Icons.favorite : Icons.favorite_border,
                 ),
@@ -845,7 +913,8 @@ class _DetailScreenState extends State<DetailScreen> {
                 tooltip: _listEntry == null
                     ? 'Add to AniList list'
                     : 'Edit ${_listEntry!.status.label}',
-                onPressed: _listEntryLoading || _listEntrySaving
+                onPressed:
+                    !canUseAniList || _listEntryLoading || _listEntrySaving
                     ? null
                     : _editAniListListEntry,
                 icon: _aniListListIcon(),
@@ -861,7 +930,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 icon: const Icon(Icons.manage_search),
               ),
               IconButton(
-                tooltip: 'AniList',
+                tooltip: 'Media page',
                 onPressed: _openAniList,
                 icon: const Icon(Icons.open_in_new),
               ),
@@ -897,21 +966,6 @@ class _DetailScreenState extends State<DetailScreen> {
                       ),
                     ),
                   ),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: const [0, 0.58, 0.86, 1],
-                        colors: [
-                          backgroundColor.withAlpha(0),
-                          backgroundColor.withAlpha(0),
-                          backgroundColor.withAlpha(212),
-                          backgroundColor,
-                        ],
-                      ),
-                    ),
-                  ),
                   Align(
                     alignment: Alignment.bottomLeft,
                     child: Padding(
@@ -941,11 +995,7 @@ class _DetailScreenState extends State<DetailScreen> {
                                   ),
                                 _InfoChip(
                                   icon: Icons.source_outlined,
-                                  label:
-                                      widget
-                                          .preferences
-                                          .lastAnimeProviderName ??
-                                      _providerKey,
+                                  label: _providerName,
                                 ),
                               ],
                             ),
@@ -1189,6 +1239,115 @@ class _DetailScreenState extends State<DetailScreen> {
 
   double _detailBottomPadding(BuildContext context) =>
       24 + MediaQuery.viewPaddingOf(context).bottom;
+}
+
+class _AnimeProviderSheet extends StatelessWidget {
+  const _AnimeProviderSheet({
+    required this.providers,
+    required this.selectedProviderKey,
+    required this.scrollController,
+  });
+
+  final List<SourceProvider> providers;
+  final String selectedProviderKey;
+  final ScrollController scrollController;
+
+  @override
+  Widget build(BuildContext context) {
+    final juroProviders = providers
+        .where(
+          (provider) =>
+              !AniyomiExtensionService.isAnimeProviderKey(provider.key),
+        )
+        .toList();
+    final aniyomiProviders = providers
+        .where(
+          (provider) =>
+              AniyomiExtensionService.isAnimeProviderKey(provider.key),
+        )
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
+          child: Text(
+            'Anime Provider',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: ListView(
+            controller: scrollController,
+            padding: EdgeInsets.only(
+              bottom: 12 + MediaQuery.viewPaddingOf(context).bottom,
+            ),
+            children: [
+              if (juroProviders.isNotEmpty)
+                _ProviderSection(
+                  title: 'Juro providers',
+                  providers: juroProviders,
+                  selectedProviderKey: selectedProviderKey,
+                ),
+              if (aniyomiProviders.isNotEmpty)
+                _ProviderSection(
+                  title: 'Aniyomi extensions',
+                  providers: aniyomiProviders,
+                  selectedProviderKey: selectedProviderKey,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProviderSection extends StatelessWidget {
+  const _ProviderSection({
+    required this.title,
+    required this.providers,
+    required this.selectedProviderKey,
+  });
+
+  final String title;
+  final List<SourceProvider> providers;
+  final String selectedProviderKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: colorScheme.secondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        for (final provider in providers)
+          ListTile(
+            leading: Icon(
+              provider.key == selectedProviderKey
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_off,
+            ),
+            title: Text(provider.name),
+            subtitle: Text(provider.language),
+            onTap: () => Navigator.of(context).pop(provider),
+          ),
+      ],
+    );
+  }
 }
 
 enum _VideoSourceAction { copyLink, openExternal }

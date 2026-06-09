@@ -7,8 +7,8 @@ import 'anilist_service.dart';
 
 class UpdateService {
   UpdateService({
+    required this.currentVersion,
     http.Client? client,
-    this.currentVersion = AppConstants.appVersion,
     Uri? latestReleaseUri,
   }) : _client = client ?? http.Client(),
        _latestReleaseUri =

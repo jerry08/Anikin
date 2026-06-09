@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../models/anilist_media.dart';
 
-class MediaPosterCard extends StatelessWidget {
+class MediaPosterCard extends StatefulWidget {
   const MediaPosterCard({
     required this.media,
     required this.onTap,
@@ -22,6 +22,14 @@ class MediaPosterCard extends StatelessWidget {
   final Widget? posterOverlay;
 
   @override
+  State<MediaPosterCard> createState() => _MediaPosterCardState();
+}
+
+class _MediaPosterCardState extends State<MediaPosterCard> {
+  bool _hovered = false;
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final defaultTextStyle = DefaultTextStyle.of(context).style;
@@ -30,76 +38,105 @@ class MediaPosterCard extends StatelessWidget {
         .copyWith(fontWeight: FontWeight.w700);
     final metadataStyle = (theme.textTheme.bodySmall ?? defaultTextStyle)
         .copyWith(color: theme.colorScheme.onSurfaceVariant);
-    final hasMetadata = showMetadata && media.metadata.isNotEmpty;
-    final showRatingBadge = showRating && media.meanScore != null;
+    final hasMetadata = widget.showMetadata && widget.media.metadata.isNotEmpty;
+    final showRatingBadge = widget.showRating && widget.media.meanScore != null;
+    final highlighted = _hovered || _focused;
 
     return SizedBox(
-      width: width,
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: cardRadius,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          borderRadius: cardRadius,
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final cardWidth = constraints.hasBoundedWidth
-                    ? constraints.maxWidth
-                    : width;
-                final posterHeight = _posterHeightFor(
-                  context: context,
-                  constraints: constraints,
-                  cardWidth: cardWidth,
-                  titleStyle: titleStyle,
-                  metadataStyle: metadataStyle,
-                  hasMetadata: hasMetadata,
-                );
+      width: widget.width,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: AnimatedScale(
+          scale: _hovered ? 1.018 : 1,
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOutCubic,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
+              borderRadius: cardRadius,
+              border: Border.all(
+                color: highlighted
+                    ? theme.colorScheme.primary.withValues(alpha: 0.44)
+                    : Colors.transparent,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: cardRadius,
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                borderRadius: cardRadius,
+                mouseCursor: SystemMouseCursors.click,
+                focusColor: theme.colorScheme.primary.withValues(alpha: 0.08),
+                hoverColor: theme.colorScheme.primary.withValues(alpha: 0.06),
+                onFocusChange: (focused) => setState(() => _focused = focused),
+                onTap: widget.onTap,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final cardWidth = constraints.hasBoundedWidth
+                          ? constraints.maxWidth
+                          : widget.width;
+                      final posterHeight = _posterHeightFor(
+                        context: context,
+                        constraints: constraints,
+                        cardWidth: cardWidth,
+                        titleStyle: titleStyle,
+                        metadataStyle: metadataStyle,
+                        hasMetadata: hasMetadata,
+                      );
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: cardRadius,
-                      child: SizedBox(
-                        width: cardWidth,
-                        height: posterHeight,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            _PosterImage(url: media.cover.best),
-                            if (showRatingBadge)
-                              Positioned(
-                                right: 7,
-                                bottom: 7,
-                                child: _RatingBadge(score: media.meanScore!),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: cardRadius,
+                            child: SizedBox(
+                              width: cardWidth,
+                              height: posterHeight,
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  _PosterImage(url: widget.media.cover.best),
+                                  if (showRatingBadge)
+                                    Positioned(
+                                      right: 7,
+                                      bottom: 7,
+                                      child: _RatingBadge(
+                                        score: widget.media.meanScore!,
+                                      ),
+                                    ),
+                                  ?widget.posterOverlay,
+                                ],
                               ),
-                            ?posterOverlay,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.media.displayTitle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: titleStyle,
+                          ),
+                          if (hasMetadata) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              widget.media.metadata,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: metadataStyle,
+                            ),
                           ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      media.displayTitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: titleStyle,
-                    ),
-                    if (hasMetadata) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        media.metadata,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: metadataStyle,
-                      ),
-                    ],
-                  ],
-                );
-              },
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -124,7 +161,7 @@ class MediaPosterCard extends StatelessWidget {
         8 +
         _measureTextHeight(
           context: context,
-          text: media.displayTitle,
+          text: widget.media.displayTitle,
           style: titleStyle,
           maxLines: 2,
           maxWidth: cardWidth,
@@ -134,7 +171,7 @@ class MediaPosterCard extends StatelessWidget {
           3 +
           _measureTextHeight(
             context: context,
-            text: media.metadata,
+            text: widget.media.metadata,
             style: metadataStyle,
             maxLines: 1,
             maxWidth: cardWidth,

@@ -17,7 +17,70 @@ enum AniListMediaType {
   final String graphqlName;
 }
 
-class AniListService {
+abstract class MediaCatalogService {
+  String get providerLabel;
+
+  Future<List<AniListMedia>> searchMedia({
+    String? query,
+    int page = 1,
+    int perPage = 50,
+    List<String>? sort,
+    String? season,
+    int? seasonYear,
+    List<String>? tags,
+    List<String>? genres,
+    AniListMediaType mediaType = AniListMediaType.anime,
+    required bool includeNonJapanese,
+  });
+
+  Future<List<AniListMedia>> getPopular({required bool includeNonJapanese});
+
+  Future<List<AniListMedia>> getTrending({required bool includeNonJapanese});
+
+  Future<List<AniListMedia>> getCurrentSeason({
+    required bool includeNonJapanese,
+  });
+
+  Future<List<AniListMedia>> getRecentlyUpdated({
+    required bool includeNonJapanese,
+  });
+
+  Future<List<AniListMedia>> searchManga({
+    String? query,
+    int page = 1,
+    int perPage = 50,
+    List<String>? sort,
+    List<String>? tags,
+    List<String>? genres,
+    required bool includeNonJapanese,
+  });
+
+  Future<List<String>> getGenreCollection();
+
+  Future<List<AniListMedia>> getPopularManga({
+    required bool includeNonJapanese,
+  });
+
+  Future<List<AniListMedia>> getTrendingManga({
+    required bool includeNonJapanese,
+  });
+
+  Future<List<AniListMedia>> getRecentlyUpdatedManga({
+    required bool includeNonJapanese,
+  });
+
+  Future<List<AniListMedia>> getTopRatedManga({
+    required bool includeNonJapanese,
+  });
+
+  Future<List<AniListAiringSchedule>> getAiringCalendar({
+    required DateTime start,
+    required int days,
+    required bool includeNonJapanese,
+  });
+}
+
+class AniListService implements MediaCatalogService {
   AniListService({
     http.Client? client,
     FutureOr<bool> Function()? includeAdultContentResolver,
@@ -26,6 +89,9 @@ class AniListService {
 
   final http.Client _client;
   final FutureOr<bool> Function()? _includeAdultContentResolver;
+
+  @override
+  String get providerLabel => 'AniList';
 
   static const _mediaFields = r'''
 id
@@ -50,6 +116,7 @@ siteUrl
 isAdult
 ''';
 
+  @override
   Future<List<AniListMedia>> searchMedia({
     String? query,
     int page = 1,
@@ -137,6 +204,7 @@ query MediaSearch(
     return media;
   }
 
+  @override
   Future<List<AniListMedia>> getPopular({required bool includeNonJapanese}) {
     return searchMedia(
       sort: const ['POPULARITY_DESC'],
@@ -144,6 +212,7 @@ query MediaSearch(
     );
   }
 
+  @override
   Future<List<AniListMedia>> getTrending({required bool includeNonJapanese}) {
     return searchMedia(
       sort: const ['TRENDING_DESC'],
@@ -151,6 +220,7 @@ query MediaSearch(
     );
   }
 
+  @override
   Future<List<AniListMedia>> getCurrentSeason({
     required bool includeNonJapanese,
   }) {
@@ -163,6 +233,7 @@ query MediaSearch(
     );
   }
 
+  @override
   Future<List<AniListMedia>> getRecentlyUpdated({
     required bool includeNonJapanese,
   }) async {
@@ -208,6 +279,7 @@ query RecentlyUpdated($start: Int!, $end: Int!) {
         .toList();
   }
 
+  @override
   Future<List<AniListMedia>> searchManga({
     String? query,
     int page = 1,
@@ -229,6 +301,7 @@ query RecentlyUpdated($start: Int!, $end: Int!) {
     );
   }
 
+  @override
   Future<List<String>> getGenreCollection() async {
     final includeAdultContent = await _resolveIncludeAdultContent();
     final data = await _post(r'''
@@ -245,6 +318,7 @@ query GenreCollection {
       ..sort();
   }
 
+  @override
   Future<List<AniListMedia>> getPopularManga({
     required bool includeNonJapanese,
   }) {
@@ -254,6 +328,7 @@ query GenreCollection {
     );
   }
 
+  @override
   Future<List<AniListMedia>> getTrendingManga({
     required bool includeNonJapanese,
   }) {
@@ -263,6 +338,7 @@ query GenreCollection {
     );
   }
 
+  @override
   Future<List<AniListMedia>> getRecentlyUpdatedManga({
     required bool includeNonJapanese,
   }) {
@@ -272,6 +348,7 @@ query GenreCollection {
     );
   }
 
+  @override
   Future<List<AniListMedia>> getTopRatedManga({
     required bool includeNonJapanese,
   }) {
@@ -281,6 +358,7 @@ query GenreCollection {
     );
   }
 
+  @override
   Future<List<AniListAiringSchedule>> getAiringCalendar({
     required DateTime start,
     required int days,

@@ -1,3 +1,4 @@
+import '../core/image_url_utils.dart';
 import '../core/json_utils.dart';
 import '../core/text_utils.dart';
 
@@ -81,7 +82,7 @@ class JuroAnimeInfo {
       released: readString(json, 'released'),
       category: readString(json, 'category'),
       link: readString(json, 'link'),
-      image: readString(json, 'image'),
+      image: normalizeImageUrl(readString(json, 'image')),
       type: readString(json, 'type'),
       status: readString(json, 'status'),
       otherNames: readString(json, 'otherNames'),
@@ -135,7 +136,7 @@ class MangaResult {
     return MangaResult(
       id: readString(json, 'id') ?? '',
       title: readString(json, 'title') ?? 'Untitled',
-      image: readString(json, 'image'),
+      image: normalizeImageUrl(readString(json, 'image')),
       description: stripHtml(readString(json, 'description')),
       link: readString(json, 'link'),
       headers: readStringMap(readJson(json, 'headers')),
@@ -171,7 +172,7 @@ class MangaInfo extends MangaResult {
     return MangaInfo(
       id: readString(json, 'id') ?? '',
       title: readString(json, 'title') ?? 'Untitled',
-      image: readString(json, 'image'),
+      image: normalizeImageUrl(readString(json, 'image')),
       description: stripHtml(readString(json, 'description')),
       link: readString(json, 'link'),
       headers: readStringMap(readJson(json, 'headers')),
@@ -246,7 +247,7 @@ class MangaChapterPage {
 
   factory MangaChapterPage.fromJson(Map<String, dynamic> json) {
     return MangaChapterPage(
-      image: readString(json, 'image') ?? '',
+      image: normalizeImageUrl(readString(json, 'image')) ?? '',
       page: readInt(json, 'page') ?? 0,
       title: readString(json, 'title'),
       headers: readStringMap(readJson(json, 'headers')),
@@ -325,7 +326,7 @@ class AnimeEpisode {
       number: readDouble(json, 'number') ?? 0,
       duration: readDouble(json, 'duration') ?? 0,
       link: readString(json, 'link'),
-      image: readString(json, 'image'),
+      image: normalizeImageUrl(readString(json, 'image')),
       progress: readDouble(json, 'progress') ?? 0,
     );
   }

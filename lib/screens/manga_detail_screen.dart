@@ -28,6 +28,8 @@ class MangaDetailScreen extends StatefulWidget {
     required this.juroService,
     required this.mangaDownloadService,
     required this.trackingService,
+    this.initialProvider,
+    this.initialProviderManga,
     super.key,
   });
 
@@ -36,6 +38,8 @@ class MangaDetailScreen extends StatefulWidget {
   final JuroService juroService;
   final MangaDownloadService mangaDownloadService;
   final TrackingService trackingService;
+  final SourceProvider? initialProvider;
+  final MangaResult? initialProviderManga;
 
   @override
   State<MangaDetailScreen> createState() => _MangaDetailScreenState();
@@ -55,8 +59,18 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
   int _chapterRangeIndex = 0;
   String? _error;
   String? _status;
+  SourceProviderChoice? _localProviderChoice;
 
-  String get _providerKey => widget.preferences.lastMangaProviderKey;
+  bool get _usesLocalProvider =>
+      widget.initialProvider != null || widget.initialProviderManga != null;
+
+  String get _providerKey =>
+      _localProviderChoice?.key ?? widget.preferences.lastMangaProviderKey;
+
+  String get _providerName =>
+      _localProviderChoice?.name ??
+      widget.preferences.lastMangaProviderName ??
+      _providerKey;
 
   List<MangaChapter> get _displayChapters {
     final chapters = List<MangaChapter>.of(_chapters);
@@ -76,6 +90,13 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
   @override
   void initState() {
     super.initState();
+    final provider = widget.initialProvider;
+    if (provider != null) {
+      _localProviderChoice = SourceProviderChoice(
+        key: provider.key,
+        name: provider.name,
+      );
+    }
     _load();
     _refreshFavorite();
     _refreshAniListListEntry();
@@ -92,7 +113,13 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
 
     try {
       _providers = await widget.juroService.getMangaProviders();
-      if (_providers.isNotEmpty &&
+      if (_usesLocalProvider) {
+        final initialProvider = widget.initialProvider;
+        if (initialProvider != null &&
+            !_providers.any((item) => item.key == initialProvider.key)) {
+          _providers = [initialProvider, ..._providers];
+        }
+      } else if (_providers.isNotEmpty &&
           !_providers.any((item) => item.key == _providerKey)) {
         final provider = _providers.first;
         await widget.preferences.setLastMangaProvider(
@@ -100,7 +127,17 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
         );
       }
 
-      await _autoMatchAndLoadChapters();
+      final initialManga = widget.initialProviderManga;
+      final initialProvider = widget.initialProvider;
+      final stillUsingInitialProvider =
+          initialProvider == null || _providerKey == initialProvider.key;
+      if (initialManga != null &&
+          _usesLocalProvider &&
+          stillUsingInitialProvider) {
+        await _loadChapters(initialManga);
+      } else {
+        await _autoMatchAndLoadChapters();
+      }
     } catch (error) {
       _error = error.toString();
     } finally {
@@ -145,8 +182,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
   Future<void> _loadChapters(MangaResult manga) async {
     setState(() {
       _providerManga = manga;
-      _status =
-          'Loading chapters from ${widget.preferences.lastMangaProviderName ?? _providerKey}';
+      _status = 'Loading chapters from $_providerName';
     });
 
     final info = await widget.juroService.getMangaInfo(
@@ -198,9 +234,16 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
       return;
     }
 
-    await widget.preferences.setLastMangaProvider(
-      SourceProviderChoice(key: provider.key, name: provider.name),
-    );
+    if (_usesLocalProvider) {
+      _localProviderChoice = SourceProviderChoice(
+        key: provider.key,
+        name: provider.name,
+      );
+    } else {
+      await widget.preferences.setLastMangaProvider(
+        SourceProviderChoice(key: provider.key, name: provider.name),
+      );
+    }
     await _load();
   }
 
@@ -249,6 +292,8 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
           juroService: widget.juroService,
           mangaDownloadService: widget.mangaDownloadService,
           trackingService: widget.trackingService,
+          providerKey: _providerKey,
+          providerName: _providerName,
         ),
       ),
     );
@@ -264,7 +309,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
       manga: info,
       chapter: chapter,
       providerKey: _providerKey,
-      providerName: widget.preferences.lastMangaProviderName ?? _providerKey,
+      providerName: _providerName,
     );
   }
 
@@ -341,6 +386,9 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
   }
 
   Future<void> _refreshFavorite() async {
+    if (!widget.media.hasAniListId) {
+      return;
+    }
     if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
       return;
     }
@@ -357,6 +405,9 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
 
   Future<void> _toggleFavorite() async {
     if (_favoriteLoading) {
+      return;
+    }
+    if (!widget.media.hasAniListId) {
       return;
     }
     if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
@@ -390,6 +441,12 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
   }
 
   Future<void> _refreshAniListListEntry({bool showErrors = false}) async {
+    if (!widget.media.hasAniListId) {
+      if (mounted) {
+        setState(() => _listEntry = null);
+      }
+      return;
+    }
     if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
       if (mounted) {
         setState(() => _listEntry = null);
@@ -424,6 +481,9 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
 
   Future<void> _editAniListListEntry() async {
     if (_listEntryLoading || _listEntrySaving) {
+      return;
+    }
+    if (!widget.media.hasAniListId) {
       return;
     }
     if (!widget.trackingService.isLoggedIn(TrackingProvider.anilist)) {
@@ -576,6 +636,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
         ? _mangaInfo!.description!
         : widget.media.description;
     final visibleChapters = _visibleChapters;
+    final canUseAniList = widget.media.hasAniListId;
 
     return Scaffold(
       body: CustomScrollView(
@@ -586,7 +647,9 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
             actions: [
               IconButton(
                 tooltip: _isFavorite ? 'Remove favorite' : 'Favorite',
-                onPressed: _favoriteLoading ? null : _toggleFavorite,
+                onPressed: !canUseAniList || _favoriteLoading
+                    ? null
+                    : _toggleFavorite,
                 icon: Icon(
                   _isFavorite ? Icons.favorite : Icons.favorite_border,
                 ),
@@ -595,7 +658,8 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
                 tooltip: _listEntry == null
                     ? 'Add to AniList list'
                     : 'Edit ${_listEntry!.status.label}',
-                onPressed: _listEntryLoading || _listEntrySaving
+                onPressed:
+                    !canUseAniList || _listEntryLoading || _listEntrySaving
                     ? null
                     : _editAniListListEntry,
                 icon: _aniListListIcon(),
@@ -611,7 +675,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
                 icon: const Icon(Icons.manage_search),
               ),
               IconButton(
-                tooltip: 'AniList',
+                tooltip: 'Media page',
                 onPressed: _openAniList,
                 icon: const Icon(Icons.open_in_new),
               ),
@@ -680,11 +744,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
                                   ),
                                 _InfoChip(
                                   icon: Icons.source_outlined,
-                                  label:
-                                      widget
-                                          .preferences
-                                          .lastMangaProviderName ??
-                                      _providerKey,
+                                  label: _providerName,
                                 ),
                               ],
                             ),
