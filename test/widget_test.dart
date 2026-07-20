@@ -6,6 +6,7 @@ import 'package:anikin/app/anikin_app.dart';
 import 'package:anikin/core/app_constants.dart';
 import 'package:anikin/core/app_theme.dart';
 import 'package:anikin/models/anilist_media.dart';
+import 'package:anikin/models/aniyomi_filters.dart';
 import 'package:anikin/models/downloaded_episode.dart';
 import 'package:anikin/models/juro_models.dart';
 import 'package:anikin/models/tracking.dart';
@@ -1850,13 +1851,18 @@ class _FakeAniyomiExtensionService extends AniyomiExtensionService {
   ];
 
   @override
-  Future<List<JuroAnimeInfo>> searchAnime(
+  Future<AniyomiPage<JuroAnimeInfo>> searchAnime(
     String query, {
     required String providerKey,
+    int page = 1,
+    List<AniyomiFilterSelection>? filters,
   }) async {
     lastProviderKey = providerKey;
     lastSearchQuery = query;
-    return const [JuroAnimeInfo(id: 'extension-anime', title: 'Frieren')];
+    return const AniyomiPage(
+      items: [JuroAnimeInfo(id: 'extension-anime', title: 'Frieren')],
+      hasNextPage: false,
+    );
   }
 
   @override
@@ -1899,13 +1905,18 @@ class _FakeAniyomiExtensionService extends AniyomiExtensionService {
   }
 
   @override
-  Future<List<MangaResult>> searchManga(
+  Future<AniyomiPage<MangaResult>> searchManga(
     String query, {
     required String providerKey,
+    int page = 1,
+    List<AniyomiFilterSelection>? filters,
   }) async {
     lastProviderKey = providerKey;
     lastSearchQuery = query;
-    return const [MangaResult(id: 'extension-manga', title: 'Dungeon Meshi')];
+    return const AniyomiPage(
+      items: [MangaResult(id: 'extension-manga', title: 'Dungeon Meshi')],
+      hasNextPage: false,
+    );
   }
 
   @override

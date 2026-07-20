@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/list_ranges.dart';
+import '../core/text_utils.dart';
 import '../models/anilist_media.dart';
 import '../models/downloaded_manga.dart';
 import '../models/juro_models.dart';
@@ -152,15 +153,18 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
 
   Future<void> _autoMatchAndLoadChapters() async {
     setState(() => _status = 'Searching ${widget.media.displayTitle}');
+    final candidates = widget.media.title.searchCandidates.toList();
     MangaResult? match;
 
-    for (final title in widget.media.title.searchCandidates) {
+    for (final title in candidates) {
       final results = await widget.juroService.searchManga(
         title,
         providerKey: _providerKey,
       );
       if (results.isNotEmpty) {
-        match = results.first;
+        match =
+            bestTitleMatch(results, candidates, (item) => item.title) ??
+            results.first;
         break;
       }
     }

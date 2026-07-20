@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/list_ranges.dart';
+import '../core/text_utils.dart';
 import '../models/anilist_media.dart';
 import '../models/downloaded_episode.dart';
 import '../models/juro_models.dart';
@@ -153,16 +154,24 @@ class _DetailScreenState extends State<DetailScreen> {
 
   Future<void> _autoMatchAndLoadEpisodes() async {
     setState(() => _status = 'Searching ${widget.media.displayTitle}');
-    final dubText = _dub ? ' (dub)' : '';
+    // Aniyomi sources index canonical titles; a " (dub)" suffix only breaks
+    // their search. Dub selection there happens via source settings/servers.
+    final isAniyomiProvider = AniyomiExtensionService.isProviderKey(
+      _providerKey,
+    );
+    final dubText = _dub && !isAniyomiProvider ? ' (dub)' : '';
+    final candidates = widget.media.title.searchCandidates.toList();
     JuroAnimeInfo? match;
 
-    for (final title in widget.media.title.searchCandidates) {
+    for (final title in candidates) {
       final results = await widget.juroService.searchAnime(
         '$title$dubText',
         providerKey: _providerKey,
       );
       if (results.isNotEmpty) {
-        match = results.first;
+        match =
+            bestTitleMatch(results, candidates, (item) => item.title) ??
+            results.first;
         break;
       }
     }
@@ -361,128 +370,91 @@ class _DetailScreenState extends State<DetailScreen> {
     String title = 'Select source',
     bool showSourceActions = false,
   }) {
-    final future = widget.juroService.getVideos(
-      episode.id,
-      providerKey: _providerKey,
-    );
     return showAppBottomSheet<VideoSource>(
       context: context,
       initialChildSize: 0.72,
       minChildSize: 0.36,
       maxChildSize: 0.92,
-      builder: (context, controller) => FutureBuilder<List<VideoSource>>(
-        future: future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return AppErrorView(message: snapshot.error.toString());
-          }
-
-          final sources = snapshot.data ?? const <VideoSource>[];
-          if (sources.isEmpty) {
-            return const EmptyState(
-              icon: Icons.videocam_off_outlined,
-              title: 'No video sources',
-            );
-          }
-
-          final grouped = <String, List<VideoSource>>{};
-          for (final source in sources) {
-            grouped.putIfAbsent(source.serverName, () => []).add(source);
-          }
-
-          return ListView(
-            controller: controller,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                child: Text(
-                  title,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-                ),
-              ),
-              for (final entry in grouped.entries) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
-                  child: Text(
-                    entry.key,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-                  ),
-                ),
-                for (final source in entry.value)
-                  Builder(
-                    builder: (context) {
-                      final providerAnime = _providerAnime;
-                      final request = providerAnime == null
-                          ? null
-                          : EpisodeDownloadRequest(
-                              media: widget.media,
-                              providerAnime: providerAnime,
-                              episode: episode,
-                              source: source,
-                            );
-                      return ListTile(
-                        leading: const Icon(Icons.play_circle_outline),
-                        title: Text(source.displayTitle),
-                        subtitle: Text(
-                          [
-                            source.resolution,
-                            source.fileType,
-                            source.extraNote,
-                          ].whereType<String>().join(' • '),
-                        ),
-                        trailing: showSourceActions && request != null
-                            ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _SourceDownloadButton(
-                                    service: widget.downloadService,
-                                    request: request,
-                                    onDownload: () =>
-                                        _downloadEpisodeRequest(request),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Copy link',
-                                    visualDensity: VisualDensity.compact,
-                                    onPressed: () => _handleVideoSourceAction(
-                                      source,
-                                      _VideoSourceAction.copyLink,
-                                    ),
-                                    icon: const Icon(Icons.copy),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Open externally',
-                                    visualDensity: VisualDensity.compact,
-                                    onPressed: () => _handleVideoSourceAction(
-                                      source,
-                                      _VideoSourceAction.openExternal,
-                                    ),
-                                    icon: const Icon(Icons.open_in_new),
-                                  ),
-                                ],
-                              )
-                            : null,
-                        onLongPress: showSourceActions
-                            ? () => _handleVideoSourceAction(
-                                source,
-                                _VideoSourceAction.copyLink,
-                              )
-                            : null,
-                        onTap: () => Navigator.of(context).pop(source),
-                      );
-                    },
-                  ),
-              ],
-            ],
-          );
-        },
+      builder: (context, controller) => _VideoSourcePicker(
+        title: title,
+        scrollController: controller,
+        loadServers: () => widget.juroService.getVideoServers(
+          episode.id,
+          providerKey: _providerKey,
+        ),
+        loadVideosForServer: (server) => widget.juroService.getVideos(
+          server.embed.url,
+          providerKey: _providerKey,
+        ),
+        loadAllVideos: () => widget.juroService.getVideos(
+          episode.id,
+          providerKey: _providerKey,
+        ),
+        buildSourceTile: (context, source) =>
+            _buildVideoSourceTile(context, episode, source, showSourceActions),
       ),
+    );
+  }
+
+  Widget _buildVideoSourceTile(
+    BuildContext context,
+    AnimeEpisode episode,
+    VideoSource source,
+    bool showSourceActions,
+  ) {
+    final providerAnime = _providerAnime;
+    final request = providerAnime == null
+        ? null
+        : EpisodeDownloadRequest(
+            media: widget.media,
+            providerAnime: providerAnime,
+            episode: episode,
+            source: source,
+          );
+    return ListTile(
+      leading: const Icon(Icons.play_circle_outline),
+      title: Text(source.displayTitle),
+      subtitle: Text(
+        [
+          source.resolution,
+          source.fileType,
+          source.extraNote,
+        ].whereType<String>().join(' • '),
+      ),
+      trailing: showSourceActions && request != null
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _SourceDownloadButton(
+                  service: widget.downloadService,
+                  request: request,
+                  onDownload: () => _downloadEpisodeRequest(request),
+                ),
+                IconButton(
+                  tooltip: 'Copy link',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _handleVideoSourceAction(
+                    source,
+                    _VideoSourceAction.copyLink,
+                  ),
+                  icon: const Icon(Icons.copy),
+                ),
+                IconButton(
+                  tooltip: 'Open externally',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _handleVideoSourceAction(
+                    source,
+                    _VideoSourceAction.openExternal,
+                  ),
+                  icon: const Icon(Icons.open_in_new),
+                ),
+              ],
+            )
+          : null,
+      onLongPress: showSourceActions
+          ? () => _handleVideoSourceAction(source, _VideoSourceAction.copyLink)
+          : null,
+      onTap: () => Navigator.of(context).pop(source),
     );
   }
 
@@ -2066,6 +2038,226 @@ class _EpisodeDownloadStatus extends StatelessWidget {
 
         return compact ? const SizedBox.shrink() : const Icon(Icons.play_arrow);
       },
+    );
+  }
+}
+
+/// Two-step video picker: shows the source's server/hoster list first and only
+/// extracts videos for the server the user taps. Falls back to a flat list for
+/// sources that don't expose servers.
+class _VideoSourcePicker extends StatefulWidget {
+  const _VideoSourcePicker({
+    required this.title,
+    required this.scrollController,
+    required this.loadServers,
+    required this.loadVideosForServer,
+    required this.loadAllVideos,
+    required this.buildSourceTile,
+  });
+
+  final String title;
+  final ScrollController scrollController;
+  final Future<List<VideoServer>> Function() loadServers;
+  final Future<List<VideoSource>> Function(VideoServer server)
+  loadVideosForServer;
+  final Future<List<VideoSource>> Function() loadAllVideos;
+  final Widget Function(BuildContext context, VideoSource source)
+  buildSourceTile;
+
+  @override
+  State<_VideoSourcePicker> createState() => _VideoSourcePickerState();
+}
+
+class _VideoSourcePickerState extends State<_VideoSourcePicker> {
+  List<VideoServer>? _servers;
+  VideoServer? _selectedServer;
+  List<VideoSource>? _videos;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadServers());
+  }
+
+  Future<void> _loadServers() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    List<VideoServer> servers;
+    try {
+      servers = await widget.loadServers();
+    } catch (_) {
+      // Some providers don't expose a server list; fall back to the flat
+      // video list instead of failing the sheet.
+      servers = const [];
+    }
+    if (!mounted) return;
+    if (servers.isEmpty) {
+      try {
+        final videos = await widget.loadAllVideos();
+        if (!mounted) return;
+        setState(() {
+          _servers = const [];
+          _videos = videos;
+          _loading = false;
+        });
+      } catch (error) {
+        if (mounted) {
+          setState(() {
+            _error = error.toString();
+            _loading = false;
+          });
+        }
+      }
+      return;
+    }
+    setState(() {
+      _servers = servers;
+      _loading = false;
+    });
+    if (servers.length == 1) {
+      await _selectServer(servers.first);
+    }
+  }
+
+  Future<void> _selectServer(VideoServer server) async {
+    setState(() {
+      _selectedServer = server;
+      _videos = null;
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final videos = await widget.loadVideosForServer(server);
+      if (!mounted || _selectedServer != server) return;
+      setState(() {
+        _videos = videos;
+        _loading = false;
+      });
+    } catch (error) {
+      if (mounted && _selectedServer == server) {
+        setState(() {
+          _error = error.toString();
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  void _backToServers() {
+    setState(() {
+      _selectedServer = null;
+      _videos = null;
+      _error = null;
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final servers = _servers;
+    final showBack = _selectedServer != null && (servers?.length ?? 0) > 1;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 4, 20, 8),
+          child: Row(
+            children: [
+              if (showBack)
+                IconButton(
+                  tooltip: 'Back to servers',
+                  onPressed: _backToServers,
+                  icon: const Icon(Icons.arrow_back),
+                )
+              else
+                const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _selectedServer == null
+                      ? widget.title
+                      : _selectedServer!.name,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(child: _buildBody(context)),
+      ],
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return AppErrorView(
+        message: _error!,
+        onRetry: _selectedServer == null
+            ? () => unawaited(_loadServers())
+            : () => unawaited(_selectServer(_selectedServer!)),
+      );
+    }
+    final videos = _videos;
+    if (videos != null) {
+      if (videos.isEmpty) {
+        return const EmptyState(
+          icon: Icons.videocam_off_outlined,
+          title: 'No video sources',
+        );
+      }
+      // Sources without servers return a mixed list; keep the grouping so
+      // qualities stay clustered per server name.
+      final grouped = <String, List<VideoSource>>{};
+      for (final source in videos) {
+        grouped.putIfAbsent(source.serverName, () => []).add(source);
+      }
+      final showGroups = _selectedServer == null;
+      return ListView(
+        controller: widget.scrollController,
+        children: [
+          for (final entry in grouped.entries) ...[
+            if (showGroups)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+                child: Text(
+                  entry.key,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
+                ),
+              ),
+            for (final source in entry.value)
+              widget.buildSourceTile(context, source),
+          ],
+        ],
+      );
+    }
+    final servers = _servers ?? const <VideoServer>[];
+    if (servers.isEmpty) {
+      return const EmptyState(
+        icon: Icons.dns_outlined,
+        title: 'No servers available',
+      );
+    }
+    return ListView(
+      controller: widget.scrollController,
+      children: [
+        for (final server in servers)
+          ListTile(
+            leading: const Icon(Icons.dns_outlined),
+            title: Text(server.name),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+            onTap: () => unawaited(_selectServer(server)),
+          ),
+      ],
     );
   }
 }

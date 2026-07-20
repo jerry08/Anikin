@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../models/anilist_media.dart';
+import '../models/aniyomi_filters.dart';
 import '../models/juro_models.dart';
 import '../services/aniyomi_extension_service.dart';
 import '../services/download_service.dart';
@@ -12,6 +13,7 @@ import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
+import '../widgets/aniyomi_filter_sheet.dart';
 import '../widgets/app_error_view.dart';
 import 'detail_screen.dart';
 import 'manga_detail_screen.dart';
@@ -88,6 +90,15 @@ class _AniyomiSourcesScreenState extends State<AniyomiSourcesScreen> {
     );
   }
 
+  void _openSourceSettings(SourceProvider provider) {
+    unawaited(
+      widget.extensionService.openSourcePreferences(
+        provider.key,
+        sourceName: provider.name,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -134,12 +145,14 @@ class _AniyomiSourcesScreenState extends State<AniyomiSourcesScreen> {
                     mediaType: _SourceMediaType.anime,
                     onRefresh: _refresh,
                     onOpen: _openSource,
+                    onOpenSettings: _openSourceSettings,
                   ),
                   _SourceListTab(
                     providers: data.manga,
                     mediaType: _SourceMediaType.manga,
                     onRefresh: _refresh,
                     onOpen: _openSource,
+                    onOpenSettings: _openSourceSettings,
                   ),
                 ],
               );
@@ -164,6 +177,7 @@ class _SourceListTab extends StatelessWidget {
     required this.mediaType,
     required this.onRefresh,
     required this.onOpen,
+    required this.onOpenSettings,
   });
 
   final List<SourceProvider> providers;
@@ -171,6 +185,7 @@ class _SourceListTab extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final void Function(SourceProvider provider, _SourceMediaType mediaType)
   onOpen;
+  final void Function(SourceProvider provider) onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -192,6 +207,9 @@ class _SourceListTab extends StatelessWidget {
                 provider: provider,
                 mediaType: mediaType,
                 onTap: () => onOpen(provider, mediaType),
+                onOpenSettings: provider.isConfigurable
+                    ? () => onOpenSettings(provider)
+                    : null,
               ),
         ],
       ),
@@ -204,11 +222,13 @@ class _SourceProviderTile extends StatelessWidget {
     required this.provider,
     required this.mediaType,
     required this.onTap,
+    this.onOpenSettings,
   });
 
   final SourceProvider provider;
   final _SourceMediaType mediaType;
   final VoidCallback onTap;
+  final VoidCallback? onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -225,8 +245,24 @@ class _SourceProviderTile extends StatelessWidget {
         child: ListTile(
           leading: _IconBadge(icon: mediaType.icon, color: colorScheme.primary),
           title: Text(provider.name),
-          subtitle: Text(provider.language.toUpperCase()),
-          trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+          subtitle: Text(
+            [
+              provider.language.toUpperCase(),
+              if (provider.isNsfw) 'NSFW',
+            ].join(' • '),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (onOpenSettings != null)
+                IconButton(
+                  tooltip: 'Source settings',
+                  onPressed: onOpenSettings,
+                  icon: const Icon(Icons.settings_outlined, size: 20),
+                ),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+            ],
+          ),
           onTap: onTap,
         ),
       ),
@@ -265,61 +301,177 @@ class _AniyomiSourceBrowseScreen extends StatefulWidget {
 class _AniyomiSourceBrowseScreenState
     extends State<_AniyomiSourceBrowseScreen> {
   final _controller = TextEditingController();
-  Future<List<Object>>? _future;
+  final _scrollController = ScrollController();
+
+  AniyomiBrowseKind _kind = AniyomiBrowseKind.popular;
+  List<AniyomiFilter>? _filters;
+  bool _filtersActive = false;
+
+  final List<Object> _items = [];
+  bool _hasNextPage = false;
+  int _page = 1;
+  bool _loading = true;
+  bool _loadingMore = false;
+  String? _error;
+  int _requestId = 0;
 
   @override
   void initState() {
     super.initState();
-    _controller.addListener(_onQueryChanged);
-    _future = _load();
+    _scrollController.addListener(_onScroll);
+    unawaited(_reload());
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_onQueryChanged);
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _controller.dispose();
     super.dispose();
   }
 
-  void _onQueryChanged() {
-    setState(() {});
+  void _onScroll() {
+    if (!_hasNextPage || _loadingMore || _loading) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 400) {
+      unawaited(_loadMore());
+    }
   }
 
-  Future<List<Object>> _load() async {
+  bool get _isSearching =>
+      _controller.text.trim().isNotEmpty || _filtersActive;
+
+  Future<AniyomiPage<Object>> _fetchPage(int page) async {
     final query = _controller.text.trim();
+    final selections = _filtersActive && _filters != null
+        ? collectFilterSelections(_filters!)
+        : null;
     switch (widget.mediaType) {
       case _SourceMediaType.anime:
-        final results = query.isEmpty
-            ? await widget.extensionService.browseAnime(
-                providerKey: widget.provider.key,
-              )
-            : await widget.extensionService.searchAnime(
+        final result = _isSearching
+            ? await widget.extensionService.searchAnime(
                 query,
                 providerKey: widget.provider.key,
+                page: page,
+                filters: selections,
+              )
+            : await widget.extensionService.browseAnime(
+                providerKey: widget.provider.key,
+                page: page,
+                kind: _kind,
               );
-        return results.cast<Object>();
+        return AniyomiPage<Object>(
+          items: result.items,
+          hasNextPage: result.hasNextPage,
+        );
       case _SourceMediaType.manga:
-        final results = query.isEmpty
-            ? await widget.extensionService.browseManga(
-                providerKey: widget.provider.key,
-              )
-            : await widget.extensionService.searchManga(
+        final result = _isSearching
+            ? await widget.extensionService.searchManga(
                 query,
                 providerKey: widget.provider.key,
+                page: page,
+                filters: selections,
+              )
+            : await widget.extensionService.browseManga(
+                providerKey: widget.provider.key,
+                page: page,
+                kind: _kind,
               );
-        return results.cast<Object>();
+        return AniyomiPage<Object>(
+          items: result.items,
+          hasNextPage: result.hasNextPage,
+        );
+    }
+  }
+
+  Future<void> _reload() async {
+    final requestId = ++_requestId;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final result = await _fetchPage(1);
+      if (!mounted || requestId != _requestId) return;
+      setState(() {
+        _items
+          ..clear()
+          ..addAll(result.items);
+        _hasNextPage = result.hasNextPage;
+        _page = 1;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted || requestId != _requestId) return;
+      setState(() {
+        _error = error.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _loadMore() async {
+    final requestId = _requestId;
+    setState(() => _loadingMore = true);
+    try {
+      final result = await _fetchPage(_page + 1);
+      if (!mounted || requestId != _requestId) return;
+      setState(() {
+        _items.addAll(result.items);
+        _hasNextPage = result.hasNextPage;
+        _page += 1;
+      });
+    } catch (_) {
+      if (!mounted || requestId != _requestId) return;
+      setState(() => _hasNextPage = false);
+    } finally {
+      if (mounted && requestId == _requestId) {
+        setState(() => _loadingMore = false);
+      }
+    }
+  }
+
+  Future<void> _openFilters() async {
+    var filters = _filters;
+    if (filters == null) {
+      try {
+        filters = await widget.extensionService.getFilters(
+          widget.provider.key,
+        );
+      } catch (_) {
+        filters = const [];
+      }
+      if (!mounted) return;
+      _filters = filters;
+    }
+    if (filters.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This source has no filters')),
+      );
+      return;
+    }
+    final action = await showAniyomiFilterSheet(context, filters);
+    if (!mounted || action == null) return;
+    switch (action) {
+      case AniyomiFilterSheetAction.apply:
+        _filtersActive = true;
+        unawaited(_reload());
+      case AniyomiFilterSheetAction.reset:
+        _filters = null;
+        _filtersActive = false;
+        unawaited(_reload());
     }
   }
 
   void _run() {
-    setState(() {
-      _future = _load();
-    });
+    unawaited(_reload());
   }
 
   void _clear() {
-    if (_controller.text.isEmpty) return;
+    if (_controller.text.isEmpty && !_filtersActive) return;
     _controller.clear();
+    _filtersActive = false;
+    _filters = null;
     _run();
   }
 
@@ -360,7 +512,31 @@ class _AniyomiSourceBrowseScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.provider.name)),
+      appBar: AppBar(
+        title: Text(widget.provider.name),
+        actions: [
+          IconButton(
+            tooltip: 'Filters',
+            onPressed: () => unawaited(_openFilters()),
+            icon: Badge(
+              isLabelVisible: _filtersActive,
+              smallSize: 8,
+              child: const Icon(Icons.filter_list),
+            ),
+          ),
+          if (widget.provider.isConfigurable)
+            IconButton(
+              tooltip: 'Source settings',
+              onPressed: () => unawaited(
+                widget.extensionService.openSourcePreferences(
+                  widget.provider.key,
+                  sourceName: widget.provider.name,
+                ),
+              ),
+              icon: const Icon(Icons.settings_outlined),
+            ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -373,7 +549,7 @@ class _AniyomiSourceBrowseScreenState
                 decoration: InputDecoration(
                   hintText: 'Search ${widget.mediaType.label.toLowerCase()}',
                   prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _controller.text.isEmpty
+                  suffixIcon: _controller.text.isEmpty && !_filtersActive
                       ? null
                       : IconButton(
                           tooltip: 'Clear',
@@ -381,53 +557,83 @@ class _AniyomiSourceBrowseScreenState
                           icon: const Icon(Icons.close),
                         ),
                 ),
+                onChanged: (_) => setState(() {}),
               ),
             ),
-            Expanded(
-              child: FutureBuilder<List<Object>>(
-                future: _future,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return AppErrorView(
-                      message: snapshot.error.toString(),
-                      onRetry: _run,
-                    );
-                  }
-                  final items = snapshot.data ?? const [];
-                  if (items.isEmpty) {
-                    return EmptyState(
-                      icon: Icons.search_off,
-                      title: _controller.text.trim().isEmpty
-                          ? 'No popular results'
-                          : 'No results',
-                      message: _controller.text.trim().isEmpty
-                          ? 'This source did not return anything for its browse page.'
-                          : null,
-                    );
-                  }
-                  return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                    itemCount: items.length,
-                    itemBuilder: (context, index) => _SourceResultTile(
-                      item: items[index],
-                      onTap: () => _openItem(items[index]),
+            if (!_isSearching && widget.provider.supportsLatest)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: SegmentedButton<AniyomiBrowseKind>(
+                  segments: const [
+                    ButtonSegment(
+                      value: AniyomiBrowseKind.popular,
+                      label: Text('Popular'),
+                      icon: Icon(Icons.local_fire_department_outlined),
                     ),
-                  );
-                },
+                    ButtonSegment(
+                      value: AniyomiBrowseKind.latest,
+                      label: Text('Latest'),
+                      icon: Icon(Icons.new_releases_outlined),
+                    ),
+                  ],
+                  selected: {_kind},
+                  onSelectionChanged: (selection) {
+                    setState(() => _kind = selection.first);
+                    unawaited(_reload());
+                  },
+                ),
               ),
-            ),
+            Expanded(child: _buildResults(context)),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildResults(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return AppErrorView(message: _error!, onRetry: _run);
+    }
+    if (_items.isEmpty) {
+      return EmptyState(
+        icon: Icons.search_off,
+        title: _isSearching ? 'No results' : 'No ${_kind.name} results',
+        message: _isSearching
+            ? null
+            : 'This source did not return anything for its browse page.',
+      );
+    }
+    return GridView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 130,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 0.56,
+      ),
+      itemCount: _items.length + (_hasNextPage ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index >= _items.length) {
+          return const Center(
+            child: SizedBox.square(
+              dimension: 26,
+              child: CircularProgressIndicator(strokeWidth: 2.6),
+            ),
+          );
+        }
+        final item = _items[index];
+        return _SourceResultCard(item: item, onTap: () => _openItem(item));
+      },
+    );
+  }
 }
 
-class _SourceResultTile extends StatelessWidget {
-  const _SourceResultTile({required this.item, required this.onTap});
+class _SourceResultCard extends StatelessWidget {
+  const _SourceResultCard({required this.item, required this.onTap});
 
   final Object item;
   final VoidCallback onTap;
@@ -440,6 +646,7 @@ class _SourceResultTile extends StatelessWidget {
       _ => null,
     };
     final headers = switch (item) {
+      JuroAnimeInfo anime => anime.headers,
       MangaResult manga => manga.headers,
       _ => const <String, String>{},
     };
@@ -448,51 +655,54 @@ class _SourceResultTile extends StatelessWidget {
       MangaResult manga => manga.title,
       _ => 'Untitled',
     };
-    final subtitle = switch (item) {
-      JuroAnimeInfo anime => anime.status ?? anime.released ?? anime.type ?? '',
-      MangaResult manga => manga.displaySubtitle,
-      _ => '',
-    };
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        clipBehavior: Clip.antiAlias,
-        child: ListTile(
-          leading: _ResultImage(url: image, headers: headers),
-          title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
-          subtitle: subtitle.isEmpty ? null : Text(subtitle),
-          onTap: onTap,
-        ),
-      ),
-    );
-  }
-}
-
-class _ResultImage extends StatelessWidget {
-  const _ResultImage({required this.url, required this.headers});
-
-  final String? url;
-  final Map<String, String> headers;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: SizedBox(
-        width: 44,
-        height: 58,
-        child: url == null || url!.isEmpty
-            ? ColoredBox(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                child: const Icon(Icons.image_not_supported_outlined),
-              )
-            : CachedNetworkImage(
-                imageUrl: url!,
-                httpHeaders: headers,
-                fit: BoxFit.cover,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox.expand(
+                child: image == null || image.isEmpty
+                    ? ColoredBox(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        child: const Icon(Icons.image_not_supported_outlined),
+                      )
+                    : CachedNetworkImage(
+                        imageUrl: image,
+                        httpHeaders: headers.isEmpty ? null : headers,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => ColoredBox(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
+                        ),
+                        errorWidget: (context, url, error) => ColoredBox(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
+                          child: const Icon(
+                            Icons.image_not_supported_outlined,
+                          ),
+                        ),
+                      ),
               ),
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
     );
   }

@@ -3,7 +3,26 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../models/aniyomi_filters.dart';
 import '../models/juro_models.dart';
+
+class AniyomiPage<T> {
+  const AniyomiPage({required this.items, required this.hasNextPage});
+
+  static const empty = AniyomiPage<Never>(items: [], hasNextPage: false);
+
+  final List<T> items;
+  final bool hasNextPage;
+}
+
+enum AniyomiBrowseKind {
+  popular('popular'),
+  latest('latest');
+
+  const AniyomiBrowseKind(this.wireName);
+
+  final String wireName;
+}
 
 class AniyomiExtensionService {
   AniyomiExtensionService({
@@ -111,22 +130,59 @@ class AniyomiExtensionService {
     await _invoke<Object?>('uninstallExtension', {'pkgName': pkgName});
   }
 
-  Future<List<JuroAnimeInfo>> searchAnime(
+  Future<AniyomiPage<JuroAnimeInfo>> searchAnime(
     String query, {
     required String providerKey,
+    int page = 1,
+    List<AniyomiFilterSelection>? filters,
   }) async {
     final value = await _invoke<Object?>('searchAnime', {
       'providerKey': providerKey,
       'query': query,
+      'page': page,
+      if (filters != null)
+        'filters': filters.map((selection) => selection.toJson()).toList(),
     });
-    return _readMapList(value).map(JuroAnimeInfo.fromJson).toList();
+    return _readPage(value, JuroAnimeInfo.fromJson);
   }
 
-  Future<List<JuroAnimeInfo>> browseAnime({required String providerKey}) async {
+  Future<AniyomiPage<JuroAnimeInfo>> browseAnime({
+    required String providerKey,
+    int page = 1,
+    AniyomiBrowseKind kind = AniyomiBrowseKind.popular,
+  }) async {
     final value = await _invoke<Object?>('browseAnime', {
       'providerKey': providerKey,
+      'page': page,
+      'kind': kind.wireName,
     });
-    return _readMapList(value).map(JuroAnimeInfo.fromJson).toList();
+    return _readPage(value, JuroAnimeInfo.fromJson);
+  }
+
+  Future<List<AniyomiFilter>> getFilters(String providerKey) async {
+    final value = await _invoke<Object?>('getFilters', {
+      'providerKey': providerKey,
+    });
+    return _readMapList(value).map(AniyomiFilter.fromJson).toList();
+  }
+
+  Future<void> openSourcePreferences(
+    String providerKey, {
+    String? sourceName,
+  }) async {
+    await _invoke<Object?>('openSourcePreferences', {
+      'providerKey': providerKey,
+      'sourceName': ?sourceName,
+    });
+  }
+
+  Future<bool> getNsfwAllowed() async {
+    final value = await _invoke<bool>('getNsfwAllowed');
+    return value ?? true;
+  }
+
+  Future<void> setNsfwAllowed(bool allowed) async {
+    await _invoke<Object?>('setNsfwAllowed', {'allowed': allowed});
   }
 
   Future<List<AnimeEpisode>> getEpisodes(
@@ -164,26 +220,41 @@ class AniyomiExtensionService {
     ).map(VideoSource.fromJson).where((source) => source.isPlayable).toList();
   }
 
-  Future<List<MangaResult>> browseManga({required String providerKey}) async {
+  Future<AniyomiPage<MangaResult>> browseManga({
+    required String providerKey,
+    int page = 1,
+    AniyomiBrowseKind kind = AniyomiBrowseKind.popular,
+  }) async {
     final value = await _invoke<Object?>('browseManga', {
       'providerKey': providerKey,
+      'page': page,
+      'kind': kind.wireName,
     });
-    return _readMapList(
+    return _readPage(
       value,
-    ).map(MangaResult.fromJson).where((item) => item.id.isNotEmpty).toList();
+      MangaResult.fromJson,
+      where: (item) => item.id.isNotEmpty,
+    );
   }
 
-  Future<List<MangaResult>> searchManga(
+  Future<AniyomiPage<MangaResult>> searchManga(
     String query, {
     required String providerKey,
+    int page = 1,
+    List<AniyomiFilterSelection>? filters,
   }) async {
     final value = await _invoke<Object?>('searchManga', {
       'providerKey': providerKey,
       'query': query,
+      'page': page,
+      if (filters != null)
+        'filters': filters.map((selection) => selection.toJson()).toList(),
     });
-    return _readMapList(
+    return _readPage(
       value,
-    ).map(MangaResult.fromJson).where((item) => item.id.isNotEmpty).toList();
+      MangaResult.fromJson,
+      where: (item) => item.id.isNotEmpty,
+    );
   }
 
   Future<MangaInfo?> getMangaInfo(
@@ -260,6 +331,24 @@ class AniyomiExtensionService {
     return value.whereType<Map>().map((item) {
       return item.map((key, value) => MapEntry(key.toString(), value));
     }).toList();
+  }
+
+  AniyomiPage<T> _readPage<T>(
+    Object? value,
+    T Function(Map<String, dynamic> json) fromJson, {
+    bool Function(T item)? where,
+  }) {
+    if (value is! Map) {
+      return AniyomiPage<T>(items: const [], hasNextPage: false);
+    }
+    final items = _readMapList(value['items'])
+        .map(fromJson)
+        .where((item) => where?.call(item) ?? true)
+        .toList();
+    return AniyomiPage<T>(
+      items: items,
+      hasNextPage: value['hasNextPage'] == true,
+    );
   }
 }
 

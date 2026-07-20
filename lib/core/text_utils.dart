@@ -50,3 +50,64 @@ String? firstNonBlank(Iterable<String?> values) {
   }
   return null;
 }
+
+String _normalizeForMatch(String value) {
+  return value
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+}
+
+/// Normalized Levenshtein similarity in [0, 1]; 1 means identical titles.
+double titleSimilarity(String a, String b) {
+  final left = _normalizeForMatch(a);
+  final right = _normalizeForMatch(b);
+  if (left.isEmpty || right.isEmpty) {
+    return left == right ? 1 : 0;
+  }
+  if (left == right) {
+    return 1;
+  }
+  var previous = List<int>.generate(right.length + 1, (index) => index);
+  var current = List<int>.filled(right.length + 1, 0);
+  for (var i = 1; i <= left.length; i++) {
+    current[0] = i;
+    for (var j = 1; j <= right.length; j++) {
+      final substitution =
+          previous[j - 1] + (left.codeUnitAt(i - 1) == right.codeUnitAt(j - 1) ? 0 : 1);
+      final insertion = current[j - 1] + 1;
+      final deletion = previous[j] + 1;
+      current[j] = [substitution, insertion, deletion]
+          .reduce((a, b) => a < b ? a : b);
+    }
+    final swap = previous;
+    previous = current;
+    current = swap;
+  }
+  final distance = previous[right.length];
+  final longest = left.length > right.length ? left.length : right.length;
+  return 1 - distance / longest;
+}
+
+/// Picks the item whose title is closest to any of [candidates], mirroring
+/// Dantotsu's closest-string matching instead of trusting result order.
+T? bestTitleMatch<T>(
+  List<T> items,
+  Iterable<String> candidates,
+  String Function(T item) titleOf,
+) {
+  T? best;
+  var bestScore = -1.0;
+  for (final item in items) {
+    final title = titleOf(item);
+    for (final candidate in candidates) {
+      final score = titleSimilarity(title, candidate);
+      if (score > bestScore) {
+        bestScore = score;
+        best = item;
+      }
+    }
+  }
+  return best;
+}

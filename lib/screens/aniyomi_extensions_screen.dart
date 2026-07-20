@@ -61,6 +61,12 @@ class _AniyomiExtensionsScreenState extends State<AniyomiExtensionsScreen> {
         _available = results[1] as List<AniyomiExtensionInfo>;
         _installed = results[2] as List<AniyomiExtensionInfo>;
       });
+      // Repos are configured but nothing is cached yet (e.g. first run after
+      // install): fetch the index automatically instead of waiting for a
+      // manual refresh.
+      if (_repos.isNotEmpty && _available.isEmpty && !_refreshing) {
+        await _refreshAvailable();
+      }
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {

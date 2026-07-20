@@ -47,11 +47,11 @@ class JuroService {
     required String providerKey,
   }) async {
     if (_isAniyomiProvider(providerKey)) {
-      return _aniyomiExtensionService?.searchAnime(
-            query,
-            providerKey: providerKey,
-          ) ??
-          const [];
+      final page = await _aniyomiExtensionService?.searchAnime(
+        query,
+        providerKey: providerKey,
+      );
+      return page?.items ?? const [];
     }
 
     final uri = _uri('$providerKey/Search', queryParameters: {'query': query});
@@ -151,11 +151,11 @@ class JuroService {
     required String providerKey,
   }) async {
     if (_isAniyomiMangaProvider(providerKey)) {
-      return _aniyomiExtensionService?.searchManga(
-            query,
-            providerKey: providerKey,
-          ) ??
-          const [];
+      final page = await _aniyomiExtensionService?.searchManga(
+        query,
+        providerKey: providerKey,
+      );
+      return page?.items ?? const [];
     }
 
     final uri = _uri('$providerKey/Search', queryParameters: {'q': query});

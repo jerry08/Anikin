@@ -1,11 +1,22 @@
 package com.oneb.anikin.extensions
 
+import eu.kanade.tachiyomi.animesource.AnimeCatalogueSource
 import eu.kanade.tachiyomi.animesource.AnimeSource
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.source.CatalogueSource as MangaCatalogueSource
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.Source as MangaSource
+import org.json.JSONArray
+import org.json.JSONObject
 
 enum class ExtensionMediaType(val wireName: String, val providerType: Int) {
     Anime("anime", 0),
-    Manga("manga", 1),
+    Manga("manga", 1);
+
+    companion object {
+        fun fromWireName(value: String?): ExtensionMediaType =
+            entries.firstOrNull { it.wireName == value } ?: Anime
+    }
 }
 
 enum class ExtensionInstallLocation(val wireName: String) {
@@ -46,6 +57,54 @@ data class AvailableExtensionInfo(
         "isPrivate" to (installed?.installLocation == ExtensionInstallLocation.Private),
         "hasUpdate" to (installed?.let { versionCode > it.versionCode || libVersion > it.libVersion } ?: false),
     )
+
+    fun toJson(): JSONObject = JSONObject()
+        .put("name", name)
+        .put("pkgName", pkgName)
+        .put("versionName", versionName)
+        .put("versionCode", versionCode)
+        .put("libVersion", libVersion)
+        .put("lang", lang)
+        .put("isNsfw", isNsfw)
+        .put("mediaType", mediaType.wireName)
+        .put("apkName", apkName)
+        .put("repoUrl", repoUrl)
+        .put("iconUrl", iconUrl)
+        .put(
+            "sources",
+            JSONArray().also { array -> sources.forEach { source -> array.put(source.toJson()) } },
+        )
+
+    companion object {
+        fun fromJson(json: JSONObject): AvailableExtensionInfo? {
+            val pkgName = json.optString("pkgName")
+            if (pkgName.isEmpty()) return null
+            val mediaType = ExtensionMediaType.fromWireName(json.optString("mediaType"))
+            val sourcesJson = json.optJSONArray("sources")
+            val sources = buildList {
+                if (sourcesJson != null) {
+                    for (index in 0 until sourcesJson.length()) {
+                        val source = sourcesJson.optJSONObject(index) ?: continue
+                        add(AvailableSourceInfo.fromJson(source, mediaType))
+                    }
+                }
+            }
+            return AvailableExtensionInfo(
+                name = json.optString("name"),
+                pkgName = pkgName,
+                versionName = json.optString("versionName"),
+                versionCode = json.optLong("versionCode"),
+                libVersion = json.optDouble("libVersion", 0.0),
+                lang = json.optString("lang"),
+                isNsfw = json.optBoolean("isNsfw", false),
+                mediaType = mediaType,
+                apkName = json.optString("apkName"),
+                repoUrl = json.optString("repoUrl"),
+                iconUrl = json.optString("iconUrl").takeIf { it.isNotEmpty() },
+                sources = sources,
+            )
+        }
+    }
 }
 
 data class AvailableSourceInfo(
@@ -68,6 +127,23 @@ data class AvailableSourceInfo(
         "mediaType" to mediaType.wireName,
         "type" to mediaType.providerType,
     )
+
+    fun toJson(): JSONObject = JSONObject()
+        .put("id", id)
+        .put("lang", lang)
+        .put("name", name)
+        .put("baseUrl", baseUrl)
+
+    companion object {
+        fun fromJson(json: JSONObject, mediaType: ExtensionMediaType): AvailableSourceInfo =
+            AvailableSourceInfo(
+                id = json.optLong("id"),
+                lang = json.optString("lang"),
+                name = json.optString("name"),
+                baseUrl = json.optString("baseUrl"),
+                mediaType = mediaType,
+            )
+    }
 }
 
 data class LoadedExtensionInfo(
@@ -109,6 +185,8 @@ data class LoadedExtensionInfo(
             "lang" to source.lang,
             "mediaType" to ExtensionMediaType.Anime.wireName,
             "type" to ExtensionMediaType.Anime.providerType,
+            "supportsLatest" to ((source as? AnimeCatalogueSource)?.supportsLatest ?: false),
+            "isConfigurable" to (source is ConfigurableAnimeSource),
         )
         is MangaSource -> mapOf(
             "id" to source.id,
@@ -118,6 +196,8 @@ data class LoadedExtensionInfo(
             "lang" to source.lang,
             "mediaType" to ExtensionMediaType.Manga.wireName,
             "type" to ExtensionMediaType.Manga.providerType,
+            "supportsLatest" to ((source as? MangaCatalogueSource)?.supportsLatest ?: false),
+            "isConfigurable" to (source is ConfigurableSource),
         )
         else -> null
     }

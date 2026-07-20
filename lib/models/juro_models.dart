@@ -8,12 +8,18 @@ class SourceProvider {
     required this.name,
     this.language = 'en',
     this.type = 0,
+    this.supportsLatest = false,
+    this.isNsfw = false,
+    this.isConfigurable = false,
   });
 
   final String key;
   final String name;
   final String language;
   final int type;
+  final bool supportsLatest;
+  final bool isNsfw;
+  final bool isConfigurable;
 
   factory SourceProvider.fromJson(Map<String, dynamic> json) {
     return SourceProvider(
@@ -21,6 +27,9 @@ class SourceProvider {
       name: readString(json, 'name') ?? readString(json, 'Name') ?? 'Anime',
       language: readString(json, 'language') ?? 'en',
       type: readInt(json, 'type') ?? 0,
+      supportsLatest: json['supportsLatest'] == true,
+      isNsfw: json['isNsfw'] == true,
+      isConfigurable: json['isConfigurable'] == true,
     );
   }
 }
@@ -58,6 +67,7 @@ class JuroAnimeInfo {
     this.otherNames,
     this.summary,
     this.genres = const [],
+    this.headers = const {},
   });
 
   final String id;
@@ -72,6 +82,9 @@ class JuroAnimeInfo {
   final String? otherNames;
   final String? summary;
   final List<JuroGenre> genres;
+
+  /// HTTP headers (e.g. Referer) required by the source's image CDN.
+  final Map<String, String> headers;
 
   factory JuroAnimeInfo.fromJson(Map<String, dynamic> json) {
     final rawGenres = readJson(json, 'genres');
@@ -93,6 +106,7 @@ class JuroAnimeInfo {
                 .where((genre) => genre.name.isNotEmpty)
                 .toList()
           : const [],
+      headers: readStringMap(readJson(json, 'headers')),
     );
   }
 }

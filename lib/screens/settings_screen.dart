@@ -170,6 +170,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 ),
+                _NsfwSourcesTile(
+                  extensionService: widget.aniyomiExtensionService,
+                ),
               ],
             ),
           );
@@ -180,6 +183,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _openSettingsPage(BuildContext context, Widget page) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  }
+}
+
+class _NsfwSourcesTile extends StatefulWidget {
+  const _NsfwSourcesTile({required this.extensionService});
+
+  final AniyomiExtensionService extensionService;
+
+  @override
+  State<_NsfwSourcesTile> createState() => _NsfwSourcesTileState();
+}
+
+class _NsfwSourcesTileState extends State<_NsfwSourcesTile> {
+  bool? _allowed;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  Future<void> _load() async {
+    try {
+      final allowed = await widget.extensionService.getNsfwAllowed();
+      if (mounted) setState(() => _allowed = allowed);
+    } catch (_) {
+      if (mounted) setState(() => _allowed = true);
+    }
+  }
+
+  Future<void> _toggle(bool value) async {
+    setState(() => _allowed = value);
+    try {
+      await widget.extensionService.setNsfwAllowed(value);
+    } catch (_) {
+      if (mounted) setState(() => _allowed = !value);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      secondary: const Icon(Icons.explicit_outlined),
+      title: const Text('Show NSFW sources'),
+      subtitle: const Text('Include 18+ extensions and sources in listings'),
+      value: _allowed ?? true,
+      onChanged: _allowed == null ? null : (value) => unawaited(_toggle(value)),
+    );
   }
 }
 

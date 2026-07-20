@@ -14,9 +14,15 @@ import android.content.pm.PackageInstaller
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.preference.DialogPreference
+import androidx.preference.PreferenceManager
+import androidx.preference.PreferenceScreen
+import androidx.preference.forEach
 import eu.kanade.tachiyomi.animesource.AnimeCatalogueSource
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.AnimeSourceFactory
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.Hoster
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -25,22 +31,28 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.source.CatalogueSource as MangaCatalogueSource
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.Source as MangaSource
 import eu.kanade.tachiyomi.source.SourceFactory as MangaSourceFactory
+import eu.kanade.tachiyomi.source.model.Filter as MangaFilter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource as MangaHttpSource
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
+import okhttp3.Headers
 import okhttp3.Request
 import org.json.JSONArray
+import org.json.JSONObject
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.FullTypeReference
 import java.io.File
@@ -48,23 +60,47 @@ import java.security.MessageDigest
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
-class AniyomiExtensionRuntime private constructor(private val context: Context) {
+class AniyomiExtensionRuntime private constructor(context: Context) {
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences("aniyomi_extensions", Context.MODE_PRIVATE)
-    private val client = OkHttpClient()
     private val extensionDir = File(appContext.filesDir, "aniyomi_anime_exts")
     private val installedExtensions = ConcurrentHashMap<String, LoadedExtensionInfo>()
     private val animeSources = ConcurrentHashMap<Long, AnimeSource>()
     private val mangaSources = ConcurrentHashMap<Long, MangaSource>()
+
+    @Volatile
     private var availableExtensions: List<AvailableExtensionInfo> = emptyList()
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val ready = CompletableDeferred<Unit>()
+
+    private val client get() = NetworkHelper.get().client
+
     init {
-        initializeHostDependencies()
-        extensionDir.mkdirs()
-        reloadInstalledExtensions()
+        // Loading extensions scans installed packages and instantiates source classes; keep
+        // it off the main thread so app startup is not blocked.
+        scope.launch {
+            try {
+                NetworkHelper.initialize(appContext)
+                initializeHostDependencies()
+                extensionDir.mkdirs()
+                loadPersistedAvailableExtensions()
+                reloadInstalledExtensions()
+            } finally {
+                ready.complete(Unit)
+            }
+        }
     }
 
+    suspend fun awaitReady() = ready.await()
+
     fun isSupported(): Boolean = true
+
+    fun isNsfwAllowed(): Boolean = prefs.getBoolean(KEY_SHOW_NSFW, true)
+
+    fun setNsfwAllowed(allowed: Boolean) {
+        prefs.edit().putBoolean(KEY_SHOW_NSFW, allowed).apply()
+    }
 
     fun getRepos(): List<String> = prefs.getStringSet(KEY_REPOS, emptySet()).orEmpty().sorted()
 
@@ -73,7 +109,6 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
         val repos = getRepos().toMutableSet()
         repos += repo
         prefs.edit().putStringSet(KEY_REPOS, repos).apply()
-        availableExtensions = emptyList()
         return getRepos()
     }
 
@@ -82,64 +117,107 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
         val repos = getRepos().toMutableSet()
         repos -= repo
         prefs.edit().putStringSet(KEY_REPOS, repos).apply()
-        availableExtensions = emptyList()
+        availableExtensions = availableExtensions.filterNot { it.repoUrl == repo }
+        persistAvailableExtensions()
         return getRepos()
     }
 
-    fun getAnimeProviders(): List<Map<String, Any?>> = installedExtensions.values
-        .flatMap { extension -> extension.sources }
-        .filterIsInstance<AnimeCatalogueSource>()
-        .sortedWith(compareBy<AnimeCatalogueSource> { it.lang }.thenBy { it.name.lowercase(Locale.ROOT) })
-        .map { source ->
-            mapOf(
-                "key" to providerKeyForAnimeSource(source.id),
-                "name" to source.name,
-                "language" to source.lang,
-                "type" to 0,
-            )
-        }
+    suspend fun getAnimeProviders(): List<Map<String, Any?>> {
+        awaitReady()
+        val nsfwAllowed = isNsfwAllowed()
+        return installedExtensions.values
+            .filter { nsfwAllowed || !it.isNsfw }
+            .flatMap { extension ->
+                extension.sources.filterIsInstance<AnimeCatalogueSource>().map { source -> extension to source }
+            }
+            .sortedWith(compareBy({ it.second.lang }, { it.second.name.lowercase(Locale.ROOT) }))
+            .map { (extension, source) ->
+                mapOf(
+                    "key" to providerKeyForAnimeSource(source.id),
+                    "name" to source.name,
+                    "language" to source.lang,
+                    "type" to 0,
+                    "supportsLatest" to source.supportsLatest,
+                    "isNsfw" to extension.isNsfw,
+                    "isConfigurable" to (source is ConfigurableAnimeSource),
+                )
+            }
+    }
 
-    fun getMangaProviders(): List<Map<String, Any?>> = installedExtensions.values
-        .flatMap { extension -> extension.sources }
-        .filterIsInstance<MangaCatalogueSource>()
-        .sortedWith(compareBy<MangaCatalogueSource> { it.lang }.thenBy { it.name.lowercase(Locale.ROOT) })
-        .map { source ->
-            mapOf(
-                "key" to providerKeyForMangaSource(source.id),
-                "name" to source.name,
-                "language" to source.lang,
-                "type" to 1,
-            )
-        }
+    suspend fun getMangaProviders(): List<Map<String, Any?>> {
+        awaitReady()
+        val nsfwAllowed = isNsfwAllowed()
+        return installedExtensions.values
+            .filter { nsfwAllowed || !it.isNsfw }
+            .flatMap { extension ->
+                extension.sources.filterIsInstance<MangaCatalogueSource>().map { source -> extension to source }
+            }
+            .sortedWith(compareBy({ it.second.lang }, { it.second.name.lowercase(Locale.ROOT) }))
+            .map { (extension, source) ->
+                mapOf(
+                    "key" to providerKeyForMangaSource(source.id),
+                    "name" to source.name,
+                    "language" to source.lang,
+                    "type" to 1,
+                    "supportsLatest" to source.supportsLatest,
+                    "isNsfw" to extension.isNsfw,
+                    "isConfigurable" to (source is ConfigurableSource),
+                )
+            }
+    }
 
     suspend fun refreshAvailableExtensions(): List<Map<String, Any?>> = withContext(Dispatchers.IO) {
-        availableExtensions = getRepos().flatMap { repo -> fetchRepo(repo) }
+        awaitReady()
+        val repos = getRepos()
+        val results = repos.map { repo -> repo to runCatching { fetchRepo(repo) } }
+        val failures = results.filter { it.second.isFailure }
+        if (repos.isNotEmpty() && failures.size == repos.size) {
+            val reason = failures.firstNotNullOfOrNull { it.second.exceptionOrNull()?.message }
+            error("Failed to fetch extension repos${if (reason != null) ": $reason" else ""}")
+        }
+        availableExtensions = results
+            .flatMap { it.second.getOrDefault(emptyList()) }
             .distinctBy { it.pkgName }
             .sortedWith(compareBy<AvailableExtensionInfo> { it.lang }.thenBy { it.name.lowercase(Locale.ROOT) })
-        listAvailableExtensions()
+        persistAvailableExtensions()
+        listAvailableExtensionsInternal()
     }
 
-    fun listAvailableExtensions(): List<Map<String, Any?>> = availableExtensions.map { available ->
-        available.toMap(installedExtensions[available.pkgName])
+    suspend fun listAvailableExtensions(): List<Map<String, Any?>> {
+        awaitReady()
+        return listAvailableExtensionsInternal()
     }
 
-    fun listInstalledExtensions(): List<Map<String, Any?>> = installedExtensions.values
-        .sortedBy { it.name.lowercase(Locale.ROOT) }
-        .map { installed ->
-            val available = availableExtensions.firstOrNull { it.pkgName == installed.pkgName }
-            val map = installed.toMap().toMutableMap()
-            if (available != null) {
-                map["hasUpdate"] = available.versionCode > installed.versionCode || available.libVersion > installed.libVersion
+    private fun listAvailableExtensionsInternal(): List<Map<String, Any?>> {
+        val nsfwAllowed = isNsfwAllowed()
+        return availableExtensions
+            .filter { nsfwAllowed || !it.isNsfw }
+            .map { available -> available.toMap(installedExtensions[available.pkgName]) }
+    }
+
+    suspend fun listInstalledExtensions(): List<Map<String, Any?>> {
+        awaitReady()
+        return installedExtensions.values
+            .sortedBy { it.name.lowercase(Locale.ROOT) }
+            .map { installed ->
+                val available = availableExtensions.firstOrNull { it.pkgName == installed.pkgName }
+                val map = installed.toMap().toMutableMap()
+                if (available != null) {
+                    map["hasUpdate"] = available.versionCode > installed.versionCode || available.libVersion > installed.libVersion
+                    map["iconUrl"] = available.iconUrl
+                }
+                map
             }
-            map
-        }
+    }
 
     suspend fun installExtension(pkgName: String): Map<String, Any?> = withContext(Dispatchers.IO) {
+        awaitReady()
         val available = availableExtensions.firstOrNull { it.pkgName == pkgName }
             ?: refreshAndFind(pkgName)
             ?: error("Extension not found in configured repos: $pkgName")
         val apkUrl = "${available.repoUrl.trimEnd('/')}/apk/${available.apkName}"
         val temp = File(appContext.cacheDir, "${available.pkgName}.apk")
+        var installLocation = ExtensionInstallLocation.System
         try {
             client.newCall(Request.Builder().url(apkUrl).build()).execute().use { response ->
                 if (!response.isSuccessful) error("Extension download failed: HTTP ${response.code}")
@@ -149,17 +227,30 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
             val extension = archivePackageInfo(temp) ?: error("Downloaded file is not a valid APK")
             validateInstallCandidate(extension)
             validateUpdateSafety(extension)
-            installSystemExtensionFile(temp, extension)
+            try {
+                installSystemExtensionFile(temp, extension)
+            } catch (systemError: Exception) {
+                if (systemError is kotlinx.coroutines.CancellationException &&
+                    systemError !is kotlinx.coroutines.TimeoutCancellationException
+                ) {
+                    throw systemError
+                }
+                // The system installer can fail when the user declines the prompt or the
+                // OEM blocks session installs; fall back to loading the APK privately.
+                installPrivateExtensionFile(temp)
+                installLocation = ExtensionInstallLocation.Private
+            }
         } finally {
             temp.delete()
         }
         reloadInstalledExtensions()
-        mapOf("ok" to true, "installLocation" to ExtensionInstallLocation.System.wireName)
+        mapOf("ok" to true, "installLocation" to installLocation.wireName)
     }
 
     suspend fun updateExtension(pkgName: String): Map<String, Any?> = installExtension(pkgName)
 
     suspend fun uninstallExtension(pkgName: String): Map<String, Any?> {
+        awaitReady()
         val privateFile = File(extensionDir, "$pkgName.$PRIVATE_EXTENSION_EXTENSION")
         if (installedPackageInfo(pkgName) != null) {
             uninstallSystemExtension(pkgName)
@@ -171,65 +262,203 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
         return mapOf("ok" to true)
     }
 
-    suspend fun browseAnime(providerKey: String): List<Map<String, Any?>> = withContext(Dispatchers.IO) {
-        val source = animeSourceForProviderKey(providerKey) as? AnimeCatalogueSource ?: return@withContext emptyList()
-        source.getPopularAnime(1).animes.map { anime -> animeToMap(source.id, anime) }
+    suspend fun getFilters(providerKey: String): List<Map<String, Any?>> = withContext(Dispatchers.IO) {
+        awaitReady()
+        when {
+            isMangaProviderKey(providerKey) -> {
+                val source = mangaSourceForProviderKey(providerKey) as? MangaCatalogueSource
+                    ?: return@withContext emptyList()
+                safeFilters(source).map { filter -> mangaFilterToMap(filter) }
+            }
+            else -> {
+                val source = animeSourceForProviderKey(providerKey) as? AnimeCatalogueSource
+                    ?: return@withContext emptyList()
+                safeFilters(source).map { filter -> animeFilterToMap(filter) }
+            }
+        }
     }
 
-    suspend fun searchAnime(providerKey: String, query: String): List<Map<String, Any?>> = withContext(Dispatchers.IO) {
-        val source = animeSourceForProviderKey(providerKey) as? AnimeCatalogueSource ?: return@withContext emptyList()
-        source.getSearchAnime(1, query, safeFilters(source)).animes.map { anime -> animeToMap(source.id, anime) }
+    suspend fun browseAnime(providerKey: String, page: Int, kind: String): Map<String, Any?> = withContext(Dispatchers.IO) {
+        awaitReady()
+        val source = animeSourceForProviderKey(providerKey) as? AnimeCatalogueSource
+            ?: return@withContext emptyPage()
+        val result = if (kind == KIND_LATEST && source.supportsLatest) {
+            source.getLatestUpdates(page)
+        } else {
+            source.getPopularAnime(page)
+        }
+        mapOf(
+            "items" to result.animes.map { anime -> animeToMap(source, anime) },
+            "hasNextPage" to result.hasNextPage,
+        )
+    }
+
+    suspend fun searchAnime(
+        providerKey: String,
+        query: String,
+        page: Int,
+        filterStates: List<Map<String, Any?>>?,
+    ): Map<String, Any?> = withContext(Dispatchers.IO) {
+        awaitReady()
+        val source = animeSourceForProviderKey(providerKey) as? AnimeCatalogueSource
+            ?: return@withContext emptyPage()
+        val filters = appliedAnimeFilters(source, filterStates)
+        val result = source.getSearchAnime(page, query, filters)
+        mapOf(
+            "items" to result.animes.map { anime -> animeToMap(source, anime) },
+            "hasNextPage" to result.hasNextPage,
+        )
     }
 
     suspend fun getEpisodes(providerKey: String, animeId: String): List<Map<String, Any?>> = withContext(Dispatchers.IO) {
+        awaitReady()
         val (sourceId, anime) = OpaqueIds.decodeAnime(animeId) ?: return@withContext emptyList()
         val source = animeSources[sourceId] ?: return@withContext emptyList()
         val details = runCatching { source.getAnimeDetails(anime) }.getOrDefault(anime)
         source.getEpisodeList(details).map { episode -> episodeToMap(sourceId, episode) }
     }
 
-    fun getVideoServers(providerKey: String, episodeId: String): List<Map<String, Any?>> = emptyList()
+    suspend fun getVideoServers(providerKey: String, episodeId: String): List<Map<String, Any?>> = withContext(Dispatchers.IO) {
+        awaitReady()
+        val (sourceId, episode) = OpaqueIds.decodeEpisode(episodeId) ?: return@withContext emptyList()
+        val source = animeSources[sourceId] ?: return@withContext emptyList()
+        val hosters = fetchHosters(source, episode)
+        if (hosters.isEmpty()) return@withContext emptyList()
+        hosters.mapIndexed { index, hoster ->
+            mapOf(
+                "name" to hoster.hosterName.ifBlank { "Server ${index + 1}" },
+                "embed" to mapOf(
+                    "url" to OpaqueIds.hosterId(sourceId, episode, index, hoster.hosterName),
+                    "headers" to emptyMap<String, String>(),
+                ),
+            )
+        }
+    }
 
     suspend fun getVideos(providerKey: String, query: String): List<Map<String, Any?>> = withContext(Dispatchers.IO) {
+        awaitReady()
+        val hosterRef = OpaqueIds.decodeHoster(query)
+        if (hosterRef != null) {
+            val source = animeSources[hosterRef.sourceId] ?: return@withContext emptyList()
+            val hosters = fetchHosters(source, hosterRef.episode)
+            val hoster = hosters.getOrNull(hosterRef.index)
+                ?.takeIf { it.hosterName == hosterRef.name }
+                ?: hosters.firstOrNull { it.hosterName == hosterRef.name }
+                ?: hosters.getOrNull(hosterRef.index)
+                ?: return@withContext emptyList()
+            val videos = hoster.videoList
+                ?: runCatching { source.getVideoList(hoster) }.getOrDefault(emptyList())
+            return@withContext videos.mapNotNull { video ->
+                videoToMap(source, video, hoster.hosterName.ifBlank { "Aniyomi" })
+            }
+        }
         val (sourceId, episode) = OpaqueIds.decodeEpisode(query) ?: return@withContext emptyList()
         val source = animeSources[sourceId] ?: return@withContext emptyList()
         val videos = loadVideos(source, episode)
-        videos.mapNotNull { videoToMap(source, it) }
+        videos.mapNotNull { video -> videoToMap(source, video, "Aniyomi") }
     }
 
-    suspend fun browseManga(providerKey: String): List<Map<String, Any?>> = withContext(Dispatchers.IO) {
-        val source = mangaSourceForProviderKey(providerKey) as? MangaCatalogueSource ?: return@withContext emptyList()
-        source.getPopularManga(1).mangas.map { manga -> mangaToMap(source.id, manga) }
+    suspend fun browseManga(providerKey: String, page: Int, kind: String): Map<String, Any?> = withContext(Dispatchers.IO) {
+        awaitReady()
+        val source = mangaSourceForProviderKey(providerKey) as? MangaCatalogueSource
+            ?: return@withContext emptyPage()
+        val result = if (kind == KIND_LATEST && source.supportsLatest) {
+            source.getLatestUpdates(page)
+        } else {
+            source.getPopularManga(page)
+        }
+        mapOf(
+            "items" to result.mangas.map { manga -> mangaToMap(source, manga) },
+            "hasNextPage" to result.hasNextPage,
+        )
     }
 
-    suspend fun searchManga(providerKey: String, query: String): List<Map<String, Any?>> = withContext(Dispatchers.IO) {
-        val source = mangaSourceForProviderKey(providerKey) as? MangaCatalogueSource ?: return@withContext emptyList()
-        source.getSearchManga(1, query, safeFilters(source)).mangas.map { manga -> mangaToMap(source.id, manga) }
+    suspend fun searchManga(
+        providerKey: String,
+        query: String,
+        page: Int,
+        filterStates: List<Map<String, Any?>>?,
+    ): Map<String, Any?> = withContext(Dispatchers.IO) {
+        awaitReady()
+        val source = mangaSourceForProviderKey(providerKey) as? MangaCatalogueSource
+            ?: return@withContext emptyPage()
+        val filters = appliedMangaFilters(source, filterStates)
+        val result = source.getSearchManga(page, query, filters)
+        mapOf(
+            "items" to result.mangas.map { manga -> mangaToMap(source, manga) },
+            "hasNextPage" to result.hasNextPage,
+        )
     }
 
     suspend fun getMangaInfo(providerKey: String, mangaId: String): Map<String, Any?> = withContext(Dispatchers.IO) {
+        awaitReady()
         val (sourceId, manga) = OpaqueIds.decodeManga(mangaId) ?: return@withContext emptyMap()
         val source = mangaSources[sourceId] ?: return@withContext emptyMap()
         val details = runCatching { source.getMangaDetails(manga) }.getOrDefault(manga)
         val chapters = runCatching { source.getChapterList(details) }.getOrDefault(emptyList())
-        mangaToMap(sourceId, details) + mapOf("chapters" to chapters.map { chapter -> chapterToMap(sourceId, chapter) })
+        mangaToMap(source, details) + mapOf("chapters" to chapters.map { chapter -> chapterToMap(sourceId, chapter) })
     }
 
     suspend fun getChapterPages(providerKey: String, chapterId: String): List<Map<String, Any?>> = withContext(Dispatchers.IO) {
+        awaitReady()
         val (sourceId, chapter) = OpaqueIds.decodeChapter(chapterId) ?: return@withContext emptyList()
         val source = mangaSources[sourceId] ?: return@withContext emptyList()
         source.getPageList(chapter).mapNotNull { page -> pageToMap(source, page) }
     }
 
+    /**
+     * Builds the androidx preference screen a configurable source defines. Must be called on
+     * the main thread (the preference framework requires it).
+     */
+    suspend fun buildPreferenceScreen(
+        preferenceManager: PreferenceManager,
+        context: Context,
+        providerKey: String,
+    ): PreferenceScreen? {
+        awaitReady()
+        val source: Any = animeSourceForProviderKey(providerKey)
+            ?: mangaSourceForProviderKey(providerKey)
+            ?: return null
+        val sourceId = when (source) {
+            is AnimeSource -> source.id
+            is MangaSource -> source.id
+            else -> return null
+        }
+        preferenceManager.preferenceDataStore = SharedPreferencesDataStore(
+            appContext.getSharedPreferences("source_$sourceId", Context.MODE_PRIVATE),
+        )
+        val screen = preferenceManager.createPreferenceScreen(context)
+        when (source) {
+            is ConfigurableAnimeSource -> source.setupPreferenceScreen(screen)
+            is ConfigurableSource -> source.setupPreferenceScreen(screen)
+            else -> return null
+        }
+        screen.forEach { pref ->
+            pref.isIconSpaceReserved = false
+            if (pref is DialogPreference) {
+                pref.dialogTitle = pref.title
+            }
+        }
+        return screen
+    }
+
+    fun sourceDisplayName(providerKey: String): String? {
+        val source: Any? = animeSourceForProviderKey(providerKey) ?: mangaSourceForProviderKey(providerKey)
+        return when (source) {
+            is AnimeSource -> source.name
+            is MangaSource -> source.name
+            else -> null
+        }
+    }
+
     @OptIn(ExperimentalSerializationApi::class)
     private fun initializeHostDependencies() {
-        NetworkHelper.initialize(appContext)
         (appContext as? Application)?.let { application ->
             Injekt.addSingleton(typeRef<Application>(), application)
         }
         Injekt.addSingleton(typeRef<Context>(), appContext)
         Injekt.addSingletonFactory(typeRef<NetworkHelper>()) { NetworkHelper.get() }
-        Injekt.addSingletonFactory(typeRef<OkHttpClient>()) { NetworkHelper.get().client }
+        Injekt.addSingletonFactory(typeRef<okhttp3.OkHttpClient>()) { NetworkHelper.get().client }
         Injekt.addSingletonFactory(typeRef<Json>()) {
             Json {
                 ignoreUnknownKeys = true
@@ -244,14 +473,39 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
     }
 
     private fun fetchRepo(repoUrl: String): List<AvailableExtensionInfo> {
-        val indexUrl = "${repoUrl.trimEnd('/')}/index.min.json"
-        return runCatching {
-            client.newCall(Request.Builder().url(indexUrl).build()).execute().use { response ->
-                if (!response.isSuccessful) return emptyList()
-                val body = response.body ?: return emptyList()
-                parseAvailableExtensions(JSONArray(body.string()), repoUrl)
-            }
-        }.getOrDefault(emptyList())
+        val primary = "${repoUrl.trimEnd('/')}/index.min.json"
+        val primaryResult = runCatching { fetchRepoIndex(primary, repoUrl) }
+        if (primaryResult.isSuccess) return primaryResult.getOrThrow()
+        val fallback = jsDelivrFallbackUrl(repoUrl)
+        if (fallback != null) {
+            val fallbackResult = runCatching { fetchRepoIndex("$fallback/index.min.json", repoUrl) }
+            if (fallbackResult.isSuccess) return fallbackResult.getOrThrow()
+        }
+        throw primaryResult.exceptionOrNull() ?: IllegalStateException("Failed to fetch $repoUrl")
+    }
+
+    private fun fetchRepoIndex(indexUrl: String, repoUrl: String): List<AvailableExtensionInfo> {
+        return client.newCall(Request.Builder().url(indexUrl).build()).execute().use { response ->
+            if (!response.isSuccessful) error("HTTP ${response.code} for $indexUrl")
+            val body = response.body ?: error("Empty response for $indexUrl")
+            parseAvailableExtensions(JSONArray(body.string()), repoUrl)
+        }
+    }
+
+    /**
+     * raw.githubusercontent.com is blocked in some regions; jsDelivr mirrors the same
+     * repository content.
+     */
+    private fun jsDelivrFallbackUrl(repoUrl: String): String? {
+        val prefix = "https://raw.githubusercontent.com/"
+        if (!repoUrl.startsWith(prefix)) return null
+        val parts = repoUrl.removePrefix(prefix).split("/")
+        if (parts.size < 3) return null
+        val user = parts[0]
+        val repo = parts[1]
+        val branch = parts[2]
+        val rest = parts.drop(3).joinToString("/")
+        return "https://cdn.jsdelivr.net/gh/$user/$repo@$branch" + if (rest.isEmpty()) "" else "/$rest"
     }
 
     private fun parseAvailableExtensions(json: JSONArray, repoUrl: String): List<AvailableExtensionInfo> {
@@ -297,6 +551,28 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
                     ),
                 )
             }
+        }
+    }
+
+    private fun persistAvailableExtensions() {
+        val json = JSONArray()
+        availableExtensions.forEach { available -> json.put(available.toJson()) }
+        prefs.edit().putString(KEY_AVAILABLE_CACHE, json.toString()).apply()
+    }
+
+    private fun loadPersistedAvailableExtensions() {
+        val raw = prefs.getString(KEY_AVAILABLE_CACHE, null) ?: return
+        val loaded = runCatching {
+            val json = JSONArray(raw)
+            buildList {
+                for (index in 0 until json.length()) {
+                    val item = json.optJSONObject(index) ?: continue
+                    AvailableExtensionInfo.fromJson(item)?.let(::add)
+                }
+            }
+        }.getOrDefault(emptyList())
+        if (loaded.isNotEmpty() && availableExtensions.isEmpty()) {
+            availableExtensions = loaded
         }
     }
 
@@ -548,6 +824,13 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
             (candidateVersion == existingVersion && !candidate.isPrivate && existing.isPrivate)
     }
 
+    private suspend fun fetchHosters(source: AnimeSource, episode: SEpisode): List<Hoster> {
+        val hosters = runCatching { source.getHosterList(episode) }.getOrDefault(emptyList())
+        val real = hosters.filterNot { it.hosterName == Hoster.NO_HOSTER_LIST }
+        if (real.isEmpty()) return emptyList()
+        return if (source is AnimeHttpSource) with(source) { real.sortHosters() } else real
+    }
+
     private suspend fun loadVideos(source: AnimeSource, episode: SEpisode): List<Video> {
         val hosters = runCatching { source.getHosterList(episode) }.getOrDefault(emptyList())
         if (hosters.isNotEmpty()) {
@@ -559,14 +842,14 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
         return runCatching { source.getVideoList(episode) }.getOrDefault(emptyList())
     }
 
-    private suspend fun videoToMap(source: AnimeSource, video: Video): Map<String, Any?>? {
+    private suspend fun videoToMap(source: AnimeSource, video: Video, serverName: String): Map<String, Any?>? {
         val resolved = if (source is AnimeHttpSource) runCatching { source.resolveVideo(video) }.getOrNull() ?: video else video
         var videoUrl = resolved.videoUrl.takeIf { it.isNotBlank() && it != "null" }
         if (videoUrl == null && source is AnimeHttpSource) {
             videoUrl = runCatching { source.getVideoUrl(resolved) }.getOrNull()
         }
         if (videoUrl.isNullOrBlank() || videoUrl == "null") return null
-        val headers = resolved.headers?.toMultimap()?.mapValues { it.value.firstOrNull().orEmpty() }.orEmpty()
+        val headers = resolved.headers?.toSingleValueMap().orEmpty()
         return mapOf(
             "title" to resolved.videoTitle.ifBlank { resolved.quality.ifBlank { resolved.resolution?.let { "${it}p" } } },
             "resolution" to resolved.resolution?.let { "${it}p" },
@@ -582,16 +865,17 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
                 )
             },
             "videoServer" to mapOf(
-                "name" to "Aniyomi",
+                "name" to serverName,
                 "embed" to mapOf("url" to (resolved.url.ifBlank { videoUrl }), "headers" to headers),
             ),
         )
     }
 
-    private fun animeToMap(sourceId: Long, anime: SAnime): Map<String, Any?> = mapOf(
-        "id" to OpaqueIds.animeId(sourceId, anime),
+    private fun animeToMap(source: AnimeSource, anime: SAnime): Map<String, Any?> = mapOf(
+        "id" to OpaqueIds.animeId(source.id, anime),
         "title" to anime.title,
         "image" to anime.thumbnail_url,
+        "headers" to sourceHeaders(source),
         "summary" to anime.description,
         "status" to statusName(anime.status),
         "genres" to anime.getGenres().orEmpty(),
@@ -609,13 +893,13 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
         "link" to episode.url,
     )
 
-    private fun mangaToMap(sourceId: Long, manga: SManga): Map<String, Any?> = mapOf(
-        "id" to OpaqueIds.mangaId(sourceId, manga),
+    private fun mangaToMap(source: MangaSource, manga: SManga): Map<String, Any?> = mapOf(
+        "id" to OpaqueIds.mangaId(source.id, manga),
         "title" to manga.title,
         "image" to manga.thumbnail_url,
         "description" to manga.description,
         "link" to manga.url,
-        "headers" to emptyMap<String, String>(),
+        "headers" to sourceHeaders(source),
         "genres" to manga.getGenres().orEmpty(),
         "status" to mangaStatusName(manga.status),
         "authors" to listOfNotNull(manga.author).filter { it.isNotBlank() },
@@ -632,14 +916,25 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
     private suspend fun pageToMap(source: MangaSource, page: Page): Map<String, Any?>? {
         val image = page.imageUrl ?: if (source is MangaHttpSource) runCatching { source.getImageUrl(page) }.getOrNull() else null
         if (image.isNullOrBlank()) return null
-        val headers = if (source is MangaHttpSource) source.headers.toMultimap().mapValues { it.value.firstOrNull().orEmpty() } else emptyMap()
         return mapOf(
             "image" to image,
             "page" to page.index,
             "title" to null,
-            "headers" to headers,
+            "headers" to sourceHeaders(source),
         )
     }
+
+    private fun sourceHeaders(source: Any?): Map<String, String> {
+        val headers: Headers? = when (source) {
+            is AnimeHttpSource -> runCatching { source.headers }.getOrNull()
+            is MangaHttpSource -> runCatching { source.headers }.getOrNull()
+            else -> null
+        }
+        return headers?.toSingleValueMap().orEmpty()
+    }
+
+    private fun Headers.toSingleValueMap(): Map<String, String> =
+        toMultimap().mapValues { it.value.firstOrNull().orEmpty() }
 
     private fun animeSourceForProviderKey(providerKey: String): AnimeSource? {
         val sourceId = providerKey.removePrefix(ANIME_PROVIDER_KEY_PREFIX).toLongOrNull() ?: return null
@@ -651,9 +946,140 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
         return mangaSources[sourceId]
     }
 
+    private fun emptyPage(): Map<String, Any?> = mapOf(
+        "items" to emptyList<Map<String, Any?>>(),
+        "hasNextPage" to false,
+    )
+
     private fun safeFilters(source: AnimeCatalogueSource): AnimeFilterList = runCatching { source.getFilterList() }.getOrDefault(AnimeFilterList())
 
     private fun safeFilters(source: MangaCatalogueSource): FilterList = runCatching { source.getFilterList() }.getOrDefault(FilterList())
+
+    private fun animeFilterToMap(filter: AnimeFilter<*>): Map<String, Any?> = when (filter) {
+        is AnimeFilter.Header -> mapOf("type" to "header", "name" to filter.name)
+        is AnimeFilter.Separator -> mapOf("type" to "separator", "name" to filter.name)
+        is AnimeFilter.Select<*> -> mapOf(
+            "type" to "select",
+            "name" to filter.name,
+            "values" to filter.values.map { it.toString() },
+            "state" to filter.state,
+        )
+        is AnimeFilter.Text -> mapOf("type" to "text", "name" to filter.name, "state" to filter.state)
+        is AnimeFilter.CheckBox -> mapOf("type" to "checkbox", "name" to filter.name, "state" to filter.state)
+        is AnimeFilter.TriState -> mapOf("type" to "tristate", "name" to filter.name, "state" to filter.state)
+        is AnimeFilter.Group<*> -> mapOf(
+            "type" to "group",
+            "name" to filter.name,
+            "filters" to filter.state.mapNotNull { child -> (child as? AnimeFilter<*>)?.let(::animeFilterToMap) },
+        )
+        is AnimeFilter.Sort -> mapOf(
+            "type" to "sort",
+            "name" to filter.name,
+            "values" to filter.values.toList(),
+            "state" to filter.state?.let { mapOf("index" to it.index, "ascending" to it.ascending) },
+        )
+    }
+
+    private fun mangaFilterToMap(filter: MangaFilter<*>): Map<String, Any?> = when (filter) {
+        is MangaFilter.Header -> mapOf("type" to "header", "name" to filter.name)
+        is MangaFilter.Separator -> mapOf("type" to "separator", "name" to filter.name)
+        is MangaFilter.Select<*> -> mapOf(
+            "type" to "select",
+            "name" to filter.name,
+            "values" to filter.values.map { it.toString() },
+            "state" to filter.state,
+        )
+        is MangaFilter.Text -> mapOf("type" to "text", "name" to filter.name, "state" to filter.state)
+        is MangaFilter.CheckBox -> mapOf("type" to "checkbox", "name" to filter.name, "state" to filter.state)
+        is MangaFilter.TriState -> mapOf("type" to "tristate", "name" to filter.name, "state" to filter.state)
+        is MangaFilter.Group<*> -> mapOf(
+            "type" to "group",
+            "name" to filter.name,
+            "filters" to filter.state.mapNotNull { child -> (child as? MangaFilter<*>)?.let(::mangaFilterToMap) },
+        )
+        is MangaFilter.Sort -> mapOf(
+            "type" to "sort",
+            "name" to filter.name,
+            "values" to filter.values.toList(),
+            "state" to filter.state?.let { mapOf("index" to it.index, "ascending" to it.ascending) },
+        )
+    }
+
+    private fun appliedAnimeFilters(
+        source: AnimeCatalogueSource,
+        filterStates: List<Map<String, Any?>>?,
+    ): AnimeFilterList {
+        val filters = safeFilters(source)
+        if (filterStates.isNullOrEmpty()) return filters
+        filterStates.forEach { state ->
+            val path = (state["path"] as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: return@forEach
+            if (path.isEmpty()) return@forEach
+            var current: AnimeFilter<*>? = filters.getOrNull(path.first())
+            for (childIndex in path.drop(1)) {
+                val group = current as? AnimeFilter.Group<*> ?: return@forEach
+                current = group.state.getOrNull(childIndex) as? AnimeFilter<*>
+            }
+            applyAnimeFilterState(current ?: return@forEach, state["state"])
+        }
+        return filters
+    }
+
+    private fun applyAnimeFilterState(filter: AnimeFilter<*>, value: Any?) {
+        runCatching {
+            when (filter) {
+                is AnimeFilter.Select<*> -> filter.state = (value as Number).toInt()
+                is AnimeFilter.Text -> filter.state = value?.toString().orEmpty()
+                is AnimeFilter.CheckBox -> filter.state = value as Boolean
+                is AnimeFilter.TriState -> filter.state = (value as Number).toInt()
+                is AnimeFilter.Sort -> {
+                    val map = value as? Map<*, *> ?: return@runCatching
+                    filter.state = AnimeFilter.Sort.Selection(
+                        (map["index"] as? Number)?.toInt() ?: 0,
+                        map["ascending"] as? Boolean ?: false,
+                    )
+                }
+                else -> Unit
+            }
+        }
+    }
+
+    private fun appliedMangaFilters(
+        source: MangaCatalogueSource,
+        filterStates: List<Map<String, Any?>>?,
+    ): FilterList {
+        val filters = safeFilters(source)
+        if (filterStates.isNullOrEmpty()) return filters
+        filterStates.forEach { state ->
+            val path = (state["path"] as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: return@forEach
+            if (path.isEmpty()) return@forEach
+            var current: MangaFilter<*>? = filters.getOrNull(path.first())
+            for (childIndex in path.drop(1)) {
+                val group = current as? MangaFilter.Group<*> ?: return@forEach
+                current = group.state.getOrNull(childIndex) as? MangaFilter<*>
+            }
+            applyMangaFilterState(current ?: return@forEach, state["state"])
+        }
+        return filters
+    }
+
+    private fun applyMangaFilterState(filter: MangaFilter<*>, value: Any?) {
+        runCatching {
+            when (filter) {
+                is MangaFilter.Select<*> -> filter.state = (value as Number).toInt()
+                is MangaFilter.Text -> filter.state = value?.toString().orEmpty()
+                is MangaFilter.CheckBox -> filter.state = value as Boolean
+                is MangaFilter.TriState -> filter.state = (value as Number).toInt()
+                is MangaFilter.Sort -> {
+                    val map = value as? Map<*, *> ?: return@runCatching
+                    filter.state = MangaFilter.Sort.Selection(
+                        (map["index"] as? Number)?.toInt() ?: 0,
+                        map["ascending"] as? Boolean ?: false,
+                    )
+                }
+                else -> Unit
+            }
+        }
+    }
 
     private fun privatePackageInfo(pkgName: String): PackageInfo? {
         val file = File(extensionDir, "$pkgName.$PRIVATE_EXTENSION_EXTENSION")
@@ -738,9 +1164,16 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
     private fun extractLibVersion(versionName: String): Double? = versionName.substringBeforeLast('.').toDoubleOrNull()
 
     private fun normalizeRepo(input: String): String {
-        val trimmed = input.trim().removeSuffix("/")
+        var trimmed = input.trim().removeSuffix("/")
+        // Accept pasted GitHub web links and convert them to raw content URLs.
+        if (trimmed.contains("github.com") && (trimmed.contains("/blob/") || trimmed.contains("/tree/"))) {
+            trimmed = trimmed
+                .replace("github.com", "raw.githubusercontent.com")
+                .replace("/blob/", "/")
+                .replace("/tree/", "/")
+        }
         require(trimmed.startsWith("https://")) { "Extension repos must use HTTPS" }
-        return trimmed.removeSuffix("/index.min.json")
+        return trimmed.removeSuffix("/index.min.json").removeSuffix("/")
     }
 
     private fun statusName(status: Int): String? = when (status) {
@@ -777,6 +1210,8 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
     companion object {
         const val ANIME_PROVIDER_KEY_PREFIX = "aniyomi:"
         const val MANGA_PROVIDER_KEY_PREFIX = "aniyomi-manga:"
+        const val KIND_POPULAR = "popular"
+        const val KIND_LATEST = "latest"
         private const val ANIME_EXTENSION_FEATURE = "tachiyomi.animeextension"
         private const val MANGA_EXTENSION_FEATURE = "tachiyomi.extension"
         private const val ANIME_METADATA_SOURCE_CLASS = "tachiyomi.animeextension.class"
@@ -788,6 +1223,8 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
         private const val PACKAGE_UNINSTALL_ACTION = "com.oneb.anikin.extensions.UNINSTALL_RESULT"
         private const val PACKAGE_INSTALL_TIMEOUT_MS = 5 * 60 * 1000L
         private const val KEY_REPOS = "anime_extension_repos"
+        private const val KEY_AVAILABLE_CACHE = "available_extensions_cache"
+        private const val KEY_SHOW_NSFW = "show_nsfw_sources"
         private const val ANIME_LIB_VERSION_MIN = 12.0
         private const val ANIME_LIB_VERSION_MAX = 16.0
         private const val MANGA_LIB_VERSION_MIN = 1.0
@@ -796,6 +1233,8 @@ class AniyomiExtensionRuntime private constructor(private val context: Context) 
             PackageManager.GET_META_DATA or
             PackageManager.GET_SIGNATURES or
             (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) PackageManager.GET_SIGNING_CERTIFICATES else 0)
+
+        fun isMangaProviderKey(providerKey: String): Boolean = providerKey.startsWith(MANGA_PROVIDER_KEY_PREFIX)
 
         @Volatile
         private var instance: AniyomiExtensionRuntime? = null

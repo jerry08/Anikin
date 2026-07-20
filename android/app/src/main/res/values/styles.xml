@@ -33,4 +33,9 @@
         <item name="android:enforceNavigationBarContrast">false</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
+    <!-- Theme for the native per-source (Aniyomi extension) settings screen. -->
+    <style name="SourcePreferencesTheme" parent="Theme.AppCompat.DayNight">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="colorAccent">#6BBF8E</item>
+    </style>
 </resources>
