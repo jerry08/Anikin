@@ -419,6 +419,7 @@ class _ContinueTab extends StatelessWidget {
           children: [
             for (final item in items)
               Card(
+                margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   enabled: item.canResumeAnime,
                   leading: Icon(
@@ -818,6 +819,7 @@ class _MediaListEntryTile extends StatelessWidget {
         'Finished ${entry.completedAt!.label}',
     ].where((part) => part.isNotEmpty).join(' • ');
     return Card(
+      margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(6),
@@ -872,6 +874,7 @@ class _FavoriteMediaTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final image = media.cover.best;
     return Card(
+      margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(6),
@@ -1077,6 +1080,7 @@ class _DownloadTaskTile extends StatelessWidget {
     final pausing = task.status == DownloadTaskStatus.pausing;
     final paused = task.status == DownloadTaskStatus.paused;
     return Card(
+      margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: Icon(
           failed
@@ -1194,6 +1198,7 @@ class _MangaDownloadTaskTile extends StatelessWidget {
     final failed = task.status == MangaDownloadTaskStatus.failed;
     final canceling = task.status == MangaDownloadTaskStatus.canceling;
     return Card(
+      margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: Icon(
           failed
@@ -1273,6 +1278,7 @@ class _DownloadedEpisodeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: const Icon(Icons.play_circle_outline),
         title: Text(
@@ -1310,6 +1316,7 @@ class _DownloadedMangaChapterTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: const Icon(Icons.menu_book_outlined),
         title: Text(
