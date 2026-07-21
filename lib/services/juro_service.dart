@@ -243,7 +243,7 @@ class JuroService {
 
   Future<List<SourceProvider>> _getAniyomiProviders() async {
     final service = _aniyomiExtensionService;
-    if (service == null) {
+    if (service == null || !service.isPlatformSupported) {
       return const [];
     }
     try {
@@ -255,7 +255,7 @@ class JuroService {
 
   Future<List<SourceProvider>> _getAniyomiMangaProviders() async {
     final service = _aniyomiExtensionService;
-    if (service == null) {
+    if (service == null || !service.isPlatformSupported) {
       return const [];
     }
     try {

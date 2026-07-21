@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -16,6 +15,7 @@ import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/media_poster_card.dart';
+import '../widgets/media_type_selector.dart';
 import 'detail_screen.dart';
 import 'home_discovery_screen.dart';
 import 'manga_detail_screen.dart';
@@ -44,21 +44,26 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-enum _HomeContentType { anime, manga }
-
 const double _desktopBreakpoint = 900;
 const double _desktopContentMaxWidth = 1280;
 
 class _HomeScreenState extends State<HomeScreen> {
   Future<_BrowseData>? _animeFuture;
   Future<_BrowseData>? _mangaFuture;
-  _HomeContentType _contentType = _HomeContentType.anime;
+  final _animeScrollController = ScrollController();
+  final _mangaScrollController = ScrollController();
+  double _animeScrollOffset = 0;
+  double _mangaScrollOffset = 0;
+  AppMediaType? _pendingScrollRestore;
+  late AppMediaType _contentType;
   late String _catalogProviderKey;
 
   @override
   void initState() {
     super.initState();
+    _contentType = widget.preferences.appMediaType;
     _catalogProviderKey = widget.trackingService.primaryProvider.key;
+    widget.preferences.addListener(_handleMediaTypeChanged);
     widget.trackingService.addListener(_handleCatalogProviderChanged);
     _animeFuture = _loadAnime();
     _mangaFuture = _loadManga();
@@ -66,8 +71,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    widget.preferences.removeListener(_handleMediaTypeChanged);
     widget.trackingService.removeListener(_handleCatalogProviderChanged);
+    _animeScrollController.dispose();
+    _mangaScrollController.dispose();
     super.dispose();
+  }
+
+  void _handleMediaTypeChanged() {
+    final contentType = widget.preferences.appMediaType;
+    if (contentType == _contentType || !mounted) {
+      return;
+    }
+    _rememberScrollOffset(_contentType);
+    setState(() {
+      _contentType = contentType;
+      _pendingScrollRestore = contentType;
+    });
   }
 
   void _handleCatalogProviderChanged() {
@@ -143,18 +163,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<_BrowseData> get _activeFuture => switch (_contentType) {
-    _HomeContentType.anime => _animeFuture ??= _loadAnime(),
-    _HomeContentType.manga => _mangaFuture ??= _loadManga(),
+    AppMediaType.anime => _animeFuture ??= _loadAnime(),
+    AppMediaType.manga => _mangaFuture ??= _loadManga(),
   };
 
   Future<void> _refresh() async {
     late final Future<_BrowseData> future;
     setState(() {
       switch (_contentType) {
-        case _HomeContentType.anime:
+        case AppMediaType.anime:
           future = _loadAnime();
           _animeFuture = future;
-        case _HomeContentType.manga:
+        case AppMediaType.manga:
           future = _loadManga();
           _mangaFuture = future;
       }
@@ -165,17 +185,17 @@ class _HomeScreenState extends State<HomeScreen> {
   void _retry() {
     setState(() {
       switch (_contentType) {
-        case _HomeContentType.anime:
+        case AppMediaType.anime:
           _animeFuture = _loadAnime();
-        case _HomeContentType.manga:
+        case AppMediaType.manga:
           _mangaFuture = _loadManga();
       }
     });
   }
 
-  void _openMedia(AniListMedia media) {
-    switch (_contentType) {
-      case _HomeContentType.anime:
+  void _openMedia(AniListMedia media, {AppMediaType? contentType}) {
+    switch (contentType ?? _contentType) {
+      case AppMediaType.anime:
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => DetailScreen(
@@ -188,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         );
-      case _HomeContentType.manga:
+      case AppMediaType.manga:
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => MangaDetailScreen(
@@ -203,17 +223,20 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _setContentType(_HomeContentType contentType) {
+  void _setContentType(AppMediaType contentType) {
     if (_contentType == contentType) {
       return;
     }
-    setState(() => _contentType = contentType);
+    unawaited(widget.preferences.setAppMediaType(contentType));
   }
 
-  void _openSection(_BrowseSection section) {
-    final contentLabel = switch (_contentType) {
-      _HomeContentType.anime => 'anime',
-      _HomeContentType.manga => 'manga',
+  void _openSection(
+    _BrowseSection section, {
+    required AppMediaType contentType,
+  }) {
+    final contentLabel = switch (contentType) {
+      AppMediaType.anime => 'anime',
+      AppMediaType.manga => 'manga',
     };
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -222,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
           subtitle:
               'A fuller $contentLabel shelf for ${section.title.toLowerCase()}.',
           loader: () async => section.items,
-          onItemTap: _openMedia,
+          onItemTap: (media) => _openMedia(media, contentType: contentType),
           emptyTitle: 'Nothing to show',
           emptyMessage: 'This shelf does not have any titles right now.',
         ),
@@ -230,17 +253,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openGenres() {
+  void _openGenres(AppMediaType contentType) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => GenreBrowseScreen(
-          mediaType: switch (_contentType) {
-            _HomeContentType.anime => AniListMediaType.anime,
-            _HomeContentType.manga => AniListMediaType.manga,
+          mediaType: switch (contentType) {
+            AppMediaType.anime => AniListMediaType.anime,
+            AppMediaType.manga => AniListMediaType.manga,
           },
           preferences: widget.preferences,
           aniListService: widget.aniListService,
-          onItemTap: _openMedia,
+          onItemTap: (media) => _openMedia(media, contentType: contentType),
         ),
       ),
     );
@@ -258,33 +281,85 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  List<Widget> _contentWidgets(_BrowseData data) {
+  List<Widget> _contentWidgets(_BrowseData data, AppMediaType contentType) {
     return [
       if (data.featured.isNotEmpty)
-        _FeatureCarousel(items: data.featured, onItemTap: _openMedia),
+        _FeatureCarousel(
+          items: data.featured,
+          onItemTap: (media) => _openMedia(media, contentType: contentType),
+        ),
       if (data.featured.isEmpty) const _TopChromeSpacer(),
       _HomeShortcutStrip(
-        contentType: _contentType,
-        onGenres: _openGenres,
-        onCalendar: _contentType == _HomeContentType.anime
-            ? _openCalendar
-            : null,
+        onGenres: () => _openGenres(contentType),
+        onCalendar: contentType == AppMediaType.anime ? _openCalendar : null,
       ),
       for (final section in data.sections)
         MediaSection(
           title: section.title,
           items: section.items,
-          onItemTap: _openMedia,
-          onMoreTap: () => _openSection(section),
+          onItemTap: (media) => _openMedia(media, contentType: contentType),
+          onMoreTap: () => _openSection(section, contentType: contentType),
         ),
     ];
+  }
+
+  ScrollController _scrollControllerFor(AppMediaType contentType) =>
+      switch (contentType) {
+        AppMediaType.anime => _animeScrollController,
+        AppMediaType.manga => _mangaScrollController,
+      };
+
+  double _scrollOffsetFor(AppMediaType contentType) => switch (contentType) {
+    AppMediaType.anime => _animeScrollOffset,
+    AppMediaType.manga => _mangaScrollOffset,
+  };
+
+  ScrollController get _activeScrollController =>
+      _scrollControllerFor(_contentType);
+
+  void _rememberScrollOffset(AppMediaType contentType) {
+    final controller = _scrollControllerFor(contentType);
+    if (!controller.hasClients) {
+      return;
+    }
+    switch (contentType) {
+      case AppMediaType.anime:
+        _animeScrollOffset = controller.offset;
+      case AppMediaType.manga:
+        _mangaScrollOffset = controller.offset;
+    }
+  }
+
+  void _restoreScrollOffsetAfterBuild(AppMediaType contentType) {
+    if (_pendingScrollRestore != contentType) {
+      return;
+    }
+    _pendingScrollRestore = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _contentType != contentType) {
+        return;
+      }
+      final controller = _scrollControllerFor(contentType);
+      if (!controller.hasClients) {
+        return;
+      }
+      final position = controller.position;
+      final offset = _scrollOffsetFor(
+        contentType,
+      ).clamp(position.minScrollExtent, position.maxScrollExtent).toDouble();
+      controller.jumpTo(offset);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<_BrowseData>(
+      key: ValueKey('home-${_contentType.name}-future'),
       future: _activeFuture,
       builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          _restoreScrollOffsetAfterBuild(_contentType);
+        }
         return LayoutBuilder(
           builder: (context, constraints) {
             final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
@@ -303,31 +378,43 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               else
-                ..._contentWidgets(snapshot.data!),
+                ..._contentWidgets(snapshot.data!, _contentType),
             ];
 
             return Stack(
               fit: StackFit.expand,
               children: [
                 Positioned.fill(
-                  child: RefreshIndicator(
-                    onRefresh: _refresh,
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.only(bottom: 24),
-                      children: [
-                        if (isDesktop)
-                          Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: _desktopContentMaxWidth,
+                  child: TweenAnimationBuilder<double>(
+                    key: ValueKey(_contentType),
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    tween: Tween(begin: 0, end: 1),
+                    builder: (context, opacity, child) =>
+                        Opacity(opacity: opacity, child: child),
+                    child: RefreshIndicator(
+                      onRefresh: _refresh,
+                      child: ListView(
+                        key: PageStorageKey<String>(
+                          'home-${_contentType.name}-scroll',
+                        ),
+                        controller: _activeScrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.only(bottom: 24),
+                        children: [
+                          if (isDesktop)
+                            Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: _desktopContentMaxWidth,
+                                ),
+                                child: Column(children: content),
                               ),
-                              child: Column(children: content),
-                            ),
-                          )
-                        else
-                          ...content,
-                      ],
+                            )
+                          else
+                            ...content,
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -380,8 +467,8 @@ class _HomeTopBar extends StatelessWidget {
     required this.onContentTypeChanged,
   });
 
-  final _HomeContentType contentType;
-  final ValueChanged<_HomeContentType> onContentTypeChanged;
+  final AppMediaType contentType;
+  final ValueChanged<AppMediaType> onContentTypeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -402,9 +489,10 @@ class _HomeTopBar extends StatelessWidget {
                   height: 34,
                 ),
                 const Spacer(),
-                _ContentSwitch(
+                MediaTypeSelector(
                   value: contentType,
                   onChanged: onContentTypeChanged,
+                  appearance: MediaTypeSelectorAppearance.glass,
                 ),
               ],
             ),
@@ -421,118 +509,6 @@ class _TopChromeSpacer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(height: MediaQuery.paddingOf(context).top + 58);
-  }
-}
-
-class _ContentSwitch extends StatelessWidget {
-  const _ContentSwitch({required this.value, required this.onChanged});
-
-  final _HomeContentType value;
-  final ValueChanged<_HomeContentType> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          height: 40,
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            color: const Color(0x26000000),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0x26FFFFFF)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _ContentSwitchButton(
-                label: 'Anime',
-                icon: Icons.live_tv_outlined,
-                selected: value == _HomeContentType.anime,
-                onPressed: () => onChanged(_HomeContentType.anime),
-              ),
-              const SizedBox(width: 2),
-              _ContentSwitchButton(
-                label: 'Manga',
-                icon: Icons.menu_book_outlined,
-                selected: value == _HomeContentType.manga,
-                onPressed: () => onChanged(_HomeContentType.manga),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ContentSwitchButton extends StatelessWidget {
-  const _ContentSwitchButton({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onPressed,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    const foregroundColor = Colors.white;
-    return Tooltip(
-      message: label,
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: label,
-        child: Container(
-          width: selected ? 92 : 40,
-          height: 36,
-          decoration: BoxDecoration(
-            color: selected ? const Color(0x30FFFFFF) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: selected ? const Color(0x42FFFFFF) : Colors.transparent,
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(10),
-              mouseCursor: SystemMouseCursors.click,
-              onTap: onPressed,
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(icon, size: 20, color: foregroundColor),
-                    if (selected) ...[
-                      const SizedBox(width: 5),
-                      Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.fade,
-                        softWrap: false,
-                        style: TextStyle(
-                          color: foregroundColor,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 
@@ -885,18 +861,13 @@ class _DesktopMediaSectionGrid extends StatelessWidget {
 }
 
 class _HomeShortcutStrip extends StatelessWidget {
-  const _HomeShortcutStrip({
-    required this.contentType,
-    required this.onGenres,
-    required this.onCalendar,
-  });
+  const _HomeShortcutStrip({required this.onGenres, required this.onCalendar});
 
   static const _genreImageUrl =
       'https://s4.anilist.co/file/anilistcdn/media/anime/banner/16498-8jpFCOcDmneX.jpg';
   static const _calendarImageUrl =
       'https://s4.anilist.co/file/anilistcdn/media/anime/banner/125367-hGPJLSNfprO3.jpg';
 
-  final _HomeContentType contentType;
   final VoidCallback onGenres;
   final VoidCallback? onCalendar;
 

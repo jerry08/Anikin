@@ -386,10 +386,8 @@ class _DetailScreenState extends State<DetailScreen> {
           server.embed.url,
           providerKey: _providerKey,
         ),
-        loadAllVideos: () => widget.juroService.getVideos(
-          episode.id,
-          providerKey: _providerKey,
-        ),
+        loadAllVideos: () =>
+            widget.juroService.getVideos(episode.id, providerKey: _providerKey),
         buildSourceTile: (context, source) =>
             _buildVideoSourceTile(context, episode, source, showSourceActions),
       ),
@@ -529,7 +527,12 @@ class _DetailScreenState extends State<DetailScreen> {
 
     final selectedVariant = variants.length == 1
         ? variants.first
-        : await _chooseHlsDownloadQuality(variants);
+        : switch (widget.preferences.downloadQualityPreference) {
+            DownloadQualityPreference.askEveryTime =>
+              await _chooseHlsDownloadQuality(variants),
+            DownloadQualityPreference.highest => variants.first,
+            DownloadQualityPreference.dataSaver => variants.last,
+          };
     if (selectedVariant == null) {
       return null;
     }
@@ -607,14 +610,22 @@ class _DetailScreenState extends State<DetailScreen> {
           failed++;
           continue;
         }
-        await widget.downloadService.startDownload(
-          EpisodeDownloadRequest(
-            media: widget.media,
-            providerAnime: _providerAnime!,
-            episode: episode,
-            source: source,
-          ),
+        final request = EpisodeDownloadRequest(
+          media: widget.media,
+          providerAnime: _providerAnime!,
+          episode: episode,
+          source: source,
         );
+        final selectedRequest =
+            widget.preferences.downloadQualityPreference ==
+                DownloadQualityPreference.askEveryTime
+            ? request
+            : await _resolveDownloadRequest(request);
+        if (selectedRequest == null) {
+          failed++;
+          continue;
+        }
+        await widget.downloadService.startDownload(selectedRequest);
         queued++;
       } catch (error) {
         firstError ??= error;

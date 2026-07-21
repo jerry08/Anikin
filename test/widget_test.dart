@@ -28,6 +28,7 @@ import 'package:anikin/services/update_service.dart';
 import 'package:anikin/services/watch_history_service.dart';
 import 'package:anikin/widgets/app_error_view.dart';
 import 'package:anikin/widgets/media_poster_card.dart';
+import 'package:anikin/widgets/media_type_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -52,6 +53,58 @@ void main() {
 
     expect(preferences.themeColorPalette, ThemeColorPalette.ocean);
     expect(preferences.automaticUpdateChecks, isFalse);
+  });
+
+  test('loads and persists the new experience preferences', () async {
+    SharedPreferences.setMockInitialValues({
+      'appStartTab': AppStartTab.library.index,
+      'appMediaType': AppMediaType.manga.index,
+      'incognitoMode': true,
+      'resumePlayback': false,
+      'playerControlsTimeoutSeconds': 8,
+      'downloadQualityPreference': DownloadQualityPreference.dataSaver.index,
+      'mangaShowPageNumber': false,
+      'mangaPreloadPages': 10,
+    });
+    final preferences = PreferencesService();
+    await preferences.load();
+
+    expect(preferences.appStartTab, AppStartTab.library);
+    expect(preferences.appMediaType, AppMediaType.manga);
+    expect(preferences.incognitoMode, isTrue);
+    expect(preferences.resumePlayback, isFalse);
+    expect(preferences.playerControlsTimeoutSeconds, 8);
+    expect(
+      preferences.downloadQualityPreference,
+      DownloadQualityPreference.dataSaver,
+    );
+    expect(preferences.mangaShowPageNumber, isFalse);
+    expect(preferences.mangaPreloadPages, 10);
+
+    await preferences.setAppStartTab(AppStartTab.search);
+    await preferences.setAppMediaType(AppMediaType.anime);
+    await preferences.setIncognitoMode(false);
+    await preferences.setResumePlayback(true);
+    await preferences.setPlayerControlsTimeoutSeconds(30);
+    await preferences.setDownloadQualityPreference(
+      DownloadQualityPreference.highest,
+    );
+    await preferences.setMangaShowPageNumber(true);
+    await preferences.setMangaPreloadPages(20);
+
+    final reloaded = PreferencesService();
+    await reloaded.load();
+    expect(reloaded.appStartTab, AppStartTab.search);
+    expect(reloaded.appMediaType, AppMediaType.anime);
+    expect(reloaded.incognitoMode, isFalse);
+    expect(reloaded.resumePlayback, isTrue);
+    expect(reloaded.playerControlsTimeoutSeconds, 15);
+    expect(
+      reloaded.downloadQualityPreference,
+      DownloadQualityPreference.highest,
+    );
+    expect(reloaded.mangaShowPageNumber, isTrue);
+    expect(reloaded.mangaPreloadPages, 12);
   });
 
   test('watch history loads legacy entries', () async {
@@ -98,6 +151,28 @@ void main() {
     expect(history.resumeProviderAnime.id, 'provider-show-42');
     expect(history.resumeEpisode.displayName, 'Ep 1 • Episode One');
     expect(history.providerKey, 'Anime');
+  });
+
+  test('watch history can be cleared and notifies listeners', () async {
+    SharedPreferences.setMockInitialValues({
+      'player.watchedEpisodes': jsonEncode({
+        '42-1': {
+          'id': '42-1',
+          'animeName': 'Clear Me',
+          'watchedDuration': 90000,
+          'watchedPercentage': 35,
+        },
+      }),
+    });
+    final service = WatchHistoryService();
+    var notifications = 0;
+    service.addListener(() => notifications++);
+
+    expect(await service.getAll(), hasLength(1));
+    await service.clear();
+
+    expect(await service.getAll(), isEmpty);
+    expect(notifications, 1);
   });
 
   test('download service reads HLS master playlist qualities', () async {
@@ -430,6 +505,28 @@ https://cdn.example.com/720/index.m3u8
     ]);
   });
 
+  test('Juro service excludes Aniyomi providers off Android', () async {
+    final service = JuroService(
+      baseUrl: 'https://example.invalid/api',
+      aniyomiExtensionService: _FakeAniyomiExtensionService(isAndroid: false),
+      client: MockClient((request) async {
+        final type = request.url.queryParameters['type'];
+        return http.Response(
+          jsonEncode([
+            {'key': type == '1' ? 'Manga' : 'Anime', 'name': 'Built in'},
+          ]),
+          200,
+        );
+      }),
+    );
+
+    final animeProviders = await service.getProviders();
+    final mangaProviders = await service.getMangaProviders();
+
+    expect(animeProviders.map((provider) => provider.key), ['Anime']);
+    expect(mangaProviders.map((provider) => provider.key), ['Manga']);
+  });
+
   test(
     'Juro service routes Aniyomi provider calls to extension service',
     () async {
@@ -677,6 +774,99 @@ https://cdn.example.com/720/index.m3u8
     expect(find.byKey(const ValueKey('top-status-bar-shade')), findsOneWidget);
   });
 
+  testWidgets('Home and Search share the selected media type', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({'automaticUpdateChecks': false});
+    final preferences = PreferencesService();
+    await preferences.load();
+
+    await tester.pumpWidget(
+      AnikinApp(
+        preferences: preferences,
+        aniListService: _FakeAniListService(),
+        juroService: _FakeJuroService(),
+        watchHistoryService: WatchHistoryService(),
+        updateService: UpdateService(currentVersion: '0.0.0'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    var selector = find.byType(MediaTypeSelector);
+    expect(
+      tester.widget<MediaTypeSelector>(selector).appearance,
+      MediaTypeSelectorAppearance.glass,
+    );
+    expect(
+      find.descendant(of: selector, matching: find.byType(BackdropFilter)),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<MediaTypeSelector>(selector).value,
+      AppMediaType.anime,
+    );
+    expect(
+      find.descendant(of: selector, matching: find.text('Anime')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: selector, matching: find.text('Manga')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.descendant(of: selector, matching: find.text('Manga')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(preferences.appMediaType, AppMediaType.manga);
+    await tester.tap(find.text('Search'));
+    await tester.pumpAndSettle();
+
+    selector = find.byType(MediaTypeSelector);
+    expect(
+      tester.widget<MediaTypeSelector>(selector).appearance,
+      MediaTypeSelectorAppearance.surface,
+    );
+    expect(
+      tester.widget<MediaTypeSelector>(selector).value,
+      AppMediaType.manga,
+    );
+    final searchField = tester.widget<TextField>(find.byType(TextField));
+    expect(searchField.decoration?.hintText, 'Search manga');
+
+    final reloaded = PreferencesService();
+    await reloaded.load();
+    expect(reloaded.appMediaType, AppMediaType.manga);
+  });
+
+  testWidgets('opens on the configured start screen', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'appStartTab': AppStartTab.library.index,
+    });
+    final preferences = PreferencesService();
+    await preferences.load();
+
+    await tester.pumpWidget(
+      AnikinApp(
+        preferences: preferences,
+        aniListService: _FakeAniListService(),
+        juroService: _FakeJuroService(),
+        watchHistoryService: WatchHistoryService(),
+        updateService: UpdateService(currentVersion: '0.0.0'),
+      ),
+    );
+    await tester.pump();
+
+    final navigationBar = tester.widget<NavigationBar>(
+      find.byType(NavigationBar),
+    );
+    expect(navigationBar.selectedIndex, 2);
+    expect(find.text('Continue'), findsOneWidget);
+  });
+
   testWidgets('settings categories open detailed pages', (
     WidgetTester tester,
   ) async {
@@ -698,9 +888,11 @@ https://cdn.example.com/720/index.m3u8
     await tester.pumpAndSettle();
 
     expect(find.text('App'), findsOneWidget);
+    expect(find.text('Data and privacy'), findsOneWidget);
     expect(find.text('Playback'), findsOneWidget);
     expect(find.text('Subtitles'), findsOneWidget);
-    expect(find.text('Tracking and sync'), findsOneWidget);
+    expect(find.text('Reader'), findsOneWidget);
+    expect(find.text('Tracking and sync', skipOffstage: false), findsOneWidget);
 
     await tester.tap(find.text('App'));
     await tester.pumpAndSettle();
@@ -731,6 +923,122 @@ https://cdn.example.com/720/index.m3u8
     await tester.pumpAndSettle();
 
     expect(find.text('Double-tap seek'), findsOneWidget);
+  });
+
+  testWidgets('data and privacy settings control incognito and history', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'player.watchedEpisodes': jsonEncode({
+        '42-1': {
+          'id': '42-1',
+          'animeName': 'Private Show',
+          'watchedDuration': 90000,
+          'watchedPercentage': 35,
+        },
+      }),
+    });
+    final preferences = PreferencesService();
+    await preferences.load();
+    final historyService = WatchHistoryService();
+
+    await tester.pumpWidget(
+      AnikinApp(
+        preferences: preferences,
+        aniListService: _FakeAniListService(),
+        juroService: _FakeJuroService(),
+        watchHistoryService: historyService,
+        updateService: UpdateService(currentVersion: '0.0.0'),
+      ),
+    );
+
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Data and privacy'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Incognito mode'), findsOneWidget);
+    expect(find.text('Download quality'), findsOneWidget);
+    expect(find.text('1 saved episode'), findsOneWidget);
+
+    await tester.tap(find.text('Incognito mode'));
+    await tester.pumpAndSettle();
+    expect(preferences.incognitoMode, isTrue);
+
+    await tester.tap(find.text('Clear watch history'));
+    await tester.pumpAndSettle();
+    expect(find.text('Clear watch history?'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Clear'));
+    await tester.pumpAndSettle();
+
+    expect(await historyService.getAll(), isEmpty);
+    expect(find.text('No saved episode progress'), findsOneWidget);
+  });
+
+  testWidgets('Aniyomi settings are hidden off Android', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = PreferencesService();
+    await preferences.load();
+
+    await tester.pumpWidget(
+      AnikinApp(
+        preferences: preferences,
+        aniListService: _FakeAniListService(),
+        aniyomiExtensionService: AniyomiExtensionService(isAndroid: false),
+        juroService: _FakeJuroService(),
+        watchHistoryService: WatchHistoryService(),
+        updateService: UpdateService(currentVersion: '0.0.0'),
+      ),
+    );
+
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -1600));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Browse Aniyomi sources', skipOffstage: false),
+      findsNothing,
+    );
+    expect(find.text('Aniyomi extensions', skipOffstage: false), findsNothing);
+    expect(find.text('Show NSFW sources', skipOffstage: false), findsNothing);
+  });
+
+  testWidgets('Aniyomi settings remain available on Android', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = PreferencesService();
+    await preferences.load();
+
+    await tester.pumpWidget(
+      AnikinApp(
+        preferences: preferences,
+        aniListService: _FakeAniListService(),
+        aniyomiExtensionService: AniyomiExtensionService(isAndroid: true),
+        juroService: _FakeJuroService(),
+        watchHistoryService: WatchHistoryService(),
+        updateService: UpdateService(currentVersion: '0.0.0'),
+      ),
+    );
+
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -1600));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Browse Aniyomi sources', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Aniyomi extensions', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(find.text('Show NSFW sources', skipOffstage: false), findsOneWidget);
   });
 
   testWidgets('search screen applies AniList tags', (
@@ -788,6 +1096,45 @@ https://cdn.example.com/720/index.m3u8
 
     expect(find.text('Pick one or more'), findsNothing);
     expect(find.text('Search Result'), findsNothing);
+  });
+
+  testWidgets('search header stays focused on wide layouts', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    SharedPreferences.setMockInitialValues({});
+    final preferences = PreferencesService();
+    await preferences.load();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SearchScreen(
+            preferences: preferences,
+            aniListService: _FakeAniListService(),
+            juroService: _FakeJuroService(),
+            watchHistoryService: WatchHistoryService(),
+            downloadService: DownloadService(),
+            mangaDownloadService: MangaDownloadService(),
+            trackingService: TrackingService(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final searchField = find.byType(TextField);
+    expect(tester.getSize(searchField).width, lessThanOrEqualTo(808));
+    expect(tester.getCenter(searchField).dx, closeTo(720, 0.5));
+    expect(
+      tester.getSize(find.byType(MediaTypeSelector)).width,
+      lessThanOrEqualTo(240),
+    );
   });
 
   testWidgets('search screen keeps the latest AniList result', (
@@ -1049,6 +1396,82 @@ https://cdn.example.com/720/index.m3u8
     expect(find.text('Popular Manga'), findsOneWidget);
     expect(find.text('Manga First'), findsWidgets);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('home preserves separate Anime and Manga scroll positions', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = PreferencesService();
+    await preferences.load();
+    final animeItems = List.generate(
+      8,
+      (index) => AniListMedia(
+        id: index + 1,
+        title: MediaTitle(english: 'Anime $index'),
+        cover: const MediaCover(),
+        format: 'TV',
+      ),
+    );
+    final mangaItems = List.generate(
+      8,
+      (index) => AniListMedia(
+        id: index + 101,
+        title: MediaTitle(english: 'Manga $index'),
+        cover: const MediaCover(),
+        format: 'MANGA',
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: HomeScreen(
+            preferences: preferences,
+            aniListService: _FakeAniListService(
+              currentSeason: animeItems,
+              popularManga: mangaItems,
+            ),
+            juroService: _FakeJuroService(),
+            watchHistoryService: WatchHistoryService(),
+            downloadService: DownloadService(),
+            mangaDownloadService: MangaDownloadService(),
+            trackingService: TrackingService(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final animeScroll = find.byKey(
+      const PageStorageKey<String>('home-anime-scroll'),
+    );
+    await tester.drag(animeScroll, const Offset(0, -360));
+    await tester.pumpAndSettle();
+    final animeOffset = tester.widget<ListView>(animeScroll).controller!.offset;
+    expect(animeOffset, greaterThan(0));
+
+    var selector = find.byType(MediaTypeSelector);
+    await tester.tap(
+      find.descendant(of: selector, matching: find.text('Manga')),
+    );
+    await tester.pumpAndSettle();
+
+    final mangaScroll = find.byKey(
+      const PageStorageKey<String>('home-manga-scroll'),
+    );
+    expect(tester.widget<ListView>(mangaScroll).controller!.offset, 0);
+
+    selector = find.byType(MediaTypeSelector);
+    await tester.tap(
+      find.descendant(of: selector, matching: find.text('Anime')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<ListView>(animeScroll).controller!.offset,
+      closeTo(animeOffset, 1),
+    );
   });
 
   testWidgets('long pressing an episode opens source options', (
@@ -1459,6 +1882,60 @@ https://cdn.example.com/720/index.m3u8
     expect(downloadService.cancelledId, downloadService.startedRequest?.taskId);
   });
 
+  testWidgets('data saver download quality picks the smallest HLS variant', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'episodeLayoutMode': EpisodeLayoutMode.list.index,
+      'downloadQualityPreference': DownloadQualityPreference.dataSaver.index,
+    });
+    final preferences = PreferencesService();
+    await preferences.load();
+    final downloadService = _HlsVariantDownloadService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DetailScreen(
+          media: const AniListMedia(
+            id: 42,
+            title: MediaTitle(english: 'Data Saver Show'),
+            cover: MediaCover(),
+          ),
+          preferences: preferences,
+          juroService: _HlsEpisodeOptionsJuroService(),
+          watchHistoryService: WatchHistoryService(),
+          downloadService: downloadService,
+          trackingService: TrackingService(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+
+    final episodeTitle = find.text('Ep 1 • The Beginning', skipOffstage: false);
+    await tester.ensureVisible(episodeTitle);
+    await tester.pump();
+    await tester.longPress(find.text('Ep 1 • The Beginning'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Download episode'));
+    await tester.pump();
+    downloadService.completeVariants();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+
+    expect(find.text('Download quality'), findsNothing);
+    expect(
+      downloadService.startedRequest?.source.videoUrl,
+      'https://example.com/720/index.m3u8',
+    );
+    expect(downloadService.startedRequest?.source.resolution, '720p');
+  });
+
   testWidgets('manga reader footer buttons match and settings apply', (
     WidgetTester tester,
   ) async {
@@ -1505,6 +1982,8 @@ https://cdn.example.com/720/index.m3u8
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Reading mode'), findsOneWidget);
+    expect(find.text('Show page number', skipOffstage: false), findsOneWidget);
+    expect(find.text('Pages to preload', skipOffstage: false), findsOneWidget);
     await tester.tap(find.text('RTL'));
     await tester.pump();
 
@@ -1829,6 +2308,9 @@ class _DelayedSearchRequest {
 }
 
 class _FakeAniyomiExtensionService extends AniyomiExtensionService {
+  _FakeAniyomiExtensionService({bool isAndroid = true})
+    : super(isAndroid: isAndroid);
+
   String? lastProviderKey;
   String? lastSearchQuery;
 

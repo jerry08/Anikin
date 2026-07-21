@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -52,6 +53,7 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
   final _pageController = PageController();
   final _webtoonController = ScrollController();
   final _keyboardFocusNode = FocusNode(debugLabel: 'Reader shortcuts');
+  final Set<String> _precacheUrls = {};
   int _pageIndex = 0;
   int _pageCount = 0;
   bool _chromeVisible = true;
@@ -127,6 +129,31 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
     }
     if (_webtoonController.hasClients) {
       _webtoonController.jumpTo(0);
+    }
+  }
+
+  void _precachePages(List<MangaChapterPage> pages, int currentIndex) {
+    final preloadCount = widget.preferences.mangaPreloadPages;
+    if (!mounted || preloadCount <= 0 || pages.isEmpty) {
+      return;
+    }
+
+    final candidateEnd = currentIndex + preloadCount + 1;
+    final end = candidateEnd < pages.length ? candidateEnd : pages.length;
+    for (var index = currentIndex + 1; index < end; index++) {
+      final page = pages[index];
+      final imageUrl = page.image;
+      if ((!imageUrl.startsWith('http://') &&
+              !imageUrl.startsWith('https://')) ||
+          !_precacheUrls.add(imageUrl)) {
+        continue;
+      }
+      unawaited(
+        precacheImage(
+          CachedNetworkImageProvider(imageUrl, headers: page.headers),
+          context,
+        ).catchError((Object _) {}),
+      );
     }
   }
 
@@ -284,6 +311,7 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
           );
         }
 
+        _precachePages(pages, index);
         return Padding(
           padding: EdgeInsets.symmetric(vertical: gap / 2),
           child: _ReaderPageImage(
@@ -309,7 +337,10 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
             controller: _pageController,
             reverse: reverse,
             itemCount: pages.length,
-            onPageChanged: (index) => setState(() => _pageIndex = index),
+            onPageChanged: (index) {
+              setState(() => _pageIndex = index);
+              _precachePages(pages, index);
+            },
             itemBuilder: (context, index) => Padding(
               padding: EdgeInsets.all(widget.preferences.mangaPageGap),
               child: Center(
@@ -331,10 +362,12 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      'Page ${_pageIndex + 1} of ${pages.length}',
-                      style: TextStyle(color: _readerSubtleForeground),
-                    ),
+                    child: widget.preferences.mangaShowPageNumber
+                        ? Text(
+                            'Page ${_pageIndex + 1} of ${pages.length}',
+                            style: TextStyle(color: _readerSubtleForeground),
+                          )
+                        : const SizedBox.shrink(),
                   ),
                   Text(
                     _chapter.displayTitle,
@@ -477,6 +510,7 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
             }
 
             _pageCount = pages.length;
+            _precachePages(pages, _pageIndex - 1);
             return _buildPages(pages);
           },
         ),
@@ -710,6 +744,34 @@ class _ReaderSettingsSheet extends StatelessWidget {
                 await preferences.setMangaKeepScreenOn(value);
                 onChanged();
               },
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              secondary: const Icon(Icons.numbers_outlined),
+              title: const Text('Show page number'),
+              value: preferences.mangaShowPageNumber,
+              onChanged: (value) async {
+                await preferences.setMangaShowPageNumber(value);
+                onChanged();
+              },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.cached_outlined),
+              title: const Text('Pages to preload'),
+              subtitle: Slider(
+                min: 0,
+                max: 12,
+                divisions: 6,
+                value: preferences.mangaPreloadPages.toDouble(),
+                label: preferences.mangaPreloadPages == 0
+                    ? 'Off'
+                    : preferences.mangaPreloadPages.toString(),
+                onChanged: (value) async {
+                  await preferences.setMangaPreloadPages(value.round());
+                  onChanged();
+                },
+              ),
             ),
           ],
         ),

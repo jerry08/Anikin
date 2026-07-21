@@ -13,11 +13,20 @@ enum MangaPageFitMode { width, contain }
 
 enum MangaReaderBackground { black, dark, gray, white }
 
+enum AppStartTab { home, search, library }
+
+enum AppMediaType { anime, manga }
+
+enum DownloadQualityPreference { askEveryTime, highest, dataSaver }
+
 class PreferencesService extends ChangeNotifier {
   SharedPreferences? _prefs;
 
   ThemeMode themeMode = ThemeMode.dark;
   ThemeColorPalette themeColorPalette = ThemeColorPalette.anikin;
+  AppStartTab appStartTab = AppStartTab.home;
+  AppMediaType appMediaType = AppMediaType.anime;
+  bool incognitoMode = false;
   bool showNonJapaneseAnime = false;
   String lastAnimeProviderKey = 'Anime';
   String? lastAnimeProviderName;
@@ -31,6 +40,8 @@ class PreferencesService extends ChangeNotifier {
   MangaReaderBackground mangaReaderBackground = MangaReaderBackground.black;
   double mangaPageGap = 4;
   bool mangaKeepScreenOn = true;
+  bool mangaShowPageNumber = true;
+  int mangaPreloadPages = 4;
   EpisodeLayoutMode episodeLayoutMode = EpisodeLayoutMode.semi;
   bool alwaysLandscape = true;
   bool selectServerBeforePlaying = false;
@@ -43,6 +54,10 @@ class PreferencesService extends ChangeNotifier {
   bool autoPlayNext = true;
   bool doubleTapSeek = true;
   bool showRemainingDuration = true;
+  bool resumePlayback = true;
+  int playerControlsTimeoutSeconds = 4;
+  DownloadQualityPreference downloadQualityPreference =
+      DownloadQualityPreference.askEveryTime;
   bool timeStampsEnabled = true;
   bool showTimeStampButton = true;
   bool developerMode = false;
@@ -70,6 +85,17 @@ class PreferencesService extends ChangeNotifier {
                 ThemeColorPalette.anikin.index)
             .clamp(0, ThemeColorPalette.values.length - 1)
             .toInt()];
+    appStartTab =
+        AppStartTab.values[(prefs.getInt('appStartTab') ??
+                AppStartTab.home.index)
+            .clamp(0, AppStartTab.values.length - 1)
+            .toInt()];
+    appMediaType =
+        AppMediaType.values[(prefs.getInt('appMediaType') ??
+                AppMediaType.anime.index)
+            .clamp(0, AppMediaType.values.length - 1)
+            .toInt()];
+    incognitoMode = prefs.getBool('incognitoMode') ?? false;
     showNonJapaneseAnime = prefs.getBool('showNonJapaneseAnime') ?? false;
     lastAnimeProviderKey = prefs.getString('lastAnimeProviderKey') ?? 'Anime';
     lastAnimeProviderName = prefs.getString('lastAnimeProviderName');
@@ -95,6 +121,10 @@ class PreferencesService extends ChangeNotifier {
             .toInt()];
     mangaPageGap = prefs.getDouble('mangaPageGap') ?? 4;
     mangaKeepScreenOn = prefs.getBool('mangaKeepScreenOn') ?? true;
+    mangaShowPageNumber = prefs.getBool('mangaShowPageNumber') ?? true;
+    mangaPreloadPages = (prefs.getInt('mangaPreloadPages') ?? 4)
+        .clamp(0, 12)
+        .toInt();
     episodeLayoutMode =
         EpisodeLayoutMode.values[(prefs.getInt('episodeLayoutMode') ??
                 EpisodeLayoutMode.semi.index)
@@ -116,6 +146,18 @@ class PreferencesService extends ChangeNotifier {
     autoPlayNext = prefs.getBool('autoPlayNext') ?? true;
     doubleTapSeek = prefs.getBool('doubleTapSeek') ?? true;
     showRemainingDuration = prefs.getBool('showRemainingDuration') ?? true;
+    resumePlayback = prefs.getBool('resumePlayback') ?? true;
+    playerControlsTimeoutSeconds =
+        (prefs.getInt('playerControlsTimeoutSeconds') ?? 4)
+            .clamp(2, 15)
+            .toInt();
+    downloadQualityPreference =
+        DownloadQualityPreference.values[(prefs.getInt(
+                  'downloadQualityPreference',
+                ) ??
+                DownloadQualityPreference.askEveryTime.index)
+            .clamp(0, DownloadQualityPreference.values.length - 1)
+            .toInt()];
     timeStampsEnabled = prefs.getBool('timeStampsEnabled') ?? true;
     showTimeStampButton = prefs.getBool('showTimeStampButton') ?? true;
     developerMode = prefs.getBool('developerMode') ?? false;
@@ -131,6 +173,27 @@ class PreferencesService extends ChangeNotifier {
   Future<void> setThemeColorPalette(ThemeColorPalette value) async {
     themeColorPalette = value;
     await _prefs!.setInt('themeColorPalette', value.index);
+    notifyListeners();
+  }
+
+  Future<void> setAppStartTab(AppStartTab value) async {
+    appStartTab = value;
+    await _prefs!.setInt('appStartTab', value.index);
+    notifyListeners();
+  }
+
+  Future<void> setAppMediaType(AppMediaType value) async {
+    if (appMediaType == value) {
+      return;
+    }
+    appMediaType = value;
+    await _prefs!.setInt('appMediaType', value.index);
+    notifyListeners();
+  }
+
+  Future<void> setIncognitoMode(bool value) async {
+    incognitoMode = value;
+    await _prefs!.setBool('incognitoMode', value);
     notifyListeners();
   }
 
@@ -201,6 +264,18 @@ class PreferencesService extends ChangeNotifier {
   Future<void> setMangaKeepScreenOn(bool value) async {
     mangaKeepScreenOn = value;
     await _prefs!.setBool('mangaKeepScreenOn', value);
+    notifyListeners();
+  }
+
+  Future<void> setMangaShowPageNumber(bool value) async {
+    mangaShowPageNumber = value;
+    await _prefs!.setBool('mangaShowPageNumber', value);
+    notifyListeners();
+  }
+
+  Future<void> setMangaPreloadPages(int value) async {
+    mangaPreloadPages = value.clamp(0, 12).toInt();
+    await _prefs!.setInt('mangaPreloadPages', mangaPreloadPages);
     notifyListeners();
   }
 
@@ -275,6 +350,29 @@ class PreferencesService extends ChangeNotifier {
   Future<void> setShowRemainingDuration(bool value) async {
     showRemainingDuration = value;
     await _prefs!.setBool('showRemainingDuration', value);
+    notifyListeners();
+  }
+
+  Future<void> setResumePlayback(bool value) async {
+    resumePlayback = value;
+    await _prefs!.setBool('resumePlayback', value);
+    notifyListeners();
+  }
+
+  Future<void> setPlayerControlsTimeoutSeconds(int value) async {
+    playerControlsTimeoutSeconds = value.clamp(2, 15).toInt();
+    await _prefs!.setInt(
+      'playerControlsTimeoutSeconds',
+      playerControlsTimeoutSeconds,
+    );
+    notifyListeners();
+  }
+
+  Future<void> setDownloadQualityPreference(
+    DownloadQualityPreference value,
+  ) async {
+    downloadQualityPreference = value;
+    await _prefs!.setInt('downloadQualityPreference', value.index);
     notifyListeners();
   }
 

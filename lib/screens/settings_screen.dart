@@ -94,6 +94,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 ),
+                _SettingsNavigationTile(
+                  icon: Icons.storage_outlined,
+                  title: 'Data and privacy',
+                  subtitle: _dataSummary(prefs),
+                  onTap: () => _openSettingsPage(
+                    context,
+                    _DataSettingsPage(
+                      preferences: widget.preferences,
+                      watchHistoryService: widget.watchHistoryService,
+                      downloadService: widget.downloadService,
+                      mangaDownloadService: widget.mangaDownloadService,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 10),
                 const _SectionTitle('Watching'),
                 _SettingsNavigationTile(
@@ -112,6 +126,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () => _openSettingsPage(
                     context,
                     _SubtitleSettingsPage(preferences: widget.preferences),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const _SectionTitle('Reading'),
+                _SettingsNavigationTile(
+                  icon: Icons.chrome_reader_mode_outlined,
+                  title: 'Reader',
+                  subtitle: _readerSummary(prefs),
+                  onTap: () => _openSettingsPage(
+                    context,
+                    _ReaderSettingsPage(preferences: widget.preferences),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -142,37 +167,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 ),
-                _SettingsNavigationTile(
-                  icon: Icons.travel_explore_outlined,
-                  title: 'Browse Aniyomi sources',
-                  subtitle: 'Open installed extension sources',
-                  onTap: () => _openSettingsPage(
-                    context,
-                    AniyomiSourcesScreen(
-                      extensionService: widget.aniyomiExtensionService,
-                      preferences: widget.preferences,
-                      juroService: widget.juroService,
-                      watchHistoryService: widget.watchHistoryService,
-                      downloadService: widget.downloadService,
-                      mangaDownloadService: widget.mangaDownloadService,
-                      trackingService: widget.trackingService,
+                if (widget.aniyomiExtensionService.isPlatformSupported) ...[
+                  _SettingsNavigationTile(
+                    icon: Icons.travel_explore_outlined,
+                    title: 'Browse Aniyomi sources',
+                    subtitle: 'Open installed extension sources',
+                    onTap: () => _openSettingsPage(
+                      context,
+                      AniyomiSourcesScreen(
+                        extensionService: widget.aniyomiExtensionService,
+                        preferences: widget.preferences,
+                        juroService: widget.juroService,
+                        watchHistoryService: widget.watchHistoryService,
+                        downloadService: widget.downloadService,
+                        mangaDownloadService: widget.mangaDownloadService,
+                        trackingService: widget.trackingService,
+                      ),
                     ),
                   ),
-                ),
-                _SettingsNavigationTile(
-                  icon: Icons.extension_outlined,
-                  title: 'Aniyomi extensions',
-                  subtitle: 'Android extension sources',
-                  onTap: () => _openSettingsPage(
-                    context,
-                    AniyomiExtensionsScreen(
-                      extensionService: widget.aniyomiExtensionService,
+                  _SettingsNavigationTile(
+                    icon: Icons.extension_outlined,
+                    title: 'Aniyomi extensions',
+                    subtitle: 'Android extension sources',
+                    onTap: () => _openSettingsPage(
+                      context,
+                      AniyomiExtensionsScreen(
+                        extensionService: widget.aniyomiExtensionService,
+                      ),
                     ),
                   ),
-                ),
-                _NsfwSourcesTile(
-                  extensionService: widget.aniyomiExtensionService,
-                ),
+                  _NsfwSourcesTile(
+                    extensionService: widget.aniyomiExtensionService,
+                  ),
+                ],
               ],
             ),
           );
@@ -263,6 +290,16 @@ class _AppSettingsPage extends StatelessWidget {
         _PalettePicker(
           value: prefs.themeColorPalette,
           onChanged: prefs.setThemeColorPalette,
+        ),
+        _SelectionTile<AppStartTab>(
+          icon: Icons.first_page_outlined,
+          title: 'Start screen',
+          value: prefs.appStartTab,
+          values: AppStartTab.values,
+          labelBuilder: _appStartTabLabel,
+          onChanged: (value) {
+            if (value != null) prefs.setAppStartTab(value);
+          },
         ),
         const SizedBox(height: 10),
         const _SectionTitle('Diagnostics'),
@@ -398,6 +435,13 @@ class _PlaybackSettingsPage extends StatelessWidget {
           onChanged: prefs.setSelectServerBeforePlaying,
         ),
         SwitchListTile(
+          secondary: const Icon(Icons.history),
+          title: const Text('Resume playback'),
+          subtitle: const Text('Continue from your last watched position'),
+          value: prefs.resumePlayback,
+          onChanged: prefs.setResumePlayback,
+        ),
+        SwitchListTile(
           secondary: const Icon(Icons.skip_next),
           title: const Text('Autoplay next episode'),
           value: prefs.autoPlayNext,
@@ -405,6 +449,16 @@ class _PlaybackSettingsPage extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         const _SectionTitle('Controls'),
+        _SelectionTile<int>(
+          icon: Icons.visibility_off_outlined,
+          title: 'Hide controls after',
+          value: prefs.playerControlsTimeoutSeconds,
+          values: const [2, 4, 6, 8, 10, 15],
+          labelBuilder: (value) => '$value seconds',
+          onChanged: (value) {
+            if (value != null) prefs.setPlayerControlsTimeoutSeconds(value);
+          },
+        ),
         ListTile(
           leading: const Icon(Icons.fast_forward),
           title: Text('Seek time: ${prefs.seekTimeSeconds}s'),
@@ -478,6 +532,325 @@ class _SubtitleSettingsPage extends StatelessWidget {
           title: const Text('Show timestamp skip button'),
           value: prefs.showTimeStampButton,
           onChanged: prefs.setShowTimeStampButton,
+        ),
+      ],
+    );
+  }
+}
+
+class _DataSettingsPage extends StatelessWidget {
+  const _DataSettingsPage({
+    required this.preferences,
+    required this.watchHistoryService,
+    required this.downloadService,
+    required this.mangaDownloadService,
+  });
+
+  final PreferencesService preferences;
+  final WatchHistoryService watchHistoryService;
+  final DownloadService downloadService;
+  final MangaDownloadService mangaDownloadService;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SettingsPageScaffold(
+      title: 'Data and privacy',
+      preferences: preferences,
+      childrenBuilder: (context, prefs) => [
+        const _SectionTitle('Privacy'),
+        SwitchListTile(
+          secondary: const Icon(Icons.visibility_off_outlined),
+          title: const Text('Incognito mode'),
+          subtitle: const Text(
+            'Do not save watch progress or send automatic tracker updates',
+          ),
+          value: prefs.incognitoMode,
+          onChanged: prefs.setIncognitoMode,
+        ),
+        const SizedBox(height: 10),
+        const _SectionTitle('Downloads'),
+        _SelectionTile<DownloadQualityPreference>(
+          icon: Icons.high_quality_outlined,
+          title: 'Download quality',
+          value: prefs.downloadQualityPreference,
+          values: DownloadQualityPreference.values,
+          labelBuilder: _downloadQualityLabel,
+          onChanged: (value) {
+            if (value != null) prefs.setDownloadQualityPreference(value);
+          },
+        ),
+        _DownloadedMediaTile(
+          downloadService: downloadService,
+          mangaDownloadService: mangaDownloadService,
+        ),
+        const SizedBox(height: 10),
+        const _SectionTitle('History'),
+        _ClearHistoryTile(service: watchHistoryService),
+      ],
+    );
+  }
+}
+
+class _ClearHistoryTile extends StatefulWidget {
+  const _ClearHistoryTile({required this.service});
+
+  final WatchHistoryService service;
+
+  @override
+  State<_ClearHistoryTile> createState() => _ClearHistoryTileState();
+}
+
+class _ClearHistoryTileState extends State<_ClearHistoryTile> {
+  int? _count;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.service.addListener(_handleHistoryChanged);
+    unawaited(_loadCount());
+  }
+
+  @override
+  void didUpdateWidget(covariant _ClearHistoryTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.service == widget.service) {
+      return;
+    }
+    oldWidget.service.removeListener(_handleHistoryChanged);
+    widget.service.addListener(_handleHistoryChanged);
+    unawaited(_loadCount());
+  }
+
+  @override
+  void dispose() {
+    widget.service.removeListener(_handleHistoryChanged);
+    super.dispose();
+  }
+
+  void _handleHistoryChanged() {
+    unawaited(_loadCount());
+  }
+
+  Future<void> _loadCount() async {
+    final count = (await widget.service.getAll()).length;
+    if (mounted) {
+      setState(() => _count = count);
+    }
+  }
+
+  Future<void> _clear() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear watch history?'),
+        content: const Text(
+          'All saved episode positions will be removed. Downloads and '
+          'tracker lists are not affected.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+
+    await widget.service.clear();
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Watch history cleared')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final count = _count;
+    return ListTile(
+      leading: const Icon(Icons.delete_sweep_outlined),
+      title: const Text('Clear watch history'),
+      subtitle: Text(
+        count == null
+            ? 'Checking saved progress…'
+            : count == 0
+            ? 'No saved episode progress'
+            : '$count saved ${count == 1 ? 'episode' : 'episodes'}',
+      ),
+      enabled: count != null && count > 0,
+      onTap: count != null && count > 0 ? () => unawaited(_clear()) : null,
+    );
+  }
+}
+
+class _DownloadedMediaTile extends StatelessWidget {
+  const _DownloadedMediaTile({
+    required this.downloadService,
+    required this.mangaDownloadService,
+  });
+
+  final DownloadService downloadService;
+  final MangaDownloadService mangaDownloadService;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([downloadService, mangaDownloadService]),
+      builder: (context, _) {
+        final episodeDownloads = downloadService.items;
+        final mangaDownloads = mangaDownloadService.items;
+        final itemCount = episodeDownloads.length + mangaDownloads.length;
+        final bytes =
+            episodeDownloads.fold<int>(0, (sum, item) => sum + item.bytes) +
+            mangaDownloads.fold<int>(0, (sum, item) => sum + item.bytes);
+        return ListTile(
+          leading: const Icon(Icons.download_done_outlined),
+          title: const Text('Downloaded media'),
+          subtitle: Text(
+            itemCount == 0
+                ? 'No completed downloads'
+                : '$itemCount ${itemCount == 1 ? 'item' : 'items'} • '
+                      '${_formatStorageBytes(bytes)}',
+          ),
+          trailing: itemCount == 0
+              ? null
+              : TextButton(
+                  onPressed: () => unawaited(_clear(context)),
+                  child: const Text('Clear'),
+                ),
+        );
+      },
+    );
+  }
+
+  Future<void> _clear(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete all downloaded media?'),
+        content: const Text(
+          'Completed anime episodes and manga chapters will be permanently '
+          'removed from this device.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete all'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+
+    final episodeIds = downloadService.items.map((item) => item.id).toList();
+    final mangaIds = mangaDownloadService.items.map((item) => item.id).toList();
+    for (final id in episodeIds) {
+      await downloadService.delete(id);
+    }
+    for (final id in mangaIds) {
+      await mangaDownloadService.delete(id);
+    }
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Downloaded media deleted')));
+    }
+  }
+}
+
+class _ReaderSettingsPage extends StatelessWidget {
+  const _ReaderSettingsPage({required this.preferences});
+
+  final PreferencesService preferences;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SettingsPageScaffold(
+      title: 'Reader',
+      preferences: preferences,
+      childrenBuilder: (context, prefs) => [
+        const _SectionTitle('Layout'),
+        _SelectionTile<MangaReadingMode>(
+          icon: Icons.chrome_reader_mode_outlined,
+          title: 'Reading mode',
+          value: prefs.mangaReadingMode,
+          values: MangaReadingMode.values,
+          labelBuilder: _mangaReadingModeLabel,
+          onChanged: (value) {
+            if (value != null) prefs.setMangaReadingMode(value);
+          },
+        ),
+        _SelectionTile<MangaPageFitMode>(
+          icon: Icons.fit_screen_outlined,
+          title: 'Page fit',
+          value: prefs.mangaPageFitMode,
+          values: MangaPageFitMode.values,
+          labelBuilder: (value) => switch (value) {
+            MangaPageFitMode.width => 'Fit width',
+            MangaPageFitMode.contain => 'Fit screen',
+          },
+          onChanged: (value) {
+            if (value != null) prefs.setMangaPageFitMode(value);
+          },
+        ),
+        _SelectionTile<MangaReaderBackground>(
+          icon: Icons.format_color_fill_outlined,
+          title: 'Background',
+          value: prefs.mangaReaderBackground,
+          values: MangaReaderBackground.values,
+          labelBuilder: (value) => _formatEnumLabel(value.name),
+          onChanged: (value) {
+            if (value != null) prefs.setMangaReaderBackground(value);
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.space_bar),
+          title: Text('Page gap: ${prefs.mangaPageGap.round()}'),
+          subtitle: Slider(
+            min: 0,
+            max: 24,
+            divisions: 12,
+            value: prefs.mangaPageGap,
+            label: prefs.mangaPageGap.round().toString(),
+            onChanged: prefs.setMangaPageGap,
+          ),
+        ),
+        const SizedBox(height: 10),
+        const _SectionTitle('Reading behavior'),
+        SwitchListTile(
+          secondary: const Icon(Icons.lightbulb_outline),
+          title: const Text('Keep screen on'),
+          value: prefs.mangaKeepScreenOn,
+          onChanged: prefs.setMangaKeepScreenOn,
+        ),
+        SwitchListTile(
+          secondary: const Icon(Icons.numbers_outlined),
+          title: const Text('Show page number'),
+          value: prefs.mangaShowPageNumber,
+          onChanged: prefs.setMangaShowPageNumber,
+        ),
+        _SelectionTile<int>(
+          icon: Icons.cached_outlined,
+          title: 'Pages to preload',
+          value: prefs.mangaPreloadPages,
+          values: const [0, 2, 4, 6, 8, 10, 12],
+          labelBuilder: (value) => value == 0 ? 'Off' : '$value pages',
+          onChanged: (value) {
+            if (value != null) prefs.setMangaPreloadPages(value);
+          },
         ),
       ],
     );
@@ -1330,22 +1703,18 @@ class _SelectionTile<T> extends StatelessWidget {
 String _appSummary(PreferencesService prefs) {
   final theme = _formatEnumLabel(prefs.themeMode.name);
   final palette = AppTheme.paletteLabel(prefs.themeColorPalette);
-  final diagnostics = prefs.developerMode
-      ? 'developer details on'
-      : 'developer details off';
+  final startTab = _appStartTabLabel(prefs.appStartTab).toLowerCase();
   final updates = prefs.automaticUpdateChecks
       ? 'startup updates on'
       : 'startup updates off';
-  return '$theme theme, $palette palette, $diagnostics, $updates';
+  return '$theme theme, $palette palette, starts on $startTab, $updates';
 }
 
 String _playbackSummary(PreferencesService prefs) {
   final speed = '${_formatSpeed(prefs.defaultPlaybackSpeed)}x';
   final resize = _formatEnumLabel(prefs.resizeMode.name).toLowerCase();
-  final remaining = prefs.showRemainingDuration
-      ? 'remaining time on'
-      : 'remaining time off';
-  return '$speed default, $resize resize, $remaining';
+  final resume = prefs.resumePlayback ? 'resume on' : 'resume off';
+  return '$speed default, $resize resize, $resume';
 }
 
 String _subtitlesSummary(PreferencesService prefs) {
@@ -1354,6 +1723,19 @@ String _subtitlesSummary(PreferencesService prefs) {
       ? 'timestamps on'
       : 'timestamps off';
   return '${prefs.subtitleFontSize}px, $timestamps';
+}
+
+String _dataSummary(PreferencesService prefs) {
+  final privacy = prefs.incognitoMode ? 'incognito on' : 'history on';
+  return '$privacy, ${_downloadQualityLabel(prefs.downloadQualityPreference).toLowerCase()} downloads';
+}
+
+String _readerSummary(PreferencesService prefs) {
+  final mode = _mangaReadingModeLabel(prefs.mangaReadingMode);
+  final preload = prefs.mangaPreloadPages == 0
+      ? 'preloading off'
+      : '${prefs.mangaPreloadPages} pages preloaded';
+  return '$mode, $preload';
 }
 
 String _sourcesSummary(PreferencesService prefs) {
@@ -1383,6 +1765,30 @@ String _providerLabel({required String key, required String? name}) {
   return trimmedName == null || trimmedName.isEmpty ? key : trimmedName;
 }
 
+String _appStartTabLabel(AppStartTab value) {
+  return switch (value) {
+    AppStartTab.home => 'Home',
+    AppStartTab.search => 'Search',
+    AppStartTab.library => 'Library',
+  };
+}
+
+String _downloadQualityLabel(DownloadQualityPreference value) {
+  return switch (value) {
+    DownloadQualityPreference.askEveryTime => 'Ask every time',
+    DownloadQualityPreference.highest => 'Highest available',
+    DownloadQualityPreference.dataSaver => 'Data saver',
+  };
+}
+
+String _mangaReadingModeLabel(MangaReadingMode value) {
+  return switch (value) {
+    MangaReadingMode.webtoon => 'Webtoon',
+    MangaReadingMode.leftToRight => 'Left to right',
+    MangaReadingMode.rightToLeft => 'Right to left',
+  };
+}
+
 String _formatEnumLabel(String name) {
   return name[0].toUpperCase() + name.substring(1);
 }
@@ -1390,4 +1796,14 @@ String _formatEnumLabel(String name) {
 String _formatSpeed(double value) {
   if (value == value.roundToDouble()) return value.toInt().toString();
   return value.toString();
+}
+
+String _formatStorageBytes(int bytes) {
+  if (bytes < 1024) return '$bytes B';
+  final kib = bytes / 1024;
+  if (kib < 1024) return '${kib.toStringAsFixed(kib >= 10 ? 0 : 1)} KB';
+  final mib = kib / 1024;
+  if (mib < 1024) return '${mib.toStringAsFixed(mib >= 10 ? 0 : 1)} MB';
+  final gib = mib / 1024;
+  return '${gib.toStringAsFixed(gib >= 10 ? 0 : 1)} GB';
 }

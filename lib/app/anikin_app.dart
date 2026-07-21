@@ -147,11 +147,16 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
   @override
   void initState() {
     super.initState();
+    _selectedIndex = switch (widget.preferences.appStartTab) {
+      AppStartTab.home => 0,
+      AppStartTab.search => 1,
+      AppStartTab.library => 2,
+    };
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_checkForStartupUpdate());
     });

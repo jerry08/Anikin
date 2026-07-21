@@ -39,6 +39,8 @@ class AniyomiExtensionService {
   final MethodChannel _channel;
   final bool _isAndroid;
 
+  bool get isPlatformSupported => _isAndroid;
+
   static bool isProviderKey(String providerKey) {
     return isAnimeProviderKey(providerKey) || isMangaProviderKey(providerKey);
   }
@@ -341,10 +343,9 @@ class AniyomiExtensionService {
     if (value is! Map) {
       return AniyomiPage<T>(items: const [], hasNextPage: false);
     }
-    final items = _readMapList(value['items'])
-        .map(fromJson)
-        .where((item) => where?.call(item) ?? true)
-        .toList();
+    final items = _readMapList(
+      value['items'],
+    ).map(fromJson).where((item) => where?.call(item) ?? true).toList();
     return AniyomiPage<T>(
       items: items,
       hasNextPage: value['hasNextPage'] == true,

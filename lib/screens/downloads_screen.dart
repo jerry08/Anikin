@@ -64,6 +64,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
     super.initState();
     _loadFuture = _loadDownloads();
     _historyFuture = widget.watchHistoryService.getAll();
+    widget.watchHistoryService.addListener(_handleHistoryChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.watchHistoryService.removeListener(_handleHistoryChanged);
+    super.dispose();
+  }
+
+  void _handleHistoryChanged() {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _historyFuture = widget.watchHistoryService.getAll();
+    });
   }
 
   Future<void> _loadDownloads() async {

@@ -227,7 +227,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
         widget.preferences.defaultPlaybackSpeed,
       );
 
-      final watched = await widget.watchHistoryService.get(_episodeKey);
+      final watched = widget.preferences.resumePlayback
+          ? await widget.watchHistoryService.get(_episodeKey)
+          : null;
       if (watched != null && watched.watchedPercentage < 92) {
         final seekTo = watched.watchedDuration;
         if (seekTo < controller.value.duration) {
@@ -319,6 +321,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   Future<void> _saveProgress() async {
+    if (widget.preferences.incognitoMode) {
+      return;
+    }
+
     final controller = _controller;
     if (controller == null ||
         !controller.value.isInitialized ||
@@ -489,12 +495,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _scheduleControlsHide() {
     _hideTimer?.cancel();
-    _hideTimer = Timer(const Duration(seconds: 4), () {
-      final controller = _controller;
-      if (mounted && controller?.value.isPlaying == true && !_locked) {
-        setState(() => _showControls = false);
-      }
-    });
+    _hideTimer = Timer(
+      Duration(seconds: widget.preferences.playerControlsTimeoutSeconds),
+      () {
+        final controller = _controller;
+        if (mounted && controller?.value.isPlaying == true && !_locked) {
+          setState(() => _showControls = false);
+        }
+      },
+    );
   }
 
   Future<void> _togglePlay() async {
@@ -881,6 +890,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     seekSeconds: widget.preferences.seekTimeSeconds,
                     showRemainingDuration:
                         widget.preferences.showRemainingDuration,
+                    incognitoMode: widget.preferences.incognitoMode,
                   ),
                 if ((_loading || _error != null) && !playerControlsVisible)
                   Positioned(
@@ -1115,6 +1125,7 @@ class _PlayerControls extends StatelessWidget {
     required this.resizeMode,
     required this.seekSeconds,
     required this.showRemainingDuration,
+    required this.incognitoMode,
   });
 
   final VideoPlayerController controller;
@@ -1142,6 +1153,7 @@ class _PlayerControls extends StatelessWidget {
   final ResizeModeSetting resizeMode;
   final int seekSeconds;
   final bool showRemainingDuration;
+  final bool incognitoMode;
 
   @override
   Widget build(BuildContext context) {
@@ -1238,6 +1250,26 @@ class _PlayerControls extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      if (incognitoMode)
+                        Tooltip(
+                          message: 'Incognito mode: progress is not saved',
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0x59000000),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: const Icon(
+                              Icons.visibility_off_outlined,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        ),
                       if (currentSource != null)
                         Flexible(
                           flex: compact ? 1 : 0,

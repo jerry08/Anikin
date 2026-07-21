@@ -1,10 +1,11 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/watch_history.dart';
 
-class WatchHistoryService {
+class WatchHistoryService extends ChangeNotifier {
   static const _storageKey = 'player.watchedEpisodes';
 
   SharedPreferences? _prefs;
@@ -59,6 +60,7 @@ class WatchHistoryService {
       _storageKey,
       jsonEncode(all.map((key, value) => MapEntry(key, value.toJson()))),
     );
+    notifyListeners();
   }
 
   Future<void> remove(String id) async {
@@ -71,5 +73,12 @@ class WatchHistoryService {
       _storageKey,
       jsonEncode(all.map((key, value) => MapEntry(key, value.toJson()))),
     );
+    notifyListeners();
+  }
+
+  Future<void> clear() async {
+    final prefs = await _store;
+    await prefs.remove(_storageKey);
+    notifyListeners();
   }
 }

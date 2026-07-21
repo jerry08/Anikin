@@ -13,6 +13,7 @@ import '../services/watch_history_service.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/media_poster_card.dart';
+import '../widgets/media_type_selector.dart';
 import 'detail_screen.dart';
 import 'manga_detail_screen.dart';
 
@@ -40,8 +41,7 @@ class SearchScreen extends StatefulWidget {
   State<SearchScreen> createState() => _SearchScreenState();
 }
 
-enum _SearchContentType { anime, manga }
-
+const double _searchHeaderMaxWidth = 840;
 const _featuredSearchTags = [
   'Shounen',
   'Isekai',
@@ -88,7 +88,7 @@ class _SearchScreenState extends State<SearchScreen> {
   final _items = <AniListMedia>[];
   final _selectedTags = <String>{};
 
-  _SearchContentType _contentType = _SearchContentType.anime;
+  late AppMediaType _contentType;
   Timer? _debounce;
   int _page = 1;
   int _searchGeneration = 0;
@@ -103,18 +103,46 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
+    _contentType = widget.preferences.appMediaType;
     _catalogProviderKey = widget.trackingService.primaryProvider.key;
+    widget.preferences.addListener(_handleMediaTypeChanged);
     widget.trackingService.addListener(_handleCatalogProviderChanged);
     _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    widget.preferences.removeListener(_handleMediaTypeChanged);
     widget.trackingService.removeListener(_handleCatalogProviderChanged);
     _debounce?.cancel();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _handleMediaTypeChanged() {
+    final contentType = widget.preferences.appMediaType;
+    if (contentType == _contentType || !mounted) {
+      return;
+    }
+
+    _debounce?.cancel();
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+    setState(() {
+      _contentType = contentType;
+      _searchGeneration++;
+      _page = 1;
+      _items.clear();
+      _canLoadMore = false;
+      _error = null;
+      _isLoading = false;
+    });
+
+    if (_hasSearchInput) {
+      unawaited(_runSearch(reset: true));
+    }
   }
 
   void _handleCatalogProviderChanged() {
@@ -204,14 +232,14 @@ class _SearchScreenState extends State<SearchScreen> {
     try {
       late final List<AniListMedia> result;
       switch (_contentType) {
-        case _SearchContentType.anime:
+        case AppMediaType.anime:
           result = await widget.aniListService.searchMedia(
             query: query,
             page: requestPage,
             tags: tags,
             includeNonJapanese: includeNonJapanese,
           );
-        case _SearchContentType.manga:
+        case AppMediaType.manga:
           result = await widget.aniListService.searchManga(
             query: query,
             page: requestPage,
@@ -243,7 +271,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _openMedia(AniListMedia media) {
     switch (_contentType) {
-      case _SearchContentType.anime:
+      case AppMediaType.anime:
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => DetailScreen(
@@ -256,7 +284,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
         );
-      case _SearchContentType.manga:
+      case AppMediaType.manga:
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => MangaDetailScreen(
@@ -271,22 +299,11 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  void _setContentType(_SearchContentType contentType) {
+  void _setContentType(AppMediaType contentType) {
     if (_contentType == contentType) {
       return;
     }
-
-    setState(() {
-      _contentType = contentType;
-      _page = 1;
-      _items.clear();
-      _canLoadMore = false;
-      _error = null;
-    });
-
-    if (_hasSearchInput) {
-      _runSearch(reset: true);
-    }
+    unawaited(widget.preferences.setAppMediaType(contentType));
   }
 
   bool _includeNonJapaneseResults(String query) {
@@ -295,8 +312,8 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     return switch (_contentType) {
-      _SearchContentType.anime => widget.preferences.showNonJapaneseAnime,
-      _SearchContentType.manga => widget.preferences.showNonJapaneseManga,
+      AppMediaType.anime => widget.preferences.showNonJapaneseAnime,
+      AppMediaType.manga => widget.preferences.showNonJapaneseManga,
     };
   }
 
@@ -344,13 +361,13 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   String get _searchHint => switch (_contentType) {
-    _SearchContentType.anime => 'Search anime',
-    _SearchContentType.manga => 'Search manga',
+    AppMediaType.anime => 'Search anime',
+    AppMediaType.manga => 'Search manga',
   };
 
   IconData get _emptyIcon => switch (_contentType) {
-    _SearchContentType.anime => Icons.manage_search,
-    _SearchContentType.manga => Icons.menu_book_outlined,
+    AppMediaType.anime => Icons.manage_search,
+    AppMediaType.manga => Icons.menu_book_outlined,
   };
 
   String get _emptyTitle {
@@ -358,9 +375,8 @@ class _SearchScreenState extends State<SearchScreen> {
       return 'No results';
     }
     return switch (_contentType) {
-      _SearchContentType.anime =>
-        'Search ${widget.aniListService.providerLabel}',
-      _SearchContentType.manga => 'Search manga',
+      AppMediaType.anime => 'Search ${widget.aniListService.providerLabel}',
+      AppMediaType.manga => 'Search manga',
     };
   }
 
@@ -369,9 +385,9 @@ class _SearchScreenState extends State<SearchScreen> {
       return 'Try changing the title or selected tags.';
     }
     return switch (_contentType) {
-      _SearchContentType.anime =>
+      AppMediaType.anime =>
         'Pick a title or tag and Anikin will find playable episodes through your Juro providers.',
-      _SearchContentType.manga =>
+      AppMediaType.manga =>
         'Pick a title or tag and Anikin will find readable chapters through your Juro providers.',
     };
   }
@@ -381,57 +397,64 @@ class _SearchScreenState extends State<SearchScreen> {
     return SafeArea(
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-            child: SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<_SearchContentType>(
-                selected: {_contentType},
-                showSelectedIcon: false,
-                onSelectionChanged: (selection) =>
-                    _setContentType(selection.single),
-                segments: const [
-                  ButtonSegment(
-                    value: _SearchContentType.anime,
-                    icon: Icon(Icons.live_tv_outlined),
-                    label: Text('Anime'),
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: _searchHeaderMaxWidth,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                    child: Center(
+                      child: MediaTypeSelector(
+                        value: _contentType,
+                        onChanged: _setContentType,
+                      ),
+                    ),
                   ),
-                  ButtonSegment(
-                    value: _SearchContentType.manga,
-                    icon: Icon(Icons.menu_book_outlined),
-                    label: Text('Manga'),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: TextField(
+                      controller: _controller,
+                      textInputAction: TextInputAction.search,
+                      onChanged: _onQueryChanged,
+                      onSubmitted: (_) => _runSearch(reset: true),
+                      decoration: InputDecoration(
+                        hintText: _searchHint,
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _controller.text.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: 'Clear search',
+                                icon: const Icon(Icons.close),
+                                onPressed: _clearQuery,
+                              ),
+                      ),
+                    ),
+                  ),
+                  _SearchTagsBar(
+                    selectedTags: _selectedTags,
+                    onTagToggled: _toggleTag,
+                    onClearTags: _clearTags,
+                    onShowAllTags: _showTagSheet,
                   ),
                 ],
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: TextField(
-              controller: _controller,
-              textInputAction: TextInputAction.search,
-              onChanged: _onQueryChanged,
-              onSubmitted: (_) => _runSearch(reset: true),
-              decoration: InputDecoration(
-                hintText: _searchHint,
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _controller.text.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: 'Clear search',
-                        icon: const Icon(Icons.close),
-                        onPressed: _clearQuery,
-                      ),
-              ),
+          Expanded(
+            child: TweenAnimationBuilder<double>(
+              key: ValueKey(_contentType),
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              tween: Tween(begin: 0, end: 1),
+              builder: (context, opacity, child) =>
+                  Opacity(opacity: opacity, child: child),
+              child: _buildBody(),
             ),
           ),
-          _SearchTagsBar(
-            selectedTags: _selectedTags,
-            onTagToggled: _toggleTag,
-            onClearTags: _clearTags,
-            onShowAllTags: _showTagSheet,
-          ),
-          Expanded(child: _buildBody()),
         ],
       ),
     );
