@@ -36,11 +36,12 @@ Future<void> showUpdateAvailableDialog(
           ),
         ),
         actions: [
-          TextButton(
+          AppDialogAction(
+            label: 'Later',
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Later'),
           ),
-          FilledButton.icon(
+          AppDialogAction(
+            label: 'Open release',
             onPressed: () async {
               Navigator.of(dialogContext).pop();
               final uri = Uri.tryParse(release.url);
@@ -55,8 +56,6 @@ Future<void> showUpdateAvailableDialog(
                 }
               }
             },
-            icon: const Icon(Icons.open_in_new),
-            label: const Text('Open release'),
           ),
         ],
       );

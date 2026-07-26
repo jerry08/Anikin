@@ -14,6 +14,9 @@ import '../models/anilist_media.dart';
 import '../models/juro_models.dart';
 import '../models/watch_history.dart';
 import '../services/juro_service.dart';
+import '../services/android_playback_bridge.dart';
+import '../services/community_timestamp_service.dart';
+import '../services/playback_controller_factory.dart';
 import '../services/preferences_service.dart';
 import '../services/subtitle_service.dart';
 import '../services/tracking_service.dart';
@@ -58,12 +61,16 @@ class PlayerScreen extends StatefulWidget {
 
 class _PlayerScreenState extends State<PlayerScreen> {
   final _subtitleService = SubtitleService();
+  final _timestampService = CommunityTimestampService();
+  final _playbackControllers = const PlaybackControllerFactory();
   final _keyboardFocusNode = FocusNode(debugLabel: 'Player shortcuts');
 
   VideoPlayerController? _controller;
   VideoSource? _source;
   late AnimeEpisode _episode;
   List<SubtitleCue> _subtitleCues = const [];
+  List<CommunitySkipInterval> _skipIntervals = const [];
+  CommunitySkipInterval? _activeSkipInterval;
   String? _caption;
   String? _error;
   String? _status;
@@ -112,6 +119,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     unawaited(_saveProgress());
     _controller?.removeListener(_onControllerChanged);
     _controller?.dispose();
+    _timestampService.dispose();
     unawaited(_exitPlayerMode());
     _keyboardFocusNode.dispose();
     super.dispose();
@@ -168,6 +176,27 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
+  Future<void> _enterPictureInPicture() async {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) {
+      return;
+    }
+    final size = controller.value.size;
+    setState(() => _showControls = false);
+    final entered = await AndroidPlaybackBridge.enterPictureInPicture(
+      width: size.width.round().clamp(1, 10000),
+      height: size.height.round().clamp(1, 10000),
+    );
+    if (!entered && mounted) {
+      setState(() => _showControls = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Picture-in-picture is unavailable on this device'),
+        ),
+      );
+    }
+  }
+
   Future<void> _loadSourceAndPlay() async {
     setState(() {
       _loading = true;
@@ -175,6 +204,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _status = 'Resolving source';
       _caption = null;
       _subtitleCues = const [];
+      _skipIntervals = const [];
+      _activeSkipInterval = null;
       _completedHandled = false;
     });
 
@@ -187,7 +218,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
       if (_isOffline) {
         _source = widget.initialSource;
         setState(() => _status = 'Opening offline video');
-        controller = VideoPlayerController.file(File(widget.offlineFilePath!));
+        controller = _playbackControllers.fromFile(
+          File(widget.offlineFilePath!),
+        );
       } else {
         final source =
             _source ??
@@ -210,7 +243,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           headers['User-Agent'] = AppConstants.defaultUserAgent;
         }
 
-        controller = VideoPlayerController.networkUrl(
+        controller = _playbackControllers.fromNetwork(
           Uri.parse(source.videoUrl.replaceAll(' ', '%20')),
           httpHeaders: headers,
         );
@@ -226,6 +259,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       await controller.setPlaybackSpeed(
         widget.preferences.defaultPlaybackSpeed,
       );
+      unawaited(_loadCommunityTimestamps(controller.value.duration, _episode));
 
       final watched = widget.preferences.resumePlayback
           ? await widget.watchHistoryService.get(_episodeKey)
@@ -269,6 +303,21 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _subtitleCues = await _subtitleService.load(subtitle);
   }
 
+  Future<void> _loadCommunityTimestamps(
+    Duration duration,
+    AnimeEpisode episode,
+  ) async {
+    final malId = widget.media.idMal;
+    if (!widget.preferences.timeStampsEnabled || malId == null) return;
+    final intervals = await _timestampService.getSkipIntervals(
+      malId: malId,
+      episodeNumber: episode.number,
+      episodeDuration: duration,
+    );
+    if (!mounted || _episode.id != episode.id) return;
+    setState(() => _skipIntervals = intervals);
+  }
+
   void _startTimers() {
     _uiTimer?.cancel();
     _uiTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
@@ -281,6 +330,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
       final caption = widget.preferences.subtitlesEnabled
           ? SubtitleService.textAt(_subtitleCues, position)
           : null;
+      CommunitySkipInterval? activeSkip;
+      if (widget.preferences.timeStampsEnabled) {
+        for (final interval in _skipIntervals) {
+          if (interval.contains(position)) {
+            activeSkip = interval;
+            break;
+          }
+        }
+      }
       final shouldSave =
           DateTime.now().difference(_lastProgressSave).inSeconds >= 5;
       if (shouldSave) {
@@ -288,8 +346,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
         _saveProgress();
       }
 
-      setState(() => _caption = caption);
+      setState(() {
+        _caption = caption;
+        _activeSkipInterval = activeSkip;
+      });
     });
+  }
+
+  Future<void> _skipCommunityInterval() async {
+    final interval = _activeSkipInterval;
+    if (interval == null) return;
+    await _seekTo(interval.end + const Duration(milliseconds: 150));
+    if (mounted) setState(() => _activeSkipInterval = null);
   }
 
   void _onControllerChanged() {
@@ -613,7 +681,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   'Sources',
                   style: Theme.of(
                     context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
               for (final entry in grouped.entries) ...[
@@ -677,7 +745,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               'Playback speed',
               style: Theme.of(
                 context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
           for (final speed in widget.preferences.playbackSpeeds)
@@ -713,7 +781,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               'Resize mode',
               style: Theme.of(
                 context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
           for (final mode in ResizeModeSetting.values)
@@ -816,6 +884,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       ),
                     ),
                   ),
+                if (_activeSkipInterval != null &&
+                    widget.preferences.showTimeStampButton &&
+                    !_locked)
+                  Positioned(
+                    right: 24 + MediaQuery.paddingOf(context).right,
+                    bottom: _showControls ? 118 : 28,
+                    child: FilledButton.icon(
+                      onPressed: _skipCommunityInterval,
+                      icon: const Icon(Icons.fast_forward),
+                      label: Text(_activeSkipInterval!.label),
+                    ),
+                  ),
                 if (_loading)
                   ColoredBox(
                     color: const Color(0xAA000000),
@@ -879,6 +959,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     onSource: _isOffline ? null : _selectSource,
                     onSpeed: _selectSpeed,
                     onResize: _selectResizeMode,
+                    onPictureInPicture: Platform.isAndroid
+                        ? _enterPictureInPicture
+                        : null,
                     onLock: () => setState(() {
                       _locked = true;
                       _showControls = true;
@@ -989,7 +1072,7 @@ class _SeekFeedbackPulse extends StatelessWidget {
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
@@ -1118,6 +1201,7 @@ class _PlayerControls extends StatelessWidget {
     required this.onSource,
     required this.onSpeed,
     required this.onResize,
+    required this.onPictureInPicture,
     required this.onLock,
     required this.onEpisodeSelected,
     required this.episodes,
@@ -1146,6 +1230,7 @@ class _PlayerControls extends StatelessWidget {
   final VoidCallback? onSource;
   final VoidCallback onSpeed;
   final VoidCallback onResize;
+  final VoidCallback? onPictureInPicture;
   final VoidCallback onLock;
   final ValueChanged<AnimeEpisode> onEpisodeSelected;
   final List<AnimeEpisode> episodes;
@@ -1226,7 +1311,7 @@ class _PlayerControls extends StatelessWidget {
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: compact ? 16 : 18,
-                                        fontWeight: FontWeight.w800,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ),
@@ -1437,6 +1522,14 @@ class _PlayerControls extends StatelessWidget {
                               buttonSize: 38,
                               iconSize: 22,
                             ),
+                            if (onPictureInPicture != null)
+                              _ControlButton(
+                                icon: Icons.picture_in_picture_alt_outlined,
+                                tooltip: 'Picture in picture',
+                                onPressed: onPictureInPicture,
+                                buttonSize: 38,
+                                iconSize: 22,
+                              ),
                           ],
                         ),
                       ),
@@ -1608,7 +1701,7 @@ class _VideoSeekBarState extends State<_VideoSeekBar> {
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),

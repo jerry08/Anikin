@@ -18,17 +18,22 @@ class MediaTypeSelector extends StatelessWidget {
   final ValueChanged<AppMediaType> onChanged;
   final MediaTypeSelectorAppearance appearance;
 
+  static const _borderRadius = BorderRadius.all(Radius.circular(14));
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isGlass = appearance == MediaTypeSelectorAppearance.glass;
     final selector = DecoratedBox(
+      key: const ValueKey('media-type-selector-outline'),
       decoration: BoxDecoration(
         color: isGlass
             ? const Color(0x26000000)
             : colorScheme.surface.withAlpha(238),
-        borderRadius: BorderRadius.circular(14),
-        border: isGlass ? Border.all(color: const Color(0x26FFFFFF)) : null,
+        borderRadius: _borderRadius,
+        border: Border.all(
+          color: isGlass ? const Color(0x26FFFFFF) : colorScheme.outlineVariant,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x26000000),
@@ -53,9 +58,11 @@ class MediaTypeSelector extends StatelessWidget {
         selected: {value},
         showSelectedIcon: false,
         style: ButtonStyle(
-          visualDensity: VisualDensity.compact,
+          visualDensity: VisualDensity.standard,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          minimumSize: const WidgetStatePropertyAll(Size(0, 46)),
           padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 12),
+            EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           ),
           textStyle: const WidgetStatePropertyAll(
             TextStyle(fontWeight: FontWeight.w700),
@@ -80,16 +87,10 @@ class MediaTypeSelector extends StatelessWidget {
                 ? colorScheme.primaryContainer
                 : Colors.transparent;
           }),
-          side: WidgetStateProperty.resolveWith((states) {
-            if (isGlass) {
-              return BorderSide(
-                color: states.contains(WidgetState.selected)
-                    ? const Color(0x42FFFFFF)
-                    : const Color(0x16FFFFFF),
-              );
-            }
-            return BorderSide(color: colorScheme.outlineVariant);
-          }),
+          side: const WidgetStatePropertyAll(BorderSide.none),
+          shape: const WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: _borderRadius),
+          ),
         ),
         onSelectionChanged: (selection) {
           final selected = selection.single;
@@ -107,7 +108,7 @@ class MediaTypeSelector extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 240),
         child: isGlass
             ? ClipRRect(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: _borderRadius,
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                   child: selector,

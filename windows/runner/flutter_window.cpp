@@ -5,6 +5,7 @@
 
 #include "flutter/generated_plugin_registrant.h"
 #include <flutter/standard_method_codec.h>
+#include "window_state.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -66,6 +67,21 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   }
 
   switch (message) {
+    case WM_EXITSIZEMOVE:
+      if (!fullscreen_) {
+        window_state::SaveSize(hwnd);
+      }
+      break;
+    case WM_CLOSE:
+      window_state::SaveSize(
+          hwnd, fullscreen_ ? &fullscreen_placement_ : nullptr);
+      break;
+    case WM_ENDSESSION:
+      if (wparam) {
+        window_state::SaveSize(
+            hwnd, fullscreen_ ? &fullscreen_placement_ : nullptr);
+      }
+      break;
     case WM_FONTCHANGE:
       flutter_controller_->engine()->ReloadSystemFonts();
       break;

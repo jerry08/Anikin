@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../models/aniyomi_filters.dart';
+import 'app_bottom_sheet.dart';
+import 'app_sheet_action_bar.dart';
 
 /// Result of the filter sheet: `apply` re-runs the search with the current
 /// filter states, `reset` asks the caller to reload default filters.
@@ -10,18 +12,13 @@ Future<AniyomiFilterSheetAction?> showAniyomiFilterSheet(
   BuildContext context,
   List<AniyomiFilter> filters,
 ) {
-  return showModalBottomSheet<AniyomiFilterSheetAction>(
+  return showAppBottomSheet<AniyomiFilterSheetAction>(
     context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    builder: (context) => DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.7,
-      minChildSize: 0.4,
-      maxChildSize: 0.94,
-      builder: (context, controller) =>
-          _AniyomiFilterSheet(filters: filters, scrollController: controller),
-    ),
+    initialChildSize: 0.7,
+    minChildSize: 0.4,
+    maxChildSize: 0.94,
+    builder: (context, controller) =>
+        _AniyomiFilterSheet(filters: filters, scrollController: controller),
   );
 }
 
@@ -44,28 +41,15 @@ class _AniyomiFilterSheetState extends State<_AniyomiFilterSheet> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 12, 4),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Filters',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: () =>
-                    Navigator.of(context).pop(AniyomiFilterSheetAction.reset),
-                child: const Text('Reset'),
-              ),
-              FilledButton(
-                onPressed: () =>
-                    Navigator.of(context).pop(AniyomiFilterSheetAction.apply),
-                child: const Text('Apply'),
-              ),
-            ],
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Filters',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
           ),
         ),
         const Divider(height: 1),
@@ -78,6 +62,24 @@ class _AniyomiFilterSheetState extends State<_AniyomiFilterSheet> {
                 _buildFilter(context, filter),
             ],
           ),
+        ),
+        AppSheetActionBar(
+          children: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(AniyomiFilterSheetAction.reset),
+              child: const Text('Reset'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(AniyomiFilterSheetAction.apply),
+              child: const Text('Apply'),
+            ),
+          ],
         ),
       ],
     );

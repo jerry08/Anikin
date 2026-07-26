@@ -71,6 +71,7 @@ class AniListMedia {
     this.genres = const [],
     this.meanScore,
     this.popularity,
+    this.favourites,
     this.episodes,
     this.chapters,
     this.volumes,
@@ -79,7 +80,11 @@ class AniListMedia {
     this.season,
     this.seasonYear,
     this.format,
+    this.mediaType,
+    this.source,
     this.countryOfOrigin,
+    this.startDate,
+    this.endDate,
     this.siteUrl,
     this.isAdult = false,
     this.catalogProviderKey = 'anilist',
@@ -94,6 +99,7 @@ class AniListMedia {
   final List<String> genres;
   final int? meanScore;
   final int? popularity;
+  final int? favourites;
   final int? episodes;
   final int? chapters;
   final int? volumes;
@@ -102,7 +108,11 @@ class AniListMedia {
   final String? season;
   final int? seasonYear;
   final String? format;
+  final String? mediaType;
+  final String? source;
   final String? countryOfOrigin;
+  final String? startDate;
+  final String? endDate;
   final String? siteUrl;
   final bool isAdult;
   final String catalogProviderKey;
@@ -137,6 +147,7 @@ class AniListMedia {
       genres: readStringList(readJson(json, 'genres')),
       meanScore: readInt(json, 'meanScore'),
       popularity: readInt(json, 'popularity'),
+      favourites: readInt(json, 'favourites'),
       episodes: readInt(json, 'episodes'),
       chapters: readInt(json, 'chapters'),
       volumes: readInt(json, 'volumes'),
@@ -145,10 +156,35 @@ class AniListMedia {
       season: readString(json, 'season'),
       seasonYear: readInt(json, 'seasonYear'),
       format: readString(json, 'format'),
+      mediaType: readString(json, 'type'),
+      source: readString(json, 'source'),
       countryOfOrigin: readString(json, 'countryOfOrigin'),
+      startDate: _formatAniListDate(readJson(json, 'startDate')),
+      endDate: _formatAniListDate(readJson(json, 'endDate')),
       siteUrl: readString(json, 'siteUrl'),
       isAdult: json['isAdult'] == true,
       catalogProviderKey: readString(json, 'catalogProviderKey') ?? 'anilist',
     );
   }
+}
+
+String? _formatAniListDate(Object? value) {
+  if (value is! Map) {
+    return null;
+  }
+  final date = Map<String, dynamic>.from(value);
+  final year = readInt(date, 'year');
+  if (year == null) {
+    return null;
+  }
+  final month = readInt(date, 'month');
+  final day = readInt(date, 'day');
+  if (month == null) {
+    return '$year';
+  }
+  final monthText = month.toString().padLeft(2, '0');
+  if (day == null) {
+    return '$year-$monthText';
+  }
+  return '$year-$monthText-${day.toString().padLeft(2, '0')}';
 }

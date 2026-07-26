@@ -6,19 +6,33 @@ import '../core/app_constants.dart';
 import '../models/juro_models.dart';
 import 'anilist_service.dart';
 import 'aniyomi_extension_service.dart';
+import 'source_health_service.dart';
 
 class JuroService {
   JuroService({
     http.Client? client,
     String? baseUrl,
     AniyomiExtensionService? aniyomiExtensionService,
+    SourceHealthService? sourceHealthService,
   }) : _client = client ?? http.Client(),
        _baseUrl = _normalizeBaseUrl(baseUrl ?? AppConstants.juroApiBaseUrl),
-       _aniyomiExtensionService = aniyomiExtensionService;
+       _aniyomiExtensionService = aniyomiExtensionService,
+       _sourceHealthService = sourceHealthService;
 
   final http.Client _client;
   final String? _baseUrl;
   final AniyomiExtensionService? _aniyomiExtensionService;
+  final SourceHealthService? _sourceHealthService;
+
+  Future<List<SourceProvider>> rankProviders(
+    List<SourceProvider> providers, {
+    String? preferredKey,
+  }) async {
+    final health = _sourceHealthService;
+    return health == null
+        ? providers
+        : health.rank(providers, preferredKey: preferredKey);
+  }
 
   Future<List<SourceProvider>> getProviders() async {
     final uri = _uri('Providers', queryParameters: {'type': '0'});
@@ -45,84 +59,95 @@ class JuroService {
   Future<List<JuroAnimeInfo>> searchAnime(
     String query, {
     required String providerKey,
-  }) async {
-    if (_isAniyomiProvider(providerKey)) {
-      final page = await _aniyomiExtensionService?.searchAnime(
-        query,
-        providerKey: providerKey,
-      );
-      return page?.items ?? const [];
-    }
+  }) {
+    return _track(providerKey, () async {
+      if (_isAniyomiProvider(providerKey)) {
+        final page = await _aniyomiExtensionService?.searchAnime(
+          query,
+          providerKey: providerKey,
+        );
+        return page?.items ?? const [];
+      }
 
-    final uri = _uri('$providerKey/Search', queryParameters: {'query': query});
-    final json = await _getList(uri);
-    return json
-        .whereType<Map<String, dynamic>>()
-        .map(JuroAnimeInfo.fromJson)
-        .toList();
+      final uri = _uri(
+        '$providerKey/Search',
+        queryParameters: {'query': query},
+      );
+      final json = await _getList(uri);
+      return json
+          .whereType<Map<String, dynamic>>()
+          .map(JuroAnimeInfo.fromJson)
+          .toList();
+    });
   }
 
   Future<List<AnimeEpisode>> getEpisodes(
     String animeId, {
     required String providerKey,
-  }) async {
-    if (_isAniyomiProvider(providerKey)) {
-      return _aniyomiExtensionService?.getEpisodes(
-            animeId,
-            providerKey: providerKey,
-          ) ??
-          const [];
-    }
+  }) {
+    return _track(providerKey, () async {
+      if (_isAniyomiProvider(providerKey)) {
+        return _aniyomiExtensionService?.getEpisodes(
+              animeId,
+              providerKey: providerKey,
+            ) ??
+            const [];
+      }
 
-    final uri = _uri('$providerKey/Episodes/${Uri.encodeComponent(animeId)}');
-    final json = await _getList(uri);
-    return json
-        .whereType<Map<String, dynamic>>()
-        .map(AnimeEpisode.fromJson)
-        .toList();
+      final uri = _uri('$providerKey/Episodes/${Uri.encodeComponent(animeId)}');
+      final json = await _getList(uri);
+      return json
+          .whereType<Map<String, dynamic>>()
+          .map(AnimeEpisode.fromJson)
+          .toList();
+    });
   }
 
   Future<List<VideoServer>> getVideoServers(
     String episodeId, {
     required String providerKey,
-  }) async {
-    if (_isAniyomiProvider(providerKey)) {
-      return _aniyomiExtensionService?.getVideoServers(
-            episodeId,
-            providerKey: providerKey,
-          ) ??
-          const [];
-    }
+  }) {
+    return _track(providerKey, () async {
+      if (_isAniyomiProvider(providerKey)) {
+        return _aniyomiExtensionService?.getVideoServers(
+              episodeId,
+              providerKey: providerKey,
+            ) ??
+            const [];
+      }
 
-    final uri = _uri(
-      '$providerKey/VideoServers/${Uri.encodeComponent(episodeId)}',
-    );
-    final json = await _getList(uri);
-    return json
-        .whereType<Map<String, dynamic>>()
-        .map(VideoServer.fromJson)
-        .toList();
+      final uri = _uri(
+        '$providerKey/VideoServers/${Uri.encodeComponent(episodeId)}',
+      );
+      final json = await _getList(uri);
+      return json
+          .whereType<Map<String, dynamic>>()
+          .map(VideoServer.fromJson)
+          .toList();
+    });
   }
 
   Future<List<VideoSource>> getVideos(
     String query, {
     required String providerKey,
-  }) async {
-    if (_isAniyomiProvider(providerKey)) {
-      return _aniyomiExtensionService?.getVideos(
-            query,
-            providerKey: providerKey,
-          ) ??
-          const [];
-    }
+  }) {
+    return _track(providerKey, () async {
+      if (_isAniyomiProvider(providerKey)) {
+        return _aniyomiExtensionService?.getVideos(
+              query,
+              providerKey: providerKey,
+            ) ??
+            const [];
+      }
 
-    final uri = _uri('$providerKey/Videos', queryParameters: {'q': query});
-    final json = await _getList(uri);
-    return json
-        .whereType<Map<String, dynamic>>()
-        .map(VideoSource.fromJson)
-        .where((source) => source.isPlayable)
-        .toList();
+      final uri = _uri('$providerKey/Videos', queryParameters: {'q': query});
+      final json = await _getList(uri);
+      return json
+          .whereType<Map<String, dynamic>>()
+          .map(VideoSource.fromJson)
+          .where((source) => source.isPlayable)
+          .toList();
+    });
   }
 
   Future<VideoSource?> getPreferredVideo(
@@ -149,64 +174,100 @@ class JuroService {
   Future<List<MangaResult>> searchManga(
     String query, {
     required String providerKey,
-  }) async {
-    if (_isAniyomiMangaProvider(providerKey)) {
-      final page = await _aniyomiExtensionService?.searchManga(
-        query,
-        providerKey: providerKey,
-      );
-      return page?.items ?? const [];
-    }
+  }) {
+    return _track(providerKey, () async {
+      if (_isAniyomiMangaProvider(providerKey)) {
+        final page = await _aniyomiExtensionService?.searchManga(
+          query,
+          providerKey: providerKey,
+        );
+        return page?.items ?? const [];
+      }
 
-    final uri = _uri('$providerKey/Search', queryParameters: {'q': query});
-    final json = await _getList(uri);
-    return json
-        .whereType<Map<String, dynamic>>()
-        .map(MangaResult.fromJson)
-        .where((item) => item.id.isNotEmpty)
-        .toList();
+      final uri = _uri('$providerKey/Search', queryParameters: {'q': query});
+      final json = await _getList(uri);
+      return json
+          .whereType<Map<String, dynamic>>()
+          .map(MangaResult.fromJson)
+          .where((item) => item.id.isNotEmpty)
+          .toList();
+    });
   }
 
   Future<MangaInfo> getMangaInfo(
     String mangaId, {
     required String providerKey,
-  }) async {
-    if (_isAniyomiMangaProvider(providerKey)) {
-      final info = await _aniyomiExtensionService?.getMangaInfo(
-        mangaId,
-        providerKey: providerKey,
-      );
-      if (info != null) return info;
-      throw const ApiException('Manga extension returned no details');
-    }
+  }) {
+    return _track(providerKey, () async {
+      if (_isAniyomiMangaProvider(providerKey)) {
+        final info = await _aniyomiExtensionService?.getMangaInfo(
+          mangaId,
+          providerKey: providerKey,
+        );
+        if (info != null) return info;
+        throw const ApiException('Manga extension returned no details');
+      }
 
-    final uri = _uri('$providerKey/${Uri.encodeComponent(mangaId)}');
-    final json = await _getMap(uri);
-    return MangaInfo.fromJson(json);
+      final uri = _uri('$providerKey/${Uri.encodeComponent(mangaId)}');
+      final json = await _getMap(uri);
+      return MangaInfo.fromJson(json);
+    });
   }
 
   Future<List<MangaChapterPage>> getChapterPages(
     String chapterId, {
     required String providerKey,
-  }) async {
-    if (_isAniyomiMangaProvider(providerKey)) {
-      return _aniyomiExtensionService?.getChapterPages(
-            chapterId,
-            providerKey: providerKey,
-          ) ??
-          const [];
-    }
+  }) {
+    return _track(providerKey, () async {
+      if (_isAniyomiMangaProvider(providerKey)) {
+        return _aniyomiExtensionService?.getChapterPages(
+              chapterId,
+              providerKey: providerKey,
+            ) ??
+            const [];
+      }
 
-    final uri = _uri(
-      '$providerKey/ChapterPages/${Uri.encodeComponent(chapterId)}',
-    );
-    final json = await _getList(uri);
-    return json
-        .whereType<Map<String, dynamic>>()
-        .map(MangaChapterPage.fromJson)
-        .where((page) => page.image.isNotEmpty)
-        .toList()
-      ..sort((a, b) => a.page.compareTo(b.page));
+      final uri = _uri(
+        '$providerKey/ChapterPages/${Uri.encodeComponent(chapterId)}',
+      );
+      final json = await _getList(uri);
+      final pages = json
+          .whereType<Map<String, dynamic>>()
+          .map(MangaChapterPage.fromJson)
+          .where((page) => page.image.isNotEmpty)
+          .toList();
+      pages.sort((a, b) => a.page.compareTo(b.page));
+      return pages;
+    });
+  }
+
+  Future<T> _track<T>(String providerKey, Future<T> Function() action) async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      final result = await action();
+      stopwatch.stop();
+      try {
+        await _sourceHealthService?.recordSuccess(
+          providerKey,
+          stopwatch.elapsed,
+        );
+      } catch (_) {
+        // Health telemetry must never prevent source playback or reading.
+      }
+      return result;
+    } catch (error) {
+      stopwatch.stop();
+      try {
+        await _sourceHealthService?.recordFailure(
+          providerKey,
+          error,
+          stopwatch.elapsed,
+        );
+      } catch (_) {
+        // Preserve the provider's original error.
+      }
+      rethrow;
+    }
   }
 
   Uri _uri(String path, {Map<String, String>? queryParameters}) {

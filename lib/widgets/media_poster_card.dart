@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 
 import '../models/anilist_media.dart';
 
+final ValueNotifier<Object?> _activeMediaPosterHeroSource = ValueNotifier(null);
+
+Object mediaPosterHeroTag(AniListMedia media) =>
+    'media-poster-${media.catalogProviderKey}-${media.id}';
+
 class MediaPosterCard extends StatefulWidget {
   const MediaPosterCard({
     required this.media,
@@ -26,13 +31,23 @@ class MediaPosterCard extends StatefulWidget {
 }
 
 class _MediaPosterCardState extends State<MediaPosterCard> {
+  final Object _heroSourceToken = Object();
   bool _hovered = false;
+
+  void _openMedia() {
+    _activeMediaPosterHeroSource.value = _heroSourceToken;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.onTap();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final defaultTextStyle = DefaultTextStyle.of(context).style;
-    final cardRadius = BorderRadius.circular(8);
+    final cardRadius = BorderRadius.circular(16);
     final titleStyle = (theme.textTheme.bodyMedium ?? defaultTextStyle)
         .copyWith(fontWeight: FontWeight.w700);
     final metadataStyle = (theme.textTheme.bodySmall ?? defaultTextStyle)
@@ -60,7 +75,7 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
               mouseCursor: SystemMouseCursors.click,
               focusColor: theme.colorScheme.onSurface.withValues(alpha: 0.12),
               hoverColor: theme.colorScheme.onSurface.withValues(alpha: 0.08),
-              onTap: widget.onTap,
+              onTap: _openMedia,
               child: Padding(
                 // Symmetric top/bottom padding leaves headroom for the hover
                 // zoom so a 2-line title's metadata isn't clipped when scaled.
@@ -82,25 +97,40 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ClipRRect(
-                          borderRadius: cardRadius,
-                          child: SizedBox(
-                            width: cardWidth,
-                            height: posterHeight,
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                _PosterImage(url: widget.media.cover.best),
-                                if (showRatingBadge)
-                                  Positioned(
-                                    right: 7,
-                                    bottom: 7,
-                                    child: _RatingBadge(
-                                      score: widget.media.meanScore!,
-                                    ),
-                                  ),
-                                ?widget.posterOverlay,
-                              ],
+                        AnimatedBuilder(
+                          animation: _activeMediaPosterHeroSource,
+                          builder: (context, child) => HeroMode(
+                            enabled:
+                                _activeMediaPosterHeroSource.value ==
+                                _heroSourceToken,
+                            child: Hero(
+                              tag: mediaPosterHeroTag(widget.media),
+                              child: child!,
+                            ),
+                          ),
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: ClipRRect(
+                              borderRadius: cardRadius,
+                              child: SizedBox(
+                                width: cardWidth,
+                                height: posterHeight,
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    _PosterImage(url: widget.media.cover.best),
+                                    if (showRatingBadge)
+                                      Positioned(
+                                        right: 7,
+                                        bottom: 7,
+                                        child: _RatingBadge(
+                                          score: widget.media.meanScore!,
+                                        ),
+                                      ),
+                                    ?widget.posterOverlay,
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -216,7 +246,7 @@ class _RatingBadge extends StatelessWidget {
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 11,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],

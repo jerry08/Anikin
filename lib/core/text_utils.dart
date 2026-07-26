@@ -42,6 +42,29 @@ String formatDuration(Duration duration) {
   return '$minutes:${seconds.toString().padLeft(2, '0')}';
 }
 
+/// Formats AniList enum values ("RELEASING", "TV_SHORT", "NOT_YET_RELEASED")
+/// as readable labels ("Releasing", "TV Short", "Not Yet Released").
+String? mediaEnumLabel(String? value) {
+  if (value == null || value.trim().isEmpty) {
+    return null;
+  }
+  const acronyms = {'TV', 'OVA', 'ONA'};
+  return value
+      .trim()
+      .split(RegExp(r'[_\s]+'))
+      .map((word) {
+        final upper = word.toUpperCase();
+        if (acronyms.contains(upper)) {
+          return upper;
+        }
+        if (word.isEmpty) {
+          return word;
+        }
+        return upper[0] + word.substring(1).toLowerCase();
+      })
+      .join(' ');
+}
+
 String? firstNonBlank(Iterable<String?> values) {
   for (final value in values) {
     if (value != null && value.trim().isNotEmpty) {
@@ -75,11 +98,15 @@ double titleSimilarity(String a, String b) {
     current[0] = i;
     for (var j = 1; j <= right.length; j++) {
       final substitution =
-          previous[j - 1] + (left.codeUnitAt(i - 1) == right.codeUnitAt(j - 1) ? 0 : 1);
+          previous[j - 1] +
+          (left.codeUnitAt(i - 1) == right.codeUnitAt(j - 1) ? 0 : 1);
       final insertion = current[j - 1] + 1;
       final deletion = previous[j] + 1;
-      current[j] = [substitution, insertion, deletion]
-          .reduce((a, b) => a < b ? a : b);
+      current[j] = [
+        substitution,
+        insertion,
+        deletion,
+      ].reduce((a, b) => a < b ? a : b);
     }
     final swap = previous;
     previous = current;

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../core/app_theme.dart';
+
 typedef AppBottomSheetBuilder =
     Widget Function(BuildContext context, ScrollController scrollController);
 
-const double _desktopPanelBreakpoint = 900;
 const double _desktopPanelWidth = 480;
 const double _desktopPanelMaxWidthFraction = 0.42;
 
@@ -16,7 +17,7 @@ Future<T?> showAppBottomSheet<T>({
   List<double>? snapSizes,
   bool useSafeArea = true,
 }) {
-  if (MediaQuery.sizeOf(context).width >= _desktopPanelBreakpoint) {
+  if (MediaQuery.sizeOf(context).width >= AppLayout.wideBreakpoint) {
     return showDialog<T>(
       context: context,
       useSafeArea: useSafeArea,

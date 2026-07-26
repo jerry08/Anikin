@@ -12,6 +12,9 @@
 // rendering and input handling
 class Win32Window {
  public:
+  static constexpr int kMinimumWidth = 900;
+  static constexpr int kMinimumHeight = 600;
+
   struct Point {
     unsigned int x;
     unsigned int y;

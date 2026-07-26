@@ -36,12 +36,18 @@ class ProviderCatalogService implements MediaCatalogService {
     List<String>? sort,
     String? season,
     int? seasonYear,
+    String? status,
+    String? source,
+    String? format,
+    String? countryOfOrigin,
     List<String>? tags,
+    List<String>? excludedTags,
     List<String>? genres,
+    List<String>? excludedGenres,
     AniListMediaType mediaType = AniListMediaType.anime,
     required bool includeNonJapanese,
-  }) {
-    return switch (_provider) {
+  }) async {
+    final results = await switch (_provider) {
       TrackingProvider.anilist => _aniListService.searchMedia(
         query: query,
         page: page,
@@ -49,8 +55,14 @@ class ProviderCatalogService implements MediaCatalogService {
         sort: sort,
         season: season,
         seasonYear: seasonYear,
+        status: status,
+        source: source,
+        format: format,
+        countryOfOrigin: countryOfOrigin,
         tags: tags,
+        excludedTags: excludedTags,
         genres: genres,
+        excludedGenres: excludedGenres,
         mediaType: mediaType,
         includeNonJapanese: includeNonJapanese,
       ),
@@ -73,6 +85,21 @@ class ProviderCatalogService implements MediaCatalogService {
         genres: genres,
       ),
     };
+    return results
+        .where(
+          (media) => _matchesPortableFilters(
+            media,
+            season: season,
+            seasonYear: seasonYear,
+            status: status,
+            source: source,
+            format: format,
+            countryOfOrigin: countryOfOrigin,
+            genres: genres,
+            excludedGenres: excludedGenres,
+          ),
+        )
+        .toList(growable: false);
   }
 
   @override
@@ -147,8 +174,14 @@ class ProviderCatalogService implements MediaCatalogService {
     int page = 1,
     int perPage = 50,
     List<String>? sort,
+    String? status,
+    String? source,
+    String? format,
+    String? countryOfOrigin,
     List<String>? tags,
+    List<String>? excludedTags,
     List<String>? genres,
+    List<String>? excludedGenres,
     required bool includeNonJapanese,
   }) {
     return searchMedia(
@@ -156,8 +189,14 @@ class ProviderCatalogService implements MediaCatalogService {
       page: page,
       perPage: perPage,
       sort: sort,
+      status: status,
+      source: source,
+      format: format,
+      countryOfOrigin: countryOfOrigin,
       tags: tags,
+      excludedTags: excludedTags,
       genres: genres,
+      excludedGenres: excludedGenres,
       mediaType: AniListMediaType.manga,
       includeNonJapanese: includeNonJapanese,
     );
@@ -692,6 +731,47 @@ class ProviderCatalogService implements MediaCatalogService {
       return null;
     }
     return value.trim();
+  }
+
+  static bool _matchesPortableFilters(
+    AniListMedia media, {
+    String? season,
+    int? seasonYear,
+    String? status,
+    String? source,
+    String? format,
+    String? countryOfOrigin,
+    List<String>? genres,
+    List<String>? excludedGenres,
+  }) {
+    bool knownValueMatches(Object? actual, Object? expected) {
+      return expected == null || actual == null || actual == expected;
+    }
+
+    if (!knownValueMatches(media.season, season) ||
+        !knownValueMatches(media.seasonYear, seasonYear) ||
+        !knownValueMatches(media.status, status) ||
+        !knownValueMatches(media.source, source) ||
+        !knownValueMatches(media.format, format) ||
+        !knownValueMatches(media.countryOfOrigin, countryOfOrigin)) {
+      return false;
+    }
+
+    final mediaGenres = media.genres
+        .map((genre) => genre.toLowerCase())
+        .toSet();
+    final requiredGenres = genres?.map((genre) => genre.toLowerCase()).toSet();
+    if (requiredGenres != null &&
+        requiredGenres.isNotEmpty &&
+        !mediaGenres.containsAll(requiredGenres)) {
+      return false;
+    }
+    final blockedGenres = excludedGenres
+        ?.map((genre) => genre.toLowerCase())
+        .toSet();
+    return blockedGenres == null ||
+        blockedGenres.isEmpty ||
+        mediaGenres.intersection(blockedGenres).isEmpty;
   }
 
   static String _seasonForMonth(int month) {

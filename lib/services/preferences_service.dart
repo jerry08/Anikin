@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,8 +21,60 @@ enum AppMediaType { anime, manga }
 
 enum DownloadQualityPreference { askEveryTime, highest, dataSaver }
 
+enum NotificationPrivacy { full, titleOnly, generic }
+
+enum NovelReaderTheme { system, sepia, dark }
+
+class MangaReadingProgress {
+  const MangaReadingProgress({
+    required this.mediaId,
+    required this.chapterId,
+    required this.chapterNumber,
+    required this.pageIndex,
+    required this.pageCount,
+    required this.completed,
+    required this.updatedAtMs,
+  });
+
+  final int mediaId;
+  final String chapterId;
+  final double chapterNumber;
+  final int pageIndex;
+  final int pageCount;
+  final bool completed;
+  final int updatedAtMs;
+
+  double get pageFraction =>
+      pageCount <= 0 ? 0 : ((pageIndex + 1) / pageCount).clamp(0, 1);
+
+  Map<String, Object?> toJson() => {
+    'mediaId': mediaId,
+    'chapterId': chapterId,
+    'chapterNumber': chapterNumber,
+    'pageIndex': pageIndex,
+    'pageCount': pageCount,
+    'completed': completed,
+    'updatedAtMs': updatedAtMs,
+  };
+
+  factory MangaReadingProgress.fromJson(Map<String, dynamic> json) {
+    return MangaReadingProgress(
+      mediaId: (json['mediaId'] as num?)?.toInt() ?? 0,
+      chapterId: json['chapterId']?.toString() ?? '',
+      chapterNumber: (json['chapterNumber'] as num?)?.toDouble() ?? 0,
+      pageIndex: (json['pageIndex'] as num?)?.toInt() ?? 0,
+      pageCount: (json['pageCount'] as num?)?.toInt() ?? 0,
+      completed: json['completed'] == true,
+      updatedAtMs: (json['updatedAtMs'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 class PreferencesService extends ChangeNotifier {
+  static const _mangaProgressKey = 'reader.mangaProgress';
+
   SharedPreferences? _prefs;
+  final Map<int, MangaReadingProgress> _mangaProgress = {};
 
   ThemeMode themeMode = ThemeMode.dark;
   ThemeColorPalette themeColorPalette = ThemeColorPalette.anikin;
@@ -62,6 +116,16 @@ class PreferencesService extends ChangeNotifier {
   bool showTimeStampButton = true;
   bool developerMode = false;
   bool automaticUpdateChecks = false;
+  bool notificationsEnabled = false;
+  bool notifyAniListCurrent = true;
+  bool notifyAniListPlanning = true;
+  bool notifyAniListFavorites = true;
+  NotificationPrivacy notificationPrivacy = NotificationPrivacy.full;
+  int notificationRefreshHours = 6;
+  double novelFontSize = 18;
+  double novelLineHeight = 1.6;
+  NovelReaderTheme novelReaderTheme = NovelReaderTheme.system;
+  bool novelKeepScreenOn = true;
 
   List<double> get playbackSpeeds => cursedSpeeds
       ? const [1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 10, 25, 50]
@@ -162,6 +226,107 @@ class PreferencesService extends ChangeNotifier {
     showTimeStampButton = prefs.getBool('showTimeStampButton') ?? true;
     developerMode = prefs.getBool('developerMode') ?? false;
     automaticUpdateChecks = prefs.getBool('automaticUpdateChecks') ?? false;
+    notificationsEnabled = prefs.getBool('notificationsEnabled') ?? false;
+    notifyAniListCurrent = prefs.getBool('notifyAniListCurrent') ?? true;
+    notifyAniListPlanning = prefs.getBool('notifyAniListPlanning') ?? true;
+    notifyAniListFavorites = prefs.getBool('notifyAniListFavorites') ?? true;
+    notificationPrivacy =
+        NotificationPrivacy.values[(prefs.getInt('notificationPrivacy') ??
+                NotificationPrivacy.full.index)
+            .clamp(0, NotificationPrivacy.values.length - 1)
+            .toInt()];
+    notificationRefreshHours = (prefs.getInt('notificationRefreshHours') ?? 6)
+        .clamp(1, 24)
+        .toInt();
+    novelFontSize = (prefs.getDouble('novelFontSize') ?? 18)
+        .clamp(12, 36)
+        .toDouble();
+    novelLineHeight = (prefs.getDouble('novelLineHeight') ?? 1.6)
+        .clamp(1.1, 2.4)
+        .toDouble();
+    novelReaderTheme =
+        NovelReaderTheme.values[(prefs.getInt('novelReaderTheme') ??
+                NovelReaderTheme.system.index)
+            .clamp(0, NovelReaderTheme.values.length - 1)
+            .toInt()];
+    novelKeepScreenOn = prefs.getBool('novelKeepScreenOn') ?? true;
+    _mangaProgress
+      ..clear()
+      ..addAll(_decodeMangaProgress(prefs.getString(_mangaProgressKey)));
+    notifyListeners();
+  }
+
+  Map<int, MangaReadingProgress> _decodeMangaProgress(String? encoded) {
+    if (encoded == null || encoded.isEmpty) {
+      return {};
+    }
+    try {
+      final decoded = jsonDecode(encoded);
+      if (decoded is! Map) {
+        return {};
+      }
+      final progress = <int, MangaReadingProgress>{};
+      for (final entry in decoded.entries) {
+        final value = entry.value;
+        if (value is! Map) {
+          continue;
+        }
+        final item = MangaReadingProgress.fromJson(
+          Map<String, dynamic>.from(value),
+        );
+        if (item.mediaId > 0 && item.chapterId.isNotEmpty) {
+          progress[item.mediaId] = item;
+        }
+      }
+      return progress;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  MangaReadingProgress? mangaProgressFor(int mediaId) =>
+      _mangaProgress[mediaId];
+
+  Future<void> setMangaReadingProgress(MangaReadingProgress progress) async {
+    final current = _mangaProgress[progress.mediaId];
+    if (current != null &&
+        current.chapterId == progress.chapterId &&
+        current.pageIndex == progress.pageIndex &&
+        current.pageCount == progress.pageCount &&
+        current.completed == progress.completed) {
+      return;
+    }
+    _mangaProgress[progress.mediaId] = progress;
+    final prefs = _prefs;
+    if (prefs == null) {
+      return;
+    }
+    await prefs.setString(
+      _mangaProgressKey,
+      jsonEncode({
+        for (final entry in _mangaProgress.entries)
+          entry.key.toString(): entry.value.toJson(),
+      }),
+    );
+  }
+
+  int detailSectionIndex({required String mediaKind, required int mediaId}) {
+    final defaultIndex = mediaKind == 'anime' ? 1 : 0;
+    return (_prefs?.getInt('detail.$mediaKind.section.$mediaId') ??
+            defaultIndex)
+        .clamp(0, 1)
+        .toInt();
+  }
+
+  Future<void> setDetailSectionIndex({
+    required String mediaKind,
+    required int mediaId,
+    required int index,
+  }) async {
+    await _prefs?.setInt(
+      'detail.$mediaKind.section.$mediaId',
+      index.clamp(0, 1).toInt(),
+    );
   }
 
   Future<void> setThemeMode(ThemeMode value) async {
@@ -397,6 +562,66 @@ class PreferencesService extends ChangeNotifier {
   Future<void> setAutomaticUpdateChecks(bool value) async {
     automaticUpdateChecks = value;
     await _prefs!.setBool('automaticUpdateChecks', value);
+    notifyListeners();
+  }
+
+  Future<void> setNotificationsEnabled(bool value) async {
+    notificationsEnabled = value;
+    await _prefs!.setBool('notificationsEnabled', value);
+    notifyListeners();
+  }
+
+  Future<void> setNotifyAniListCurrent(bool value) async {
+    notifyAniListCurrent = value;
+    await _prefs!.setBool('notifyAniListCurrent', value);
+    notifyListeners();
+  }
+
+  Future<void> setNotifyAniListPlanning(bool value) async {
+    notifyAniListPlanning = value;
+    await _prefs!.setBool('notifyAniListPlanning', value);
+    notifyListeners();
+  }
+
+  Future<void> setNotifyAniListFavorites(bool value) async {
+    notifyAniListFavorites = value;
+    await _prefs!.setBool('notifyAniListFavorites', value);
+    notifyListeners();
+  }
+
+  Future<void> setNotificationPrivacy(NotificationPrivacy value) async {
+    notificationPrivacy = value;
+    await _prefs!.setInt('notificationPrivacy', value.index);
+    notifyListeners();
+  }
+
+  Future<void> setNotificationRefreshHours(int value) async {
+    notificationRefreshHours = value.clamp(1, 24).toInt();
+    await _prefs!.setInt('notificationRefreshHours', notificationRefreshHours);
+    notifyListeners();
+  }
+
+  Future<void> setNovelFontSize(double value) async {
+    novelFontSize = value.clamp(12, 36).toDouble();
+    await _prefs!.setDouble('novelFontSize', novelFontSize);
+    notifyListeners();
+  }
+
+  Future<void> setNovelLineHeight(double value) async {
+    novelLineHeight = value.clamp(1.1, 2.4).toDouble();
+    await _prefs!.setDouble('novelLineHeight', novelLineHeight);
+    notifyListeners();
+  }
+
+  Future<void> setNovelReaderTheme(NovelReaderTheme value) async {
+    novelReaderTheme = value;
+    await _prefs!.setInt('novelReaderTheme', value.index);
+    notifyListeners();
+  }
+
+  Future<void> setNovelKeepScreenOn(bool value) async {
+    novelKeepScreenOn = value;
+    await _prefs!.setBool('novelKeepScreenOn', value);
     notifyListeners();
   }
 }

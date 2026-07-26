@@ -50,11 +50,6 @@ const double _desktopContentMaxWidth = 1280;
 class _HomeScreenState extends State<HomeScreen> {
   Future<_BrowseData>? _animeFuture;
   Future<_BrowseData>? _mangaFuture;
-  final _animeScrollController = ScrollController();
-  final _mangaScrollController = ScrollController();
-  double _animeScrollOffset = 0;
-  double _mangaScrollOffset = 0;
-  AppMediaType? _pendingScrollRestore;
   late AppMediaType _contentType;
   late String _catalogProviderKey;
 
@@ -73,8 +68,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     widget.preferences.removeListener(_handleMediaTypeChanged);
     widget.trackingService.removeListener(_handleCatalogProviderChanged);
-    _animeScrollController.dispose();
-    _mangaScrollController.dispose();
     super.dispose();
   }
 
@@ -83,11 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (contentType == _contentType || !mounted) {
       return;
     }
-    _rememberScrollOffset(_contentType);
-    setState(() {
-      _contentType = contentType;
-      _pendingScrollRestore = contentType;
-    });
+    setState(() => _contentType = contentType);
   }
 
   void _handleCatalogProviderChanged() {
@@ -303,63 +292,12 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
-  ScrollController _scrollControllerFor(AppMediaType contentType) =>
-      switch (contentType) {
-        AppMediaType.anime => _animeScrollController,
-        AppMediaType.manga => _mangaScrollController,
-      };
-
-  double _scrollOffsetFor(AppMediaType contentType) => switch (contentType) {
-    AppMediaType.anime => _animeScrollOffset,
-    AppMediaType.manga => _mangaScrollOffset,
-  };
-
-  ScrollController get _activeScrollController =>
-      _scrollControllerFor(_contentType);
-
-  void _rememberScrollOffset(AppMediaType contentType) {
-    final controller = _scrollControllerFor(contentType);
-    if (!controller.hasClients) {
-      return;
-    }
-    switch (contentType) {
-      case AppMediaType.anime:
-        _animeScrollOffset = controller.offset;
-      case AppMediaType.manga:
-        _mangaScrollOffset = controller.offset;
-    }
-  }
-
-  void _restoreScrollOffsetAfterBuild(AppMediaType contentType) {
-    if (_pendingScrollRestore != contentType) {
-      return;
-    }
-    _pendingScrollRestore = null;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _contentType != contentType) {
-        return;
-      }
-      final controller = _scrollControllerFor(contentType);
-      if (!controller.hasClients) {
-        return;
-      }
-      final position = controller.position;
-      final offset = _scrollOffsetFor(
-        contentType,
-      ).clamp(position.minScrollExtent, position.maxScrollExtent).toDouble();
-      controller.jumpTo(offset);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<_BrowseData>(
       key: ValueKey('home-${_contentType.name}-future'),
       future: _activeFuture,
       builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          _restoreScrollOffsetAfterBuild(_contentType);
-        }
         return LayoutBuilder(
           builder: (context, constraints) {
             final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
@@ -395,10 +333,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: RefreshIndicator(
                       onRefresh: _refresh,
                       child: ListView(
-                        key: PageStorageKey<String>(
-                          'home-${_contentType.name}-scroll',
-                        ),
-                        controller: _activeScrollController,
+                        key: ValueKey<String>('home-${_contentType.name}-list'),
+                        primary: false,
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.only(bottom: 24),
                         children: [
@@ -676,7 +612,7 @@ class _FeatureBanner extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -781,7 +717,7 @@ class MediaSection extends StatelessWidget {
                       child: Text(
                         title,
                         style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
                     IconButton(
@@ -975,7 +911,7 @@ class _HomeShortcutAction extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         shadows: const [
                           Shadow(color: Color(0x99000000), blurRadius: 10),
                         ],

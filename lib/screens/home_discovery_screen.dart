@@ -6,6 +6,7 @@ import '../models/anilist_airing_schedule.dart';
 import '../models/anilist_media.dart';
 import '../services/anilist_service.dart';
 import '../services/preferences_service.dart';
+import '../widgets/app_content_constraint.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/media_poster_card.dart';
 
@@ -102,58 +103,60 @@ class _HomeMediaCollectionScreenState extends State<HomeMediaCollectionScreen> {
 
           return RefreshIndicator(
             onRefresh: _refresh,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final columns = (constraints.maxWidth / 154).floor().clamp(
-                  2,
-                  6,
-                );
-                return CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    if (_layoutMode == _CollectionLayoutMode.grid)
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
-                        sliver: SliverGrid(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final item = items[index];
-                            return MediaPosterCard(
-                              media: item,
-                              width: 150,
-                              onTap: () => widget.onItemTap(item),
-                            );
-                          }, childCount: items.length),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: columns,
-                                mainAxisSpacing: 12,
-                                crossAxisSpacing: 8,
-                                childAspectRatio: 0.54,
-                              ),
+            child: AppContentConstraint(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = (constraints.maxWidth / 154).floor().clamp(
+                    2,
+                    8,
+                  );
+                  return CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      if (_layoutMode == _CollectionLayoutMode.grid)
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
+                          sliver: SliverGrid(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final item = items[index];
+                              return MediaPosterCard(
+                                media: item,
+                                width: 150,
+                                onTap: () => widget.onItemTap(item),
+                              );
+                            }, childCount: items.length),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: columns,
+                                  mainAxisSpacing: 12,
+                                  crossAxisSpacing: 8,
+                                  childAspectRatio: 0.54,
+                                ),
+                          ),
+                        )
+                      else
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                          sliver: SliverList.separated(
+                            itemBuilder: (context, index) {
+                              final item = items[index];
+                              return _MediaCollectionListTile(
+                                media: item,
+                                onTap: () => widget.onItemTap(item),
+                              );
+                            },
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 12),
+                            itemCount: items.length,
+                          ),
                         ),
-                      )
-                    else
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                        sliver: SliverList.separated(
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-                            return _MediaCollectionListTile(
-                              media: item,
-                              onTap: () => widget.onItemTap(item),
-                            );
-                          },
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 12),
-                          itemCount: items.length,
-                        ),
-                      ),
-                  ],
-                );
-              },
+                    ],
+                  );
+                },
+              ),
             ),
           );
         },
@@ -290,31 +293,33 @@ class _GenreBrowseScreenState extends State<GenreBrowseScreen> {
 
           return RefreshIndicator(
             onRefresh: _refresh,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final columns = (constraints.maxWidth / 156).floor().clamp(
-                  2,
-                  5,
-                );
-                return GridView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                  itemCount: items.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: columns,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    mainAxisExtent: 78,
-                  ),
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return _GenreGridTile(
-                      item: item,
-                      onTap: () => _openGenre(item.genre),
-                    );
-                  },
-                );
-              },
+            child: AppContentConstraint(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = (constraints.maxWidth / 156).floor().clamp(
+                    2,
+                    8,
+                  );
+                  return GridView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                    itemCount: items.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columns,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      mainAxisExtent: 78,
+                    ),
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return _GenreGridTile(
+                        item: item,
+                        onTap: () => _openGenre(item.genre),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           );
         },
@@ -485,7 +490,7 @@ class _CalendarDayTab extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: textColor,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
               ),
             ),
@@ -505,7 +510,7 @@ class _CalendarDayTab extends StatelessWidget {
                   style: TextStyle(
                     color: textColor,
                     fontSize: 11,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -585,7 +590,7 @@ class _GenreGridTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w700,
                         shadows: const [
                           Shadow(color: Color(0x90000000), blurRadius: 12),
                         ],
@@ -640,28 +645,30 @@ class _CalendarDayGrid extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: onRefresh,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final columns = (constraints.maxWidth / 154).floor().clamp(2, 6);
-          return GridView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            itemCount: day.items.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columns,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.54,
-            ),
-            itemBuilder: (context, index) {
-              final item = day.items[index];
-              return _AiringPosterCard(
-                schedule: item,
-                onTap: () => onItemTap(item.media),
-              );
-            },
-          );
-        },
+      child: AppContentConstraint(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = (constraints.maxWidth / 154).floor().clamp(2, 8);
+            return GridView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              itemCount: day.items.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.54,
+              ),
+              itemBuilder: (context, index) {
+                final item = day.items[index];
+                return _AiringPosterCard(
+                  schedule: item,
+                  onTap: () => onItemTap(item.media),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -737,7 +744,7 @@ class _PosterBadge extends StatelessWidget {
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 10,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -795,7 +802,7 @@ class _MediaCollectionListTile extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     if (media.metadata.isNotEmpty) ...[

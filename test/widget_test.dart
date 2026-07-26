@@ -774,6 +774,41 @@ https://cdn.example.com/720/index.m3u8
     expect(find.byKey(const ValueKey('top-status-bar-shade')), findsOneWidget);
   });
 
+  testWidgets('wide app shell uses navigation rail', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    SharedPreferences.setMockInitialValues({'automaticUpdateChecks': false});
+    final preferences = PreferencesService();
+    await preferences.load();
+
+    await tester.pumpWidget(
+      AnikinApp(
+        preferences: preferences,
+        aniListService: _FakeAniListService(),
+        juroService: _FakeJuroService(),
+        watchHistoryService: WatchHistoryService(),
+        updateService: UpdateService(currentVersion: '0.0.0'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final navigationRail = tester.widget<NavigationRail>(
+      find.byType(NavigationRail),
+    );
+    expect(navigationRail.destinations, hasLength(4));
+    expect(find.byType(NavigationBar), findsNothing);
+
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    expect(find.text('General'), findsOneWidget);
+  });
+
   testWidgets('Home and Search share the selected media type', (
     WidgetTester tester,
   ) async {
@@ -826,7 +861,11 @@ https://cdn.example.com/720/index.m3u8
     selector = find.byType(MediaTypeSelector);
     expect(
       tester.widget<MediaTypeSelector>(selector).appearance,
-      MediaTypeSelectorAppearance.surface,
+      MediaTypeSelectorAppearance.glass,
+    );
+    expect(
+      find.descendant(of: selector, matching: find.byType(BackdropFilter)),
+      findsOneWidget,
     );
     expect(
       tester.widget<MediaTypeSelector>(selector).value,
@@ -969,7 +1008,7 @@ https://cdn.example.com/720/index.m3u8
     await tester.pumpAndSettle();
     expect(find.text('Clear watch history?'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Clear'));
+    await tester.tap(find.widgetWithText(TextButton, 'Clear'));
     await tester.pumpAndSettle();
 
     expect(await historyService.getAll(), isEmpty);
@@ -1398,7 +1437,7 @@ https://cdn.example.com/720/index.m3u8
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('home preserves separate Anime and Manga scroll positions', (
+  testWidgets('home resets scroll when switching Anime and Manga', (
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -1443,13 +1482,22 @@ https://cdn.example.com/720/index.m3u8
     );
     await tester.pumpAndSettle();
 
-    final animeScroll = find.byKey(
-      const PageStorageKey<String>('home-anime-scroll'),
-    );
+    double offsetFor(Finder list) {
+      final scrollable = find.descendant(
+        of: list,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        ),
+      );
+      return tester.state<ScrollableState>(scrollable.first).position.pixels;
+    }
+
+    final animeScroll = find.byKey(const ValueKey<String>('home-anime-list'));
     await tester.drag(animeScroll, const Offset(0, -360));
     await tester.pumpAndSettle();
-    final animeOffset = tester.widget<ListView>(animeScroll).controller!.offset;
-    expect(animeOffset, greaterThan(0));
+    expect(offsetFor(animeScroll), greaterThan(0));
 
     var selector = find.byType(MediaTypeSelector);
     await tester.tap(
@@ -1457,10 +1505,8 @@ https://cdn.example.com/720/index.m3u8
     );
     await tester.pumpAndSettle();
 
-    final mangaScroll = find.byKey(
-      const PageStorageKey<String>('home-manga-scroll'),
-    );
-    expect(tester.widget<ListView>(mangaScroll).controller!.offset, 0);
+    final mangaScroll = find.byKey(const ValueKey<String>('home-manga-list'));
+    expect(offsetFor(mangaScroll), 0);
 
     selector = find.byType(MediaTypeSelector);
     await tester.tap(
@@ -1468,10 +1514,7 @@ https://cdn.example.com/720/index.m3u8
     );
     await tester.pumpAndSettle();
 
-    expect(
-      tester.widget<ListView>(animeScroll).controller!.offset,
-      closeTo(animeOffset, 1),
-    );
+    expect(offsetFor(animeScroll), 0);
   });
 
   testWidgets('long pressing an episode opens source options', (
@@ -1502,6 +1545,8 @@ https://cdn.example.com/720/index.m3u8
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
+    await tester.tap(find.byIcon(Icons.movie_filter_outlined));
+    await tester.pumpAndSettle();
 
     final episodeTitle = find.text('Ep 1 • The Beginning', skipOffstage: false);
     await tester.ensureVisible(episodeTitle);
@@ -1555,7 +1600,9 @@ https://cdn.example.com/720/index.m3u8
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
 
-    await tester.tap(find.byTooltip('Provider'));
+    await tester.tap(find.byIcon(Icons.movie_filter_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Source'));
     await tester.pumpAndSettle();
 
     expect(find.text('Anime Provider'), findsOneWidget);
@@ -1578,6 +1625,52 @@ https://cdn.example.com/720/index.m3u8
       tester.getTopLeft(find.text('Juro providers')).dy,
       lessThan(tester.getTopLeft(find.text('Aniyomi extensions')).dy),
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('selecting an Aniyomi provider replaces the active Juro source', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = PreferencesService();
+    await preferences.load();
+    final juroService = _ProviderSelectionJuroService();
+    final aniyomiProviderKey = AniyomiExtensionService.providerKeyForSourceId(
+      123,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DetailScreen(
+          media: const AniListMedia(
+            id: 42,
+            title: MediaTitle(english: 'Provider Selection Show'),
+            cover: MediaCover(),
+          ),
+          preferences: preferences,
+          juroService: juroService,
+          watchHistoryService: WatchHistoryService(),
+          downloadService: DownloadService(),
+          trackingService: TrackingService(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(juroService.lastEpisodeProviderKey, 'Anime');
+
+    await tester.tap(find.byIcon(Icons.movie_filter_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Source'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Aniyomi Demo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Aniyomi Demo'));
+    await tester.pumpAndSettle();
+
+    expect(preferences.lastAnimeProviderKey, aniyomiProviderKey);
+    expect(juroService.lastSearchProviderKey, aniyomiProviderKey);
+    expect(juroService.lastEpisodeProviderKey, aniyomiProviderKey);
+    expect(find.text('Aniyomi Demo'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -1616,10 +1709,20 @@ https://cdn.example.com/720/index.m3u8
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
+    await tester.tap(find.byIcon(Icons.movie_filter_outlined));
+    await tester.pumpAndSettle();
 
-    expect(find.text('Provider failed to load episodes'), findsOneWidget);
+    // The taller Dantotsu-style header can push the empty state below the
+    // fold in the test viewport.
     expect(
-      find.text('Try another provider or search the source manually.'),
+      find.text('Provider failed to load episodes', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Try another provider or search the source manually.',
+        skipOffstage: false,
+      ),
       findsOneWidget,
     );
     expect(find.byType(AppErrorView), findsNothing);
@@ -1838,6 +1941,8 @@ https://cdn.example.com/720/index.m3u8
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
+    await tester.tap(find.byIcon(Icons.movie_filter_outlined));
+    await tester.pumpAndSettle();
 
     final episodeTitle = find.text('Ep 1 • The Beginning', skipOffstage: false);
     await tester.ensureVisible(episodeTitle);
@@ -1912,6 +2017,8 @@ https://cdn.example.com/720/index.m3u8
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
+    await tester.tap(find.byIcon(Icons.movie_filter_outlined));
+    await tester.pumpAndSettle();
 
     final episodeTitle = find.text('Ep 1 • The Beginning', skipOffstage: false);
     await tester.ensureVisible(episodeTitle);
@@ -2015,6 +2122,8 @@ https://cdn.example.com/720/index.m3u8
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       await tester.pump();
+      await tester.tap(find.byIcon(Icons.movie_filter_outlined));
+      await tester.pumpAndSettle();
 
       final episodeTitle = find.text(
         'Ep 1 • The Beginning',
@@ -2196,7 +2305,13 @@ class _FakeAniListService extends AniListService {
     List<String>? genres,
     String? season,
     int? seasonYear,
+    String? status,
+    String? source,
+    String? format,
+    String? countryOfOrigin,
     List<String>? tags,
+    List<String>? excludedTags,
+    List<String>? excludedGenres,
     AniListMediaType mediaType = AniListMediaType.anime,
     required bool includeNonJapanese,
   }) async {
@@ -2214,7 +2329,13 @@ class _FakeAniListService extends AniListService {
     int perPage = 50,
     List<String>? sort,
     List<String>? genres,
+    List<String>? excludedGenres,
+    String? status,
+    String? source,
+    String? format,
+    String? countryOfOrigin,
     List<String>? tags,
+    List<String>? excludedTags,
     required bool includeNonJapanese,
   }) async {
     lastSearchQuery = query;
@@ -2281,7 +2402,13 @@ class _DelayedSearchAniListService extends AniListService {
     List<String>? genres,
     String? season,
     int? seasonYear,
+    String? status,
+    String? source,
+    String? format,
+    String? countryOfOrigin,
     List<String>? tags,
+    List<String>? excludedTags,
+    List<String>? excludedGenres,
     AniListMediaType mediaType = AniListMediaType.anime,
     required bool includeNonJapanese,
   }) {
@@ -2465,6 +2592,33 @@ class _ProviderPickerJuroService extends _FakeJuroService {
     String query, {
     required String providerKey,
   }) async => const [];
+}
+
+class _ProviderSelectionJuroService extends _ProviderPickerJuroService {
+  String? lastSearchProviderKey;
+  String? lastEpisodeProviderKey;
+
+  @override
+  Future<List<JuroAnimeInfo>> searchAnime(
+    String query, {
+    required String providerKey,
+  }) async {
+    lastSearchProviderKey = providerKey;
+    return [
+      JuroAnimeInfo(id: '$providerKey-show', title: 'Provider Selection Show'),
+    ];
+  }
+
+  @override
+  Future<List<AnimeEpisode>> getEpisodes(
+    String animeId, {
+    required String providerKey,
+  }) async {
+    lastEpisodeProviderKey = providerKey;
+    return const [
+      AnimeEpisode(id: 'episode-1', name: 'Episode One', number: 1),
+    ];
+  }
 }
 
 class _ResumeJuroService extends _FakeJuroService {

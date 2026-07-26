@@ -386,7 +386,7 @@ class _MediaExtensionsTab extends StatelessWidget {
       onRefresh: onRefresh,
       children: [
         if (!hasAny)
-          _EmptyState(
+          CompactEmptyState(
             icon: mediaType.icon,
             title: filter == _ExtensionFilter.all
                 ? 'No ${mediaType.label.toLowerCase()} extensions'
@@ -463,7 +463,10 @@ class _ReposTab extends StatelessWidget {
           ),
         ),
         if (repos.isEmpty)
-          const _EmptyState(icon: Icons.link_off, title: 'No repositories')
+          const CompactEmptyState(
+            icon: Icons.link_off,
+            title: 'No repositories',
+          )
         else
           for (final repo in repos)
             _RepositoryTile(
@@ -541,13 +544,13 @@ class _FilterOrderDialogState extends State<_FilterOrderDialog> {
         ),
       ),
       actions: [
-        TextButton(
+        AppDialogAction(
+          label: 'Cancel',
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
         ),
-        FilledButton(
+        AppDialogAction(
+          label: 'Apply',
           onPressed: () => Navigator.of(context).pop((_filter, _sortOrder)),
-          child: const Text('Apply'),
         ),
       ],
     );
@@ -573,40 +576,67 @@ class _ExtensionActionsDialog extends StatelessWidget {
           const SizedBox(height: 12),
           if (extension.displaySubtitle.isNotEmpty)
             Text(extension.displaySubtitle),
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          if (extension.isInstalled)
+            _ExtensionDialogActionTile(
+              icon: Icons.settings_outlined,
+              label: 'Details',
+              onTap: () => Navigator.of(context).pop(_ExtensionAction.open),
+            ),
+          if (!extension.isInstalled)
+            _ExtensionDialogActionTile(
+              icon: Icons.download_outlined,
+              label: 'Install',
+              onTap: () => Navigator.of(context).pop(_ExtensionAction.install),
+            )
+          else if (extension.hasUpdate)
+            _ExtensionDialogActionTile(
+              icon: Icons.system_update_alt,
+              label: 'Update',
+              onTap: () => Navigator.of(context).pop(_ExtensionAction.update),
+            ),
+          if (extension.isInstalled)
+            _ExtensionDialogActionTile(
+              icon: Icons.delete_outline,
+              label: 'Uninstall',
+              destructive: true,
+              onTap: () =>
+                  Navigator.of(context).pop(_ExtensionAction.uninstall),
+            ),
         ],
       ),
       actions: [
-        if (extension.isInstalled)
-          TextButton.icon(
-            onPressed: () => Navigator.of(context).pop(_ExtensionAction.open),
-            icon: const Icon(Icons.settings_outlined),
-            label: const Text('Details'),
-          ),
-        if (!extension.isInstalled)
-          TextButton.icon(
-            onPressed: () =>
-                Navigator.of(context).pop(_ExtensionAction.install),
-            icon: const Icon(Icons.download_outlined),
-            label: const Text('Install'),
-          )
-        else if (extension.hasUpdate)
-          TextButton.icon(
-            onPressed: () => Navigator.of(context).pop(_ExtensionAction.update),
-            icon: const Icon(Icons.system_update_alt),
-            label: const Text('Update'),
-          ),
-        if (extension.isInstalled)
-          TextButton.icon(
-            onPressed: () =>
-                Navigator.of(context).pop(_ExtensionAction.uninstall),
-            icon: const Icon(Icons.delete_outline),
-            label: const Text('Uninstall'),
-          ),
-        FilledButton(
+        AppDialogAction(
+          label: 'Close',
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
         ),
       ],
+    );
+  }
+}
+
+class _ExtensionDialogActionTile extends StatelessWidget {
+  const _ExtensionDialogActionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = destructive ? Theme.of(context).colorScheme.error : null;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: color),
+      title: Text(label, style: TextStyle(color: color)),
+      onTap: onTap,
     );
   }
 }
@@ -646,7 +676,7 @@ class _ExtensionDetailsScreen extends StatelessWidget {
             const SizedBox(height: 14),
             const _SectionHeader(title: 'Sources', icon: Icons.source_outlined),
             if (extension.sources.isEmpty)
-              _EmptyState(
+              CompactEmptyState(
                 icon: Icons.source_outlined,
                 title: 'No sources exposed by this extension',
               )
@@ -831,13 +861,13 @@ class _AddRepoDialogState extends State<_AddRepoDialog> {
         onSubmitted: (value) => Navigator.of(context).pop(value),
       ),
       actions: [
-        TextButton(
+        AppDialogAction(
+          label: 'Cancel',
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
         ),
-        FilledButton(
+        AppDialogAction(
+          label: 'Add',
           onPressed: () => Navigator.of(context).pop(_controller.text),
-          child: const Text('Add'),
         ),
       ],
     );
@@ -896,47 +926,11 @@ class _SectionHeader extends StatelessWidget {
               title,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: colorScheme.secondary,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.icon, required this.title});
-
-  final IconData icon;
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        child: Row(
-          children: [
-            _IconBadge(icon: icon, color: colorScheme.outline),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -1079,7 +1073,7 @@ class _ExtensionSummary extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: Theme.of(
             context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 5),
         Wrap(

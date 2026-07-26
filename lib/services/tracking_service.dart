@@ -11,14 +11,17 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/app_constants.dart';
 import '../models/anilist_media.dart';
 import '../models/tracking.dart';
+import 'credential_vault.dart';
 
 class TrackingService extends ChangeNotifier {
   TrackingService({
     http.Client? client,
     AppLinks? appLinks,
+    CredentialVault? credentialVault,
     bool listenForLinks = true,
   }) : _client = client ?? http.Client(),
        _appLinks = appLinks ?? AppLinks(),
+       _credentialVault = credentialVault ?? CredentialVault(),
        _listenForLinks = listenForLinks;
 
   static const _anikinAniListClientId = '14733';
@@ -35,8 +38,7 @@ class TrackingService extends ChangeNotifier {
   static const _progressSyncEnabledKey = 'tracking.progressSyncEnabled';
   static const _pendingUpdatesKey = 'tracking.pendingUpdates';
   static const _malCodeVerifierKey = 'tracking.malCodeVerifier';
-  static const _aniListAdultContentKey =
-      'tracking.anilist.displayAdultContent';
+  static const _aniListAdultContentKey = 'tracking.anilist.displayAdultContent';
 
   static const _aniListMediaFields = r'''
 id
@@ -77,6 +79,7 @@ media { MEDIA_FIELDS }
 
   final http.Client _client;
   final AppLinks _appLinks;
+  final CredentialVault _credentialVault;
   final bool _listenForLinks;
   StreamSubscription<Uri>? _linkSubscription;
   SharedPreferences? _prefs;
@@ -110,7 +113,12 @@ media { MEDIA_FIELDS }
 
     _accounts.clear();
     for (final provider in TrackingProvider.values) {
-      final raw = prefs.getString('$_accountPrefix${provider.key}');
+      final accountKey = '$_accountPrefix${provider.key}';
+      final raw = await _credentialVault.read(
+        accountKey,
+        legacyPreferences: prefs,
+        legacyKey: accountKey,
+      );
       if (raw == null || raw.isEmpty) {
         continue;
       }
@@ -207,7 +215,12 @@ media { MEDIA_FIELDS }
         });
       case TrackingProvider.myAnimeList:
         final verifier = _createCodeVerifier();
-        await _prefs!.setString(_malCodeVerifierKey, verifier);
+        await _credentialVault.write(
+          _malCodeVerifierKey,
+          verifier,
+          legacyPreferences: _prefs,
+          legacyKey: _malCodeVerifierKey,
+        );
         return Uri.https('myanimelist.net', '/v1/oauth2/authorize', {
           'client_id': _myAnimeListClientId,
           'code_challenge': verifier,
@@ -277,7 +290,11 @@ media { MEDIA_FIELDS }
   }
 
   Future<void> loginMyAnimeListCode(String code) async {
-    final verifier = _prefs!.getString(_malCodeVerifierKey);
+    final verifier = await _credentialVault.read(
+      _malCodeVerifierKey,
+      legacyPreferences: _prefs,
+      legacyKey: _malCodeVerifierKey,
+    );
     if (verifier == null || verifier.isEmpty) {
       throw const TrackingException('Missing MAL login verifier');
     }
@@ -306,13 +323,16 @@ media { MEDIA_FIELDS }
             : DateTime.now().millisecondsSinceEpoch + expiresInSeconds * 1000,
       ),
     );
+    await _credentialVault.delete(_malCodeVerifierKey);
     await _prefs!.remove(_malCodeVerifierKey);
     lastMessage = 'Logged in to MyAnimeList';
   }
 
   Future<void> logout(TrackingProvider provider) async {
     _accounts.remove(provider);
-    await _prefs!.remove('$_accountPrefix${provider.key}');
+    final accountKey = '$_accountPrefix${provider.key}';
+    await _credentialVault.delete(accountKey);
+    await _prefs!.remove(accountKey);
     if (provider == TrackingProvider.anilist) {
       aniListAdultContentEnabled = false;
       await _prefs!.remove(_aniListAdultContentKey);
@@ -768,27 +788,20 @@ query ViewerName {
     );
     aniListAdultContentEnabled =
         viewer?['options']?['displayAdultContent'] == true;
-    await _prefs!.setBool(
-      _aniListAdultContentKey,
-      aniListAdultContentEnabled,
-    );
+    await _prefs!.setBool(_aniListAdultContentKey, aniListAdultContentEnabled);
     lastMessage = 'Logged in to AniList';
     notifyListeners();
   }
 
   Future<void> _refreshAniListAdultContentPreference() async {
     final account = _requireAccount(TrackingProvider.anilist);
-    final data = await _postAniList(
-      account,
-      r'''
+    final data = await _postAniList(account, r'''
 query ViewerAdultContentPreference {
   Viewer {
     options { displayAdultContent }
   }
 }
-''',
-      const {},
-    );
+''', const {});
     aniListAdultContentEnabled =
         data['Viewer']?['options']?['displayAdultContent'] == true;
     await _prefs!.setBool(_aniListAdultContentKey, aniListAdultContentEnabled);
@@ -797,9 +810,12 @@ query ViewerAdultContentPreference {
 
   Future<void> _saveAccount(TrackingAccount account) async {
     _accounts[account.provider] = account;
-    await _prefs!.setString(
-      '$_accountPrefix${account.provider.key}',
+    final accountKey = '$_accountPrefix${account.provider.key}';
+    await _credentialVault.write(
+      accountKey,
       jsonEncode(account.toJson()),
+      legacyPreferences: _prefs,
+      legacyKey: accountKey,
     );
     notifyListeners();
   }

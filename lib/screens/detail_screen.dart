@@ -3,18 +3,25 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../app/app_services.dart';
 import '../core/list_ranges.dart';
 import '../core/text_utils.dart';
 import '../models/anilist_media.dart';
+import '../models/anilist_media_details.dart';
+import '../models/anilist_person_details.dart';
 import '../models/downloaded_episode.dart';
 import '../models/juro_models.dart';
 import '../models/tracking.dart';
 import '../models/watch_history.dart';
 import '../services/download_service.dart';
 import '../services/aniyomi_extension_service.dart';
+import '../services/anilist_service.dart';
+import '../services/feature_gate_service.dart';
 import '../services/juro_service.dart';
+import '../services/notification_subscription_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
@@ -24,7 +31,16 @@ import '../widgets/app_dialogs.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/detail_media_tools.dart';
 import '../widgets/list_range_selector.dart';
+import '../widgets/media_detail_header.dart';
+import '../widgets/media_poster_card.dart';
+import '../widgets/rich_media_details.dart';
+import 'manga_detail_screen.dart';
 import 'player_screen.dart';
+import 'person_detail_screen.dart';
+
+enum _AnimeDetailSection { info, watch }
+
+enum _AnimeDetailMenuAction { openAniList, copyTitle }
 
 class DetailScreen extends StatefulWidget {
   const DetailScreen({
@@ -53,6 +69,8 @@ class DetailScreen extends StatefulWidget {
 }
 
 class _DetailScreenState extends State<DetailScreen> {
+  final ScrollController _detailsScrollController = ScrollController();
+  final Map<_AnimeDetailSection, double> _sectionOffsets = {};
   List<SourceProvider> _providers = [];
   JuroAnimeInfo? _providerAnime;
   List<AnimeEpisode> _episodes = [];
@@ -68,6 +86,14 @@ class _DetailScreenState extends State<DetailScreen> {
   String? _error;
   String? _status;
   SourceProviderChoice? _localProviderChoice;
+  AniListMediaDetails? _richDetails;
+  bool _richDetailsRequested = false;
+  bool _richDetailsLoading = false;
+  bool _sourceFallbackEnabled = false;
+  NotificationSubscriptionService? _notificationSubscriptions;
+  bool _notificationsFollowed = false;
+  bool _notificationsLoading = false;
+  _AnimeDetailSection _selectedSection = _AnimeDetailSection.watch;
 
   bool get _usesLocalProvider =>
       widget.initialProvider != null || widget.initialProviderAnime != null;
@@ -83,6 +109,11 @@ class _DetailScreenState extends State<DetailScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedSection =
+        _AnimeDetailSection.values[widget.preferences.detailSectionIndex(
+          mediaKind: 'anime',
+          mediaId: widget.media.id,
+        )];
     final provider = widget.initialProvider;
     if (provider != null) {
       _localProviderChoice = SourceProviderChoice(
@@ -93,6 +124,236 @@ class _DetailScreenState extends State<DetailScreen> {
     _load();
     _refreshFavorite();
     _refreshAniListListEntry();
+    if (_selectedSection == _AnimeDetailSection.watch) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _restoreSectionOffset(_selectedSection);
+        }
+      });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final services = AppScope.maybeOf(context);
+    if (_notificationSubscriptions == null && services != null) {
+      _notificationSubscriptions = services.notificationSubscriptions;
+      unawaited(_refreshNotificationFollow());
+    }
+    _sourceFallbackEnabled =
+        services?.featureGates.isEnabled(AppFeature.sourceFallback) ?? false;
+    if (_richDetailsRequested || !widget.media.hasAniListId) {
+      return;
+    }
+    if (services == null ||
+        !services.featureGates.isEnabled(AppFeature.richMediaDetails)) {
+      return;
+    }
+    _richDetailsRequested = true;
+    unawaited(_loadRichDetails(services.aniListService));
+  }
+
+  Future<void> _loadRichDetails(AniListService service) async {
+    setState(() => _richDetailsLoading = true);
+    try {
+      final details = await service.getMediaDetails(
+        id: widget.media.id,
+        mediaType: AniListMediaType.anime,
+      );
+      if (mounted) {
+        setState(() => _richDetails = details);
+      }
+    } catch (_) {
+      // Rich metadata is additive; provider playback remains usable offline.
+    } finally {
+      if (mounted) {
+        setState(() => _richDetailsLoading = false);
+      }
+    }
+  }
+
+  void _openRelatedMedia(AniListMedia media) {
+    if (media.mediaType == AniListMediaType.anime.graphqlName) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => DetailScreen(
+            media: media,
+            preferences: widget.preferences,
+            juroService: widget.juroService,
+            watchHistoryService: widget.watchHistoryService,
+            downloadService: widget.downloadService,
+            trackingService: widget.trackingService,
+          ),
+        ),
+      );
+      return;
+    }
+    final services = AppScope.maybeOf(context);
+    if (media.mediaType == AniListMediaType.manga.graphqlName &&
+        services != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => MangaDetailScreen(
+            media: media,
+            preferences: services.preferences,
+            juroService: services.juroService,
+            mangaDownloadService: services.mangaDownloadService,
+            trackingService: services.trackingService,
+          ),
+        ),
+      );
+      return;
+    }
+    final siteUrl = media.siteUrl;
+    if (siteUrl != null) {
+      unawaited(
+        launchUrl(Uri.parse(siteUrl), mode: LaunchMode.externalApplication),
+      );
+    }
+  }
+
+  void _openPerson(AniListPersonCredit person, AniListPersonKind kind) {
+    final service = AppScope.maybeOf(context)?.aniListService;
+    if (service == null || person.id <= 0) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PersonDetailScreen(
+          person: person,
+          kind: kind,
+          aniListService: service,
+          onMediaTap: _openRelatedMedia,
+        ),
+      ),
+    );
+  }
+
+  AniListPersonCredit? get _primaryCreator {
+    final staff = _richDetails?.staff ?? const <AniListPersonCredit>[];
+    for (final person in staff) {
+      final role = person.role.toLowerCase();
+      if (role.contains('director') ||
+          role.contains('original creator') ||
+          role.contains('series composition')) {
+        return person;
+      }
+    }
+    return null;
+  }
+
+  void _selectSection(_AnimeDetailSection section) {
+    if (_selectedSection == section) {
+      _scrollDetailsTo(0);
+      return;
+    }
+    if (_detailsScrollController.hasClients) {
+      _sectionOffsets[_selectedSection] = _detailsScrollController.offset;
+    }
+    setState(() => _selectedSection = section);
+    unawaited(
+      widget.preferences.setDetailSectionIndex(
+        mediaKind: 'anime',
+        mediaId: widget.media.id,
+        index: section.index,
+      ),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _restoreSectionOffset(section);
+      }
+    });
+  }
+
+  void _restoreSectionOffset(_AnimeDetailSection section) {
+    if (!_detailsScrollController.hasClients) {
+      return;
+    }
+    final defaultOffset = section == _AnimeDetailSection.info
+        ? 0.0
+        : mediaDetailHeaderHeight(context) - kToolbarHeight;
+    _scrollDetailsTo(_sectionOffsets[section] ?? defaultOffset);
+  }
+
+  void _scrollDetailsTo(double requestedOffset) {
+    if (!_detailsScrollController.hasClients) {
+      return;
+    }
+    final target = requestedOffset
+        .clamp(0, _detailsScrollController.position.maxScrollExtent)
+        .toDouble();
+    if ((_detailsScrollController.offset - target).abs() < 1) {
+      return;
+    }
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _detailsScrollController.jumpTo(target);
+      return;
+    }
+    unawaited(
+      _detailsScrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+
+  Future<void> _showWatchOrder() async {
+    final service = AppScope.maybeOf(context)?.watchOrderService;
+    if (service == null) return;
+    final future = service.orderFor(_richDetails?.media ?? widget.media);
+    final selected = await showAppBottomSheet<AniListMedia>(
+      context: context,
+      builder: (context, scrollController) => FutureBuilder<List<AniListMedia>>(
+        future: future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return AppErrorView(message: snapshot.error.toString());
+          }
+          final items = snapshot.data ?? const [];
+          return ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+            children: [
+              Text(
+                'Watch order',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Main prequel and sequel chain inferred from AniList relations.',
+              ),
+              const SizedBox(height: 12),
+              for (var index = 0; index < items.length; index++)
+                Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    selected: items[index].id == widget.media.id,
+                    leading: CircleAvatar(child: Text('${index + 1}')),
+                    title: Text(items[index].displayTitle),
+                    subtitle: Text(
+                      items[index].metadata.isEmpty
+                          ? 'Anime'
+                          : items[index].metadata,
+                    ),
+                    trailing: items[index].id == widget.media.id
+                        ? const Icon(Icons.play_circle_fill)
+                        : const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context).pop(items[index]),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+    if (selected != null && selected.id != widget.media.id && mounted) {
+      _openRelatedMedia(selected);
+    }
   }
 
   Future<void> _load() async {
@@ -106,6 +367,10 @@ class _DetailScreenState extends State<DetailScreen> {
 
     try {
       _providers = await widget.juroService.getProviders();
+      _providers = await widget.juroService.rankProviders(
+        _providers,
+        preferredKey: _providerKey,
+      );
       if (_usesLocalProvider) {
         final initialProvider = widget.initialProvider;
         if (initialProvider != null &&
@@ -153,40 +418,121 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<void> _autoMatchAndLoadEpisodes() async {
-    setState(() => _status = 'Searching ${widget.media.displayTitle}');
-    // Aniyomi sources index canonical titles; a " (dub)" suffix only breaks
-    // their search. Dub selection there happens via source settings/servers.
-    final isAniyomiProvider = AniyomiExtensionService.isProviderKey(
-      _providerKey,
-    );
-    final dubText = _dub && !isAniyomiProvider ? ' (dub)' : '';
-    final candidates = widget.media.title.searchCandidates.toList();
-    JuroAnimeInfo? match;
-
-    for (final title in candidates) {
-      final results = await widget.juroService.searchAnime(
-        '$title$dubText',
-        providerKey: _providerKey,
-      );
-      if (results.isNotEmpty) {
-        match =
-            bestTitleMatch(results, candidates, (item) => item.title) ??
-            results.first;
+    final originalProviderKey = _providerKey;
+    final originalChoice = _localProviderChoice;
+    SourceProvider? currentProvider;
+    for (final provider in _providers) {
+      if (provider.key == originalProviderKey) {
+        currentProvider = provider;
         break;
       }
     }
-
-    if (match == null) {
-      setState(() {
-        _providerAnime = null;
-        _episodes = [];
-        _episodeRangeIndex = 0;
-        _status = 'No source match found';
-      });
+    final providerCandidates = <SourceProvider>[
+      ?currentProvider,
+      if (_sourceFallbackEnabled)
+        for (final provider in _providers)
+          if (provider.key != originalProviderKey) provider,
+    ];
+    if (providerCandidates.isEmpty) {
+      setState(() => _status = 'No providers available');
       return;
     }
 
-    await _loadEpisodes(match);
+    final candidates = widget.media.title.searchCandidates.toList();
+    for (final provider in providerCandidates) {
+      if (!mounted) return;
+      setState(() {
+        _localProviderChoice = SourceProviderChoice(
+          key: provider.key,
+          name: provider.name,
+        );
+        _status = provider.key == originalProviderKey
+            ? 'Searching ${widget.media.displayTitle}'
+            : 'Trying fallback source ${provider.name}';
+      });
+      // Aniyomi sources index canonical titles; a " (dub)" suffix only breaks
+      // their search. Dub selection there happens via source settings/servers.
+      final isAniyomiProvider = AniyomiExtensionService.isProviderKey(
+        provider.key,
+      );
+      final dubText = _dub && !isAniyomiProvider ? ' (dub)' : '';
+      try {
+        JuroAnimeInfo? match;
+        for (final title in candidates) {
+          final results = await widget.juroService.searchAnime(
+            '$title$dubText',
+            providerKey: provider.key,
+          );
+          if (results.isNotEmpty) {
+            match =
+                bestTitleMatch(results, candidates, (item) => item.title) ??
+                results.first;
+            break;
+          }
+        }
+        if (match == null) {
+          continue;
+        }
+        await _loadEpisodes(match);
+        if (_episodes.isNotEmpty) {
+          return;
+        }
+      } catch (_) {
+        // A failed provider is recorded by JuroService; try the next ranked one.
+      }
+    }
+
+    setState(() {
+      _localProviderChoice = originalChoice;
+      _providerAnime = null;
+      _episodes = [];
+      _episodeRangeIndex = 0;
+      _status = 'No source match found';
+    });
+  }
+
+  Future<void> _refreshNotificationFollow() async {
+    final service = _notificationSubscriptions;
+    if (service == null) return;
+    final followed = await service.isManuallySubscribed(
+      widget.media.id,
+      'anime',
+    );
+    if (mounted) {
+      setState(() => _notificationsFollowed = followed);
+    }
+  }
+
+  Future<void> _toggleNotificationFollow() async {
+    final service = _notificationSubscriptions;
+    final appServices = AppScope.maybeOf(context);
+    if (service == null || appServices == null || _notificationsLoading) {
+      return;
+    }
+    setState(() => _notificationsLoading = true);
+    try {
+      if (!appServices.preferences.notificationsEnabled) {
+        final enabled = await appServices.notificationCoordinator.setEnabled(
+          true,
+        );
+        if (!enabled) return;
+      }
+      if (_notificationsFollowed) {
+        await service.unsubscribeManual(widget.media.id, 'anime');
+      } else {
+        await service.subscribeManual(
+          media: widget.media,
+          mediaType: 'anime',
+          sourceKey: _providerKey,
+          providerItemId: _providerAnime?.id,
+        );
+      }
+      await _refreshNotificationFollow();
+      if (!_notificationsFollowed) return;
+      unawaited(appServices.notificationCoordinator.syncAndRefresh());
+    } finally {
+      if (mounted) setState(() => _notificationsLoading = false);
+    }
   }
 
   Future<void> _loadEpisodes(JuroAnimeInfo anime) async {
@@ -267,15 +613,13 @@ class _DetailScreenState extends State<DetailScreen> {
       return;
     }
 
-    if (_usesLocalProvider) {
-      _localProviderChoice = SourceProviderChoice(
-        key: provider.key,
-        name: provider.name,
-      );
-    } else {
-      await widget.preferences.setLastAnimeProvider(
-        SourceProviderChoice(key: provider.key, name: provider.name),
-      );
+    final providerChoice = SourceProviderChoice(
+      key: provider.key,
+      name: provider.name,
+    );
+    _localProviderChoice = providerChoice;
+    if (!_usesLocalProvider) {
+      await widget.preferences.setLastAnimeProvider(providerChoice);
     }
     await _load();
   }
@@ -345,7 +689,7 @@ class _DetailScreenState extends State<DetailScreen> {
       ),
     );
 
-    await _refreshHistory();
+    await Future.wait([_refreshHistory(), _refreshAniListListEntry()]);
   }
 
   Future<void> _showEpisodeOptions(AnimeEpisode episode) async {
@@ -578,9 +922,9 @@ class _DetailScreenState extends State<DetailScreen> {
           ),
         ),
         actions: [
-          TextButton(
+          AppDialogAction(
+            label: 'Cancel',
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
           ),
         ],
       ),
@@ -656,6 +1000,41 @@ class _DetailScreenState extends State<DetailScreen> {
     final uri = Uri.parse(siteUrl);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _shareMedia(BuildContext shareContext) async {
+    final media = _richDetails?.media ?? widget.media;
+    final siteUrl = media.siteUrl ?? widget.media.siteUrl;
+    final box = shareContext.findRenderObject();
+    final origin = box is RenderBox && box.hasSize
+        ? box.localToGlobal(Offset.zero) & box.size
+        : null;
+    await SharePlus.instance.share(
+      ShareParams(
+        subject: media.displayTitle,
+        text: [media.displayTitle, ?siteUrl].join('\n'),
+        sharePositionOrigin: origin,
+      ),
+    );
+  }
+
+  Future<void> _copyTitle() async {
+    final title = (_richDetails?.media ?? widget.media).displayTitle;
+    await Clipboard.setData(ClipboardData(text: title));
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Copied title')));
+    }
+  }
+
+  void _handleMenuAction(_AnimeDetailMenuAction action) {
+    switch (action) {
+      case _AnimeDetailMenuAction.openAniList:
+        unawaited(_openAniList());
+      case _AnimeDetailMenuAction.copyTitle:
+        unawaited(_copyTitle());
     }
   }
 
@@ -846,19 +1225,6 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
-  Widget _aniListListIcon() {
-    if (_listEntryLoading || _listEntrySaving) {
-      return const SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      );
-    }
-    return Icon(
-      _listEntry == null ? Icons.playlist_add : Icons.playlist_add_check,
-    );
-  }
-
   void _showImagePreview(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) {
       return;
@@ -874,125 +1240,143 @@ class _DetailScreenState extends State<DetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final image = widget.media.bannerImage ?? widget.media.cover.best;
+    final theme = Theme.of(context);
+    final media = _richDetails?.media ?? widget.media;
+    final banner = media.bannerImage ?? widget.media.bannerImage;
+    final cover = media.cover.best ?? widget.media.cover.best;
     final canUseAniList = widget.media.hasAniListId;
-    return Scaffold(
+    final headerHeight = mediaDetailHeaderHeight(context);
+    final tabs = [
+      const MediaDetailTab(icon: Icons.info_outline_rounded, label: 'Info'),
+      MediaDetailTab(
+        icon: Icons.movie_filter_outlined,
+        label: 'Watch',
+        badge: _episodes.isEmpty ? null : '${_episodes.length}',
+        badgeLabel: _episodes.isEmpty ? null : '${_episodes.length} episodes',
+      ),
+    ];
+    return MediaDetailScaffold(
+      tabs: tabs,
+      selectedIndex: _selectedSection.index,
+      onSelected: (index) => _selectSection(_AnimeDetailSection.values[index]),
       body: CustomScrollView(
+        controller: _detailsScrollController,
         slivers: [
           SliverAppBar(
             pinned: true,
-            expandedHeight: 340,
+            expandedHeight: headerHeight,
+            backgroundColor: theme.scaffoldBackgroundColor,
+            title: MediaCollapsedTitle(
+              controller: _detailsScrollController,
+              text: media.displayTitle,
+              expandedHeight: headerHeight,
+            ),
             actions: [
               IconButton(
-                tooltip: _isFavorite ? 'Remove favorite' : 'Favorite',
-                onPressed: !canUseAniList || _favoriteLoading
-                    ? null
-                    : _toggleFavorite,
-                icon: Icon(
-                  _isFavorite ? Icons.favorite : Icons.favorite_border,
-                ),
-              ),
-              IconButton(
-                tooltip: _listEntry == null
-                    ? 'Add to AniList list'
-                    : 'Edit ${_listEntry!.status.label}',
+                tooltip: 'Watch order',
                 onPressed:
-                    !canUseAniList || _listEntryLoading || _listEntrySaving
-                    ? null
-                    : _editAniListListEntry,
-                icon: _aniListListIcon(),
+                    canUseAniList &&
+                        AppScope.maybeOf(context)?.watchOrderService != null
+                    ? _showWatchOrder
+                    : null,
+                icon: const Icon(Icons.account_tree_outlined),
               ),
-              IconButton(
-                tooltip: 'Provider',
-                onPressed: _providers.isEmpty ? null : _changeProvider,
-                icon: const Icon(Icons.dns_outlined),
-              ),
-              IconButton(
-                tooltip: 'Manual match',
-                onPressed: _manualMatch,
-                icon: const Icon(Icons.manage_search),
-              ),
-              IconButton(
-                tooltip: 'Media page',
-                onPressed: _openAniList,
-                icon: const Icon(Icons.open_in_new),
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsetsDirectional.only(
-                start: 56,
-                bottom: 14,
-                end: 200,
-              ),
-              title: Text(
-                widget.media.displayTitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (image != null)
-                    GestureDetector(
-                      onLongPress: () => _showImagePreview(image),
-                      child: CachedNetworkImage(
-                        imageUrl: image,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0x33000000), Color(0xF0000000)],
-                      ),
+              PopupMenuButton<_AnimeDetailMenuAction>(
+                tooltip: 'More options',
+                onSelected: _handleMenuAction,
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: _AnimeDetailMenuAction.openAniList,
+                    enabled: widget.media.siteUrl != null,
+                    child: const ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.open_in_new),
+                      title: Text('Open on AniList'),
                     ),
                   ),
-                  Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 58),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          _Poster(
-                            url: widget.media.cover.best,
-                            onLongPress: () =>
-                                _showImagePreview(widget.media.cover.best),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                _InfoChip(
-                                  icon: Icons.star_rounded,
-                                  label: '${widget.media.meanScore ?? '--'}%',
-                                ),
-                                if (widget.media.metadata.isNotEmpty)
-                                  _InfoChip(
-                                    icon: Icons.movie_filter_outlined,
-                                    label: widget.media.metadata,
-                                  ),
-                                _InfoChip(
-                                  icon: Icons.source_outlined,
-                                  label: _providerName,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                  const PopupMenuItem(
+                    value: _AnimeDetailMenuAction.copyTitle,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.copy),
+                      title: Text('Copy title'),
                     ),
                   ),
                 ],
               ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              collapseMode: CollapseMode.parallax,
+              background: MediaDetailHeader(
+                title: media.displayTitle,
+                statusText: mediaEnumLabel(media.status),
+                bannerUrl: banner,
+                coverUrl: cover,
+                listButtonLabel: canUseAniList ? _listButtonLabel() : null,
+                listButtonBusy: _listEntryLoading || _listEntrySaving,
+                onListButtonPressed: _editAniListListEntry,
+                onBannerLongPress: () => _showImagePreview(banner ?? cover),
+                onCoverLongPress: () => _showImagePreview(cover),
+                onTitleLongPress: _copyTitle,
+                scrollController: _detailsScrollController,
+                expandedHeight: headerHeight,
+                posterHeroTag: mediaPosterHeroTag(media),
+              ),
             ),
           ),
-          SliverToBoxAdapter(child: _buildOverview()),
-          if (_loading)
+          SliverToBoxAdapter(
+            child: MediaDetailTotalRow(
+              text: _totalRowText(),
+              primaryActionLabel: _primaryActionLabel(),
+              primaryActionBusy: _loading && _episodes.isEmpty,
+              onPrimaryAction: _loading && _episodes.isEmpty
+                  ? null
+                  : _handlePrimaryAction,
+              actions: [
+                MediaDetailActionIcon(
+                  tooltip: _notificationsFollowed
+                      ? 'Stop manual release alerts'
+                      : 'Follow release alerts',
+                  onPressed:
+                      !canUseAniList ||
+                          _notificationSubscriptions == null ||
+                          _notificationsLoading
+                      ? null
+                      : _toggleNotificationFollow,
+                  icon: Icons.notifications_none,
+                  activeIcon: Icons.notifications_active,
+                  active: _notificationsFollowed,
+                  busy: _notificationsLoading,
+                ),
+                MediaDetailActionIcon(
+                  tooltip: _isFavorite ? 'Remove favorite' : 'Favorite',
+                  onPressed: !canUseAniList || _favoriteLoading
+                      ? null
+                      : _toggleFavorite,
+                  icon: Icons.favorite_border,
+                  activeIcon: Icons.favorite,
+                  active: _isFavorite,
+                  busy: _favoriteLoading,
+                ),
+                Builder(
+                  builder: (shareContext) => IconButton(
+                    tooltip: 'Share',
+                    onPressed: () => unawaited(_shareMedia(shareContext)),
+                    icon: const Icon(Icons.share_outlined),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_selectedSection == _AnimeDetailSection.info)
+            SliverToBoxAdapter(
+              child: MediaDetailContentConstraint(child: _buildOverview()),
+            ),
+          if (_selectedSection == _AnimeDetailSection.watch)
+            SliverToBoxAdapter(
+              child: MediaDetailContentConstraint(child: _buildEpisodeHeader()),
+            ),
+          if (_selectedSection == _AnimeDetailSection.watch && _loading)
             SliverFillRemaining(
               hasScrollBody: false,
               child: Center(
@@ -1008,14 +1392,16 @@ class _DetailScreenState extends State<DetailScreen> {
                 ),
               ),
             )
-          else if (_error != null)
+          else if (_selectedSection == _AnimeDetailSection.watch &&
+              _error != null)
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 320,
                 child: AppErrorView(message: _error!, onRetry: _load),
               ),
             )
-          else if (_episodes.isEmpty)
+          else if (_selectedSection == _AnimeDetailSection.watch &&
+              _episodes.isEmpty)
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 320,
@@ -1027,7 +1413,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 ),
               ),
             )
-          else
+          else if (_selectedSection == _AnimeDetailSection.watch)
             _buildEpisodeSliver(),
           SliverToBoxAdapter(
             child: SizedBox(height: _detailBottomPadding(context)),
@@ -1038,42 +1424,129 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Widget _buildOverview() {
-    final genres = widget.media.genres.take(8).toList();
+    final media = _richDetails?.media ?? widget.media;
+    final creator = _primaryCreator;
+    final genres = media.genres.take(8).toList();
+    final season = [
+      ?mediaEnumLabel(media.season),
+      if (media.seasonYear case final year?) '$year',
+    ].join(' ');
+    final rows = <MediaInfoRowData>[
+      if (media.meanScore case final score?)
+        MediaInfoRowData('Mean Score', '$score / 100', highlight: true),
+      if (mediaEnumLabel(media.status) case final status?)
+        MediaInfoRowData('Status', status),
+      if (media.startDate case final date?)
+        MediaInfoRowData('Start Date', date),
+      if (media.endDate case final date?) MediaInfoRowData('End Date', date),
+      if (media.episodes case final episodes?)
+        MediaInfoRowData('Total Episodes', '$episodes')
+      else if (_episodes.isNotEmpty)
+        MediaInfoRowData('Loaded Episodes', '${_episodes.length}'),
+      if (media.duration case final duration?)
+        MediaInfoRowData('Episode Duration', '$duration min'),
+      if (mediaEnumLabel(media.format) case final format?)
+        MediaInfoRowData('Format', format),
+      if (mediaEnumLabel(media.source) case final source?)
+        MediaInfoRowData('Source', source),
+      if (_richDetails?.studios case final studios? when studios.isNotEmpty)
+        MediaInfoRowData('Studios', studios.take(3).join(', ')),
+      if (creator != null)
+        MediaInfoRowData(
+          'Creator',
+          creator.name,
+          highlight: true,
+          onTap: () => _openPerson(creator, AniListPersonKind.staff),
+          semanticHint: 'Open creator details',
+        ),
+      if (season.isNotEmpty) MediaInfoRowData('Season', season),
+      if (media.countryOfOrigin case final country?)
+        MediaInfoRowData('Country', country),
+      if (media.popularity case final popularity?)
+        MediaInfoRowData('Popularity', compactNumber(popularity)),
+      if (media.favourites case final favourites?)
+        MediaInfoRowData('Favorites', compactNumber(favourites)),
+    ];
+    final nameBlocks = <(String, String)>[
+      if (media.title.romaji case final romaji?
+          when romaji.trim().isNotEmpty && romaji != media.displayTitle)
+        ('Name (Romaji)', romaji),
+      if (media.title.native case final native? when native.trim().isNotEmpty)
+        ('Name (Native)', native),
+      if (_richDetails?.synonyms case final synonyms? when synonyms.isNotEmpty)
+        ('Also Known As', synonyms.take(5).join(' · ')),
+    ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SelectionArea(
-            child: Text(
-              widget.media.displayTitle,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          MediaInfoTable(rows: rows, nameBlocks: nameBlocks),
+          if (_richDetails case final details?)
+            MediaDetailHighlightsCard(details: details),
+          if (genres.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            const MediaDetailSectionTitle('Genres'),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final genre in genres)
+                    Chip(
+                      label: Text(genre),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          if (genres.isNotEmpty)
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final genre in genres)
-                  Chip(
-                    label: Text(genre),
-                    visualDensity: VisualDensity.compact,
-                  ),
-              ],
+          ],
+          if (media.description.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            const MediaDetailSectionTitle('Description'),
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ExpandableSelectableText(
+                media.description,
+                collapsedLines: 5,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
-          if (widget.media.description.isNotEmpty) ...[
+          ],
+          if (_richDetailsLoading) ...[
             const SizedBox(height: 14),
-            ExpandableSelectableText(
-              widget.media.description,
-              collapsedLines: 5,
-              style: Theme.of(context).textTheme.bodyMedium,
+            const LinearProgressIndicator(minHeight: 2),
+          ] else if (_richDetails case final details?) ...[
+            const SizedBox(height: 10),
+            RichMediaDetailsPanel(
+              details: details,
+              onMediaTap: _openRelatedMedia,
+              onPersonTap: _openPerson,
             ),
           ],
           const SizedBox(height: 18),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEpisodeHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MediaSourceSelectorTile(
+            sourceName: _providerName,
+            onTap: _providers.isEmpty ? null : _changeProvider,
+            matchedTitle: _providerAnime?.title,
+            onWrongTitle: _providers.isEmpty ? null : _manualMatch,
+            loading: _loading,
+          ),
+          const SizedBox(height: 4),
           Row(
             children: [
               Expanded(
@@ -1081,7 +1554,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   'Episodes',
                   style: Theme.of(
                     context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
               FilterChip(
@@ -1145,15 +1618,6 @@ class _DetailScreenState extends State<DetailScreen> {
               ),
             ],
           ),
-          if (_providerAnime != null)
-            Text(
-              'Matched: ${_providerAnime!.title}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
           if (_episodeRanges.isNotEmpty) ...[
             const SizedBox(height: 10),
             ListRangeSelector(
@@ -1170,58 +1634,191 @@ class _DetailScreenState extends State<DetailScreen> {
 
   Widget _buildEpisodeSliver() {
     final episodes = _visibleEpisodes;
+    final nextEpisodeId = _continueEpisode?.id;
     if (widget.preferences.episodeLayoutMode == EpisodeLayoutMode.list) {
-      return SliverList.builder(
-        itemCount: episodes.length,
-        itemBuilder: (context, index) => _EpisodeListTile(
-          episode: episodes[index],
-          progress: _progressFor(episodes[index]),
-          downloadService: widget.downloadService,
-          downloadId: _downloadIdFor(episodes[index]),
-          onTap: () => _openEpisode(episodes[index]),
-          onLongPress: () => _showEpisodeOptions(episodes[index]),
+      return MediaDetailSliverConstraint(
+        maxWidth: 840,
+        sliver: SliverList.builder(
+          itemCount: episodes.length,
+          itemBuilder: (context, index) => _EpisodeListTile(
+            episode: episodes[index],
+            progress: _progressFor(episodes[index]),
+            isNext: nextEpisodeId == episodes[index].id,
+            downloadService: widget.downloadService,
+            downloadId: _downloadIdFor(episodes[index]),
+            onTap: () => _openEpisode(episodes[index]),
+            onLongPress: () => _showEpisodeOptions(episodes[index]),
+            onOptions: () => _showEpisodeOptions(episodes[index]),
+          ),
         ),
       );
     }
 
     final isFull =
         widget.preferences.episodeLayoutMode == EpisodeLayoutMode.full;
-    return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-      sliver: SliverGrid.builder(
-        itemCount: episodes.length,
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: isFull ? 220 : 170,
-          mainAxisExtent: isFull ? 238 : 112,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        itemBuilder: (context, index) => _EpisodeCard(
-          episode: episodes[index],
-          progress: _progressFor(episodes[index]),
-          full: isFull,
-          downloadService: widget.downloadService,
-          downloadId: _downloadIdFor(episodes[index]),
-          onTap: () => _openEpisode(episodes[index]),
-          onLongPress: () => _showEpisodeOptions(episodes[index]),
+    return MediaDetailSliverConstraint(
+      sliver: SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+        sliver: SliverGrid.builder(
+          itemCount: episodes.length,
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: isFull ? 240 : 210,
+            mainAxisExtent: isFull ? 252 : 144,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
+          itemBuilder: (context, index) => _EpisodeCard(
+            episode: episodes[index],
+            progress: _progressFor(episodes[index]),
+            isNext: nextEpisodeId == episodes[index].id,
+            full: isFull,
+            downloadService: widget.downloadService,
+            downloadId: _downloadIdFor(episodes[index]),
+            onTap: () => _openEpisode(episodes[index]),
+            onLongPress: () => _showEpisodeOptions(episodes[index]),
+            onOptions: () => _showEpisodeOptions(episodes[index]),
+          ),
         ),
       ),
     );
   }
 
+  @override
+  void dispose() {
+    _detailsScrollController.dispose();
+    super.dispose();
+  }
+
+  WatchedEpisode? _historyForEpisode(AnimeEpisode episode) {
+    final direct = _history['${widget.media.id}-${episode.number}'];
+    if (direct != null) {
+      return direct;
+    }
+    for (final item in _history.values) {
+      if (item.mediaId == widget.media.id &&
+          item.episodeNumber != null &&
+          (item.episodeNumber! - episode.number).abs() < 0.001) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  double _localProgressFor(AnimeEpisode episode) {
+    return ((_historyForEpisode(episode)?.watchedPercentage ?? 0).clamp(
+          0,
+          100,
+        ) /
+        100);
+  }
+
   double _progressFor(AnimeEpisode episode) {
-    return (_history['${widget.media.id}-${episode.number}']
-                    ?.watchedPercentage ??
-                0)
-            .clamp(0, 100) /
-        100;
+    final local = _localProgressFor(episode);
+    final remote = _listEntry?.progress ?? 0;
+    if (episode.number.floor() <= remote) {
+      return 1;
+    }
+    return local;
   }
 
   String _downloadIdFor(AnimeEpisode episode) =>
       '${widget.media.id}-${episode.number}';
 
-  double _detailBottomPadding(BuildContext context) =>
-      24 + MediaQuery.viewPaddingOf(context).bottom;
+  int get _localCompletedProgress {
+    var completed = 0;
+    for (final episode in _episodes) {
+      if (_localProgressFor(episode) >= 0.92) {
+        final number = episode.number.floor();
+        if (number > completed) {
+          completed = number;
+        }
+      }
+    }
+    return completed;
+  }
+
+  int get _effectiveProgress {
+    final remote = _listEntry?.progress ?? 0;
+    return remote > _localCompletedProgress ? remote : _localCompletedProgress;
+  }
+
+  AnimeEpisode? get _continueEpisode {
+    if (_episodes.isEmpty) {
+      return null;
+    }
+    final ascending = List<AnimeEpisode>.of(_episodes)
+      ..sort((a, b) => a.number.compareTo(b.number));
+    AnimeEpisode? partial;
+    var partialUpdatedAt = -1;
+    for (final episode in ascending) {
+      final history = _historyForEpisode(episode);
+      final localProgress = _localProgressFor(episode);
+      if (episode.number.floor() > (_listEntry?.progress ?? 0) &&
+          localProgress > 0 &&
+          localProgress < 0.92 &&
+          (history?.updatedAtMs ?? 0) >= partialUpdatedAt) {
+        partial = episode;
+        partialUpdatedAt = history?.updatedAtMs ?? 0;
+      }
+    }
+    if (partial != null) {
+      return partial;
+    }
+    for (final episode in ascending) {
+      if (episode.number.floor() > _effectiveProgress) {
+        return episode;
+      }
+    }
+    return ascending.first;
+  }
+
+  String _primaryActionLabel() {
+    if (_loading && _episodes.isEmpty) {
+      return 'Finding episodes';
+    }
+    final episode = _continueEpisode;
+    if (episode == null) {
+      return 'Choose a source to watch';
+    }
+    final number = AnimeEpisode.displayNumber(episode.number);
+    final localProgress = _localProgressFor(episode);
+    if (localProgress > 0 && localProgress < 0.92) {
+      return 'Resume episode $number';
+    }
+    if (_effectiveProgress <= 0) {
+      return 'Watch episode $number';
+    }
+    if (episode.number.floor() <= _effectiveProgress) {
+      return 'Rewatch episode $number';
+    }
+    return 'Continue with episode $number';
+  }
+
+  void _handlePrimaryAction() {
+    final episode = _continueEpisode;
+    if (episode == null) {
+      _selectSection(_AnimeDetailSection.watch);
+      return;
+    }
+    unawaited(_openEpisode(episode));
+  }
+
+  String _totalRowText() {
+    final total =
+        widget.media.episodes ?? (_episodes.isEmpty ? null : _episodes.length);
+    return 'Watched $_effectiveProgress out of ${total ?? '??'}';
+  }
+
+  String _listButtonLabel() {
+    final entry = _listEntry;
+    if (entry == null) {
+      return 'Add to list';
+    }
+    return entry.status.label;
+  }
+
+  // The bottom nav bar already sits above the system inset.
+  double _detailBottomPadding(BuildContext context) => 24;
 }
 
 class _AnimeProviderSheet extends StatelessWidget {
@@ -1259,7 +1856,7 @@ class _AnimeProviderSheet extends StatelessWidget {
             'Anime Provider',
             style: Theme.of(
               context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
         const Divider(height: 1),
@@ -1586,7 +2183,7 @@ class _ManualAnimeSearchSheetState extends State<_ManualAnimeSearchSheet> {
               'Search provider',
               style: Theme.of(
                 context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 14),
             TextField(
@@ -1738,32 +2335,6 @@ class _ProviderSearchMessage extends StatelessWidget {
   }
 }
 
-class _Poster extends StatelessWidget {
-  const _Poster({required this.url, this.onLongPress});
-
-  final String? url;
-  final VoidCallback? onLongPress;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onLongPress: url == null ? null : onLongPress,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: SizedBox(
-          width: 90,
-          height: 132,
-          child: url == null
-              ? ColoredBox(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                )
-              : CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover),
-        ),
-      ),
-    );
-  }
-}
-
 class _SmallCover extends StatelessWidget {
   const _SmallCover({required this.url});
 
@@ -1786,133 +2357,213 @@ class _SmallCover extends StatelessWidget {
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.icon, required this.label});
+class _EpisodeCard extends StatelessWidget {
+  const _EpisodeCard({
+    required this.episode,
+    required this.progress,
+    required this.isNext,
+    required this.full,
+    required this.downloadService,
+    required this.downloadId,
+    required this.onTap,
+    required this.onLongPress,
+    required this.onOptions,
+  });
 
-  final IconData icon;
-  final String label;
+  final AnimeEpisode episode;
+  final double progress;
+  final bool isNext;
+  final bool full;
+  final DownloadService downloadService;
+  final String downloadId;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  final VoidCallback onOptions;
 
   @override
   Widget build(BuildContext context) {
-    final maxChipWidth = (MediaQuery.sizeOf(context).width - 144)
-        .clamp(80.0, 360.0)
-        .toDouble();
-
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxChipWidth),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: const Color(0xAA000000),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: Colors.white),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
+    final image = episode.image;
+    final completed = progress >= 0.92;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      label: [
+        episode.displayName,
+        if (completed) 'Watched',
+        if (isNext) 'Up next',
+      ].join(', '),
+      excludeSemantics: true,
+      child: Opacity(
+        opacity: completed && !isNext ? 0.72 : 1,
+        child: Card(
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: isNext
+                ? BorderSide(color: colorScheme.primary, width: 2)
+                : BorderSide.none,
+          ),
+          child: InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (image != null)
+                        CachedNetworkImage(
+                          imageUrl: image,
+                          fit: BoxFit.cover,
+                          placeholder: (context, _) => ColoredBox(
+                            color: colorScheme.surfaceContainerHighest,
+                          ),
+                          errorWidget: (context, _, _) => ColoredBox(
+                            color: colorScheme.surfaceContainerHighest,
+                            child: const Icon(Icons.broken_image_outlined),
+                          ),
+                        )
+                      else
+                        ColoredBox(
+                          color: colorScheme.surfaceContainerHighest,
+                          child: const Icon(Icons.movie_outlined),
+                        ),
+                      const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            stops: [0, 0.45, 1],
+                            colors: [
+                              Color(0x44000000),
+                              Colors.transparent,
+                              Color(0xE6000000),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 8, 42, 9),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'EP ${AnimeEpisode.displayNumber(episode.number)}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              if (!full)
+                                Text(
+                                  episode.displayName,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 4,
+                        left: 6,
+                        child: completed
+                            ? const _EpisodeStatePill(
+                                icon: Icons.check,
+                                label: 'WATCHED',
+                              )
+                            : isNext
+                            ? const _EpisodeStatePill(
+                                icon: Icons.play_arrow,
+                                label: 'UP NEXT',
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _EpisodeDownloadStatus(
+                              service: downloadService,
+                              downloadId: downloadId,
+                              compact: true,
+                            ),
+                            IconButton(
+                              tooltip: 'Episode options',
+                              visualDensity: VisualDensity.compact,
+                              onPressed: onOptions,
+                              icon: const Icon(
+                                Icons.more_vert,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                if (full)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                    child: Text(
+                      episode.displayName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                if (progress > 0)
+                  LinearProgressIndicator(value: progress, minHeight: 3),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _EpisodeCard extends StatelessWidget {
-  const _EpisodeCard({
-    required this.episode,
-    required this.progress,
-    required this.full,
-    required this.downloadService,
-    required this.downloadId,
-    required this.onTap,
-    required this.onLongPress,
-  });
+class _EpisodeStatePill extends StatelessWidget {
+  const _EpisodeStatePill({required this.icon, required this.label});
 
-  final AnimeEpisode episode;
-  final double progress;
-  final bool full;
-  final DownloadService downloadService;
-  final String downloadId;
-  final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  final IconData icon;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    final image = episode.image;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (image != null)
-                    CachedNetworkImage(imageUrl: image, fit: BoxFit.cover),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0xCC000000)],
-                      ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Text(
-                        'EP ${AnimeEpisode.displayNumber(episode.number)}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: _EpisodeDownloadStatus(
-                      service: downloadService,
-                      downloadId: downloadId,
-                      compact: true,
-                    ),
-                  ),
-                ],
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 12),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
             ),
-            if (full)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                child: Text(
-                  episode.displayName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            if (progress > 0)
-              LinearProgressIndicator(value: progress, minHeight: 3),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1922,55 +2573,108 @@ class _EpisodeListTile extends StatelessWidget {
   const _EpisodeListTile({
     required this.episode,
     required this.progress,
+    required this.isNext,
     required this.downloadService,
     required this.downloadId,
     required this.onTap,
     required this.onLongPress,
+    required this.onOptions,
   });
 
   final AnimeEpisode episode;
   final double progress;
+  final bool isNext;
   final DownloadService downloadService;
   final String downloadId;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
+  final VoidCallback onOptions;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      child: Card(
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: onTap,
-          onLongPress: onLongPress,
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                _SmallCover(url: episode.image),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        episode.displayName,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+    final completed = progress >= 0.92;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      label: [
+        episode.displayName,
+        if (completed) 'Watched',
+        if (isNext) 'Up next',
+      ].join(', '),
+      excludeSemantics: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+        child: Opacity(
+          opacity: completed && !isNext ? 0.72 : 1,
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: isNext
+                  ? BorderSide(color: colorScheme.primary, width: 2)
+                  : BorderSide.none,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onTap,
+              onLongPress: onLongPress,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Row(
+                  children: [
+                    _SmallCover(url: episode.image),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              if (completed)
+                                Icon(
+                                  Icons.check_circle,
+                                  color: colorScheme.primary,
+                                  size: 18,
+                                )
+                              else if (isNext)
+                                Icon(
+                                  Icons.play_circle_fill,
+                                  color: colorScheme.primary,
+                                  size: 18,
+                                ),
+                              if (completed || isNext) const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  episode.displayName,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 3,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(value: progress, minHeight: 3),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 4),
+                    _EpisodeDownloadStatus(
+                      service: downloadService,
+                      downloadId: downloadId,
+                    ),
+                    IconButton(
+                      tooltip: 'Episode options',
+                      onPressed: onOptions,
+                      icon: const Icon(Icons.more_vert),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                _EpisodeDownloadStatus(
-                  service: downloadService,
-                  downloadId: downloadId,
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -2193,7 +2897,7 @@ class _VideoSourcePickerState extends State<_VideoSourcePicker> {
                       : _selectedServer!.name,
                   style: Theme.of(
                     context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ],

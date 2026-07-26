@@ -9,6 +9,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../models/anilist_media.dart';
 import '../models/downloaded_manga.dart';
 import '../models/juro_models.dart';
+import '../models/tracking.dart';
 import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
@@ -50,12 +51,15 @@ class MangaReaderScreen extends StatefulWidget {
 class _MangaReaderScreenState extends State<MangaReaderScreen> {
   late MangaChapter _chapter;
   late Future<List<MangaChapterPage>> _pagesFuture;
-  final _pageController = PageController();
+  late final PageController _pageController;
   final _webtoonController = ScrollController();
   final _keyboardFocusNode = FocusNode(debugLabel: 'Reader shortcuts');
   final Set<String> _precacheUrls = {};
+  final Set<String> _syncedChapterIds = {};
   int _pageIndex = 0;
   int _pageCount = 0;
+  String? _lastPersistedProgress;
+  String? _restoredChapterId;
   bool _chromeVisible = true;
   bool _readerWakelockEnabled = false;
 
@@ -79,13 +83,23 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
   void initState() {
     super.initState();
     _chapter = widget.chapter;
+    final saved = widget.preferences.mangaProgressFor(widget.media.id);
+    if (saved?.chapterId == _chapter.id) {
+      _pageIndex = saved!.pageIndex;
+    }
+    _pageController = PageController(initialPage: _pageIndex);
+    _webtoonController.addListener(_handleWebtoonScroll);
     _pagesFuture = _loadPages(_chapter);
     _syncWakelock();
   }
 
   @override
   void dispose() {
+    if (_pageCount > 0) {
+      unawaited(_recordReadingProgress(_pageIndex, _pageCount));
+    }
     _pageController.dispose();
+    _webtoonController.removeListener(_handleWebtoonScroll);
     _webtoonController.dispose();
     _keyboardFocusNode.dispose();
     WindowService.setFullscreen(false);
@@ -119,17 +133,114 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
   }
 
   void _openChapter(MangaChapter chapter) {
+    final saved = widget.preferences.mangaProgressFor(widget.media.id);
+    final savedPage = saved?.chapterId == chapter.id ? saved!.pageIndex : 0;
     setState(() {
       _chapter = chapter;
       _pagesFuture = _loadPages(chapter);
-      _pageIndex = 0;
+      _pageIndex = savedPage;
+      _pageCount = 0;
+      _restoredChapterId = null;
+      _lastPersistedProgress = null;
     });
     if (_pageController.hasClients) {
-      _pageController.jumpToPage(0);
+      _pageController.jumpToPage(savedPage);
     }
     if (_webtoonController.hasClients) {
       _webtoonController.jumpTo(0);
     }
+  }
+
+  void _handleWebtoonScroll() {
+    if (!_webtoonController.hasClients || _pageCount <= 0) {
+      return;
+    }
+    final position = _webtoonController.position;
+    if (!position.hasContentDimensions || position.maxScrollExtent <= 0) {
+      return;
+    }
+    final fraction = (position.pixels / position.maxScrollExtent).clamp(0, 1);
+    final index = (fraction * (_pageCount - 1)).round();
+    final completed =
+        position.pixels >= position.maxScrollExtent - 72 || index >= _pageCount;
+    if (index != _pageIndex && mounted) {
+      setState(() => _pageIndex = index);
+    }
+    unawaited(_recordReadingProgress(index, _pageCount, completed: completed));
+  }
+
+  void _restoreWebtoonProgress() {
+    if (_restoredChapterId == _chapter.id) {
+      return;
+    }
+    _restoredChapterId = _chapter.id;
+    final saved = widget.preferences.mangaProgressFor(widget.media.id);
+    if (saved?.chapterId != _chapter.id ||
+        saved == null ||
+        saved.pageIndex <= 0 ||
+        saved.completed) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          !_webtoonController.hasClients ||
+          _webtoonController.position.maxScrollExtent <= 0) {
+        return;
+      }
+      final fraction = saved.pageCount <= 1
+          ? 0.0
+          : saved.pageIndex / (saved.pageCount - 1);
+      _webtoonController.jumpTo(
+        (_webtoonController.position.maxScrollExtent * fraction).clamp(
+          _webtoonController.position.minScrollExtent,
+          _webtoonController.position.maxScrollExtent,
+        ),
+      );
+    });
+  }
+
+  Future<void> _recordReadingProgress(
+    int pageIndex,
+    int pageCount, {
+    bool completed = false,
+  }) async {
+    if (pageCount <= 0) {
+      return;
+    }
+    final chapter = _chapter;
+    final safeIndex = pageIndex.clamp(0, pageCount - 1).toInt();
+    final isComplete = completed || safeIndex >= pageCount - 1;
+    final signature =
+        '${chapter.id}:$safeIndex:$pageCount:${isComplete ? 1 : 0}';
+    if (_lastPersistedProgress == signature) {
+      return;
+    }
+    _lastPersistedProgress = signature;
+    await widget.preferences.setMangaReadingProgress(
+      MangaReadingProgress(
+        mediaId: widget.media.id,
+        chapterId: chapter.id,
+        chapterNumber: chapter.number,
+        pageIndex: safeIndex,
+        pageCount: pageCount,
+        completed: isComplete,
+        updatedAtMs: DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
+    if (!isComplete ||
+        chapter.number < 1 ||
+        !_syncedChapterIds.add(chapter.id)) {
+      return;
+    }
+    await widget.trackingService.syncProgress(
+      TrackingProgressRequest(
+        media: widget.media,
+        kind: TrackingMediaKind.manga,
+        progress: chapter.number.floor(),
+        total: widget.media.chapters,
+      ),
+      queueOnFailure: true,
+    );
   }
 
   void _precachePages(List<MangaChapterPage> pages, int currentIndex) {
@@ -175,6 +286,11 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
     final nextIndex = index + offset;
     if (nextIndex < 0 || nextIndex >= widget.chapters.length) {
       return;
+    }
+    if (offset > 0 && _pageCount > 0) {
+      unawaited(
+        _recordReadingProgress(_pageCount - 1, _pageCount, completed: true),
+      );
     }
     _openChapter(widget.chapters[nextIndex]);
   }
@@ -340,6 +456,7 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
             onPageChanged: (index) {
               setState(() => _pageIndex = index);
               _precachePages(pages, index);
+              unawaited(_recordReadingProgress(index, pages.length));
             },
             itemBuilder: (context, index) => Padding(
               padding: EdgeInsets.all(widget.preferences.mangaPageGap),
@@ -510,6 +627,20 @@ class _MangaReaderScreenState extends State<MangaReaderScreen> {
             }
 
             _pageCount = pages.length;
+            if (_pageIndex >= pages.length) {
+              _pageIndex = pages.length - 1;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && _pageController.hasClients) {
+                  _pageController.jumpToPage(_pageIndex);
+                }
+              });
+            }
+            if (widget.preferences.mangaReadingMode ==
+                MangaReadingMode.webtoon) {
+              _restoreWebtoonProgress();
+            } else {
+              unawaited(_recordReadingProgress(_pageIndex, pages.length));
+            }
             _precachePages(pages, _pageIndex - 1);
             return _buildPages(pages);
           },
@@ -643,7 +774,7 @@ class _ReaderSettingsSheet extends StatelessWidget {
               'Reader settings',
               style: Theme.of(
                 context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 18),
             Text('Reading mode', style: Theme.of(context).textTheme.labelLarge),
@@ -814,7 +945,7 @@ class _ReaderFooter extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: textColor,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 6),

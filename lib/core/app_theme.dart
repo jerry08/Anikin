@@ -3,6 +3,31 @@ import 'package:flutter/services.dart';
 
 enum ThemeColorPalette { anikin, sakura, ocean, forest, sunset }
 
+abstract final class AppLayout {
+  static const double wideBreakpoint = 900;
+  static const double maxContentWidth = 1280;
+  static const double maxReadableWidth = 840;
+  static const double dialogMinWidth = 280;
+  static const double dialogMaxWidth = 560;
+  static const double minimumTouchTarget = 44;
+}
+
+abstract final class AppShapes {
+  static const button = StadiumBorder();
+  static const card = RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(8)),
+  );
+  static const dialog = RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(28)),
+  );
+  static const sheet = RoundedRectangleBorder(
+    borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+  );
+  static const floatingSurface = RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(12)),
+  );
+}
+
 class AppTheme {
   const AppTheme._();
 
@@ -95,18 +120,19 @@ class AppTheme {
 
   static ThemeData dark(ThemeColorPalette palette) {
     final colors = _palette(palette);
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: colors.darkPrimary,
+      brightness: Brightness.dark,
+      primary: colors.darkPrimary,
+      secondary: colors.darkSecondary,
+      tertiary: colors.tertiary,
+      surface: surfaceDark,
+    );
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       fontFamily: 'Lato',
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: colors.darkPrimary,
-        brightness: Brightness.dark,
-        primary: colors.darkPrimary,
-        secondary: colors.darkSecondary,
-        tertiary: colors.tertiary,
-        surface: surfaceDark,
-      ),
+      colorScheme: colorScheme,
       scaffoldBackgroundColor: surfaceDark,
       appBarTheme: AppBarTheme(
         backgroundColor: surfaceDark,
@@ -119,7 +145,7 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: AppShapes.card,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: surfaceDarkHigh,
@@ -129,9 +155,65 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(64, 44),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          minimumSize: const Size(64, AppLayout.minimumTouchTarget),
+          shape: AppShapes.button,
         ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(64, AppLayout.minimumTouchTarget),
+          shape: AppShapes.button,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(64, AppLayout.minimumTouchTarget),
+          shape: AppShapes.button,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          minimumSize: const Size(64, AppLayout.minimumTouchTarget),
+          shape: AppShapes.button,
+        ),
+      ),
+      iconButtonTheme: const IconButtonThemeData(
+        style: ButtonStyle(
+          minimumSize: WidgetStatePropertyAll(
+            Size.square(AppLayout.minimumTouchTarget),
+          ),
+        ),
+      ),
+      dialogTheme: const DialogThemeData(
+        shape: AppShapes.dialog,
+        clipBehavior: Clip.antiAlias,
+        constraints: BoxConstraints(
+          minWidth: AppLayout.dialogMinWidth,
+          maxWidth: AppLayout.dialogMaxWidth,
+        ),
+        actionsPadding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: surfaceDarkHigh,
+        modalBackgroundColor: surfaceDarkHigh,
+        shape: AppShapes.sheet,
+        clipBehavior: Clip.antiAlias,
+        showDragHandle: true,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surfaceDarkHigh,
+        indicatorColor: colorScheme.primaryContainer,
+        elevation: 0,
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: surfaceDarkHigh,
+        indicatorColor: colorScheme.primaryContainer,
+        elevation: 0,
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: AppShapes.floatingSurface,
+        insetPadding: EdgeInsets.fromLTRB(16, 0, 16, 16),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -154,16 +236,17 @@ class AppTheme {
 
   static ThemeData light(ThemeColorPalette palette) {
     final colors = _palette(palette);
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: colors.lightPrimary,
+      primary: colors.lightPrimary,
+      secondary: colors.lightSecondary,
+      tertiary: colors.tertiary,
+    );
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       fontFamily: 'Lato',
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: colors.lightPrimary,
-        primary: colors.lightPrimary,
-        secondary: colors.lightSecondary,
-        tertiary: colors.tertiary,
-      ),
+      colorScheme: colorScheme,
       appBarTheme: AppBarTheme(
         centerTitle: false,
         systemOverlayStyle: edgeToEdgeOverlayStyle(Brightness.light),
@@ -172,13 +255,67 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: AppShapes.card,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(64, 44),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          minimumSize: const Size(64, AppLayout.minimumTouchTarget),
+          shape: AppShapes.button,
         ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(64, AppLayout.minimumTouchTarget),
+          shape: AppShapes.button,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(64, AppLayout.minimumTouchTarget),
+          shape: AppShapes.button,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          minimumSize: const Size(64, AppLayout.minimumTouchTarget),
+          shape: AppShapes.button,
+        ),
+      ),
+      iconButtonTheme: const IconButtonThemeData(
+        style: ButtonStyle(
+          minimumSize: WidgetStatePropertyAll(
+            Size.square(AppLayout.minimumTouchTarget),
+          ),
+        ),
+      ),
+      dialogTheme: const DialogThemeData(
+        shape: AppShapes.dialog,
+        clipBehavior: Clip.antiAlias,
+        constraints: BoxConstraints(
+          minWidth: AppLayout.dialogMinWidth,
+          maxWidth: AppLayout.dialogMaxWidth,
+        ),
+        actionsPadding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        shape: AppShapes.sheet,
+        clipBehavior: Clip.antiAlias,
+        showDragHandle: true,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.primaryContainer,
+        elevation: 0,
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.primaryContainer,
+        elevation: 0,
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: AppShapes.floatingSurface,
+        insetPadding: EdgeInsets.fromLTRB(16, 0, 16, 16),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

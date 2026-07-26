@@ -8,6 +8,7 @@ import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
+import '../widgets/app_content_constraint.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/media_poster_card.dart';
 import 'manga_detail_screen.dart';
@@ -210,7 +211,7 @@ class _MangaScreenState extends State<MangaScreen> {
                   child: Text(
                     'Manga',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -322,31 +323,33 @@ class _MangaScreenState extends State<MangaScreen> {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = (constraints.maxWidth / 150).floor().clamp(2, 6);
-        return GridView.builder(
-          controller: _scrollController,
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 12,
-            childAspectRatio: 0.52,
-          ),
-          itemCount: _items.length + (_isLoading ? columns : 0),
-          itemBuilder: (context, index) {
-            if (index >= _items.length) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            return MediaPosterCard(
-              media: _items[index],
-              onTap: () => _openMedia(_items[index]),
-              width: 150,
-            );
-          },
-        );
-      },
+    return AppContentConstraint(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = (constraints.maxWidth / 150).floor().clamp(2, 8);
+          return GridView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.52,
+            ),
+            itemCount: _items.length + (_isLoading ? columns : 0),
+            itemBuilder: (context, index) {
+              if (index >= _items.length) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return MediaPosterCard(
+                media: _items[index],
+                onTap: () => _openMedia(_items[index]),
+                width: 150,
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
@@ -393,7 +396,7 @@ class _MangaMediaSection extends StatelessWidget {
               title,
               style: Theme.of(
                 context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
           const SizedBox(height: 12),

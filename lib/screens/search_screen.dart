@@ -3,15 +3,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/anilist_media.dart';
+import '../models/media_search_filters.dart';
 import '../services/anilist_service.dart';
 import '../services/download_service.dart';
 import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
 import '../services/preferences_service.dart';
+import '../services/search_history_service.dart';
 import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
 import '../widgets/app_bottom_sheet.dart';
+import '../widgets/app_content_constraint.dart';
 import '../widgets/app_error_view.dart';
+import '../widgets/app_sheet_action_bar.dart';
+import '../widgets/advanced_search_sheet.dart';
 import '../widgets/media_poster_card.dart';
 import '../widgets/media_type_selector.dart';
 import 'detail_screen.dart';
@@ -26,6 +31,7 @@ class SearchScreen extends StatefulWidget {
     required this.downloadService,
     required this.mangaDownloadService,
     required this.trackingService,
+    this.searchHistoryService,
     super.key,
   });
 
@@ -36,6 +42,7 @@ class SearchScreen extends StatefulWidget {
   final DownloadService downloadService;
   final MangaDownloadService mangaDownloadService;
   final TrackingService trackingService;
+  final SearchHistoryService? searchHistoryService;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -86,9 +93,11 @@ class _SearchScreenState extends State<SearchScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final _items = <AniListMedia>[];
-  final _selectedTags = <String>{};
 
   late AppMediaType _contentType;
+  MediaSearchFilters _filters = const MediaSearchFilters();
+  List<String> _recentSearches = const [];
+  List<String>? _genres;
   Timer? _debounce;
   int _page = 1;
   int _searchGeneration = 0;
@@ -98,7 +107,11 @@ class _SearchScreenState extends State<SearchScreen> {
   late String _catalogProviderKey;
 
   bool get _hasSearchInput =>
-      _controller.text.trim().isNotEmpty || _selectedTags.isNotEmpty;
+      _controller.text.trim().isNotEmpty || _filters.hasActive;
+
+  Set<String> get _selectedTags => _filters.includedTags;
+
+  String get _historyTarget => _contentType.name;
 
   @override
   void initState() {
@@ -108,6 +121,7 @@ class _SearchScreenState extends State<SearchScreen> {
     widget.preferences.addListener(_handleMediaTypeChanged);
     widget.trackingService.addListener(_handleCatalogProviderChanged);
     _scrollController.addListener(_onScroll);
+    unawaited(_loadHistory());
   }
 
   @override
@@ -132,6 +146,10 @@ class _SearchScreenState extends State<SearchScreen> {
     }
     setState(() {
       _contentType = contentType;
+      _filters = _filters.copyWith(
+        format: null,
+        season: contentType == AppMediaType.manga ? null : _filters.season,
+      );
       _searchGeneration++;
       _page = 1;
       _items.clear();
@@ -139,6 +157,7 @@ class _SearchScreenState extends State<SearchScreen> {
       _error = null;
       _isLoading = false;
     });
+    unawaited(_loadHistory());
 
     if (_hasSearchInput) {
       unawaited(_runSearch(reset: true));
@@ -187,6 +206,42 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
+  Future<void> _loadHistory() async {
+    final service = widget.searchHistoryService;
+    if (service == null) {
+      return;
+    }
+    final target = _historyTarget;
+    final recent = await service.recent(target);
+    if (!mounted || target != _historyTarget) {
+      return;
+    }
+    setState(() => _recentSearches = recent);
+  }
+
+  Future<void> _submitSearch() async {
+    final query = _controller.text.trim();
+    if (query.isNotEmpty) {
+      await widget.searchHistoryService?.record(_historyTarget, query);
+      await _loadHistory();
+    }
+    await _runSearch(reset: true);
+  }
+
+  void _useHistory(String query) {
+    _debounce?.cancel();
+    _controller
+      ..text = query
+      ..selection = TextSelection.collapsed(offset: query.length);
+    setState(() {});
+    unawaited(_submitSearch());
+  }
+
+  Future<void> _removeHistory(String query) async {
+    await widget.searchHistoryService?.remove(_historyTarget, query);
+    await _loadHistory();
+  }
+
   void _clearQuery() {
     if (_controller.text.isEmpty) {
       return;
@@ -217,7 +272,11 @@ class _SearchScreenState extends State<SearchScreen> {
 
     final requestGeneration = reset ? ++_searchGeneration : _searchGeneration;
     final requestPage = reset ? 1 : _page;
-    final tags = _selectedTags.toList(growable: false)..sort();
+    final tags = _filters.includedTags.toList(growable: false)..sort();
+    final excludedTags = _filters.excludedTags.toList(growable: false)..sort();
+    final genres = _filters.includedGenres.toList(growable: false)..sort();
+    final excludedGenres = _filters.excludedGenres.toList(growable: false)
+      ..sort();
     final includeNonJapanese = _includeNonJapaneseResults(query);
 
     setState(() {
@@ -236,14 +295,32 @@ class _SearchScreenState extends State<SearchScreen> {
           result = await widget.aniListService.searchMedia(
             query: query,
             page: requestPage,
+            sort: [_filters.sort.graphqlName],
+            season: _filters.season,
+            seasonYear: _filters.seasonYear,
+            status: _filters.status,
+            source: _filters.source,
+            format: _filters.format,
+            countryOfOrigin: _filters.countryOfOrigin,
             tags: tags,
+            excludedTags: excludedTags,
+            genres: genres,
+            excludedGenres: excludedGenres,
             includeNonJapanese: includeNonJapanese,
           );
         case AppMediaType.manga:
           result = await widget.aniListService.searchManga(
             query: query,
             page: requestPage,
+            sort: [_filters.sort.graphqlName],
+            status: _filters.status,
+            source: _filters.source,
+            format: _filters.format,
+            countryOfOrigin: _filters.countryOfOrigin,
             tags: tags,
+            excludedTags: excludedTags,
+            genres: genres,
+            excludedGenres: excludedGenres,
             includeNonJapanese: includeNonJapanese,
           );
       }
@@ -307,7 +384,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   bool _includeNonJapaneseResults(String query) {
-    if (query.isNotEmpty) {
+    if (query.isNotEmpty || _filters.countryOfOrigin != null) {
       return true;
     }
 
@@ -318,20 +395,39 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _toggleTag(String tag) {
+    final included = {..._filters.includedTags};
+    final excluded = {..._filters.excludedTags}..remove(tag);
+    if (!included.remove(tag)) {
+      included.add(tag);
+    }
     setState(() {
-      if (!_selectedTags.remove(tag)) {
-        _selectedTags.add(tag);
-      }
+      _filters = _filters.copyWith(
+        includedTags: included,
+        excludedTags: excluded,
+      );
     });
     _runSearch(reset: true);
   }
 
   void _clearTags() {
-    if (_selectedTags.isEmpty) {
+    if (_filters.includedTags.isEmpty && _filters.excludedTags.isEmpty) {
       return;
     }
 
-    setState(_selectedTags.clear);
+    setState(() {
+      _filters = _filters.copyWith(
+        includedTags: const {},
+        excludedTags: const {},
+      );
+    });
+    _runSearch(reset: true);
+  }
+
+  void _clearFilters() {
+    if (!_filters.hasActive) {
+      return;
+    }
+    setState(() => _filters = const MediaSearchFilters());
     _runSearch(reset: true);
   }
 
@@ -353,10 +449,45 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     setState(() {
-      _selectedTags
-        ..clear()
-        ..addAll(selectedTags);
+      _filters = _filters.copyWith(
+        includedTags: {...selectedTags},
+        excludedTags: {..._filters.excludedTags}..removeAll(selectedTags),
+      );
     });
+    _runSearch(reset: true);
+  }
+
+  Future<void> _showAdvancedSearch() async {
+    var genres = _genres;
+    if (genres == null) {
+      try {
+        genres = await widget.aniListService.getGenreCollection();
+      } catch (_) {
+        genres = const [];
+      }
+      _genres = genres;
+    }
+    if (!mounted) {
+      return;
+    }
+
+    final filters = await showAppBottomSheet<MediaSearchFilters>(
+      context: context,
+      initialChildSize: 0.9,
+      minChildSize: 0.56,
+      maxChildSize: 1,
+      builder: (context, scrollController) => AdvancedSearchSheet(
+        filters: _filters,
+        isAnime: _contentType == AppMediaType.anime,
+        genres: genres!,
+        tags: _allSearchTags,
+        scrollController: scrollController,
+      ),
+    );
+    if (filters == null || !mounted) {
+      return;
+    }
+    setState(() => _filters = filters);
     _runSearch(reset: true);
   }
 
@@ -411,6 +542,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       child: MediaTypeSelector(
                         value: _contentType,
                         onChanged: _setContentType,
+                        appearance: MediaTypeSelectorAppearance.glass,
                       ),
                     ),
                   ),
@@ -420,25 +552,40 @@ class _SearchScreenState extends State<SearchScreen> {
                       controller: _controller,
                       textInputAction: TextInputAction.search,
                       onChanged: _onQueryChanged,
-                      onSubmitted: (_) => _runSearch(reset: true),
+                      onSubmitted: (_) => _submitSearch(),
                       decoration: InputDecoration(
                         hintText: _searchHint,
                         prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _controller.text.isEmpty
-                            ? null
-                            : IconButton(
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Advanced search filters',
+                              icon: Badge(
+                                isLabelVisible: _filters.activeCount > 0,
+                                label: Text('${_filters.activeCount}'),
+                                child: const Icon(Icons.tune),
+                              ),
+                              onPressed: _showAdvancedSearch,
+                            ),
+                            if (_controller.text.isNotEmpty)
+                              IconButton(
                                 tooltip: 'Clear search',
                                 icon: const Icon(Icons.close),
                                 onPressed: _clearQuery,
                               ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                   _SearchTagsBar(
                     selectedTags: _selectedTags,
+                    filterCount: _filters.activeCount,
                     onTagToggled: _toggleTag,
                     onClearTags: _clearTags,
                     onShowAllTags: _showTagSheet,
+                    onShowFilters: _showAdvancedSearch,
                   ),
                 ],
               ),
@@ -473,7 +620,10 @@ class _SearchScreenState extends State<SearchScreen> {
         icon: _emptyIcon,
         title: _emptyTitle,
         message: _emptyMessage,
-        onClearTags: _selectedTags.isEmpty ? null : _clearTags,
+        recentSearches: _hasSearchInput ? const [] : _recentSearches,
+        onRecentSearch: _useHistory,
+        onRemoveRecentSearch: _removeHistory,
+        onClearFilters: _filters.hasActive ? _clearFilters : null,
       );
     }
 
@@ -481,31 +631,33 @@ class _SearchScreenState extends State<SearchScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = (constraints.maxWidth / 150).floor().clamp(2, 6);
-        return GridView.builder(
-          controller: _scrollController,
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 12,
-            childAspectRatio: 0.52,
-          ),
-          itemCount: _items.length + (_isLoading ? 1 : 0),
-          itemBuilder: (context, index) {
-            if (index >= _items.length) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            return MediaPosterCard(
-              media: _items[index],
-              onTap: () => _openMedia(_items[index]),
-              width: 150,
-            );
-          },
-        );
-      },
+    return AppContentConstraint(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = (constraints.maxWidth / 150).floor().clamp(2, 8);
+          return GridView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.52,
+            ),
+            itemCount: _items.length + (_isLoading ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index >= _items.length) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return MediaPosterCard(
+                media: _items[index],
+                onTap: () => _openMedia(_items[index]),
+                width: 150,
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
@@ -513,15 +665,19 @@ class _SearchScreenState extends State<SearchScreen> {
 class _SearchTagsBar extends StatelessWidget {
   const _SearchTagsBar({
     required this.selectedTags,
+    required this.filterCount,
     required this.onTagToggled,
     required this.onClearTags,
     required this.onShowAllTags,
+    required this.onShowFilters,
   });
 
   final Set<String> selectedTags;
+  final int filterCount;
   final ValueChanged<String> onTagToggled;
   final VoidCallback onClearTags;
   final VoidCallback onShowAllTags;
+  final VoidCallback onShowFilters;
 
   @override
   Widget build(BuildContext context) {
@@ -541,12 +697,7 @@ class _SearchTagsBar extends StatelessWidget {
               child: TextButton(
                 onPressed: onClearTags,
                 style: TextButton.styleFrom(
-                  minimumSize: Size.zero,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
                 child: const Text('Clear'),
               ),
@@ -557,7 +708,7 @@ class _SearchTagsBar extends StatelessWidget {
             height: 42,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: visibleTags.length + 1,
+              itemCount: visibleTags.length + 2,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 if (index == visibleTags.length) {
@@ -565,6 +716,15 @@ class _SearchTagsBar extends StatelessWidget {
                     avatar: const Icon(Icons.tune, size: 18),
                     label: const Text('All tags'),
                     onPressed: onShowAllTags,
+                  );
+                }
+                if (index == visibleTags.length + 1) {
+                  return ActionChip(
+                    avatar: const Icon(Icons.filter_alt_outlined, size: 18),
+                    label: Text(
+                      filterCount == 0 ? 'Filters' : 'Filters ($filterCount)',
+                    ),
+                    onPressed: onShowFilters,
                   );
                 }
 
@@ -588,13 +748,19 @@ class _SearchEmptyState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
-    this.onClearTags,
+    required this.recentSearches,
+    required this.onRecentSearch,
+    required this.onRemoveRecentSearch,
+    this.onClearFilters,
   });
 
   final IconData icon;
   final String title;
   final String message;
-  final VoidCallback? onClearTags;
+  final List<String> recentSearches;
+  final ValueChanged<String> onRecentSearch;
+  final Future<void> Function(String) onRemoveRecentSearch;
+  final VoidCallback? onClearFilters;
 
   @override
   Widget build(BuildContext context) {
@@ -621,12 +787,34 @@ class _SearchEmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-            if (onClearTags != null) ...[
+            if (recentSearches.isNotEmpty) ...[
+              const SizedBox(height: 22),
+              Text(
+                'Recent searches',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final query in recentSearches)
+                    InputChip(
+                      avatar: const Icon(Icons.history, size: 17),
+                      label: Text(query),
+                      onPressed: () => onRecentSearch(query),
+                      onDeleted: () => onRemoveRecentSearch(query),
+                    ),
+                ],
+              ),
+            ],
+            if (onClearFilters != null) ...[
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: onClearTags,
+                onPressed: onClearFilters,
                 icon: const Icon(Icons.filter_alt_off_outlined),
-                label: const Text('Clear tags'),
+                label: const Text('Clear filters'),
               ),
             ],
           ],
@@ -677,7 +865,7 @@ class _TagFilterSheetState extends State<_TagFilterSheet> {
               'Search tags',
               style: Theme.of(
                 context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
             Text(
@@ -711,7 +899,9 @@ class _TagFilterSheetState extends State<_TagFilterSheet> {
               ),
             ),
             const SizedBox(height: 18),
-            Row(
+            AppSheetActionBar(
+              showDivider: false,
+              minimum: EdgeInsets.zero,
               children: [
                 TextButton(
                   onPressed: _selectedTags.isEmpty
@@ -719,12 +909,10 @@ class _TagFilterSheetState extends State<_TagFilterSheet> {
                       : () => setState(_selectedTags.clear),
                   child: const Text('Clear'),
                 ),
-                const Spacer(),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text('Cancel'),
                 ),
-                const SizedBox(width: 8),
                 FilledButton(
                   onPressed: () => Navigator.of(context).pop(_selectedTags),
                   child: const Text('Apply'),

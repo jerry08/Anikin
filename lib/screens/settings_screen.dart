@@ -1,21 +1,32 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:drift/drift.dart' show OrderingTerm, Value;
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../app/app_services.dart';
 import '../core/app_theme.dart';
+import '../data/app_database.dart';
 import '../models/juro_models.dart';
 import '../models/tracking.dart';
 import '../services/aniyomi_extension_service.dart';
+import '../services/backup_service.dart';
 import '../services/download_service.dart';
+import '../services/feature_gate_service.dart';
 import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
+import '../services/notification_subscription_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
 import '../services/update_service.dart';
 import '../services/watch_history_service.dart';
 import 'aniyomi_extensions_screen.dart';
 import 'aniyomi_sources_screen.dart';
+import '../widgets/app_content_constraint.dart';
 import '../widgets/app_dialogs.dart';
+import '../widgets/app_error_view.dart';
 import '../widgets/update_dialogs.dart';
 
 const _settingsTileShape = RoundedRectangleBorder(
@@ -69,138 +80,158 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ]),
         builder: (context, _) {
           final prefs = widget.preferences;
+          final services = AppScope.maybeOf(context);
           return ListTileTheme.merge(
             shape: _settingsTileShape,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-              children: [
-                Text(
-                  'Settings',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                const _SectionTitle('General'),
-                _SettingsNavigationTile(
-                  icon: Icons.tune_outlined,
-                  title: 'App',
-                  subtitle: _appSummary(prefs),
-                  onTap: () => _openSettingsPage(
-                    context,
-                    _AppSettingsPage(
-                      preferences: widget.preferences,
-                      updateService: widget.updateService,
+            child: AppContentConstraint(
+              maxWidth: AppLayout.maxReadableWidth,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+                children: [
+                  Text(
+                    'Settings',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-                _SettingsNavigationTile(
-                  icon: Icons.storage_outlined,
-                  title: 'Data and privacy',
-                  subtitle: _dataSummary(prefs),
-                  onTap: () => _openSettingsPage(
-                    context,
-                    _DataSettingsPage(
-                      preferences: widget.preferences,
-                      watchHistoryService: widget.watchHistoryService,
-                      downloadService: widget.downloadService,
-                      mangaDownloadService: widget.mangaDownloadService,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const _SectionTitle('Watching'),
-                _SettingsNavigationTile(
-                  icon: Icons.play_circle_outline,
-                  title: 'Playback',
-                  subtitle: _playbackSummary(prefs),
-                  onTap: () => _openSettingsPage(
-                    context,
-                    _PlaybackSettingsPage(preferences: widget.preferences),
-                  ),
-                ),
-                _SettingsNavigationTile(
-                  icon: Icons.subtitles_outlined,
-                  title: 'Subtitles',
-                  subtitle: _subtitlesSummary(prefs),
-                  onTap: () => _openSettingsPage(
-                    context,
-                    _SubtitleSettingsPage(preferences: widget.preferences),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const _SectionTitle('Reading'),
-                _SettingsNavigationTile(
-                  icon: Icons.chrome_reader_mode_outlined,
-                  title: 'Reader',
-                  subtitle: _readerSummary(prefs),
-                  onTap: () => _openSettingsPage(
-                    context,
-                    _ReaderSettingsPage(preferences: widget.preferences),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const _SectionTitle('Accounts'),
-                _SettingsNavigationTile(
-                  icon: Icons.sync_outlined,
-                  title: 'Tracking and sync',
-                  subtitle: _trackingSummary(widget.trackingService),
-                  onTap: () => _openSettingsPage(
-                    context,
-                    _TrackingSettingsPage(
-                      trackingService: widget.trackingService,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const _SectionTitle('Library'),
-                _SettingsNavigationTile(
-                  icon: Icons.source_outlined,
-                  title: 'Sources and library',
-                  subtitle: _sourcesSummary(prefs),
-                  onTap: () => _openSettingsPage(
-                    context,
-                    _SourcesSettingsPage(
-                      preferences: widget.preferences,
-                      providersFuture: _providersFuture,
-                      mangaProvidersFuture: _mangaProvidersFuture,
-                    ),
-                  ),
-                ),
-                if (widget.aniyomiExtensionService.isPlatformSupported) ...[
+                  const SizedBox(height: 18),
+                  const _SectionTitle('General'),
                   _SettingsNavigationTile(
-                    icon: Icons.travel_explore_outlined,
-                    title: 'Browse Aniyomi sources',
-                    subtitle: 'Open installed extension sources',
+                    icon: Icons.tune_outlined,
+                    title: 'App',
+                    subtitle: _appSummary(prefs),
                     onTap: () => _openSettingsPage(
                       context,
-                      AniyomiSourcesScreen(
-                        extensionService: widget.aniyomiExtensionService,
+                      _AppSettingsPage(
                         preferences: widget.preferences,
-                        juroService: widget.juroService,
+                        updateService: widget.updateService,
+                      ),
+                    ),
+                  ),
+                  if (services != null &&
+                      services.featureGates.isEnabled(AppFeature.notifications))
+                    _SettingsNavigationTile(
+                      icon: Icons.notifications_outlined,
+                      title: 'Notifications',
+                      subtitle: prefs.notificationsEnabled
+                          ? 'Release alerts every ${prefs.notificationRefreshHours}h'
+                          : 'Release alerts are off',
+                      onTap: () => _openSettingsPage(
+                        context,
+                        _NotificationSettingsPage(services: services),
+                      ),
+                    ),
+                  if (services?.homeWidgetService.isSupported == true)
+                    _HomeWidgetTile(services: services!),
+                  _SettingsNavigationTile(
+                    icon: Icons.storage_outlined,
+                    title: 'Data and privacy',
+                    subtitle: _dataSummary(prefs),
+                    onTap: () => _openSettingsPage(
+                      context,
+                      _DataSettingsPage(
+                        preferences: widget.preferences,
                         watchHistoryService: widget.watchHistoryService,
                         downloadService: widget.downloadService,
                         mangaDownloadService: widget.mangaDownloadService,
+                        services: services,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const _SectionTitle('Watching'),
+                  _SettingsNavigationTile(
+                    icon: Icons.play_circle_outline,
+                    title: 'Playback',
+                    subtitle: _playbackSummary(prefs),
+                    onTap: () => _openSettingsPage(
+                      context,
+                      _PlaybackSettingsPage(preferences: widget.preferences),
+                    ),
+                  ),
+                  _SettingsNavigationTile(
+                    icon: Icons.subtitles_outlined,
+                    title: 'Subtitles',
+                    subtitle: _subtitlesSummary(prefs),
+                    onTap: () => _openSettingsPage(
+                      context,
+                      _SubtitleSettingsPage(preferences: widget.preferences),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const _SectionTitle('Reading'),
+                  _SettingsNavigationTile(
+                    icon: Icons.chrome_reader_mode_outlined,
+                    title: 'Reader',
+                    subtitle: _readerSummary(prefs),
+                    onTap: () => _openSettingsPage(
+                      context,
+                      _ReaderSettingsPage(preferences: widget.preferences),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const _SectionTitle('Accounts'),
+                  _SettingsNavigationTile(
+                    icon: Icons.sync_outlined,
+                    title: 'Tracking and sync',
+                    subtitle: _trackingSummary(widget.trackingService),
+                    onTap: () => _openSettingsPage(
+                      context,
+                      _TrackingSettingsPage(
                         trackingService: widget.trackingService,
                       ),
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  const _SectionTitle('Library'),
                   _SettingsNavigationTile(
-                    icon: Icons.extension_outlined,
-                    title: 'Aniyomi extensions',
-                    subtitle: 'Android extension sources',
+                    icon: Icons.source_outlined,
+                    title: 'Sources and library',
+                    subtitle: _sourcesSummary(prefs),
                     onTap: () => _openSettingsPage(
                       context,
-                      AniyomiExtensionsScreen(
-                        extensionService: widget.aniyomiExtensionService,
+                      _SourcesSettingsPage(
+                        preferences: widget.preferences,
+                        providersFuture: _providersFuture,
+                        mangaProvidersFuture: _mangaProvidersFuture,
                       ),
                     ),
                   ),
-                  _NsfwSourcesTile(
-                    extensionService: widget.aniyomiExtensionService,
-                  ),
+                  if (widget.aniyomiExtensionService.isPlatformSupported) ...[
+                    _SettingsNavigationTile(
+                      icon: Icons.travel_explore_outlined,
+                      title: 'Browse Aniyomi sources',
+                      subtitle: 'Open installed extension sources',
+                      onTap: () => _openSettingsPage(
+                        context,
+                        AniyomiSourcesScreen(
+                          extensionService: widget.aniyomiExtensionService,
+                          preferences: widget.preferences,
+                          juroService: widget.juroService,
+                          watchHistoryService: widget.watchHistoryService,
+                          downloadService: widget.downloadService,
+                          mangaDownloadService: widget.mangaDownloadService,
+                          trackingService: widget.trackingService,
+                        ),
+                      ),
+                    ),
+                    _SettingsNavigationTile(
+                      icon: Icons.extension_outlined,
+                      title: 'Aniyomi extensions',
+                      subtitle: 'Android extension sources',
+                      onTap: () => _openSettingsPage(
+                        context,
+                        AniyomiExtensionsScreen(
+                          extensionService: widget.aniyomiExtensionService,
+                        ),
+                      ),
+                    ),
+                    _NsfwSourcesTile(
+                      extensionService: widget.aniyomiExtensionService,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           );
         },
@@ -210,6 +241,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _openSettingsPage(BuildContext context, Widget page) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  }
+}
+
+class _HomeWidgetTile extends StatefulWidget {
+  const _HomeWidgetTile({required this.services});
+
+  final AppServices services;
+
+  @override
+  State<_HomeWidgetTile> createState() => _HomeWidgetTileState();
+}
+
+class _HomeWidgetTileState extends State<_HomeWidgetTile> {
+  bool _busy = false;
+
+  Future<void> _addWidget() async {
+    setState(() => _busy = true);
+    try {
+      await widget.services.homeWidgetService.refresh();
+      final requested = await widget.services.homeWidgetService.requestPin();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              requested
+                  ? 'Widget request sent to your launcher'
+                  : 'Add the Anikin widget from your launcher’s widget picker',
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        await showErrorDialog(
+          context,
+          error.toString(),
+          title: 'Unable to add widget',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.widgets_outlined),
+      title: const Text('Home Screen widget'),
+      subtitle: const Text('Continue watching and upcoming release'),
+      trailing: _busy
+          ? const SizedBox.square(
+              dimension: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.add),
+      enabled: !_busy,
+      onTap: _busy ? null : _addWidget,
+    );
   }
 }
 
@@ -544,12 +634,14 @@ class _DataSettingsPage extends StatelessWidget {
     required this.watchHistoryService,
     required this.downloadService,
     required this.mangaDownloadService,
+    this.services,
   });
 
   final PreferencesService preferences;
   final WatchHistoryService watchHistoryService;
   final DownloadService downloadService;
   final MangaDownloadService mangaDownloadService;
+  final AppServices? services;
 
   @override
   Widget build(BuildContext context) {
@@ -583,10 +675,1060 @@ class _DataSettingsPage extends StatelessWidget {
           downloadService: downloadService,
           mangaDownloadService: mangaDownloadService,
         ),
+        if (services != null) ...[
+          const SizedBox(height: 10),
+          const _SectionTitle('Backup and restore'),
+          _BackupSettingsSection(service: services!.backupService),
+        ],
         const SizedBox(height: 10),
         const _SectionTitle('History'),
         _ClearHistoryTile(service: watchHistoryService),
       ],
+    );
+  }
+}
+
+class _BackupSettingsSection extends StatefulWidget {
+  const _BackupSettingsSection({required this.service});
+
+  final BackupService service;
+
+  @override
+  State<_BackupSettingsSection> createState() => _BackupSettingsSectionState();
+}
+
+class _BackupSettingsSectionState extends State<_BackupSettingsSection> {
+  bool _busy = false;
+
+  Future<void> _export() async {
+    final password = await _requestBackupPassword(context, confirm: true);
+    if (password == null || !mounted) return;
+    final date = DateTime.now().toIso8601String().split('T').first;
+    final fileName = 'anikin-backup-$date.anikinbackup';
+    final location = await getSaveLocation(suggestedName: fileName);
+    if (location == null || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final bytes = await widget.service.create(password);
+      await XFile.fromData(
+        bytes,
+        name: fileName,
+        mimeType: 'application/octet-stream',
+      ).saveTo(location.path);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Encrypted backup saved')));
+      }
+    } catch (error) {
+      if (mounted) {
+        await showErrorDialog(
+          context,
+          error.toString(),
+          title: 'Unable to create backup',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _restore() async {
+    final file = await openFile(
+      acceptedTypeGroups: const [
+        XTypeGroup(
+          label: 'Anikin backups',
+          extensions: ['anikinbackup'],
+          mimeTypes: ['application/octet-stream'],
+          uniformTypeIdentifiers: ['public.data'],
+        ),
+      ],
+    );
+    if (file == null || !mounted) return;
+    final password = await _requestBackupPassword(context);
+    if (password == null || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final result = await widget.service.restore(
+        await file.readAsBytes(),
+        password,
+      );
+      if (!mounted) return;
+      await showAppMessageDialog(
+        context,
+        title: 'Backup restored',
+        message:
+            'Merged ${result.preferences} settings and ${result.records} '
+            'library records. Restart Anikin to reload every service.',
+        icon: Icons.restore_outlined,
+      );
+    } catch (error) {
+      if (mounted) {
+        await showErrorDialog(
+          context,
+          error.toString(),
+          title: 'Unable to restore backup',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ListTile(
+          leading: const Icon(Icons.lock_outline),
+          title: const Text('Create encrypted backup'),
+          subtitle: const Text(
+            'Settings, history, search, follows, and alerts. Account credentials '
+            'and downloaded media are never exported.',
+          ),
+          trailing: _busy
+              ? const SizedBox.square(
+                  dimension: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.chevron_right),
+          enabled: !_busy,
+          onTap: _busy ? null : _export,
+        ),
+        ListTile(
+          leading: const Icon(Icons.settings_backup_restore),
+          title: const Text('Restore encrypted backup'),
+          subtitle: const Text(
+            'Merge portable data without deleting current data',
+          ),
+          enabled: !_busy,
+          onTap: _busy ? null : _restore,
+        ),
+      ],
+    );
+  }
+}
+
+Future<String?> _requestBackupPassword(
+  BuildContext context, {
+  bool confirm = false,
+}) async {
+  final passwordController = TextEditingController();
+  final confirmationController = TextEditingController();
+  String? error;
+  var obscure = true;
+  final result = await showDialog<String>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setDialogState) => AlertDialog(
+        title: Text(confirm ? 'Protect your backup' : 'Unlock backup'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: passwordController,
+              autofocus: true,
+              obscureText: obscure,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                errorText: error,
+                suffixIcon: IconButton(
+                  onPressed: () => setDialogState(() => obscure = !obscure),
+                  icon: Icon(obscure ? Icons.visibility : Icons.visibility_off),
+                ),
+              ),
+            ),
+            if (confirm) ...[
+              const SizedBox(height: 12),
+              TextField(
+                controller: confirmationController,
+                obscureText: obscure,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm password',
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            const Text(
+              'Passwords cannot be recovered. Use at least 8 characters.',
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+        actions: [
+          AppDialogAction(
+            label: 'Cancel',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          AppDialogAction(
+            label: confirm ? 'Continue' : 'Unlock',
+            onPressed: () {
+              final password = passwordController.text;
+              if (password.length < 8) {
+                setDialogState(() => error = 'Use at least 8 characters');
+                return;
+              }
+              if (confirm && password != confirmationController.text) {
+                setDialogState(() => error = 'Passwords do not match');
+                return;
+              }
+              Navigator.of(context).pop(password);
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+  passwordController.dispose();
+  confirmationController.dispose();
+  return result;
+}
+
+class _NotificationSettingsPage extends StatefulWidget {
+  const _NotificationSettingsPage({required this.services});
+
+  final AppServices services;
+
+  @override
+  State<_NotificationSettingsPage> createState() =>
+      _NotificationSettingsPageState();
+}
+
+class _NotificationSettingsPageState extends State<_NotificationSettingsPage> {
+  bool _busy = false;
+
+  Future<void> _setEnabled(bool enabled) async {
+    setState(() => _busy = true);
+    try {
+      final granted = await widget.services.notificationCoordinator.setEnabled(
+        enabled,
+      );
+      if (!mounted) return;
+      if (enabled && !granted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Notification permission was not granted'),
+          ),
+        );
+      } else if (!enabled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Release checks paused. Your follows were kept.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _refresh() async {
+    setState(() => _busy = true);
+    try {
+      await widget.services.notificationCoordinator.syncAndRefresh();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Release subscriptions refreshed')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _updateAniListSetting({
+    required bool enabled,
+    required NotificationSubscriptionOrigin origin,
+    required Future<void> update,
+  }) async {
+    setState(() => _busy = true);
+    try {
+      await update;
+      if (!enabled) {
+        await widget.services.notificationSubscriptions.clearOrigin(origin);
+      } else if (widget.services.preferences.notificationsEnabled) {
+        await widget.services.notificationCoordinator.syncAndRefresh();
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _openSubscriptions() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            _NotificationSubscriptionsPage(services: widget.services),
+      ),
+    );
+  }
+
+  void _openInbox() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _NotificationInboxPage(services: widget.services),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final services = widget.services;
+    final preferences = services.preferences;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Notifications')),
+      body: SafeArea(
+        child: AnimatedBuilder(
+          animation: Listenable.merge([
+            preferences,
+            services.notificationSubscriptions,
+          ]),
+          builder: (context, _) => FutureBuilder<List<NotificationSubscription>>(
+            future: services.notificationSubscriptions.all(),
+            builder: (context, subscriptionsSnapshot) {
+              final subscriptions = subscriptionsSnapshot.data ?? const [];
+              final titleCount = _subscriptionTitleCount(subscriptions);
+              final manualCount = subscriptions
+                  .where(
+                    (item) =>
+                        item.origin ==
+                        NotificationSubscriptionOrigin.manual.key,
+                  )
+                  .length;
+              final aniListConnected = services.trackingService.isLoggedIn(
+                TrackingProvider.anilist,
+              );
+              return ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+                children: [
+                  _NotificationStatusCard(
+                    enabled: preferences.notificationsEnabled,
+                    busy: _busy,
+                    titleCount: titleCount,
+                    onChanged: _setEnabled,
+                  ),
+                  const _SectionTitle('Follow automatically'),
+                  if (!aniListConnected)
+                    const _NotificationHint(
+                      icon: Icons.link_off,
+                      text:
+                          'Connect AniList in Tracking and sync to follow list entries automatically.',
+                    ),
+                  SwitchListTile(
+                    secondary: const Icon(Icons.playlist_play_outlined),
+                    title: const Text('Watching and reading'),
+                    subtitle: const Text(
+                      'Follow titles in your AniList Current lists',
+                    ),
+                    value: preferences.notifyAniListCurrent,
+                    onChanged:
+                        _busy ||
+                            (!aniListConnected &&
+                                !preferences.notifyAniListCurrent)
+                        ? null
+                        : (value) => _updateAniListSetting(
+                            enabled: value,
+                            origin:
+                                NotificationSubscriptionOrigin.aniListCurrent,
+                            update: preferences.setNotifyAniListCurrent(value),
+                          ),
+                  ),
+                  SwitchListTile(
+                    secondary: const Icon(Icons.event_note_outlined),
+                    title: const Text('Planning'),
+                    subtitle: const Text(
+                      'Follow titles in your AniList Planning lists',
+                    ),
+                    value: preferences.notifyAniListPlanning,
+                    onChanged:
+                        _busy ||
+                            (!aniListConnected &&
+                                !preferences.notifyAniListPlanning)
+                        ? null
+                        : (value) => _updateAniListSetting(
+                            enabled: value,
+                            origin:
+                                NotificationSubscriptionOrigin.aniListPlanning,
+                            update: preferences.setNotifyAniListPlanning(value),
+                          ),
+                  ),
+                  SwitchListTile(
+                    secondary: const Icon(Icons.favorite_border),
+                    title: const Text('Favorites'),
+                    subtitle: const Text('Follow favorite anime and manga'),
+                    value: preferences.notifyAniListFavorites,
+                    onChanged:
+                        _busy ||
+                            (!aniListConnected &&
+                                !preferences.notifyAniListFavorites)
+                        ? null
+                        : (value) => _updateAniListSetting(
+                            enabled: value,
+                            origin:
+                                NotificationSubscriptionOrigin.aniListFavorite,
+                            update: preferences.setNotifyAniListFavorites(
+                              value,
+                            ),
+                          ),
+                  ),
+                  _SettingsNavigationTile(
+                    icon: Icons.notifications_none,
+                    title: 'Manage followed titles',
+                    subtitle: titleCount == 0
+                        ? 'No titles followed yet'
+                        : '$titleCount title${titleCount == 1 ? '' : 's'} · $manualCount followed manually',
+                    onTap: _openSubscriptions,
+                  ),
+                  const SizedBox(height: 10),
+                  const _SectionTitle('Delivery'),
+                  _SelectionTile<NotificationPrivacy>(
+                    icon: Icons.privacy_tip_outlined,
+                    title: 'Lock-screen privacy',
+                    value: preferences.notificationPrivacy,
+                    values: NotificationPrivacy.values,
+                    labelBuilder: (value) => switch (value) {
+                      NotificationPrivacy.full => 'Title and release details',
+                      NotificationPrivacy.titleOnly => 'Title only',
+                      NotificationPrivacy.generic => 'Hide title and details',
+                    },
+                    onChanged: (value) {
+                      if (value != null) {
+                        preferences.setNotificationPrivacy(value);
+                      }
+                    },
+                  ),
+                  _SelectionTile<int>(
+                    icon: Icons.refresh_outlined,
+                    title: 'Background check interval',
+                    value: preferences.notificationRefreshHours,
+                    values: const [1, 3, 6, 12, 24],
+                    labelBuilder: (value) =>
+                        value == 1 ? 'Hourly' : 'Every $value hours',
+                    onChanged: (value) async {
+                      if (value == null) return;
+                      await preferences.setNotificationRefreshHours(value);
+                      await services.notificationCoordinator.reschedule();
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.sync),
+                    title: const Text('Refresh now'),
+                    subtitle: const Text(
+                      'Sync selected AniList lists and check for releases',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    enabled: preferences.notificationsEnabled && !_busy,
+                    onTap: _refresh,
+                  ),
+                  const SizedBox(height: 10),
+                  const _SectionTitle('History'),
+                  FutureBuilder<List<AppNotification>>(
+                    future:
+                        (services.database.select(
+                              services.database.appNotifications,
+                            )..orderBy([
+                              (entry) => OrderingTerm.desc(entry.eventAt),
+                            ]))
+                            .get(),
+                    builder: (context, snapshot) {
+                      final alerts = snapshot.data ?? const [];
+                      final unread = alerts
+                          .where((item) => !item.isRead)
+                          .length;
+                      return _SettingsNavigationTile(
+                        icon: Icons.inbox_outlined,
+                        title: 'Notification inbox',
+                        subtitle: alerts.isEmpty
+                            ? 'No release alerts yet'
+                            : '${alerts.length} alert${alerts.length == 1 ? '' : 's'}${unread == 0 ? '' : ' · $unread unread'}',
+                        onTap: _openInbox,
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationStatusCard extends StatelessWidget {
+  const _NotificationStatusCard({
+    required this.enabled,
+    required this.busy,
+    required this.titleCount,
+    required this.onChanged,
+  });
+
+  final bool enabled;
+  final bool busy;
+  final int titleCount;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      enabled: !busy,
+      toggled: enabled,
+      label: enabled ? 'Disable release alerts' : 'Enable release alerts',
+      child: Card(
+        color: enabled
+            ? colorScheme.primaryContainer
+            : colorScheme.surfaceContainerHigh,
+        margin: const EdgeInsets.only(bottom: 6),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: busy ? null : () => onChanged(!enabled),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: enabled
+                      ? colorScheme.primary
+                      : colorScheme.surfaceContainerHighest,
+                  foregroundColor: enabled
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurfaceVariant,
+                  child: busy
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          enabled
+                              ? Icons.notifications_active
+                              : Icons.notifications_paused_outlined,
+                        ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        enabled
+                            ? 'Release alerts are on'
+                            : 'Release alerts paused',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        enabled
+                            ? '$titleCount followed title${titleCount == 1 ? '' : 's'} will be checked.'
+                            : 'Your $titleCount followed ${titleCount == 1 ? 'title stays' : 'titles stay'} saved until you turn alerts back on.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                ExcludeSemantics(
+                  child: IgnorePointer(
+                    child: Switch(
+                      value: enabled,
+                      onChanged: busy ? null : (_) {},
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationHint extends StatelessWidget {
+  const _NotificationHint({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 20),
+            const SizedBox(width: 10),
+            Expanded(child: Text(text)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum _SubscriptionFilter { all, manual, aniList, paused }
+
+class _NotificationSubscriptionsPage extends StatefulWidget {
+  const _NotificationSubscriptionsPage({required this.services});
+
+  final AppServices services;
+
+  @override
+  State<_NotificationSubscriptionsPage> createState() =>
+      _NotificationSubscriptionsPageState();
+}
+
+class _NotificationSubscriptionsPageState
+    extends State<_NotificationSubscriptionsPage> {
+  String _query = '';
+  _SubscriptionFilter _filter = _SubscriptionFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
+    final services = widget.services;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Followed titles')),
+      body: SafeArea(
+        child: AnimatedBuilder(
+          animation: Listenable.merge([
+            services.preferences,
+            services.notificationSubscriptions,
+          ]),
+          builder: (context, _) {
+            return FutureBuilder<List<NotificationSubscription>>(
+              future: services.notificationSubscriptions.all(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final groups = _groupSubscriptions(snapshot.data ?? const [])
+                    .where(_matchesFilter)
+                    .where(
+                      (group) => group.title.toLowerCase().contains(
+                        _query.trim().toLowerCase(),
+                      ),
+                    )
+                    .toList();
+                return Column(
+                  children: [
+                    if (!services.preferences.notificationsEnabled)
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                        child: _NotificationHint(
+                          icon: Icons.pause_circle_outline,
+                          text:
+                              'All release checks are paused. These follows are kept and will resume when notifications are enabled.',
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                      child: SearchBar(
+                        leading: const Icon(Icons.search),
+                        hintText: 'Search followed titles',
+                        onChanged: (value) => setState(() => _query = value),
+                      ),
+                    ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: SegmentedButton<_SubscriptionFilter>(
+                        showSelectedIcon: false,
+                        segments: const [
+                          ButtonSegment(
+                            value: _SubscriptionFilter.all,
+                            label: Text('All'),
+                          ),
+                          ButtonSegment(
+                            value: _SubscriptionFilter.manual,
+                            label: Text('Manual'),
+                          ),
+                          ButtonSegment(
+                            value: _SubscriptionFilter.aniList,
+                            label: Text('AniList'),
+                          ),
+                          ButtonSegment(
+                            value: _SubscriptionFilter.paused,
+                            label: Text('Paused'),
+                          ),
+                        ],
+                        selected: {_filter},
+                        onSelectionChanged: (value) =>
+                            setState(() => _filter = value.first),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: groups.isEmpty
+                          ? const EmptyState(
+                              icon: Icons.notifications_none,
+                              title: 'No followed titles here',
+                              message:
+                                  'Use the bell on a media page or enable an AniList list above.',
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
+                              itemCount: groups.length,
+                              itemBuilder: (context, index) =>
+                                  _SubscriptionGroupCard(
+                                    group: groups[index],
+                                    onEnabledChanged: (value) => services
+                                        .notificationSubscriptions
+                                        .setMediaEnabled(
+                                          groups[index].mediaId,
+                                          groups[index].mediaType,
+                                          value,
+                                        ),
+                                    onRemoveManual: groups[index].hasManual
+                                        ? () => services
+                                              .notificationSubscriptions
+                                              .unsubscribeManual(
+                                                groups[index].mediaId,
+                                                groups[index].mediaType,
+                                              )
+                                        : null,
+                                  ),
+                            ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  bool _matchesFilter(_SubscriptionGroup group) {
+    return switch (_filter) {
+      _SubscriptionFilter.all => true,
+      _SubscriptionFilter.manual => group.hasManual,
+      _SubscriptionFilter.aniList => group.hasAniList,
+      _SubscriptionFilter.paused => !group.enabled,
+    };
+  }
+}
+
+class _SubscriptionGroupCard extends StatelessWidget {
+  const _SubscriptionGroupCard({
+    required this.group,
+    required this.onEnabledChanged,
+    this.onRemoveManual,
+  });
+
+  final _SubscriptionGroup group;
+  final ValueChanged<bool> onEnabledChanged;
+  final VoidCallback? onRemoveManual;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                width: 48,
+                height: 66,
+                child: group.coverUrl == null
+                    ? ColoredBox(
+                        color: colorScheme.surfaceContainerHighest,
+                        child: Icon(
+                          group.mediaType == 'anime'
+                              ? Icons.movie_outlined
+                              : Icons.menu_book_outlined,
+                        ),
+                      )
+                    : CachedNetworkImage(
+                        imageUrl: group.coverUrl!,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, _, _) =>
+                            const Icon(Icons.image_not_supported_outlined),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    group.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      for (final origin in group.origins)
+                        _OriginChip(label: _originLabel(origin)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Switch(value: group.enabled, onChanged: onEnabledChanged),
+            if (onRemoveManual != null)
+              PopupMenuButton<String>(
+                tooltip: 'Subscription actions',
+                onSelected: (_) => onRemoveManual?.call(),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                    value: 'remove_manual',
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.notifications_off_outlined),
+                      title: Text('Remove manual follow'),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OriginChip extends StatelessWidget {
+  const _OriginChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(label, style: Theme.of(context).textTheme.labelSmall),
+    );
+  }
+}
+
+class _SubscriptionGroup {
+  const _SubscriptionGroup({
+    required this.mediaId,
+    required this.mediaType,
+    required this.title,
+    required this.coverUrl,
+    required this.enabled,
+    required this.origins,
+  });
+
+  final int mediaId;
+  final String mediaType;
+  final String title;
+  final String? coverUrl;
+  final bool enabled;
+  final List<String> origins;
+
+  bool get hasManual =>
+      origins.contains(NotificationSubscriptionOrigin.manual.key);
+  bool get hasAniList => origins.any((origin) => origin != 'manual');
+}
+
+List<_SubscriptionGroup> _groupSubscriptions(
+  List<NotificationSubscription> subscriptions,
+) {
+  final grouped = <String, List<NotificationSubscription>>{};
+  for (final item in subscriptions) {
+    grouped
+        .putIfAbsent('${item.mediaType}:${item.mediaId}', () => [])
+        .add(item);
+  }
+  return grouped.values.map((rows) {
+    final first = rows.first;
+    final title = rows
+        .map((item) => item.mediaTitle.trim())
+        .firstWhere(
+          (value) => value.isNotEmpty,
+          orElse: () => 'Media ${first.mediaId}',
+        );
+    final covers = rows
+        .map((item) => item.coverUrl)
+        .whereType<String>()
+        .where((value) => value.isNotEmpty);
+    return _SubscriptionGroup(
+      mediaId: first.mediaId,
+      mediaType: first.mediaType,
+      title: title,
+      coverUrl: covers.isEmpty ? null : covers.first,
+      enabled: rows.any((item) => item.enabled),
+      origins: rows.map((item) => item.origin).toSet().toList(),
+    );
+  }).toList()..sort(
+    (left, right) =>
+        left.title.toLowerCase().compareTo(right.title.toLowerCase()),
+  );
+}
+
+int _subscriptionTitleCount(List<NotificationSubscription> subscriptions) {
+  return subscriptions
+      .map((item) => '${item.mediaType}:${item.mediaId}')
+      .toSet()
+      .length;
+}
+
+String _originLabel(String origin) {
+  return switch (origin) {
+    'manual' => 'Manual',
+    'anilist_current' => 'Current',
+    'anilist_planning' => 'Planning',
+    'anilist_favorite' => 'Favorite',
+    _ => origin.replaceAll('_', ' '),
+  };
+}
+
+class _NotificationInboxPage extends StatefulWidget {
+  const _NotificationInboxPage({required this.services});
+
+  final AppServices services;
+
+  @override
+  State<_NotificationInboxPage> createState() => _NotificationInboxPageState();
+}
+
+class _NotificationInboxPageState extends State<_NotificationInboxPage> {
+  late Future<List<AppNotification>> _alertsFuture = _load();
+
+  Future<List<AppNotification>> _load() {
+    return (widget.services.database.select(
+      widget.services.database.appNotifications,
+    )..orderBy([(entry) => OrderingTerm.desc(entry.eventAt)])).get();
+  }
+
+  void _reload() {
+    setState(() => _alertsFuture = _load());
+  }
+
+  Future<void> _markRead(AppNotification alert) async {
+    if (alert.isRead) return;
+    await (widget.services.database.update(
+      widget.services.database.appNotifications,
+    )..where((entry) => entry.id.equals(alert.id))).write(
+      const AppNotificationsCompanion(isRead: Value(true)),
+    );
+    _reload();
+  }
+
+  Future<void> _markAllRead() async {
+    await widget.services.database
+        .update(widget.services.database.appNotifications)
+        .write(const AppNotificationsCompanion(isRead: Value(true)));
+    _reload();
+  }
+
+  Future<void> _clear() async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Clear notification history?',
+      message:
+          'This removes the inbox history. It does not remove followed titles.',
+      confirmLabel: 'Clear',
+      destructive: true,
+      icon: Icons.delete_sweep_outlined,
+    );
+    if (!confirmed) return;
+    await widget.services.database
+        .delete(widget.services.database.appNotifications)
+        .go();
+    _reload();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Notification inbox'),
+        actions: [
+          IconButton(
+            tooltip: 'Mark all read',
+            onPressed: _markAllRead,
+            icon: const Icon(Icons.done_all),
+          ),
+          IconButton(
+            tooltip: 'Clear history',
+            onPressed: _clear,
+            icon: const Icon(Icons.delete_outline),
+          ),
+        ],
+      ),
+      body: FutureBuilder<List<AppNotification>>(
+        future: _alertsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final alerts = snapshot.data ?? const [];
+          if (alerts.isEmpty) {
+            return const EmptyState(
+              icon: Icons.inbox_outlined,
+              title: 'No alerts yet',
+              message:
+                  'New episodes, chapters, and airing reminders appear here.',
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+            itemCount: alerts.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final alert = alerts[index];
+              return Card(
+                color: alert.isRead
+                    ? null
+                    : Theme.of(context).colorScheme.secondaryContainer,
+                child: ListTile(
+                  leading: Icon(
+                    alert.category.contains('chapter')
+                        ? Icons.menu_book_outlined
+                        : Icons.notifications_outlined,
+                  ),
+                  title: Text(
+                    alert.title,
+                    style: TextStyle(
+                      fontWeight: alert.isRead
+                          ? FontWeight.normal
+                          : FontWeight.w700,
+                    ),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(alert.body),
+                      const SizedBox(height: 4),
+                      Text(
+                        DateFormat('MMM d, y · jm').format(alert.eventAt),
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ],
+                  ),
+                  onTap: () => _markRead(alert),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
@@ -639,27 +1781,17 @@ class _ClearHistoryTileState extends State<_ClearHistoryTile> {
   }
 
   Future<void> _clear() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear watch history?'),
-        content: const Text(
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Clear watch history?',
+      message:
           'All saved episode positions will be removed. Downloads and '
           'tracker lists are not affected.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Clear'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Clear',
+      destructive: true,
+      icon: Icons.delete_sweep_outlined,
     );
-    if (confirmed != true) {
+    if (!confirmed) {
       return;
     }
 
@@ -731,27 +1863,17 @@ class _DownloadedMediaTile extends StatelessWidget {
   }
 
   Future<void> _clear(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete all downloaded media?'),
-        content: const Text(
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Delete all downloaded media?',
+      message:
           'Completed anime episodes and manga chapters will be permanently '
           'removed from this device.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete all'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Delete all',
+      destructive: true,
+      icon: Icons.delete_forever_outlined,
     );
-    if (confirmed != true) {
+    if (!confirmed) {
       return;
     }
 
@@ -851,6 +1973,48 @@ class _ReaderSettingsPage extends StatelessWidget {
           onChanged: (value) {
             if (value != null) prefs.setMangaPreloadPages(value);
           },
+        ),
+        const SizedBox(height: 10),
+        const _SectionTitle('Novels'),
+        _SelectionTile<NovelReaderTheme>(
+          icon: Icons.palette_outlined,
+          title: 'Novel theme',
+          value: prefs.novelReaderTheme,
+          values: NovelReaderTheme.values,
+          labelBuilder: (value) => _formatEnumLabel(value.name),
+          onChanged: (value) {
+            if (value != null) prefs.setNovelReaderTheme(value);
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.format_size),
+          title: Text('Novel text size: ${prefs.novelFontSize.round()}'),
+          subtitle: Slider(
+            min: 12,
+            max: 36,
+            divisions: 24,
+            value: prefs.novelFontSize,
+            onChanged: prefs.setNovelFontSize,
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.format_line_spacing),
+          title: Text(
+            'Novel line height: ${prefs.novelLineHeight.toStringAsFixed(1)}',
+          ),
+          subtitle: Slider(
+            min: 1.1,
+            max: 2.4,
+            divisions: 13,
+            value: prefs.novelLineHeight,
+            onChanged: prefs.setNovelLineHeight,
+          ),
+        ),
+        SwitchListTile(
+          secondary: const Icon(Icons.lightbulb_outline),
+          title: const Text('Keep screen on for novels'),
+          value: prefs.novelKeepScreenOn,
+          onChanged: prefs.setNovelKeepScreenOn,
         ),
       ],
     );
@@ -1048,13 +2212,13 @@ class _TrackingProviderTile extends StatelessWidget {
             ],
           ),
           actions: [
-            TextButton(
+            AppDialogAction(
+              label: 'Cancel',
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
             ),
-            FilledButton(
+            AppDialogAction(
+              label: 'Login',
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Login'),
             ),
           ],
         ),
@@ -1078,23 +2242,14 @@ class _TrackingProviderTile extends StatelessWidget {
   }
 
   Future<void> _confirmLogout(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Logout of ${provider.label}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Logout of ${provider.label}?',
+      confirmLabel: 'Logout',
+      destructive: true,
+      icon: Icons.logout,
     );
-    if (confirmed == true) {
+    if (confirmed) {
       await trackingService.logout(provider);
     }
   }
@@ -1223,9 +2378,12 @@ class _SettingsPageScaffold extends StatelessWidget {
           builder: (context, _) {
             return ListTileTheme.merge(
               shape: _settingsTileShape,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-                children: childrenBuilder(context, preferences),
+              child: AppContentConstraint(
+                maxWidth: AppLayout.maxReadableWidth,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+                  children: childrenBuilder(context, preferences),
+                ),
               ),
             );
           },
@@ -1273,7 +2431,7 @@ class _SectionTitle extends StatelessWidget {
         text,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
           color: Theme.of(context).colorScheme.secondary,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -1686,9 +2844,9 @@ class _SelectionTile<T> extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
+          AppDialogAction(
+            label: 'Cancel',
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
           ),
         ],
       ),

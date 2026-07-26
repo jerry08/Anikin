@@ -1,7 +1,10 @@
 import 'dart:io';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
+import '../app/app_services.dart';
+import '../data/app_database.dart';
 import '../models/downloaded_episode.dart';
 import '../models/downloaded_manga.dart';
 import '../models/juro_models.dart';
@@ -11,14 +14,18 @@ import '../models/watch_history.dart';
 import '../services/download_service.dart';
 import '../services/juro_service.dart';
 import '../services/manga_download_service.dart';
+import '../services/feature_gate_service.dart';
+import '../services/novel_library_service.dart';
 import '../services/preferences_service.dart';
 import '../services/tracking_service.dart';
 import '../services/watch_history_service.dart';
 import '../widgets/app_dialogs.dart';
+import '../widgets/app_content_constraint.dart';
 import '../widgets/app_error_view.dart';
 import 'detail_screen.dart';
 import 'manga_detail_screen.dart';
 import 'manga_reader_screen.dart';
+import 'novel_reader_screen.dart';
 import 'player_screen.dart';
 
 class DownloadsScreen extends LibraryScreen {
@@ -282,6 +289,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final services = AppScope.maybeOf(context);
+    final novelLibrary =
+        services != null &&
+            services.featureGates.isEnabled(AppFeature.novelReader)
+        ? services.novelLibraryService
+        : null;
     return SafeArea(
       child: FutureBuilder<void>(
         future: _loadFuture,
@@ -293,75 +306,287 @@ class _LibraryScreenState extends State<LibraryScreen> {
             return AppErrorView(message: snapshot.error.toString());
           }
 
-          return DefaultTabController(
-            length: 4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                  child: Text(
-                    'Library',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
+          return AppContentConstraint(
+            child: DefaultTabController(
+              length: novelLibrary == null ? 4 : 5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                    child: Text(
+                      'Library',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    return TabBar(
-                      isScrollable: constraints.maxWidth < 380,
-                      tabs: const [
-                        Tab(text: 'Continue', icon: Icon(Icons.play_arrow)),
-                        Tab(
-                          text: 'Favorites',
-                          icon: Icon(Icons.favorite_border),
-                        ),
-                        Tab(text: 'Downloads', icon: Icon(Icons.download)),
-                        Tab(
-                          text: 'Lists',
-                          icon: Icon(Icons.format_list_bulleted),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      _ContinueTab(
-                        historyFuture: _historyFuture,
-                        onOpen: _openHistory,
-                      ),
-                      _FavoritesTab(
-                        trackingService: widget.trackingService,
-                        onOpen: _openFavorite,
-                      ),
-                      AnimatedBuilder(
-                        animation: Listenable.merge([
-                          widget.downloadService,
-                          widget.mangaDownloadService,
-                        ]),
-                        builder: (context, _) => _DownloadsBody(
-                          service: widget.downloadService,
-                          mangaService: widget.mangaDownloadService,
-                          onOpen: _openDownload,
-                          onOpenManga: _openMangaDownload,
-                        ),
-                      ),
-                      _ListsTab(
-                        trackingService: widget.trackingService,
-                        onOpen: _openFavorite,
-                      ),
-                    ],
+                  const SizedBox(height: 8),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      return TabBar(
+                        isScrollable:
+                            constraints.maxWidth <
+                            (novelLibrary == null ? 380 : 520),
+                        tabs: [
+                          const Tab(
+                            text: 'Continue',
+                            icon: Icon(Icons.play_arrow),
+                          ),
+                          const Tab(
+                            text: 'Favorites',
+                            icon: Icon(Icons.favorite_border),
+                          ),
+                          const Tab(
+                            text: 'Downloads',
+                            icon: Icon(Icons.download),
+                          ),
+                          const Tab(
+                            text: 'Lists',
+                            icon: Icon(Icons.format_list_bulleted),
+                          ),
+                          if (novelLibrary != null)
+                            const Tab(
+                              text: 'Novels',
+                              icon: Icon(Icons.auto_stories_outlined),
+                            ),
+                        ],
+                      );
+                    },
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        _ContinueTab(
+                          historyFuture: _historyFuture,
+                          onOpen: _openHistory,
+                        ),
+                        _FavoritesTab(
+                          trackingService: widget.trackingService,
+                          onOpen: _openFavorite,
+                        ),
+                        AnimatedBuilder(
+                          animation: Listenable.merge([
+                            widget.downloadService,
+                            widget.mangaDownloadService,
+                          ]),
+                          builder: (context, _) => _DownloadsBody(
+                            service: widget.downloadService,
+                            mangaService: widget.mangaDownloadService,
+                            onOpen: _openDownload,
+                            onOpenManga: _openMangaDownload,
+                          ),
+                        ),
+                        _ListsTab(
+                          trackingService: widget.trackingService,
+                          onOpen: _openFavorite,
+                        ),
+                        if (novelLibrary != null)
+                          _NovelsTab(
+                            library: novelLibrary,
+                            preferences: widget.preferences,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
       ),
+    );
+  }
+}
+
+class _NovelsTab extends StatefulWidget {
+  const _NovelsTab({required this.library, required this.preferences});
+
+  final NovelLibraryService library;
+  final PreferencesService preferences;
+
+  @override
+  State<_NovelsTab> createState() => _NovelsTabState();
+}
+
+class _NovelsTabState extends State<_NovelsTab> {
+  late Future<List<NovelLibraryEntry>> _booksFuture;
+  bool _importing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _booksFuture = widget.library.books();
+    widget.library.addListener(_handleLibraryChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant _NovelsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.library == widget.library) return;
+    oldWidget.library.removeListener(_handleLibraryChanged);
+    widget.library.addListener(_handleLibraryChanged);
+    _refresh();
+  }
+
+  @override
+  void dispose() {
+    widget.library.removeListener(_handleLibraryChanged);
+    super.dispose();
+  }
+
+  void _handleLibraryChanged() => _refresh();
+
+  void _refresh() {
+    if (mounted) {
+      setState(() => _booksFuture = widget.library.books());
+    }
+  }
+
+  Future<void> _importBook() async {
+    final file = await openFile(
+      acceptedTypeGroups: const [
+        XTypeGroup(label: 'Books', extensions: ['epub', 'txt']),
+      ],
+    );
+    if (file == null || !mounted) return;
+    setState(() => _importing = true);
+    try {
+      final book = await widget.library.importFile(file);
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => NovelReaderScreen(
+            book: book,
+            library: widget.library,
+            preferences: widget.preferences,
+          ),
+        ),
+      );
+    } catch (error) {
+      if (mounted) {
+        await showErrorDialog(
+          context,
+          error.toString(),
+          title: 'Unable to import book',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _importing = false);
+    }
+  }
+
+  Future<void> _openBook(NovelLibraryEntry book) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NovelReaderScreen(
+          book: book,
+          library: widget.library,
+          preferences: widget.preferences,
+        ),
+      ),
+    );
+    _refresh();
+  }
+
+  Future<void> _removeBook(NovelLibraryEntry book) async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Remove book?',
+      message:
+          '“${book.title}” and its locally imported chapters will be removed.',
+      confirmLabel: 'Remove',
+      destructive: true,
+      icon: Icons.delete_outline,
+    );
+    if (confirmed) await widget.library.removeBook(book);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<NovelLibraryEntry>>(
+      future: _booksFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return AppErrorView(message: snapshot.error.toString());
+        }
+        final books = snapshot.data ?? const [];
+        return RefreshIndicator(
+          onRefresh: () async {
+            _refresh();
+            await _booksFuture;
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            children: [
+              FilledButton.icon(
+                onPressed: _importing ? null : _importBook,
+                icon: _importing
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.file_open_outlined),
+                label: Text(_importing ? 'Importing…' : 'Import EPUB or TXT'),
+              ),
+              const SizedBox(height: 12),
+              if (books.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: EmptyState(
+                    icon: Icons.auto_stories_outlined,
+                    title: 'Your novel shelf is empty',
+                    message:
+                        'Import an EPUB or plain-text book. Files stay in Anikin’s private library.',
+                  ),
+                )
+              else
+                for (final book in books)
+                  Card(
+                    clipBehavior: Clip.antiAlias,
+                    child: ListTile(
+                      leading: const SizedBox.square(
+                        dimension: 48,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Color(0x2235C78A),
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          ),
+                          child: Icon(Icons.menu_book_outlined),
+                        ),
+                      ),
+                      title: Text(book.title),
+                      subtitle: Text(
+                        book.author?.trim().isNotEmpty == true
+                            ? book.author!
+                            : 'Local book',
+                      ),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'remove') _removeBook(book);
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(
+                            value: 'remove',
+                            child: ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Icon(Icons.delete_outline),
+                              title: Text('Remove'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      onTap: () => _openBook(book),
+                    ),
+                  ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -705,7 +930,7 @@ class _ListsTabState extends State<_ListsTab> {
                         child: Text(
                           'AniList lists',
                           style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w800),
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
                       IconButton(
@@ -775,7 +1000,7 @@ class _ListKindTitle extends StatelessWidget {
               '$title ($count)',
               style: Theme.of(
                 context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -988,7 +1213,7 @@ class _DownloadsBody extends StatelessWidget {
               child: Text(
                 'Downloads',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -1076,7 +1301,7 @@ class _SectionTitle extends StatelessWidget {
         title,
         style: Theme.of(
           context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
       ),
     );
   }

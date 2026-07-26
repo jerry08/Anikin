@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_brand">ANIKIN • CONTINUE</string>
+    <string name="widget_description">Continue watching and see the next followed release</string>
+    <string name="widget_nothing_in_progress">Nothing in progress</string>
+    <string name="widget_open_to_start">Open Anikin to start watching</string>
+    <string name="widget_no_release">No upcoming release synced</string>
+    <string name="widget_enable_alerts">Enable release alerts in Anikin</string>
+</resources>

@@ -56,12 +56,7 @@ class _ExpandableSelectableTextState extends State<ExpandableSelectableText> {
               TextButton.icon(
                 onPressed: () => setState(() => _expanded = !_expanded),
                 style: TextButton.styleFrom(
-                  minimumSize: Size.zero,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 0,
-                    vertical: 6,
-                  ),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                 ),
                 icon: Icon(
                   _expanded ? Icons.expand_less : Icons.expand_more,
@@ -133,7 +128,7 @@ class _ImagePreviewSheetState extends State<_ImagePreviewSheet> {
               overflow: TextOverflow.ellipsis,
               style: Theme.of(
                 context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
           const SizedBox(height: 12),

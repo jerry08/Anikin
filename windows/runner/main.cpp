@@ -1,10 +1,13 @@
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
+#include <flutter_windows.h>
+#include <algorithm>
 #include <string>
 #include <windows.h>
 
 #include "flutter_window.h"
 #include "utils.h"
+#include "window_state.h"
 #include "app_links/app_links_plugin_c_api.h"
 
 namespace {
@@ -13,6 +16,37 @@ namespace {
 //constexpr int kWindowHeight = 400;
 constexpr int kWindowWidth = 1280;
 constexpr int kWindowHeight = 800;
+
+Win32Window::Size InitialWindowSize() {
+  int width = kWindowWidth;
+  int height = kWindowHeight;
+  if (const std::optional<window_state::Size> saved_size =
+          window_state::LoadSize()) {
+    width = saved_size->width;
+    height = saved_size->height;
+  }
+
+  const POINT target_point = {0, 0};
+  const HMONITOR monitor =
+      ::MonitorFromPoint(target_point, MONITOR_DEFAULTTONEAREST);
+  MONITORINFO monitor_info = {};
+  monitor_info.cbSize = sizeof(monitor_info);
+  if (::GetMonitorInfo(monitor, &monitor_info)) {
+    const double scale_factor =
+        FlutterDesktopGetDpiForMonitor(monitor) / 96.0;
+    const int available_width = static_cast<int>(
+        (monitor_info.rcWork.right - monitor_info.rcWork.left) / scale_factor);
+    const int available_height = static_cast<int>(
+        (monitor_info.rcWork.bottom - monitor_info.rcWork.top) / scale_factor);
+    width =
+        std::min(width, std::max(Win32Window::kMinimumWidth, available_width));
+    height = std::min(
+        height, std::max(Win32Window::kMinimumHeight, available_height));
+  }
+
+  return Win32Window::Size(std::max(width, Win32Window::kMinimumWidth),
+                           std::max(height, Win32Window::kMinimumHeight));
+}
 
 void CenterWindow(HWND window) {
   RECT window_rect;
@@ -116,7 +150,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   FlutterWindow window(project);
   Win32Window::Point origin(0, 0);
-  Win32Window::Size size(kWindowWidth, kWindowHeight);
+  Win32Window::Size size = InitialWindowSize();
   if (!window.Create(L"anikin", origin, size)) {
     return EXIT_FAILURE;
   }

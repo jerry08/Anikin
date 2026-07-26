@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import '../models/anilist_media.dart';
 import '../models/tracking.dart';
 import 'app_bottom_sheet.dart';
+import 'app_dialogs.dart';
+import 'app_sheet_action_bar.dart';
 
 Future<AniListListEntryEditResult?> showAniListListEntrySheet({
   required BuildContext context,
@@ -116,7 +118,7 @@ class _AniListListEntrySheetState extends State<_AniListListEntrySheet> {
               'AniList list',
               style: Theme.of(
                 context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             Text(
@@ -263,20 +265,23 @@ class _AniListListEntrySheetState extends State<_AniListListEntrySheet> {
               ),
             ],
             const SizedBox(height: 18),
-            Row(
+            AppSheetActionBar(
+              showDivider: false,
+              minimum: EdgeInsets.zero,
               children: [
                 if (widget.entry != null)
                   TextButton.icon(
                     onPressed: _confirmDelete,
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                    ),
                     icon: const Icon(Icons.delete_outline),
                     label: const Text('Remove'),
                   ),
-                const Spacer(),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text('Cancel'),
                 ),
-                const SizedBox(width: 8),
                 FilledButton.icon(
                   onPressed: _save,
                   icon: const Icon(Icons.save_outlined),
@@ -301,24 +306,15 @@ class _AniListListEntrySheetState extends State<_AniListListEntrySheet> {
   }
 
   Future<void> _confirmDelete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Remove from AniList?'),
-        content: Text(widget.media.displayTitle),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Remove from AniList?',
+      message: widget.media.displayTitle,
+      confirmLabel: 'Remove',
+      destructive: true,
+      icon: Icons.delete_outline,
     );
-    if (confirmed == true && mounted) {
+    if (confirmed && mounted) {
       Navigator.of(context).pop(const AniListListEntryEditResult.delete());
     }
   }
