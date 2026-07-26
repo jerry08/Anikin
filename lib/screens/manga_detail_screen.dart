@@ -64,8 +64,9 @@ class MangaDetailScreen extends StatefulWidget {
 }
 
 class _MangaDetailScreenState extends State<MangaDetailScreen> {
-  final ScrollController _detailsScrollController = ScrollController();
-  final Map<_MangaDetailSection, double> _sectionOffsets = {};
+  final ScrollController _detailsScrollController = ScrollController(
+    keepScrollOffset: false,
+  );
   _MangaDetailSection _selectedSection = _MangaDetailSection.info;
   List<SourceProvider> _providers = [];
   MangaResult? _providerManga;
@@ -138,7 +139,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
     if (_selectedSection == _MangaDetailSection.read) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _restoreSectionOffset(_selectedSection);
+          _resetSectionOffset(_selectedSection);
         }
       });
     }
@@ -155,9 +156,6 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
       _scrollDetailsTo(0);
       return;
     }
-    if (_detailsScrollController.hasClients) {
-      _sectionOffsets[_selectedSection] = _detailsScrollController.offset;
-    }
     setState(() => _selectedSection = section);
     unawaited(
       widget.preferences.setDetailSectionIndex(
@@ -168,19 +166,19 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _restoreSectionOffset(section);
+        _resetSectionOffset(section);
       }
     });
   }
 
-  void _restoreSectionOffset(_MangaDetailSection section) {
+  void _resetSectionOffset(_MangaDetailSection section) {
     if (!_detailsScrollController.hasClients) {
       return;
     }
     final defaultOffset = section == _MangaDetailSection.info
         ? 0.0
         : mediaDetailHeaderHeight(context) - kToolbarHeight;
-    _scrollDetailsTo(_sectionOffsets[section] ?? defaultOffset);
+    _scrollDetailsTo(defaultOffset);
   }
 
   void _scrollDetailsTo(double requestedOffset) {
@@ -1017,6 +1015,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
                 coverUrl: cover,
                 imageHeaders: headers,
                 listButtonLabel: canUseAniList ? _listButtonLabel() : null,
+                listButtonActive: _listEntry != null,
                 listButtonBusy: _listEntryLoading || _listEntrySaving,
                 onListButtonPressed: _editAniListListEntry,
                 onBannerLongPress: () => _showImagePreview(

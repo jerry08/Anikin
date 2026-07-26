@@ -69,8 +69,9 @@ class DetailScreen extends StatefulWidget {
 }
 
 class _DetailScreenState extends State<DetailScreen> {
-  final ScrollController _detailsScrollController = ScrollController();
-  final Map<_AnimeDetailSection, double> _sectionOffsets = {};
+  final ScrollController _detailsScrollController = ScrollController(
+    keepScrollOffset: false,
+  );
   List<SourceProvider> _providers = [];
   JuroAnimeInfo? _providerAnime;
   List<AnimeEpisode> _episodes = [];
@@ -127,7 +128,7 @@ class _DetailScreenState extends State<DetailScreen> {
     if (_selectedSection == _AnimeDetailSection.watch) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _restoreSectionOffset(_selectedSection);
+          _resetSectionOffset(_selectedSection);
         }
       });
     }
@@ -246,9 +247,6 @@ class _DetailScreenState extends State<DetailScreen> {
       _scrollDetailsTo(0);
       return;
     }
-    if (_detailsScrollController.hasClients) {
-      _sectionOffsets[_selectedSection] = _detailsScrollController.offset;
-    }
     setState(() => _selectedSection = section);
     unawaited(
       widget.preferences.setDetailSectionIndex(
@@ -259,19 +257,19 @@ class _DetailScreenState extends State<DetailScreen> {
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _restoreSectionOffset(section);
+        _resetSectionOffset(section);
       }
     });
   }
 
-  void _restoreSectionOffset(_AnimeDetailSection section) {
+  void _resetSectionOffset(_AnimeDetailSection section) {
     if (!_detailsScrollController.hasClients) {
       return;
     }
     final defaultOffset = section == _AnimeDetailSection.info
         ? 0.0
         : mediaDetailHeaderHeight(context) - kToolbarHeight;
-    _scrollDetailsTo(_sectionOffsets[section] ?? defaultOffset);
+    _scrollDetailsTo(defaultOffset);
   }
 
   void _scrollDetailsTo(double requestedOffset) {
@@ -1313,6 +1311,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 bannerUrl: banner,
                 coverUrl: cover,
                 listButtonLabel: canUseAniList ? _listButtonLabel() : null,
+                listButtonActive: _listEntry != null,
                 listButtonBusy: _listEntryLoading || _listEntrySaving,
                 onListButtonPressed: _editAniListListEntry,
                 onBannerLongPress: () => _showImagePreview(banner ?? cover),

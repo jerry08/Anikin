@@ -3,12 +3,15 @@ import 'dart:ui' show Tristate;
 
 import 'package:anikin/models/anilist_media.dart';
 import 'package:anikin/models/juro_models.dart';
+import 'package:anikin/screens/detail_screen.dart';
 import 'package:anikin/screens/manga_detail_screen.dart';
 import 'package:anikin/screens/manga_reader_screen.dart';
+import 'package:anikin/services/download_service.dart';
 import 'package:anikin/services/juro_service.dart';
 import 'package:anikin/services/manga_download_service.dart';
 import 'package:anikin/services/preferences_service.dart';
 import 'package:anikin/services/tracking_service.dart';
+import 'package:anikin/services/watch_history_service.dart';
 import 'package:anikin/widgets/app_error_view.dart';
 import 'package:anikin/widgets/media_detail_header.dart';
 import 'package:flutter/material.dart';
@@ -146,6 +149,54 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('media list action stays compact beneath the title', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    Widget buildHeader({required bool active}) {
+      return MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: kMediaDetailHeaderHeight,
+            child: MediaDetailHeader(
+              title: 'Compact List Action',
+              statusText: 'Releasing',
+              listButtonLabel: active ? 'Watching' : 'Add to list',
+              listButtonActive: active,
+              onListButtonPressed: () {},
+            ),
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildHeader(active: false));
+
+    final button = find.widgetWithText(OutlinedButton, 'Add to list');
+    expect(button, findsOneWidget);
+    expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+    expect(tester.getSize(button).width, lessThan(200));
+    expect(
+      tester.getTopLeft(button).dx,
+      closeTo(tester.getTopLeft(find.text('Compact List Action')).dx, 1),
+    );
+    expect(
+      tester.getTopLeft(button).dy,
+      greaterThan(tester.getBottomLeft(find.text('Releasing')).dy),
+    );
+
+    await tester.pumpWidget(buildHeader(active: true));
+    expect(find.widgetWithText(OutlinedButton, 'Watching'), findsOneWidget);
+    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test(
     'anime defaults to Watch and detail selections survive a service reload',
     () async {
@@ -196,6 +247,142 @@ void main() {
       expect(progress?.completed, isFalse);
     },
   );
+
+  testWidgets('anime tabs reset scroll while preserving the selected tab', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    SharedPreferences.setMockInitialValues({});
+    final preferences = PreferencesService();
+    await preferences.load();
+    final tracking = TrackingService(listenForLinks: false);
+    final watchHistory = WatchHistoryService();
+    final downloads = DownloadService();
+    addTearDown(tracking.dispose);
+    addTearDown(watchHistory.dispose);
+    addTearDown(downloads.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DetailScreen(
+          media: AniListMedia(
+            id: 76,
+            title: const MediaTitle(english: 'Fresh Anime Position'),
+            cover: const MediaCover(),
+            description: List.filled(
+              40,
+              'A detailed anime synopsis used to make the info tab scroll.',
+            ).join(' '),
+            episodes: 60,
+          ),
+          preferences: preferences,
+          juroService: _ScrollableAnimeJuroService(),
+          watchHistoryService: watchHistory,
+          downloadService: downloads,
+          trackingService: tracking,
+          initialProvider: _ScrollableAnimeJuroService.provider,
+          initialProviderAnime: const JuroAnimeInfo(
+            id: 'anime-76',
+            title: 'Fresh Anime Position',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final detailView = find.descendant(
+      of: find.byType(DetailScreen),
+      matching: find.byType(CustomScrollView),
+    );
+    final controller = tester.widget<CustomScrollView>(detailView).controller!;
+    expect(controller.keepScrollOffset, isFalse);
+
+    final watchStart =
+        (mediaDetailHeaderHeight(tester.element(find.byType(DetailScreen))) -
+                kToolbarHeight)
+            .clamp(0.0, controller.position.maxScrollExtent);
+    await tester.drag(detailView, const Offset(0, -700));
+    await tester.pumpAndSettle();
+    expect(controller.offset, greaterThan(watchStart + 100));
+
+    await tester.tap(find.bySemanticsLabel('Info'));
+    await tester.pumpAndSettle();
+    expect(controller.offset, closeTo(0, 1));
+
+    await tester.tap(find.bySemanticsLabel('Watch'));
+    await tester.pumpAndSettle();
+    expect(controller.offset, closeTo(watchStart, 1));
+    expect(preferences.detailSectionIndex(mediaKind: 'anime', mediaId: 76), 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('manga tabs reset scroll while preserving the selected tab', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    SharedPreferences.setMockInitialValues({});
+    final preferences = PreferencesService();
+    await preferences.load();
+    final tracking = TrackingService(listenForLinks: false);
+    addTearDown(tracking.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MangaDetailScreen(
+          media: AniListMedia(
+            id: 77,
+            title: const MediaTitle(english: 'Fresh Manga Position'),
+            cover: const MediaCover(),
+            description: List.filled(
+              40,
+              'A detailed manga synopsis used to make the info tab scroll.',
+            ).join(' '),
+            chapters: 60,
+          ),
+          preferences: preferences,
+          juroService: _ScrollableMangaJuroService(),
+          mangaDownloadService: _NoopMangaDownloadService(),
+          trackingService: tracking,
+          initialProvider: _ScrollableMangaJuroService.provider,
+          initialProviderManga: const MangaResult(
+            id: 'manga-77',
+            title: 'Fresh Manga Position',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final detailView = find.descendant(
+      of: find.byType(MangaDetailScreen),
+      matching: find.byType(CustomScrollView),
+    );
+    final controller = tester.widget<CustomScrollView>(detailView).controller!;
+    expect(controller.keepScrollOffset, isFalse);
+
+    await tester.drag(detailView, const Offset(0, -700));
+    await tester.pumpAndSettle();
+    expect(controller.offset, greaterThan(100));
+
+    await tester.tap(find.bySemanticsLabel('Read'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.bySemanticsLabel('Info'));
+    await tester.pumpAndSettle();
+    expect(controller.offset, closeTo(0, 1));
+    expect(preferences.detailSectionIndex(mediaKind: 'manga', mediaId: 77), 0);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('manga source loading does not replace the detail shell', (
     tester,
@@ -333,6 +520,50 @@ class _PendingMangaJuroService extends JuroService {
 
   @override
   Future<List<SourceProvider>> getMangaProviders() => providers.future;
+}
+
+class _ScrollableAnimeJuroService extends JuroService {
+  static const provider = SourceProvider(key: 'fixture', name: 'Fixture');
+
+  @override
+  Future<List<SourceProvider>> getProviders() async => const [provider];
+
+  @override
+  Future<List<AnimeEpisode>> getEpisodes(
+    String animeId, {
+    required String providerKey,
+  }) async {
+    return List.generate(
+      60,
+      (index) => AnimeEpisode(id: 'episode-${index + 1}', number: index + 1),
+    );
+  }
+}
+
+class _ScrollableMangaJuroService extends JuroService {
+  static const provider = SourceProvider(
+    key: 'manga-fixture',
+    name: 'Manga Fixture',
+    type: 1,
+  );
+
+  @override
+  Future<List<SourceProvider>> getMangaProviders() async => const [provider];
+
+  @override
+  Future<MangaInfo> getMangaInfo(
+    String mangaId, {
+    required String providerKey,
+  }) async {
+    return MangaInfo(
+      id: mangaId,
+      title: 'Fresh Manga Position',
+      chapters: List.generate(
+        60,
+        (index) => MangaChapter(id: 'chapter-${index + 1}', number: index + 1),
+      ),
+    );
+  }
 }
 
 class _FailingMangaJuroService extends JuroService {

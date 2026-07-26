@@ -204,6 +204,7 @@ class MediaDetailHeader extends StatelessWidget {
     this.coverUrl,
     this.imageHeaders,
     this.listButtonLabel,
+    this.listButtonActive = false,
     this.listButtonBusy = false,
     this.onListButtonPressed,
     this.onBannerLongPress,
@@ -221,6 +222,7 @@ class MediaDetailHeader extends StatelessWidget {
   final String? coverUrl;
   final Map<String, String>? imageHeaders;
   final String? listButtonLabel;
+  final bool listButtonActive;
   final bool listButtonBusy;
   final VoidCallback? onListButtonPressed;
   final VoidCallback? onBannerLongPress;
@@ -353,6 +355,74 @@ class MediaDetailHeader extends StatelessWidget {
                                           ),
                                     ),
                                   ],
+                                  if (listButtonLabel case final label?) ...[
+                                    SizedBox(height: compact ? 8 : 10),
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      widthFactor: 1,
+                                      child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          maxWidth: compact ? 176 : 184,
+                                        ),
+                                        child: OutlinedButton.icon(
+                                          onPressed: listButtonBusy
+                                              ? null
+                                              : onListButtonPressed,
+                                          style: OutlinedButton.styleFrom(
+                                            minimumSize: Size(
+                                              0,
+                                              compact ? 40 : 42,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                            ),
+                                            side: BorderSide(
+                                              color:
+                                                  (listButtonActive
+                                                          ? colorScheme.primary
+                                                          : colorScheme
+                                                                .onSurfaceVariant)
+                                                      .withValues(alpha: 0.72),
+                                            ),
+                                            foregroundColor: listButtonActive
+                                                ? colorScheme.primary
+                                                : colorScheme.onSurface,
+                                            backgroundColor: background
+                                                .withValues(alpha: 0.52),
+                                            textStyle: theme
+                                                .textTheme
+                                                .labelLarge
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                          ),
+                                          icon: listButtonBusy
+                                              ? const SizedBox.square(
+                                                  dimension: 18,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                )
+                                              : Icon(
+                                                  listButtonActive
+                                                      ? Icons.check_rounded
+                                                      : Icons.add_rounded,
+                                                  size: 19,
+                                                ),
+                                          label: Text(
+                                            label,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -360,54 +430,6 @@ class MediaDetailHeader extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (listButtonLabel case final label?)
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          compact ? 24 : 32,
-                          0,
-                          compact ? 24 : 32,
-                          compact ? 10 : 16,
-                        ),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: compact ? 44 : 48,
-                          child: OutlinedButton(
-                            onPressed: listButtonBusy
-                                ? null
-                                : onListButtonPressed,
-                            style: OutlinedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              side: BorderSide(
-                                color: colorScheme.onSurface.withValues(
-                                  alpha: 0.8,
-                                ),
-                              ),
-                              foregroundColor: colorScheme.secondary,
-                              backgroundColor: background.withValues(
-                                alpha: 0.25,
-                              ),
-                              textStyle: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.1,
-                              ),
-                            ),
-                            child: listButtonBusy
-                                ? const SizedBox.square(
-                                    dimension: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    label.toUpperCase(),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               );
