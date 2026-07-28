@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_download_description">Downloading app update</string>
+    <string name="update_download_failed">The Anikin update download failed. Try again from Settings.</string>
+    <string name="update_installer_unavailable">The Android package installer could not be opened.</string>
+</resources>

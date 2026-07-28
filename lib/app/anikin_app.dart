@@ -281,7 +281,7 @@ class _MainShellState extends State<MainShell> {
       if (!mounted || !result.isUpdateAvailable) {
         return;
       }
-      await showUpdateAvailableDialog(context, result);
+      await showUpdateAvailableDialog(context, result, widget.updateService);
     } catch (error) {
       debugPrint('Update check failed: $error');
     }

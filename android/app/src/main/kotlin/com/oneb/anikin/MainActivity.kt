@@ -44,6 +44,46 @@ class MainActivity : FlutterActivity() {
 				}
 			}
 		}
+		MethodChannel(
+			flutterEngine.dartExecutor.binaryMessenger,
+			"com.oneb.anikin/app_update",
+		).setMethodCallHandler { call, result ->
+			when (call.method) {
+				"downloadAndInstall" -> {
+					val url = call.argument<String>("url")
+					val fileName = call.argument<String>("fileName")
+					val version = call.argument<String>("version")
+					if (url.isNullOrBlank() ||
+						fileName.isNullOrBlank() ||
+						version.isNullOrBlank()
+					) {
+						result.error(
+							"invalid_update",
+							"The update download is missing required details.",
+							null,
+						)
+						return@setMethodCallHandler
+					}
+					try {
+						result.success(
+							AppUpdateDownloader.enqueue(
+								applicationContext,
+								url,
+								fileName,
+								version,
+							),
+						)
+					} catch (error: Exception) {
+						result.error(
+							"update_download_failed",
+							error.message ?: "Android could not start the update download.",
+							null,
+						)
+					}
+				}
+				else -> result.notImplemented()
+			}
+		}
 	}
 
 	override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean) {

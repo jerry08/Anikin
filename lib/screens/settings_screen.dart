@@ -438,7 +438,7 @@ class _UpdateCheckTileState extends State<_UpdateCheckTile> {
         return;
       }
       if (result.isUpdateAvailable) {
-        await showUpdateAvailableDialog(context, result);
+        await showUpdateAvailableDialog(context, result, widget.updateService);
       } else {
         await showNoUpdateDialog(context, result);
       }

@@ -171,7 +171,10 @@ class AppServices {
       searchHistoryService: SearchHistoryService(database),
       sourceHealthService: sourceHealthService,
       trackingService: trackingService,
-      updateService: UpdateService(currentVersion: packageInfo.version),
+      updateService: UpdateService(
+        currentVersion: packageInfo.version,
+        capabilities: capabilities,
+      ),
     );
     await homeWidgetService.initialize();
     await notificationCoordinator.initialize();

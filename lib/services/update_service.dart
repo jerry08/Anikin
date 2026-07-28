@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import '../core/app_constants.dart';
+import '../core/platform_capabilities.dart';
 import 'anilist_service.dart';
 
 class UpdateService {
@@ -10,14 +12,23 @@ class UpdateService {
     required this.currentVersion,
     http.Client? client,
     Uri? latestReleaseUri,
+    PlatformCapabilities? capabilities,
+    MethodChannel? appUpdateChannel,
   }) : _client = client ?? http.Client(),
        _latestReleaseUri =
            latestReleaseUri ??
-           Uri.parse(AppConstants.githubLatestReleaseEndpoint);
+           Uri.parse(AppConstants.githubLatestReleaseEndpoint),
+       _capabilities = capabilities ?? PlatformCapabilities.detect(),
+       _appUpdateChannel =
+           appUpdateChannel ?? const MethodChannel(_appUpdateChannelName);
+
+  static const _appUpdateChannelName = 'com.oneb.anikin/app_update';
 
   final http.Client _client;
   final String currentVersion;
   final Uri _latestReleaseUri;
+  final PlatformCapabilities _capabilities;
+  final MethodChannel _appUpdateChannel;
 
   Future<UpdateCheckResult> checkForUpdate() async {
     final response = await _client.get(
@@ -47,6 +58,56 @@ class UpdateService {
       isUpdateAvailable: latest.compareTo(current) > 0,
     );
   }
+
+  bool canInstallDirectly(AppRelease release) =>
+      _capabilities.isAndroid && release.androidApkAsset != null;
+
+  Future<int> downloadAndInstall(AppRelease release) async {
+    if (!_capabilities.isAndroid) {
+      throw const AppUpdateException(
+        'In-app installation is only available on Android.',
+      );
+    }
+
+    final asset = release.androidApkAsset;
+    if (asset == null) {
+      throw const AppUpdateException(
+        'This release does not include a compatible Android APK.',
+      );
+    }
+
+    final downloadUri = Uri.tryParse(asset.downloadUrl);
+    if (downloadUri == null ||
+        downloadUri.scheme.toLowerCase() != 'https' ||
+        downloadUri.host.isEmpty) {
+      throw const AppUpdateException(
+        'The Android update has an invalid download URL.',
+      );
+    }
+
+    try {
+      final downloadId = await _appUpdateChannel
+          .invokeMethod<int>('downloadAndInstall', {
+            'url': downloadUri.toString(),
+            'fileName': asset.name,
+            'version': release.version,
+          });
+      if (downloadId == null || downloadId < 0) {
+        throw const AppUpdateException(
+          'Android could not start the update download.',
+        );
+      }
+      return downloadId;
+    } on MissingPluginException {
+      throw const AppUpdateException(
+        'The Android update installer is unavailable.',
+      );
+    } on PlatformException catch (error) {
+      throw AppUpdateException(
+        error.message ?? 'Android could not start the update download.',
+      );
+    }
+  }
 }
 
 class UpdateCheckResult {
@@ -68,6 +129,7 @@ class AppRelease {
     required this.title,
     required this.url,
     required this.body,
+    this.assets = const [],
   });
 
   final String tagName;
@@ -75,6 +137,39 @@ class AppRelease {
   final String title;
   final String url;
   final String body;
+  final List<AppReleaseAsset> assets;
+
+  AppReleaseAsset? get androidApkAsset {
+    final apks = assets
+        .where((asset) => asset.isDownloadableApk)
+        .toList(growable: false);
+    if (apks.isEmpty) {
+      return null;
+    }
+
+    for (final asset in apks) {
+      if (asset.name.toLowerCase().contains('universal')) {
+        return asset;
+      }
+    }
+
+    final withoutExplicitAbi = apks
+        .where((asset) {
+          final name = asset.name.toLowerCase();
+          return !name.contains('arm64') &&
+              !name.contains('armeabi') &&
+              !name.contains('x86') &&
+              !name.contains('x64');
+        })
+        .toList(growable: false);
+    if (withoutExplicitAbi.length == 1) {
+      return withoutExplicitAbi.single;
+    }
+    if (apks.length == 1) {
+      return apks.single;
+    }
+    return null;
+  }
 
   factory AppRelease.fromJson(Map<String, dynamic> json) {
     final tagName = json['tag_name']?.toString().trim() ?? '';
@@ -92,12 +187,68 @@ class AppRelease {
           ? json['html_url'].toString().trim()
           : AppConstants.githubReleasesUrl,
       body: json['body']?.toString().trim() ?? '',
+      assets: _parseReleaseAssets(json['assets']),
     );
   }
 
   static String _normalizeTagVersion(String tagName) {
     return tagName.trim().replaceFirst(RegExp(r'^[vV]'), '');
   }
+}
+
+class AppReleaseAsset {
+  const AppReleaseAsset({required this.name, required this.downloadUrl});
+
+  final String name;
+  final String downloadUrl;
+
+  bool get isDownloadableApk {
+    if (!name.toLowerCase().endsWith('.apk')) {
+      return false;
+    }
+    final uri = Uri.tryParse(downloadUrl);
+    return uri != null &&
+        uri.scheme.toLowerCase() == 'https' &&
+        uri.host.isNotEmpty;
+  }
+
+  static AppReleaseAsset? tryFromJson(Map<String, dynamic> json) {
+    final name = json['name']?.toString().trim() ?? '';
+    final downloadUrl = json['browser_download_url']?.toString().trim() ?? '';
+    if (name.isEmpty || downloadUrl.isEmpty) {
+      return null;
+    }
+    return AppReleaseAsset(name: name, downloadUrl: downloadUrl);
+  }
+}
+
+List<AppReleaseAsset> _parseReleaseAssets(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+
+  final assets = <AppReleaseAsset>[];
+  for (final item in value) {
+    if (item is! Map) {
+      continue;
+    }
+    final asset = AppReleaseAsset.tryFromJson(
+      item.map((key, value) => MapEntry(key.toString(), value)),
+    );
+    if (asset != null) {
+      assets.add(asset);
+    }
+  }
+  return List.unmodifiable(assets);
+}
+
+class AppUpdateException implements Exception {
+  const AppUpdateException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }
 
 class AppVersion implements Comparable<AppVersion> {
