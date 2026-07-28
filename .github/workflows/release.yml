@@ -355,6 +355,34 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Determine release range
+        id: release-range
+        shell: bash
+        run: |
+          set -euo pipefail
+          previous_tag="$(git describe \
+            --tags \
+            --abbrev=0 \
+            --match 'v[0-9]*' \
+            "${GITHUB_REF_NAME}^" 2>/dev/null || true)"
+
+          if [[ -n "$previous_tag" ]]; then
+            range="${previous_tag}..${GITHUB_REF_NAME}"
+          else
+            range="${GITHUB_REF_NAME}"
+          fi
+
+          echo "range=$range" >> "$GITHUB_OUTPUT"
+
+      - name: Generate release notes
+        uses: orhun/git-cliff-action@v4
+        with:
+          version: v2.13.1
+          config: cliff.toml
+          args: --no-exec ${{ steps.release-range.outputs.range }}
+        env:
+          OUTPUT: release-notes.md
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -374,14 +402,15 @@ jobs:
           if [[ "$tag" == *"-pre"* || "$tag" == *"-beta"* || "$tag" == *"-alpha"* || "$tag" == *"-rc"* ]]; then
             prerelease_arg=(--prerelease)
           fi
-          notes="$(git tag -l --format='%(contents)' "$tag")"
-          if [[ -z "$notes" ]]; then
-            notes="Release $tag"
+
+          if [[ ! -s release-notes.md ]] || ! grep -q '[^[:space:]]' release-notes.md; then
+            printf 'Release %s\n' "$tag" > release-notes.md
           fi
+
           gh release create "$tag" release-assets/* \
             --repo "${GITHUB_REPOSITORY}" \
             --title "$version" \
-            --notes "$notes" \
+            --notes-file release-notes.md \
             --verify-tag \
             "${prerelease_arg[@]}"
 
@@ -405,20 +434,51 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Collect release notes
+      - name: Prepare Discord notification
+        if: ${{ env.DISCORD_WEBHOOK != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-          notes="$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")"
+          notes="$(gh release view "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json body \
+            --jq '.body // ""')"
+
           if [[ -z "$notes" ]]; then
             notes="Release $GITHUB_REF_NAME"
           fi
-          {
-            echo 'RELEASE_BODY<<EOF'
-            echo "$notes"
-            echo EOF
-          } >> "$GITHUB_ENV"
+
+          if (( ${#notes} > 1200 )); then
+            notes="${notes:0:1200}"$'\n\n'"_Release notes truncated; open the GitHub Release to read the rest._"
+          fi
+
+          repository_name="${GITHUB_REPOSITORY#*/}"
+          repository_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+          avatar_url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${DEFAULT_BRANCH}/assets/branding/app_icon.png"
+
+          printf -v content '%s\n' \
+            "**${repository_name}** new version released!" \
+            "Version: \`${GITHUB_REF_NAME}\`" \
+            "" \
+            "$notes" \
+            "" \
+            "**All downloads:** <${repository_url}/releases/tag/${GITHUB_REF_NAME}>" \
+            "" \
+            "**Quick links:**" \
+            "Android (universal): <${repository_url}/releases/download/${GITHUB_REF_NAME}/${APP_NAME}-android-universal.apk>" \
+            "Windows x64: <${repository_url}/releases/download/${GITHUB_REF_NAME}/${APP_NAME}-windows-x64.zip>" \
+            "Linux x64: <${repository_url}/releases/download/${GITHUB_REF_NAME}/${APP_NAME}-linux-x64.zip>"
+
+          payload="$(jq -cn \
+            --arg username "Notifications" \
+            --arg avatar_url "$avatar_url" \
+            --arg content "$content" \
+            '{username: $username, avatar_url: $avatar_url, content: $content}')"
+
+          echo "DISCORD_PAYLOAD=$payload" >> "$GITHUB_ENV"
 
       - name: Notify Discord
         if: ${{ env.DISCORD_WEBHOOK != '' }}
@@ -428,9 +488,4 @@ jobs:
           method: POST
           headers: |
             Content-Type: application/json; charset=UTF-8
-          body: |
-            {
-              "username": "Notifications",
-              "avatar_url": "https://raw.githubusercontent.com/${{ github.event.repository.full_name }}/${{ github.event.repository.default_branch }}/assets/branding/app_icon.png",
-              "content": "**${{ github.event.repository.name }}** new version released!\nVersion: `${{ github.ref_name }}`\n\n${{ env.RELEASE_BODY }}\n\n**All downloads:** <${{ github.event.repository.html_url }}/releases/tag/${{ github.ref_name }}>\n\n**Quick links:**\nAndroid (universal): <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/${{ env.APP_NAME }}-android-universal.apk>\nWindows x64: <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/${{ env.APP_NAME }}-windows-x64.zip>\nLinux x64: <${{ github.event.repository.html_url }}/releases/download/${{ github.ref_name }}/${{ env.APP_NAME }}-linux-x64.zip>"
-            }
+          body: ${{ env.DISCORD_PAYLOAD }}

@@ -1,0 +1,39 @@
+[changelog]
+header = ""
+body = """
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim }}
+
+{% for commit in commits %}
+- {% if commit.breaking %}**Breaking:** {% endif %}{% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | upper_first }} (`{{ commit.id | truncate(length=7, end="") }}`)
+{% endfor %}
+{% endfor %}
+"""
+footer = ""
+trim = true
+render_always = true
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+split_commits = false
+commit_preprocessors = [
+  { pattern = "(?s)\n.*", replace = "" },
+]
+commit_parsers = [
+  { message = "(?i)^(release |(?:chore: )?bump (?:app )?version)", skip = true },
+  { message = "^(feat|Add|Expand)", group = "<!-- 0 -->Features" },
+  { message = "^(fix|Fix|Restore)", group = "<!-- 1 -->Fixes" },
+  { message = "^perf", group = "<!-- 2 -->Performance" },
+  { message = "^(refactor|style|Improve|Polish)", group = "<!-- 3 -->Improvements" },
+  { message = "^(docs|test)", group = "<!-- 4 -->Documentation and testing" },
+  { message = "^(build|ci)", group = "<!-- 5 -->Build and CI" },
+  { message = "^chore", group = "<!-- 6 -->Maintenance" },
+  { message = ".*", group = "<!-- 7 -->Other changes" },
+]
+protect_breaking_commits = true
+filter_commits = false
+fail_on_unmatched_commit = false
+tag_pattern = "v[0-9].*"
+topo_order = false
+sort_commits = "oldest"
