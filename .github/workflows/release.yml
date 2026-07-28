@@ -123,6 +123,62 @@ jobs:
           mkdir -p artifacts/android
           cp build/app/outputs/flutter-apk/app-release.apk "artifacts/android/${APP_NAME}-android-universal.apk"
 
+      - name: Verify extension host ABI
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="build/app/outputs/flutter-apk/app-release.apk"
+          analyzer="$(command -v apkanalyzer || true)"
+          if [[ -z "$analyzer" ]]; then
+            sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+            if [[ -n "$sdk_root" && -d "$sdk_root/cmdline-tools" ]]; then
+              analyzer="$(find "$sdk_root/cmdline-tools" -path '*/bin/apkanalyzer' -type f | sort -V | tail -n 1)"
+            fi
+          fi
+          if [[ -z "$analyzer" || ! -x "$analyzer" ]]; then
+            echo "apkanalyzer was not found in the Android SDK." >&2
+            exit 1
+          fi
+
+          verify_open_client() {
+            local class_name="$1"
+            local declaration
+            declaration="$("$analyzer" dex code --class "$class_name" "$apk" \
+              | grep -E '^\.method .* getClient\(\)Lokhttp3/OkHttpClient;' || true)"
+            if [[ -z "$declaration" ]]; then
+              echo "getClient() is missing from $class_name." >&2
+              exit 1
+            fi
+            if [[ "$declaration" == *" final "* ]]; then
+              echo "R8 finalized extension API method: $declaration" >&2
+              exit 1
+            fi
+          }
+
+          verify_open_client "eu.kanade.tachiyomi.animesource.online.AnimeHttpSource"
+          verify_open_client "eu.kanade.tachiyomi.source.online.HttpSource"
+
+          anime_preferences="$("$analyzer" dex code \
+            --class 'eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource$DefaultImpls' \
+            "$apk")"
+          manga_preferences="$("$analyzer" dex code \
+            --class 'eu.kanade.tachiyomi.source.ConfigurableSource$DefaultImpls' \
+            "$apk")"
+          anime_preference_helpers="$("$analyzer" dex code \
+            --class 'eu.kanade.tachiyomi.animesource.ConfigurableAnimeSourceKt' \
+            "$apk")"
+          manga_preference_helpers="$("$analyzer" dex code \
+            --class 'eu.kanade.tachiyomi.source.ConfigurableSourceKt' \
+            "$apk")"
+          grep -q 'getSourcePreferences' <<< "$anime_preferences"
+          grep -q 'getSourcePreferences' <<< "$manga_preferences"
+          grep -q 'preferenceKey' <<< "$anime_preference_helpers"
+          grep -q 'sourcePreferences' <<< "$anime_preference_helpers"
+          grep -q 'preferenceKey' <<< "$manga_preference_helpers"
+          grep -q 'sourcePreferences' <<< "$manga_preference_helpers"
+          "$analyzer" dex code --class 'kotlinx.serialization.protobuf.ProtoBuf' "$apk" >/dev/null
+          "$analyzer" dex code --class 'app.cash.quickjs.QuickJs' "$apk" >/dev/null
+
       - name: Build split ABI APKs
         shell: bash
         run: |

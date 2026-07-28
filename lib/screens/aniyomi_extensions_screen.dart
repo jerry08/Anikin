@@ -674,6 +674,11 @@ class _ExtensionDetailsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
+            if (extension.loadError != null &&
+                extension.loadError!.isNotEmpty) ...[
+              _ExtensionLoadError(message: extension.loadError!),
+              const SizedBox(height: 14),
+            ],
             const _SectionHeader(title: 'Sources', icon: Icons.source_outlined),
             if (extension.sources.isEmpty)
               CompactEmptyState(
@@ -683,6 +688,52 @@ class _ExtensionDetailsScreen extends StatelessWidget {
             else
               for (final source in extension.sources)
                 _SourceTile(source: source),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ExtensionLoadError extends StatelessWidget {
+  const _ExtensionLoadError({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: colorScheme.errorContainer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.error_outline, color: colorScheme.onErrorContainer),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Extension could not be loaded',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  SelectableText(
+                    message,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onErrorContainer,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -1099,6 +1150,12 @@ class _ExtensionSummary extends StatelessWidget {
                 text: extension.installLocationLabel!,
                 foreground: colorScheme.onTertiaryContainer,
                 background: colorScheme.tertiaryContainer,
+              ),
+            if (extension.isInstalled && !extension.isLoaded)
+              _MetaPill(
+                text: 'Load failed',
+                foreground: colorScheme.onErrorContainer,
+                background: colorScheme.errorContainer,
               ),
             if (extension.isNsfw)
               _MetaPill(

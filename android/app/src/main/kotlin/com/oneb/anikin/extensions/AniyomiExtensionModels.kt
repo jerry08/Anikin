@@ -38,25 +38,38 @@ data class AvailableExtensionInfo(
     val iconUrl: String?,
     val sources: List<AvailableSourceInfo>,
 ) {
-    fun toMap(installed: LoadedExtensionInfo? = null): Map<String, Any?> = mapOf(
-        "name" to name,
-        "pkgName" to pkgName,
-        "versionName" to versionName,
-        "versionCode" to versionCode,
-        "libVersion" to libVersion,
-        "lang" to lang,
-        "isNsfw" to isNsfw,
-        "mediaType" to mediaType.wireName,
-        "type" to mediaType.providerType,
-        "apkName" to apkName,
-        "repoUrl" to repoUrl,
-        "iconUrl" to iconUrl,
-        "sources" to sources.map { it.toMap() },
-        "isInstalled" to (installed != null),
-        "installLocation" to installed?.installLocation?.wireName,
-        "isPrivate" to (installed?.installLocation == ExtensionInstallLocation.Private),
-        "hasUpdate" to (installed?.let { versionCode > it.versionCode || libVersion > it.libVersion } ?: false),
-    )
+    fun toMap(
+        installed: LoadedExtensionInfo? = null,
+        failed: FailedExtensionInfo? = null,
+    ): Map<String, Any?> {
+        val installedVersionCode = installed?.versionCode ?: failed?.versionCode
+        val installedLibVersion = installed?.libVersion ?: failed?.libVersion
+        val installLocation = installed?.installLocation ?: failed?.installLocation
+        val hasUpdate = installedVersionCode != null &&
+            installedLibVersion != null &&
+            (versionCode > installedVersionCode || libVersion > installedLibVersion)
+        return mapOf(
+            "name" to name,
+            "pkgName" to pkgName,
+            "versionName" to versionName,
+            "versionCode" to versionCode,
+            "libVersion" to libVersion,
+            "lang" to lang,
+            "isNsfw" to isNsfw,
+            "mediaType" to mediaType.wireName,
+            "type" to mediaType.providerType,
+            "apkName" to apkName,
+            "repoUrl" to repoUrl,
+            "iconUrl" to iconUrl,
+            "sources" to (installed?.sources?.mapNotNull(::sourceToMap) ?: sources.map { it.toMap() }),
+            "isInstalled" to (installed != null || failed != null),
+            "isLoaded" to (installed != null),
+            "loadError" to failed?.loadError,
+            "installLocation" to installLocation?.wireName,
+            "isPrivate" to (installLocation == ExtensionInstallLocation.Private),
+            "hasUpdate" to hasUpdate,
+        )
+    }
 
     fun toJson(): JSONObject = JSONObject()
         .put("name", name)
@@ -174,31 +187,66 @@ data class LoadedExtensionInfo(
         "isPrivate" to (installLocation == ExtensionInstallLocation.Private),
         "sources" to sources.mapNotNull { source -> sourceToMap(source) },
         "isInstalled" to true,
+        "isLoaded" to true,
+        "loadError" to null,
     )
+}
 
-    private fun sourceToMap(source: Any): Map<String, Any?>? = when (source) {
-        is AnimeSource -> mapOf(
-            "id" to source.id,
-            "key" to AniyomiExtensionRuntime.providerKeyForAnimeSource(source.id),
-            "name" to source.name,
-            "language" to source.lang,
-            "lang" to source.lang,
-            "mediaType" to ExtensionMediaType.Anime.wireName,
-            "type" to ExtensionMediaType.Anime.providerType,
-            "supportsLatest" to ((source as? AnimeCatalogueSource)?.supportsLatest ?: false),
-            "isConfigurable" to (source is ConfigurableAnimeSource),
-        )
-        is MangaSource -> mapOf(
-            "id" to source.id,
-            "key" to AniyomiExtensionRuntime.providerKeyForMangaSource(source.id),
-            "name" to source.name,
-            "language" to source.lang,
-            "lang" to source.lang,
-            "mediaType" to ExtensionMediaType.Manga.wireName,
-            "type" to ExtensionMediaType.Manga.providerType,
-            "supportsLatest" to ((source as? MangaCatalogueSource)?.supportsLatest ?: false),
-            "isConfigurable" to (source is ConfigurableSource),
-        )
-        else -> null
-    }
+data class FailedExtensionInfo(
+    val name: String,
+    val pkgName: String,
+    val versionName: String,
+    val versionCode: Long,
+    val libVersion: Double,
+    val lang: String,
+    val isNsfw: Boolean,
+    val mediaType: ExtensionMediaType,
+    val signatureHash: String,
+    val installLocation: ExtensionInstallLocation,
+    val loadError: String,
+) {
+    fun toMap(): Map<String, Any?> = mapOf(
+        "name" to name,
+        "pkgName" to pkgName,
+        "versionName" to versionName,
+        "versionCode" to versionCode,
+        "libVersion" to libVersion,
+        "lang" to lang,
+        "isNsfw" to isNsfw,
+        "mediaType" to mediaType.wireName,
+        "type" to mediaType.providerType,
+        "signatureHash" to signatureHash,
+        "installLocation" to installLocation.wireName,
+        "isPrivate" to (installLocation == ExtensionInstallLocation.Private),
+        "sources" to emptyList<Map<String, Any?>>(),
+        "isInstalled" to true,
+        "isLoaded" to false,
+        "loadError" to loadError,
+    )
+}
+
+private fun sourceToMap(source: Any): Map<String, Any?>? = when (source) {
+    is AnimeSource -> mapOf(
+        "id" to source.id,
+        "key" to AniyomiExtensionRuntime.providerKeyForAnimeSource(source.id),
+        "name" to source.name,
+        "language" to source.lang,
+        "lang" to source.lang,
+        "mediaType" to ExtensionMediaType.Anime.wireName,
+        "type" to ExtensionMediaType.Anime.providerType,
+        "supportsLatest" to ((source as? AnimeCatalogueSource)?.supportsLatest ?: false),
+        "isConfigurable" to (source is ConfigurableAnimeSource),
+    )
+    is MangaSource -> mapOf(
+        "id" to source.id,
+        "key" to AniyomiExtensionRuntime.providerKeyForMangaSource(source.id),
+        "name" to source.name,
+        "language" to source.lang,
+        "lang" to source.lang,
+        "mediaType" to ExtensionMediaType.Manga.wireName,
+        "type" to ExtensionMediaType.Manga.providerType,
+        "supportsLatest" to ((source as? MangaCatalogueSource)?.supportsLatest ?: false),
+        "isConfigurable" to (source is ConfigurableSource),
+    )
+    else -> null
 }

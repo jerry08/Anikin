@@ -14,6 +14,7 @@ import android.content.pm.PackageInstaller
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.preference.DialogPreference
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
@@ -44,6 +45,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withContext
@@ -65,6 +67,7 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
     private val prefs = appContext.getSharedPreferences("aniyomi_extensions", Context.MODE_PRIVATE)
     private val extensionDir = File(appContext.filesDir, "aniyomi_anime_exts")
     private val installedExtensions = ConcurrentHashMap<String, LoadedExtensionInfo>()
+    private val failedExtensions = ConcurrentHashMap<String, FailedExtensionInfo>()
     private val animeSources = ConcurrentHashMap<Long, AnimeSource>()
     private val mangaSources = ConcurrentHashMap<Long, MangaSource>()
 
@@ -192,22 +195,38 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
         val nsfwAllowed = isNsfwAllowed()
         return availableExtensions
             .filter { nsfwAllowed || !it.isNsfw }
-            .map { available -> available.toMap(installedExtensions[available.pkgName]) }
+            .map { available ->
+                available.toMap(
+                    installed = installedExtensions[available.pkgName],
+                    failed = failedExtensions[available.pkgName],
+                )
+            }
     }
 
     suspend fun listInstalledExtensions(): List<Map<String, Any?>> {
         awaitReady()
-        return installedExtensions.values
-            .sortedBy { it.name.lowercase(Locale.ROOT) }
-            .map { installed ->
+        val loaded = installedExtensions.values.map { installed ->
+            installed.name to installed.toMap().toMutableMap().also { map ->
                 val available = availableExtensions.firstOrNull { it.pkgName == installed.pkgName }
-                val map = installed.toMap().toMutableMap()
                 if (available != null) {
                     map["hasUpdate"] = available.versionCode > installed.versionCode || available.libVersion > installed.libVersion
                     map["iconUrl"] = available.iconUrl
                 }
-                map
             }
+        }
+        val failed = failedExtensions.values.map { extension ->
+            extension.name to extension.toMap().toMutableMap().also { map ->
+                val available = availableExtensions.firstOrNull { it.pkgName == extension.pkgName }
+                if (available != null) {
+                    map["hasUpdate"] =
+                        available.versionCode > extension.versionCode || available.libVersion > extension.libVersion
+                    map["iconUrl"] = available.iconUrl
+                }
+            }
+        }
+        return (loaded + failed)
+            .sortedBy { it.first.lowercase(Locale.ROOT) }
+            .map { it.second }
     }
 
     suspend fun installExtension(pkgName: String): Map<String, Any?> = withContext(Dispatchers.IO) {
@@ -229,6 +248,7 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
             validateUpdateSafety(extension)
             try {
                 installSystemExtensionFile(temp, extension)
+                awaitSystemExtensionVisible(extension.packageName)
             } catch (systemError: Exception) {
                 if (systemError is kotlinx.coroutines.CancellationException &&
                     systemError !is kotlinx.coroutines.TimeoutCancellationException
@@ -244,7 +264,13 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
             temp.delete()
         }
         reloadInstalledExtensions()
-        mapOf("ok" to true, "installLocation" to installLocation.wireName)
+        val loadFailure = failedExtensions[pkgName]
+        mapOf(
+            "ok" to true,
+            "installLocation" to installLocation.wireName,
+            "loaded" to (loadFailure == null),
+            "loadError" to loadFailure?.loadError,
+        )
     }
 
     suspend fun updateExtension(pkgName: String): Map<String, Any?> = installExtension(pkgName)
@@ -621,6 +647,14 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
         }
     }
 
+    private suspend fun awaitSystemExtensionVisible(pkgName: String) {
+        repeat(PACKAGE_VISIBILITY_RETRIES) {
+            if (installedPackageInfo(pkgName) != null) return
+            delay(PACKAGE_VISIBILITY_RETRY_DELAY_MS)
+        }
+        error("Installed extension is not visible to Anikin: $pkgName")
+    }
+
     private suspend fun uninstallSystemExtension(pkgName: String) {
         awaitPackageInstallerResult("$PACKAGE_UNINSTALL_ACTION.${pkgName.hashCode()}") { sender ->
             appContext.packageManager.packageInstaller.uninstall(pkgName, sender)
@@ -704,6 +738,7 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
     @Synchronized
     private fun reloadInstalledExtensions() {
         installedExtensions.clear()
+        failedExtensions.clear()
         animeSources.clear()
         mangaSources.clear()
         extensionPackageCandidates().forEach { candidate ->
@@ -717,41 +752,73 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
                         }
                     }
                 }
-                LoadResult.Error -> Unit
+                is LoadResult.Error -> {
+                    failedExtensionInfo(candidate, result)?.let { failure ->
+                        failedExtensions[failure.pkgName] = failure
+                    }
+                    Log.e(
+                        TAG,
+                        "Failed to load extension ${candidate.pkgInfo.packageName}: ${result.message}",
+                        result.cause,
+                    )
+                }
             }
         }
     }
 
     private fun loadExtension(candidate: ExtensionPackageCandidate): LoadResult {
         val pkgInfo = candidate.pkgInfo
-        if (!isPackageAnExtension(pkgInfo)) return LoadResult.Error
-        val appInfo = pkgInfo.applicationInfo ?: return LoadResult.Error
+        if (!isPackageAnExtension(pkgInfo)) return LoadResult.Error("Package is not a supported extension")
+        val appInfo = pkgInfo.applicationInfo ?: return LoadResult.Error("Extension has no application information")
         appInfo.fixBasePaths(candidate.apkPath)
-        val mediaType = packageMediaType(pkgInfo) ?: return LoadResult.Error
+        val mediaType = packageMediaType(pkgInfo) ?: return LoadResult.Error("Extension media type is missing")
         val pkgName = pkgInfo.packageName
         val extensionName = packageLabel(appInfo).substringAfter("Aniyomi: ")
             .substringAfter("Tachiyomi: ")
-        val versionName = pkgInfo.versionName ?: return LoadResult.Error
-        val libVersion = extractLibVersion(versionName) ?: return LoadResult.Error
-        if (!isSupportedLibVersion(mediaType, libVersion)) return LoadResult.Error
+        val versionName = pkgInfo.versionName ?: return LoadResult.Error("Extension version is missing")
+        val libVersion = extractLibVersion(versionName)
+            ?: return LoadResult.Error("Extension lib version is invalid: $versionName")
+        if (!isSupportedLibVersion(mediaType, libVersion)) {
+            return LoadResult.Error("Extension lib version is not supported: $libVersion")
+        }
         val signatures = getSignatures(pkgInfo)
         val signatureHash = signatures.lastOrNull().orEmpty()
         val sourceClassNames = appInfo.metaData?.getString(metadataSourceClass(mediaType))?.split(';').orEmpty()
-        if (sourceClassNames.isEmpty()) return LoadResult.Error
+        if (sourceClassNames.isEmpty()) return LoadResult.Error("Extension declares no source classes")
         val classLoader = ChildFirstPathClassLoader(candidate.apkPath, appContext.classLoader)
+        val sourceLoadErrors = mutableListOf<Pair<String, Throwable>>()
+        val unsupportedSourceClasses = mutableListOf<String>()
         val loadedSources = sourceClassNames.flatMap { rawClassName ->
             val className = rawClassName.trim().let { if (it.startsWith('.')) pkgName + it else it }
-            runCatching {
+            runCatching<List<Any>> {
                 when (val instance = Class.forName(className, false, classLoader).getDeclaredConstructor().newInstance()) {
                     is AnimeSource -> listOf(instance)
                     is AnimeSourceFactory -> instance.createSources()
                     is MangaSource -> listOf(instance)
                     is MangaSourceFactory -> instance.createSources()
-                    else -> emptyList()
+                    else -> {
+                        unsupportedSourceClasses += className
+                        emptyList()
+                    }
                 }
-            }.getOrDefault(emptyList())
+            }.getOrElse { error ->
+                sourceLoadErrors += className to error
+                emptyList()
+            }
         }
-        if (loadedSources.isEmpty()) return LoadResult.Error
+        if (loadedSources.isEmpty()) {
+            val firstFailure = sourceLoadErrors.firstOrNull()
+            val message = when {
+                firstFailure != null -> {
+                    val (className, error) = firstFailure
+                    "Could not load $className: ${error.describeForExtensionLoad()}"
+                }
+                unsupportedSourceClasses.isNotEmpty() ->
+                    "Source class does not implement a supported source API: ${unsupportedSourceClasses.first()}"
+                else -> "Extension did not create any sources"
+            }
+            return LoadResult.Error(message, firstFailure?.second)
+        }
         val langs = loadedSources.mapNotNull { source ->
             when (source) {
                 is AnimeCatalogueSource -> source.lang
@@ -778,6 +845,34 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
                 installLocation = if (candidate.isPrivate) ExtensionInstallLocation.Private else ExtensionInstallLocation.System,
                 sources = loadedSources,
             ),
+        )
+    }
+
+    private fun failedExtensionInfo(
+        candidate: ExtensionPackageCandidate,
+        error: LoadResult.Error,
+    ): FailedExtensionInfo? {
+        val pkgInfo = candidate.pkgInfo
+        val appInfo = pkgInfo.applicationInfo ?: return null
+        val mediaType = packageMediaType(pkgInfo) ?: return null
+        val pkgName = pkgInfo.packageName
+        val versionName = pkgInfo.versionName.orEmpty()
+        return FailedExtensionInfo(
+            name = packageLabel(appInfo).substringAfter("Aniyomi: ").substringAfter("Tachiyomi: "),
+            pkgName = pkgName,
+            versionName = versionName,
+            versionCode = pkgInfo.versionCodeCompat(),
+            libVersion = extractLibVersion(versionName) ?: 0.0,
+            lang = availableExtensions.firstOrNull { it.pkgName == pkgName }?.lang.orEmpty(),
+            isNsfw = appInfo.metaData?.getInt(metadataNsfw(mediaType), 0) == 1,
+            mediaType = mediaType,
+            signatureHash = getSignatures(pkgInfo).lastOrNull().orEmpty(),
+            installLocation = if (candidate.isPrivate) {
+                ExtensionInstallLocation.Private
+            } else {
+                ExtensionInstallLocation.System
+            },
+            loadError = error.message,
         )
     }
 
@@ -1198,7 +1293,10 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
 
     private sealed interface LoadResult {
         data class Success(val extension: LoadedExtensionInfo) : LoadResult
-        data object Error : LoadResult
+        data class Error(
+            val message: String,
+            val cause: Throwable? = null,
+        ) : LoadResult
     }
 
     private data class ExtensionPackageCandidate(
@@ -1222,6 +1320,8 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
         private const val PACKAGE_INSTALL_ACTION = "com.oneb.anikin.extensions.INSTALL_RESULT"
         private const val PACKAGE_UNINSTALL_ACTION = "com.oneb.anikin.extensions.UNINSTALL_RESULT"
         private const val PACKAGE_INSTALL_TIMEOUT_MS = 5 * 60 * 1000L
+        private const val PACKAGE_VISIBILITY_RETRIES = 20
+        private const val PACKAGE_VISIBILITY_RETRY_DELAY_MS = 100L
         private const val KEY_REPOS = "anime_extension_repos"
         private const val KEY_AVAILABLE_CACHE = "available_extensions_cache"
         private const val KEY_SHOW_NSFW = "show_nsfw_sources"
@@ -1229,6 +1329,7 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
         private const val ANIME_LIB_VERSION_MAX = 16.0
         private const val MANGA_LIB_VERSION_MIN = 1.0
         private const val MANGA_LIB_VERSION_MAX = 2.0
+        private const val TAG = "AniyomiExtensions"
         private val PACKAGE_FLAGS = PackageManager.GET_CONFIGURATIONS or
             PackageManager.GET_META_DATA or
             PackageManager.GET_SIGNATURES or
@@ -1250,3 +1351,9 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
 }
 
 private inline fun <reified T : Any> typeRef(): FullTypeReference<T> = object : FullTypeReference<T>() {}
+
+private fun Throwable.describeForExtensionLoad(): String {
+    val rootCause = generateSequence(this) { error -> error.cause }.last()
+    val type = rootCause.javaClass.simpleName.ifBlank { rootCause.javaClass.name }
+    return rootCause.message?.takeIf { it.isNotBlank() }?.let { "$type: $it" } ?: type
+}

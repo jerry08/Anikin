@@ -368,6 +368,8 @@ class AniyomiExtensionInfo {
     this.signatureHash,
     this.sources = const [],
     this.isInstalled = false,
+    this.isLoaded = true,
+    this.loadError,
     this.hasUpdate = false,
     this.installLocation,
     this.isPrivate = false,
@@ -388,6 +390,8 @@ class AniyomiExtensionInfo {
   final String? signatureHash;
   final List<AniyomiExtensionSourceInfo> sources;
   final bool isInstalled;
+  final bool isLoaded;
+  final String? loadError;
   final bool hasUpdate;
   final String? installLocation;
   final bool isPrivate;
@@ -409,6 +413,7 @@ class AniyomiExtensionInfo {
       if (lang != null && lang!.isNotEmpty) lang!.toUpperCase(),
       versionName,
       if (isInstalled && installLocationLabel != null) installLocationLabel!,
+      if (isInstalled && !isLoaded) 'Load failed',
       if (sourceCount > 0) '$sourceCount source${sourceCount == 1 ? '' : 's'}',
       if (isNsfw) 'NSFW',
     ].join(' • ');
@@ -439,6 +444,10 @@ class AniyomiExtensionInfo {
                 .toList()
           : const [],
       isInstalled: _readBool(json, 'isInstalled'),
+      isLoaded: json.containsKey('isLoaded')
+          ? _readBool(json, 'isLoaded')
+          : true,
+      loadError: _readString(json, 'loadError'),
       hasUpdate: _readBool(json, 'hasUpdate'),
       installLocation: _readString(json, 'installLocation'),
       isPrivate: _readBool(json, 'isPrivate'),

@@ -53,4 +53,48 @@ void main() {
     expect(output, contains('Native source failed'));
     expect(output, contains('native stack trace'));
   });
+
+  testWidgets('preserves installed extension load failures', (tester) async {
+    const channel = MethodChannel('test/aniyomi_extension_load_failure');
+    final service = AniyomiExtensionService(channel: channel, isAndroid: true);
+
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+      call,
+    ) async {
+      expect(call.method, 'getInstalledExtensions');
+      return <Map<String, Object?>>[
+        {
+          'name': 'GoogleDriveIndex',
+          'pkgName': 'eu.kanade.tachiyomi.animeextension.all.googledriveindex',
+          'versionName': '14.7',
+          'versionCode': 7,
+          'libVersion': 14.0,
+          'mediaType': 'anime',
+          'type': 0,
+          'sources': <Object?>[],
+          'isInstalled': true,
+          'isLoaded': false,
+          'loadError':
+              'VerifyError: getClient overrides final method in AnimeHttpSource',
+          'installLocation': 'system',
+        },
+      ];
+    });
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        null,
+      ),
+    );
+
+    final extensions = await service.getInstalledExtensions();
+
+    expect(extensions, hasLength(1));
+    final extension = extensions.single;
+    expect(extension.isInstalled, isTrue);
+    expect(extension.isLoaded, isFalse);
+    expect(extension.loadError, contains('VerifyError'));
+    expect(extension.displaySubtitle, contains('Load failed'));
+    expect(extension.installLocationLabel, 'System installed');
+  });
 }

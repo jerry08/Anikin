@@ -88,4 +88,6 @@ dependencies {
     implementation("uy.kohesive.injekt:injekt-core:1.16.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-okio:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.9.0")
+    implementation("app.cash.quickjs:quickjs-android:0.9.2")
 }

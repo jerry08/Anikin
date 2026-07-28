@@ -26,13 +26,15 @@ class ChildFirstPathClassLoader(path: String, parent: ClassLoader) : PathClassLo
         return name.startsWith("java.") ||
             name.startsWith("javax.") ||
             name.startsWith("android.") ||
-            name.startsWith("androidx.") ||
+            name.startsWith("androidx.preference.") ||
             name.startsWith("kotlin.") ||
-            name.startsWith("kotlinx.") ||
+            name.startsWith("kotlinx.coroutines.") ||
+            name.startsWith("kotlinx.serialization.") ||
             name.startsWith("okhttp3.") ||
             name.startsWith("okio.") ||
             name.startsWith("org.jsoup.") ||
             name.startsWith("rx.") ||
+            name.startsWith("app.cash.quickjs.") ||
             name.startsWith("uy.kohesive.injekt.") ||
             name.startsWith("eu.kanade.tachiyomi.animesource.") ||
             name.startsWith("eu.kanade.tachiyomi.source.") ||
