@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -26,6 +27,115 @@ abstract final class AppShapes {
   static const floatingSurface = RoundedRectangleBorder(
     borderRadius: BorderRadius.all(Radius.circular(12)),
   );
+}
+
+abstract final class AppTypography {
+  static const String fontFamily = 'Poppins';
+
+  static TextTheme textTheme(ColorScheme colorScheme) {
+    final typography = Typography.material2021(
+      platform: defaultTargetPlatform,
+      colorScheme: colorScheme,
+    );
+    final base =
+        (colorScheme.brightness == Brightness.dark
+                ? typography.white
+                : typography.black)
+            .apply(fontFamily: fontFamily);
+
+    return base.copyWith(
+      displayLarge: base.displayLarge?.copyWith(
+        fontSize: 48,
+        fontWeight: FontWeight.w700,
+        height: 1.08,
+        letterSpacing: -1,
+      ),
+      displayMedium: base.displayMedium?.copyWith(
+        fontSize: 40,
+        fontWeight: FontWeight.w700,
+        height: 1.1,
+        letterSpacing: -0.75,
+      ),
+      displaySmall: base.displaySmall?.copyWith(
+        fontSize: 34,
+        fontWeight: FontWeight.w700,
+        height: 1.15,
+        letterSpacing: -0.5,
+      ),
+      headlineLarge: base.headlineLarge?.copyWith(
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        height: 1.18,
+        letterSpacing: -0.4,
+      ),
+      headlineMedium: base.headlineMedium?.copyWith(
+        fontSize: 30,
+        fontWeight: FontWeight.w700,
+        height: 1.18,
+        letterSpacing: -0.3,
+      ),
+      headlineSmall: base.headlineSmall?.copyWith(
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        height: 1.2,
+        letterSpacing: -0.2,
+      ),
+      titleLarge: base.titleLarge?.copyWith(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        height: 1.3,
+        letterSpacing: -0.15,
+      ),
+      titleMedium: base.titleMedium?.copyWith(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        height: 1.4,
+        letterSpacing: 0,
+      ),
+      titleSmall: base.titleSmall?.copyWith(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        height: 1.4,
+        letterSpacing: 0.05,
+      ),
+      bodyLarge: base.bodyLarge?.copyWith(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        height: 1.5,
+        letterSpacing: 0,
+      ),
+      bodyMedium: base.bodyMedium?.copyWith(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        height: 1.45,
+        letterSpacing: 0.1,
+      ),
+      bodySmall: base.bodySmall?.copyWith(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        height: 1.4,
+        letterSpacing: 0.2,
+      ),
+      labelLarge: base.labelLarge?.copyWith(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        height: 1.3,
+        letterSpacing: 0.1,
+      ),
+      labelMedium: base.labelMedium?.copyWith(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        height: 1.3,
+        letterSpacing: 0.3,
+      ),
+      labelSmall: base.labelSmall?.copyWith(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        height: 1.3,
+        letterSpacing: 0.4,
+      ),
+    );
+  }
 }
 
 class AppTheme {
@@ -131,7 +241,8 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      fontFamily: 'Lato',
+      fontFamily: AppTypography.fontFamily,
+      textTheme: AppTypography.textTheme(colorScheme),
       colorScheme: colorScheme,
       scaffoldBackgroundColor: surfaceDark,
       appBarTheme: AppBarTheme(
@@ -245,7 +356,8 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      fontFamily: 'Lato',
+      fontFamily: AppTypography.fontFamily,
+      textTheme: AppTypography.textTheme(colorScheme),
       colorScheme: colorScheme,
       appBarTheme: AppBarTheme(
         centerTitle: false,

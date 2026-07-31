@@ -109,12 +109,16 @@ flutter:
   assets:
     - assets/images/tori_gate.png
     - assets/images/logo2.png
+    - assets/fonts/Poppins-OFL.txt
 
   fonts:
-    - family: Lato
+    - family: Poppins
       fonts:
-        - asset: assets/fonts/Lato-Regular.ttf
-        - asset: assets/fonts/Lato-Bold.ttf
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
 
   # To add assets to your application, add an assets section, like this:

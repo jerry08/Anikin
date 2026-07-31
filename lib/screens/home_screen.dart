@@ -517,6 +517,7 @@ class _FeatureCarouselState extends State<_FeatureCarousel> {
         final height = isDesktop
             ? (width * 0.34).clamp(340.0, 420.0).toDouble()
             : (width * 0.78).clamp(390.0, 440.0).toDouble();
+        final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
 
         return Padding(
           padding: EdgeInsets.only(bottom: isDesktop ? 26 : 22),
@@ -525,21 +526,44 @@ class _FeatureCarouselState extends State<_FeatureCarousel> {
             children: [
               SizedBox(
                 height: height,
-                child: PageView.builder(
-                  controller: _controller,
-                  itemCount: widget.items.length,
-                  onPageChanged: (index) => setState(() => _index = index),
-                  itemBuilder: (context, index) {
-                    final media = widget.items[index];
-                    return _FeatureBanner(
-                      media: media,
-                      onTap: () => widget.onItemTap(media),
-                    );
-                  },
+                child: Stack(
+                  fit: StackFit.expand,
+                  clipBehavior: Clip.none,
+                  children: [
+                    PageView.builder(
+                      controller: _controller,
+                      itemCount: widget.items.length,
+                      onPageChanged: (index) => setState(() => _index = index),
+                      itemBuilder: (context, index) {
+                        final media = widget.items[index];
+                        return _FeatureBanner(
+                          media: media,
+                          onTap: () => widget.onItemTap(media),
+                        );
+                      },
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: -2,
+                      height: 4,
+                      child: IgnorePointer(
+                        child: ColoredBox(
+                          key: const ValueKey('feature-carousel-bottom-seam'),
+                          color: backgroundColor,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               if (widget.items.length > 1) ...[
-                const SizedBox(height: 10),
+                SizedBox(
+                  key: const ValueKey('feature-carousel-indicator-gap'),
+                  width: double.infinity,
+                  height: 10,
+                  child: ColoredBox(color: backgroundColor),
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -576,66 +600,182 @@ class _FeatureBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = media.bannerImage ?? media.cover.best;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final backgroundColor = theme.scaffoldBackgroundColor;
+    final backdropImage = media.bannerImage ?? media.cover.best;
+
     return InkWell(
       mouseCursor: SystemMouseCursors.click,
       focusColor: Colors.white.withValues(alpha: 0.08),
       hoverColor: Colors.white.withValues(alpha: 0.06),
       onTap: onTap,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (image != null)
-            CachedNetworkImage(imageUrl: image, fit: BoxFit.cover)
-          else
-            ColoredBox(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            ),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0x22000000), Color(0xF0000000)],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 22),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  media.displayTitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 600;
+          final horizontalPadding = isWide ? 28.0 : 16.0;
+          final posterWidth = isWide
+              ? 132.0
+              : (constraints.maxWidth * 0.28).clamp(92.0, 112.0).toDouble();
+
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              ColoredBox(color: backgroundColor),
+              if (backdropImage != null)
+                CachedNetworkImage(
+                  key: ValueKey('feature-backdrop-${media.id}'),
+                  imageUrl: backdropImage,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                )
+              else
+                ColoredBox(color: colorScheme.surfaceContainerHighest),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: [0, 0.42],
+                    colors: [Color(0x38000000), Colors.transparent],
                   ),
                 ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    _Pill(
-                      icon: Icons.star_rounded,
-                      label: '${media.meanScore ?? '--'}%',
-                    ),
-                    _Pill(
-                      icon: Icons.people_alt_outlined,
-                      label: compactNumber(media.popularity),
-                    ),
-                    if (media.metadata.isNotEmpty)
-                      _Pill(icon: Icons.info_outline, label: media.metadata),
-                  ],
+              ),
+              DecoratedBox(
+                key: ValueKey('feature-bottom-fade-${media.id}'),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0.35, 0.62, 0.82, 0.96, 1],
+                    colors: [
+                      Colors.transparent,
+                      backgroundColor.withValues(alpha: 0.45),
+                      backgroundColor.withValues(alpha: 0.94),
+                      backgroundColor,
+                      backgroundColor,
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  isWide ? 82 : 76,
+                  horizontalPadding,
+                  isWide ? 30 : 24,
+                ),
+                child: Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _FeaturePoster(media: media, width: posterWidth),
+                      SizedBox(width: isWide ? 22 : 14),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                media.displayTitle,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    (isWide
+                                            ? theme.textTheme.headlineSmall
+                                            : theme.textTheme.titleLarge)
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                children: [
+                                  _Pill(
+                                    icon: Icons.star_rounded,
+                                    label: '${media.meanScore ?? '--'}%',
+                                  ),
+                                  _Pill(
+                                    icon: Icons.people_alt_outlined,
+                                    label: compactNumber(media.popularity),
+                                  ),
+                                  if (media.metadata.isNotEmpty)
+                                    _Pill(
+                                      icon: Icons.info_outline,
+                                      label: media.metadata,
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _FeaturePoster extends StatelessWidget {
+  const _FeaturePoster({required this.media, required this.width});
+
+  final AniListMedia media;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final image = media.cover.best;
+
+    return ExcludeSemantics(
+      child: Container(
+        key: ValueKey('feature-poster-${media.id}'),
+        width: width,
+        height: width * 1.5,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.65),
           ),
-        ],
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x66000000),
+              blurRadius: 18,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: image == null
+            ? ColoredBox(
+                color: colorScheme.surfaceContainerHighest,
+                child: Icon(
+                  Icons.image_outlined,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              )
+            : CachedNetworkImage(
+                imageUrl: image,
+                fit: BoxFit.cover,
+                placeholder: (context, url) =>
+                    ColoredBox(color: colorScheme.surfaceContainerHighest),
+                errorWidget: (context, url, error) => ColoredBox(
+                  color: colorScheme.surfaceContainerHighest,
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
       ),
     );
   }

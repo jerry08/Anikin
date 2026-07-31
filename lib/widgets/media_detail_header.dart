@@ -4,8 +4,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../core/app_theme.dart';
+import 'marquee_text.dart';
 
-const double kMediaDetailHeaderHeight = 400;
+const double kMediaDetailHeaderHeight = 384;
+const double kMediaDetailMinHeaderHeight = 352;
 const double kMediaDetailCompactHeaderHeight = 304;
 
 bool mediaDetailUsesSideNavigation(BuildContext context) {
@@ -15,9 +17,12 @@ bool mediaDetailUsesSideNavigation(BuildContext context) {
 }
 
 double mediaDetailHeaderHeight(BuildContext context) {
+  final size = MediaQuery.sizeOf(context);
   final base = mediaDetailUsesSideNavigation(context)
       ? kMediaDetailCompactHeaderHeight
-      : kMediaDetailHeaderHeight;
+      : (size.height * 0.46)
+            .clamp(kMediaDetailMinHeaderHeight, kMediaDetailHeaderHeight)
+            .toDouble();
   final textScale = MediaQuery.textScalerOf(context).scale(1);
   return base + ((textScale - 1).clamp(0, 1) * 52);
 }
@@ -189,7 +194,14 @@ class MediaCollapsedTitle extends StatelessWidget {
           duration: reduceMotion
               ? Duration.zero
               : const Duration(milliseconds: 180),
-          child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis),
+          child: ExcludeSemantics(
+            excluding: !visible,
+            child: MarqueeText(
+              key: const ValueKey('media-collapsed-title-marquee'),
+              text: text,
+              animate: visible,
+            ),
+          ),
         );
       },
     );
@@ -1256,19 +1268,17 @@ class MediaSourceSelectorTile extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        Text(
-                          sourceName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        MarqueeText(
+                          key: const ValueKey('media-source-name-marquee'),
+                          text: sourceName,
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         if (matchedTitle case final title?)
-                          Text(
-                            'Matched as $title',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          MarqueeText(
+                            key: const ValueKey('media-source-match-marquee'),
+                            text: 'Matched as $title',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),

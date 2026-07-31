@@ -34,26 +34,45 @@ class JuroService {
         : health.rank(providers, preferredKey: preferredKey);
   }
 
-  Future<List<SourceProvider>> getProviders() async {
-    final uri = _uri('Providers', queryParameters: {'type': '0'});
-    final json = await _getList(uri);
-    final providers = json
-        .whereType<Map<String, dynamic>>()
-        .map(SourceProvider.fromJson)
-        .toList();
-    final extensionProviders = await _getAniyomiProviders();
-    return [...providers, ...extensionProviders];
+  Future<List<SourceProvider>> getProviders() {
+    return _getProvidersByType(
+      type: '0',
+      extensionProviders: _getAniyomiProviders(),
+    );
   }
 
-  Future<List<SourceProvider>> getMangaProviders() async {
-    final uri = _uri('Providers', queryParameters: {'type': '1'});
-    final json = await _getList(uri);
-    final providers = json
-        .whereType<Map<String, dynamic>>()
-        .map(SourceProvider.fromJson)
-        .toList();
-    final extensionProviders = await _getAniyomiMangaProviders();
-    return [...providers, ...extensionProviders];
+  Future<List<SourceProvider>> getMangaProviders() {
+    return _getProvidersByType(
+      type: '1',
+      extensionProviders: _getAniyomiMangaProviders(),
+    );
+  }
+
+  Future<List<SourceProvider>> _getProvidersByType({
+    required String type,
+    required Future<List<SourceProvider>> extensionProviders,
+  }) async {
+    var juroProviders = const <SourceProvider>[];
+    Object? juroError;
+    StackTrace? juroStackTrace;
+
+    try {
+      final uri = _uri('Providers', queryParameters: {'type': type});
+      final json = await _getList(uri);
+      juroProviders = json
+          .whereType<Map<String, dynamic>>()
+          .map(SourceProvider.fromJson)
+          .toList();
+    } catch (error, stackTrace) {
+      juroError = error;
+      juroStackTrace = stackTrace;
+    }
+
+    final localProviders = await extensionProviders;
+    if (juroError != null && localProviders.isEmpty) {
+      Error.throwWithStackTrace(juroError, juroStackTrace!);
+    }
+    return [...juroProviders, ...localProviders];
   }
 
   Future<List<JuroAnimeInfo>> searchAnime(

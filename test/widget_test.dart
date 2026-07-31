@@ -505,6 +505,63 @@ https://cdn.example.com/720/index.m3u8
     ]);
   });
 
+  test('Juro service keeps Aniyomi providers when Juro has none', () async {
+    final service = JuroService(
+      baseUrl: 'https://example.invalid/api',
+      aniyomiExtensionService: _FakeAniyomiExtensionService(),
+      client: MockClient((request) async => http.Response('[]', 200)),
+    );
+
+    final animeProviders = await service.getProviders();
+    final mangaProviders = await service.getMangaProviders();
+
+    expect(animeProviders.map((provider) => provider.key), [
+      AniyomiExtensionService.providerKeyForSourceId(123),
+    ]);
+    expect(mangaProviders.map((provider) => provider.key), [
+      AniyomiExtensionService.providerKeyForSourceId(456, type: 1),
+    ]);
+  });
+
+  test('Juro service falls back to Aniyomi when Juro is unavailable', () async {
+    final service = JuroService(
+      baseUrl: 'https://example.invalid/api',
+      aniyomiExtensionService: _FakeAniyomiExtensionService(),
+      client: MockClient(
+        (request) async => http.Response('Service unavailable', 503),
+      ),
+    );
+
+    final animeProviders = await service.getProviders();
+    final mangaProviders = await service.getMangaProviders();
+
+    expect(animeProviders.map((provider) => provider.key), [
+      AniyomiExtensionService.providerKeyForSourceId(123),
+    ]);
+    expect(mangaProviders.map((provider) => provider.key), [
+      AniyomiExtensionService.providerKeyForSourceId(456, type: 1),
+    ]);
+  });
+
+  test('Aniyomi provider discovery does not require a Juro URL', () async {
+    var requestedJuro = false;
+    final service = JuroService(
+      baseUrl: '',
+      aniyomiExtensionService: _FakeAniyomiExtensionService(),
+      client: MockClient((request) async {
+        requestedJuro = true;
+        return http.Response('[]', 200);
+      }),
+    );
+
+    final animeProviders = await service.getProviders();
+    final mangaProviders = await service.getMangaProviders();
+
+    expect(animeProviders, hasLength(1));
+    expect(mangaProviders, hasLength(1));
+    expect(requestedJuro, isFalse);
+  });
+
   test('Juro service excludes Aniyomi providers off Android', () async {
     final service = JuroService(
       baseUrl: 'https://example.invalid/api',
@@ -1345,6 +1402,12 @@ https://cdn.example.com/720/index.m3u8
   testWidgets('home screen renders featured carousel', (
     WidgetTester tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
     SharedPreferences.setMockInitialValues({});
     final preferences = PreferencesService();
     await preferences.load();
@@ -1389,6 +1452,38 @@ https://cdn.example.com/720/index.m3u8
 
     expect(find.byType(PageView), findsOneWidget);
     expect(find.text('Carousel First'), findsWidgets);
+    final poster = find.byKey(const ValueKey('feature-poster-11'));
+    expect(poster, findsOneWidget);
+    final posterSize = tester.getSize(poster);
+    expect(posterSize.width, lessThan(120));
+    expect(posterSize.height / posterSize.width, closeTo(1.5, 0.001));
+
+    final bottomFade = find.byKey(const ValueKey('feature-bottom-fade-11'));
+    expect(bottomFade, findsOneWidget);
+    final decoration = tester.widget<DecoratedBox>(bottomFade).decoration;
+    final gradient = (decoration as BoxDecoration).gradient! as LinearGradient;
+    final backgroundColor = Theme.of(
+      tester.element(bottomFade),
+    ).scaffoldBackgroundColor;
+    expect(gradient.colors[gradient.colors.length - 2], backgroundColor);
+    expect(gradient.colors.last, backgroundColor);
+    final bottomSeam = find.byKey(
+      const ValueKey('feature-carousel-bottom-seam'),
+    );
+    expect(bottomSeam, findsOneWidget);
+    expect(tester.getSize(bottomSeam).height, 4);
+    expect(tester.widget<ColoredBox>(bottomSeam).color, backgroundColor);
+    final pageRect = tester.getRect(find.byType(PageView));
+    final seamRect = tester.getRect(bottomSeam);
+    expect(seamRect.top, closeTo(pageRect.bottom - 2, 0.001));
+    expect(seamRect.bottom, closeTo(pageRect.bottom + 2, 0.001));
+    final indicatorGap = find.byKey(
+      const ValueKey('feature-carousel-indicator-gap'),
+    );
+    expect(indicatorGap, findsOneWidget);
+    final gap = tester.widget<SizedBox>(indicatorGap);
+    expect((gap.child! as ColoredBox).color, backgroundColor);
+    expect(tester.getRect(indicatorGap).top, closeTo(pageRect.bottom, 0.001));
     expect(tester.takeException(), isNull);
   });
 
@@ -1624,6 +1719,54 @@ https://cdn.example.com/720/index.m3u8
     expect(
       tester.getTopLeft(find.text('Juro providers')).dy,
       lessThan(tester.getTopLeft(find.text('Aniyomi extensions')).dy),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Aniyomi source stays selectable when Juro is unavailable', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = PreferencesService();
+    await preferences.load();
+    final juroService = JuroService(
+      baseUrl: 'https://example.invalid/api',
+      aniyomiExtensionService: _FakeAniyomiExtensionService(),
+      client: MockClient(
+        (request) async => http.Response('Service unavailable', 503),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DetailScreen(
+          media: const AniListMedia(
+            id: 43,
+            title: MediaTitle(english: 'Fallback Provider Show'),
+            cover: MediaCover(),
+          ),
+          preferences: preferences,
+          juroService: juroService,
+          watchHistoryService: WatchHistoryService(),
+          downloadService: DownloadService(),
+          trackingService: TrackingService(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.movie_filter_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Source'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Anime Provider'), findsOneWidget);
+    expect(find.text('Aniyomi extensions'), findsOneWidget);
+    expect(find.text('Aniyomi Demo'), findsWidgets);
+    expect(find.text('Juro providers'), findsNothing);
+    expect(
+      preferences.lastAnimeProviderKey,
+      AniyomiExtensionService.providerKeyForSourceId(123),
     );
     expect(tester.takeException(), isNull);
   });
@@ -2146,6 +2289,121 @@ https://cdn.example.com/720/index.m3u8
       expect(find.byTooltip('Download episode'), findsOneWidget);
     },
   );
+
+  testWidgets('episode options cancel downloads for the current anime only', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'episodeLayoutMode': EpisodeLayoutMode.list.index,
+    });
+    final preferences = PreferencesService();
+    await preferences.load();
+    final downloadService = _ActiveEpisodeDownloadService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DetailScreen(
+          media: _ActiveEpisodeDownloadService.media,
+          preferences: preferences,
+          juroService: _MultiSourceEpisodeOptionsJuroService(),
+          watchHistoryService: WatchHistoryService(),
+          downloadService: downloadService,
+          trackingService: TrackingService(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.movie_filter_outlined));
+    await tester.pumpAndSettle();
+
+    final optionsButton = find.byKey(const ValueKey('episode-options-button'));
+    await tester.ensureVisible(optionsButton);
+    await tester.pumpAndSettle();
+    await tester.tap(optionsButton);
+    await tester.pumpAndSettle();
+
+    final cancelAllButton = find.byKey(
+      const ValueKey('episode-cancel-all-downloads-button'),
+    );
+    final downloadAllButton = find.byKey(
+      const ValueKey('episode-download-all-button'),
+    );
+    expect(cancelAllButton, findsOneWidget);
+    expect(tester.widget<FilledButton>(downloadAllButton).onPressed, isNull);
+
+    await tester.ensureVisible(cancelAllButton);
+    await tester.pumpAndSettle();
+    await tester.tap(cancelAllButton);
+    await tester.pumpAndSettle();
+
+    expect(downloadService.cancelledIds, [
+      _ActiveEpisodeDownloadService.request.taskId,
+    ]);
+    expect(downloadService.activeTasks.map((task) => task.id), [
+      _ActiveEpisodeDownloadService.otherRequest.taskId,
+    ]);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cancel all stops a pending bulk episode queue', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = PreferencesService();
+    await preferences.load();
+    final juroService = _PendingBulkDownloadJuroService();
+    final downloadService = _RecordingBulkDownloadService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DetailScreen(
+          media: _PendingBulkDownloadJuroService.media,
+          preferences: preferences,
+          juroService: juroService,
+          watchHistoryService: WatchHistoryService(),
+          downloadService: downloadService,
+          trackingService: TrackingService(),
+          initialProvider: _PendingBulkDownloadJuroService.provider,
+          initialProviderAnime: _PendingBulkDownloadJuroService.providerAnime,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final optionsButton = find.byKey(const ValueKey('episode-options-button'));
+    await tester.ensureVisible(optionsButton);
+    await tester.pumpAndSettle();
+    await tester.tap(optionsButton);
+    await tester.pumpAndSettle();
+
+    final downloadAllButton = find.byKey(
+      const ValueKey('episode-download-all-button'),
+    );
+    await tester.ensureVisible(downloadAllButton);
+    await tester.tap(downloadAllButton);
+    await tester.pumpAndSettle();
+    expect(juroService.preferredEpisodeIds, ['episode-2']);
+
+    await tester.tap(optionsButton);
+    await tester.pumpAndSettle();
+    final cancelAllButton = find.byKey(
+      const ValueKey('episode-cancel-all-downloads-button'),
+    );
+    expect(cancelAllButton, findsOneWidget);
+    await tester.ensureVisible(cancelAllButton);
+    await tester.tap(cancelAllButton);
+    await tester.pumpAndSettle();
+
+    juroService.preferredVideo.complete(_PendingBulkDownloadJuroService.source);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(downloadService.startedRequests, isEmpty);
+    expect(find.text('Stopped queueing episode downloads'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('error state scrolls in compact panels', (
     WidgetTester tester,
@@ -2829,24 +3087,106 @@ class _ActiveEpisodeDownloadService extends DownloadService {
     bytesReceived: 256 * 1024,
     bytesTotal: 1024 * 1024,
   );
+  static const otherRequest = EpisodeDownloadRequest(
+    media: AniListMedia(
+      id: 777,
+      title: MediaTitle(english: 'Another Show'),
+      cover: MediaCover(),
+    ),
+    providerAnime: JuroAnimeInfo(id: 'other-show', title: 'Another Show'),
+    episode: AnimeEpisode(id: 'other-episode', number: 1),
+    source: activeSource,
+  );
+  static const otherProgress = EpisodeDownloadProgress(
+    request: otherRequest,
+    status: DownloadTaskStatus.queued,
+  );
+
+  bool _currentActive = true;
+  final List<String> cancelledIds = [];
+
+  @override
+  List<EpisodeDownloadProgress> get activeTasks => [
+    if (_currentActive) progress,
+    otherProgress,
+  ];
 
   @override
   EpisodeDownloadProgress? taskFor(String id) =>
-      id == request.taskId ? progress : null;
+      _currentActive && id == request.taskId ? progress : null;
 
   @override
   EpisodeDownloadProgress? taskForSource(String sourceTaskId) =>
-      sourceTaskId == request.taskId ? progress : null;
+      _currentActive && sourceTaskId == request.taskId ? progress : null;
 
   @override
   EpisodeDownloadProgress? taskForEpisode(String episodeId) =>
-      episodeId == request.id ? progress : null;
+      _currentActive && episodeId == request.id ? progress : null;
 
   @override
   bool isDownloaded(String id) => false;
 
   @override
   Future<void> load() async {}
+
+  @override
+  Future<void> cancelDownload(String id) async {
+    cancelledIds.add(id);
+    if (id == request.taskId) {
+      _currentActive = false;
+    }
+    notifyListeners();
+  }
+}
+
+class _PendingBulkDownloadJuroService extends JuroService {
+  static const media = AniListMedia(
+    id: 84,
+    title: MediaTitle(english: 'Bulk Queue Show'),
+    cover: MediaCover(),
+  );
+  static const provider = SourceProvider(key: 'bulk', name: 'Bulk');
+  static const providerAnime = JuroAnimeInfo(
+    id: 'bulk-show',
+    title: 'Bulk Queue Show',
+  );
+  static const source = VideoSource(
+    title: '1080p',
+    videoUrl: 'https://example.com/bulk.mp4',
+  );
+
+  final Completer<VideoSource?> preferredVideo = Completer<VideoSource?>();
+  final List<String> preferredEpisodeIds = [];
+
+  @override
+  Future<List<SourceProvider>> getProviders() async => const [provider];
+
+  @override
+  Future<List<AnimeEpisode>> getEpisodes(
+    String animeId, {
+    required String providerKey,
+  }) async => const [
+    AnimeEpisode(id: 'episode-1', number: 1),
+    AnimeEpisode(id: 'episode-2', number: 2),
+  ];
+
+  @override
+  Future<VideoSource?> getPreferredVideo(
+    AnimeEpisode episode, {
+    required String providerKey,
+  }) {
+    preferredEpisodeIds.add(episode.id);
+    return preferredVideo.future;
+  }
+}
+
+class _RecordingBulkDownloadService extends DownloadService {
+  final List<EpisodeDownloadRequest> startedRequests = [];
+
+  @override
+  Future<void> startDownload(EpisodeDownloadRequest request) async {
+    startedRequests.add(request);
+  }
 }
 
 class _HlsVariantDownloadService extends DownloadService {

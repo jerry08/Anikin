@@ -30,9 +30,12 @@ import '../widgets/app_bottom_sheet.dart';
 import '../widgets/app_dialogs.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/detail_media_tools.dart';
+import '../widgets/episode_action_bar.dart';
 import '../widgets/list_range_selector.dart';
 import '../widgets/media_detail_header.dart';
 import '../widgets/media_poster_card.dart';
+import '../widgets/next_episode_countdown.dart';
+import '../widgets/provider_search_results_grid.dart';
 import '../widgets/rich_media_details.dart';
 import 'manga_detail_screen.dart';
 import 'player_screen.dart';
@@ -91,6 +94,8 @@ class _DetailScreenState extends State<DetailScreen> {
   bool _richDetailsRequested = false;
   bool _richDetailsLoading = false;
   bool _sourceFallbackEnabled = false;
+  bool _queueingAllEpisodes = false;
+  int _downloadAllOperation = 0;
   NotificationSubscriptionService? _notificationSubscriptions;
   bool _notificationsFollowed = false;
   bool _notificationsLoading = false;
@@ -125,13 +130,6 @@ class _DetailScreenState extends State<DetailScreen> {
     _load();
     _refreshFavorite();
     _refreshAniListListEntry();
-    if (_selectedSection == _AnimeDetailSection.watch) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _resetSectionOffset(_selectedSection);
-        }
-      });
-    }
   }
 
   @override
@@ -244,7 +242,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
   void _selectSection(_AnimeDetailSection section) {
     if (_selectedSection == section) {
-      _scrollDetailsTo(0);
+      _resetSectionOffset(section);
       return;
     }
     setState(() => _selectedSection = section);
@@ -929,63 +927,131 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  Future<void> _downloadAllEpisodes() async {
-    final episodes = _displayEpisodes;
-    if (_providerAnime == null || episodes.isEmpty) {
+  bool get _hasCancelableEpisodeDownloads {
+    return widget.downloadService.activeTasks.any(
+      (task) =>
+          task.request.media.id == widget.media.id &&
+          task.status != DownloadTaskStatus.canceling,
+    );
+  }
+
+  Future<void> _cancelAllEpisodeDownloads() async {
+    final wasQueueing = _queueingAllEpisodes;
+    _downloadAllOperation++;
+    if (mounted && wasQueueing) {
+      setState(() => _queueingAllEpisodes = false);
+    }
+
+    final tasks = widget.downloadService.activeTasks
+        .where(
+          (task) =>
+              task.request.media.id == widget.media.id &&
+              task.status != DownloadTaskStatus.canceling,
+        )
+        .toList();
+    await Future.wait(
+      tasks.map((task) => widget.downloadService.cancelDownload(task.id)),
+    );
+    if (!mounted) {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Queueing ${episodes.length} episodes')),
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          tasks.isEmpty
+              ? 'Stopped queueing episode downloads'
+              : 'Cancelling ${tasks.length} episode '
+                    'download${tasks.length == 1 ? '' : 's'}',
+        ),
+      ),
     );
+  }
 
-    var queued = 0;
-    var failed = 0;
-    Object? firstError;
-    for (final episode in episodes) {
-      try {
-        final source = await widget.juroService.getPreferredVideo(
-          episode,
-          providerKey: _providerKey,
-        );
-        if (source == null) {
-          failed++;
-          continue;
-        }
-        final request = EpisodeDownloadRequest(
-          media: widget.media,
-          providerAnime: _providerAnime!,
-          episode: episode,
-          source: source,
-        );
-        final selectedRequest =
-            widget.preferences.downloadQualityPreference ==
-                DownloadQualityPreference.askEveryTime
-            ? request
-            : await _resolveDownloadRequest(request);
-        if (selectedRequest == null) {
-          failed++;
-          continue;
-        }
-        await widget.downloadService.startDownload(selectedRequest);
-        queued++;
-      } catch (error) {
-        firstError ??= error;
-        failed++;
-      }
+  Future<void> _downloadAllEpisodes() async {
+    final episodes = _displayEpisodes;
+    if (_providerAnime == null || episodes.isEmpty || _queueingAllEpisodes) {
+      return;
     }
 
-    if (mounted) {
-      if (failed == 0) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Queued $queued episodes')));
-      } else {
-        await showErrorDialog(
-          context,
-          firstError ?? '$failed episodes could not be queued.',
-          title: 'Some episodes failed',
-        );
+    final operation = ++_downloadAllOperation;
+    setState(() => _queueingAllEpisodes = true);
+
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Queueing ${episodes.length} episodes')),
+      );
+
+      var queued = 0;
+      var failed = 0;
+      Object? firstError;
+      for (final episode in episodes) {
+        if (operation != _downloadAllOperation) {
+          return;
+        }
+        try {
+          final source = await widget.juroService.getPreferredVideo(
+            episode,
+            providerKey: _providerKey,
+          );
+          if (operation != _downloadAllOperation) {
+            return;
+          }
+          if (source == null) {
+            failed++;
+            continue;
+          }
+          final request = EpisodeDownloadRequest(
+            media: widget.media,
+            providerAnime: _providerAnime!,
+            episode: episode,
+            source: source,
+          );
+          final selectedRequest =
+              widget.preferences.downloadQualityPreference ==
+                  DownloadQualityPreference.askEveryTime
+              ? request
+              : await _resolveDownloadRequest(request);
+          if (operation != _downloadAllOperation) {
+            return;
+          }
+          if (selectedRequest == null) {
+            failed++;
+            continue;
+          }
+          await widget.downloadService.startDownload(selectedRequest);
+          if (operation != _downloadAllOperation) {
+            await widget.downloadService.cancelDownload(selectedRequest.taskId);
+            return;
+          }
+          queued++;
+        } catch (error) {
+          if (operation != _downloadAllOperation) {
+            return;
+          }
+          firstError ??= error;
+          failed++;
+        }
+      }
+
+      if (mounted && operation == _downloadAllOperation) {
+        if (failed == 0) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Queued $queued episodes')));
+        } else {
+          await showErrorDialog(
+            context,
+            firstError ?? '$failed episodes could not be queued.',
+            title: 'Some episodes failed',
+          );
+        }
+      }
+    } finally {
+      if (mounted && operation == _downloadAllOperation) {
+        setState(() => _queueingAllEpisodes = false);
       }
     }
   }
@@ -1244,6 +1310,8 @@ class _DetailScreenState extends State<DetailScreen> {
     final cover = media.cover.best ?? widget.media.cover.best;
     final canUseAniList = widget.media.hasAniListId;
     final headerHeight = mediaDetailHeaderHeight(context);
+    final nextAiringEpisode = _richDetails?.nextAiringEpisode;
+    final nextAiringAt = _richDetails?.nextAiringAt;
     final tabs = [
       const MediaDetailTab(icon: Icons.info_outline_rounded, label: 'Info'),
       MediaDetailTab(
@@ -1367,6 +1435,15 @@ class _DetailScreenState extends State<DetailScreen> {
               ],
             ),
           ),
+          if (nextAiringEpisode != null && nextAiringAt != null)
+            SliverToBoxAdapter(
+              child: MediaDetailContentConstraint(
+                child: NextEpisodeCountdown(
+                  episode: nextAiringEpisode,
+                  airingAt: nextAiringAt,
+                ),
+              ),
+            ),
           if (_selectedSection == _AnimeDetailSection.info)
             SliverToBoxAdapter(
               child: MediaDetailContentConstraint(child: _buildOverview()),
@@ -1533,6 +1610,10 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Widget _buildEpisodeHeader() {
+    final episodeCount = _episodes.length;
+    final episodeCountLabel = episodeCount == 0
+        ? 'No episodes available'
+        : '$episodeCount episode${episodeCount == 1 ? '' : 's'} available';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
       child: Column(
@@ -1545,87 +1626,84 @@ class _DetailScreenState extends State<DetailScreen> {
             onWrongTitle: _providers.isEmpty ? null : _manualMatch,
             loading: _loading,
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Episodes',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ),
-              FilterChip(
-                label: Text(_dub ? 'Dub' : 'Sub'),
-                selected: _dub,
-                avatar: const Icon(Icons.translate, size: 18),
-                onSelected: (value) async {
-                  setState(() => _dub = value);
-                  await _load();
-                },
-              ),
-              IconButton(
-                tooltip: 'Download all episodes',
-                onPressed: _providerAnime == null || _episodes.isEmpty
+          const SizedBox(height: 18),
+          Text(
+            'Episodes',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            episodeCountLabel,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ListenableBuilder(
+            listenable: widget.downloadService,
+            builder: (context, _) {
+              final hasCancelableDownloads =
+                  _hasCancelableEpisodeDownloads || _queueingAllEpisodes;
+              return EpisodeActionBar(
+                dubbed: _dub,
+                descending: widget.preferences.episodesDescending,
+                layoutMode: widget.preferences.episodeLayoutMode,
+                onDubbedChanged: _loading
                     ? null
-                    : () => unawaited(_downloadAllEpisodes()),
-                icon: const Icon(Icons.download_for_offline_outlined),
-              ),
-              IconButton(
-                tooltip: widget.preferences.episodesDescending
-                    ? 'Descending'
-                    : 'Ascending',
-                onPressed: () async {
-                  await widget.preferences.setEpisodesDescending(
-                    !widget.preferences.episodesDescending,
-                  );
-                  if (mounted) {
-                    setState(() => _episodeRangeIndex = 0);
-                  }
-                },
-                icon: Icon(
-                  widget.preferences.episodesDescending
-                      ? Icons.south
-                      : Icons.north,
-                ),
-              ),
-              PopupMenuButton<EpisodeLayoutMode>(
-                tooltip: 'Layout',
-                icon: const Icon(Icons.grid_view),
-                initialValue: widget.preferences.episodeLayoutMode,
-                onSelected: (value) async {
+                    : (value) async {
+                        setState(() => _dub = value);
+                        await _load();
+                      },
+                onSortPressed: _episodes.isEmpty
+                    ? null
+                    : () async {
+                        await widget.preferences.setEpisodesDescending(
+                          !widget.preferences.episodesDescending,
+                        );
+                        if (mounted) {
+                          setState(() => _episodeRangeIndex = 0);
+                        }
+                      },
+                onLayoutChanged: (value) async {
                   await widget.preferences.setEpisodeLayoutMode(value);
                   if (mounted) {
                     setState(() {});
                   }
                 },
-                itemBuilder: (context) => const [
-                  PopupMenuItem(
-                    value: EpisodeLayoutMode.semi,
-                    child: Text('Semi grid'),
-                  ),
-                  PopupMenuItem(
-                    value: EpisodeLayoutMode.full,
-                    child: Text('Full grid'),
-                  ),
-                  PopupMenuItem(
-                    value: EpisodeLayoutMode.list,
-                    child: Text('List'),
-                  ),
-                ],
-              ),
-            ],
+                onDownloadAll:
+                    _providerAnime == null ||
+                        _episodes.isEmpty ||
+                        hasCancelableDownloads
+                    ? null
+                    : () => unawaited(_downloadAllEpisodes()),
+                onCancelAllDownloads: hasCancelableDownloads
+                    ? () => unawaited(_cancelAllEpisodeDownloads())
+                    : null,
+              );
+            },
           ),
           if (_episodeRanges.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Text(
+                'Episode range',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
             ListRangeSelector(
               ranges: _episodeRanges,
               selectedIndex: _episodeRangeIndex,
               onSelected: (index) => setState(() => _episodeRangeIndex = index),
             ),
           ],
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
         ],
       ),
     );
@@ -1684,6 +1762,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
   @override
   void dispose() {
+    _downloadAllOperation++;
     _detailsScrollController.dispose();
     super.dispose();
   }
@@ -2249,29 +2328,23 @@ class _ManualAnimeSearchSheetState extends State<_ManualAnimeSearchSheet> {
                       child: SizedBox.shrink(),
                     )
                   else
-                    SliverList.builder(
-                      itemCount: _results.length * 2 - 1,
+                    ProviderSearchResultsSliver(
+                      itemCount: _results.length,
                       itemBuilder: (context, index) {
-                        if (index.isOdd) {
-                          return const Divider(height: 1);
-                        }
-
-                        final item = _results[index ~/ 2];
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: _SmallCover(url: item.image),
-                          title: Text(
-                            item.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                        final item = _results[index];
+                        final subtitle = [
+                          item.type,
+                          item.released,
+                          item.status,
+                        ].whereType<String>().join(' • ');
+                        return ProviderSearchResultCard(
+                          key: ValueKey(
+                            'anime-provider-search-result-${item.id}',
                           ),
-                          subtitle: Text(
-                            [
-                              item.type,
-                              item.released,
-                              item.status,
-                            ].whereType<String>().join(' • '),
-                          ),
+                          title: item.title,
+                          subtitle: subtitle,
+                          imageUrl: item.image,
+                          imageHeaders: item.headers,
                           onTap: () => Navigator.of(context).pop(item),
                         );
                       },

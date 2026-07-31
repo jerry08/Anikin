@@ -10,6 +10,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('light and dark themes share the Poppins type scale', () {
+    for (final theme in [
+      AppTheme.light(ThemeColorPalette.anikin),
+      AppTheme.dark(ThemeColorPalette.anikin),
+    ]) {
+      final styles = <TextStyle?>[
+        theme.textTheme.displayLarge,
+        theme.textTheme.displayMedium,
+        theme.textTheme.displaySmall,
+        theme.textTheme.headlineLarge,
+        theme.textTheme.headlineMedium,
+        theme.textTheme.headlineSmall,
+        theme.textTheme.titleLarge,
+        theme.textTheme.titleMedium,
+        theme.textTheme.titleSmall,
+        theme.textTheme.bodyLarge,
+        theme.textTheme.bodyMedium,
+        theme.textTheme.bodySmall,
+        theme.textTheme.labelLarge,
+        theme.textTheme.labelMedium,
+        theme.textTheme.labelSmall,
+      ];
+
+      expect(styles.map((style) => style?.fontFamily).toSet(), {
+        AppTypography.fontFamily,
+      });
+      expect(theme.textTheme.headlineSmall?.fontSize, 28);
+      expect(theme.textTheme.headlineSmall?.fontWeight, FontWeight.w700);
+      expect(theme.textTheme.titleLarge?.fontSize, 20);
+      expect(theme.textTheme.titleLarge?.fontWeight, FontWeight.w600);
+      expect(theme.textTheme.bodyMedium?.fontSize, 14);
+      expect(theme.textTheme.bodyMedium?.height, 1.45);
+      expect(theme.textTheme.labelLarge?.fontWeight, FontWeight.w600);
+    }
+  });
+
   test('light and dark themes share component geometry', () {
     for (final theme in [
       AppTheme.light(ThemeColorPalette.anikin),

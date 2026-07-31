@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -30,6 +29,7 @@ import '../widgets/detail_media_tools.dart';
 import '../widgets/list_range_selector.dart';
 import '../widgets/media_detail_header.dart';
 import '../widgets/media_poster_card.dart';
+import '../widgets/provider_search_results_grid.dart';
 import '../widgets/rich_media_details.dart';
 import 'detail_screen.dart';
 import 'manga_reader_screen.dart';
@@ -136,13 +136,6 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
     _load();
     _refreshFavorite();
     _refreshAniListListEntry();
-    if (_selectedSection == _MangaDetailSection.read) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _resetSectionOffset(_selectedSection);
-        }
-      });
-    }
   }
 
   @override
@@ -153,7 +146,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen> {
 
   void _selectSection(_MangaDetailSection section) {
     if (_selectedSection == section) {
-      _scrollDetailsTo(0);
+      _resetSectionOffset(section);
       return;
     }
     setState(() => _selectedSection = section);
@@ -1833,32 +1826,18 @@ class _ManualMangaSearchSheetState extends State<_ManualMangaSearchSheet> {
                       child: SizedBox.shrink(),
                     )
                   else
-                    SliverList.builder(
-                      itemCount: _results.length * 2 - 1,
+                    ProviderSearchResultsSliver(
+                      itemCount: _results.length,
                       itemBuilder: (context, index) {
-                        if (index.isOdd) {
-                          return const Divider(height: 1);
-                        }
-
-                        final item = _results[index ~/ 2];
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: _SmallCover(
-                            url: item.image,
-                            headers: item.headers,
+                        final item = _results[index];
+                        return ProviderSearchResultCard(
+                          key: ValueKey(
+                            'manga-provider-search-result-${item.id}',
                           ),
-                          title: Text(
-                            item.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: item.displaySubtitle.isEmpty
-                              ? null
-                              : Text(
-                                  item.displaySubtitle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                          title: item.title,
+                          subtitle: item.displaySubtitle,
+                          imageUrl: item.image,
+                          imageHeaders: item.headers,
                           onTap: () => Navigator.of(context).pop(item),
                         );
                       },
@@ -1927,55 +1906,5 @@ class MangaChapterNumberLabel {
       return '?';
     }
     return AnimeEpisode.displayNumber(value);
-  }
-}
-
-class _SmallCover extends StatelessWidget {
-  const _SmallCover({required this.url, required this.headers});
-
-  final String? url;
-  final Map<String, String> headers;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: SizedBox(
-        width: 44,
-        height: 58,
-        child: _CoverImage(url: url, headers: headers),
-      ),
-    );
-  }
-}
-
-class _CoverImage extends StatelessWidget {
-  const _CoverImage({required this.url, required this.headers});
-
-  final String? url;
-  final Map<String, String> headers;
-
-  @override
-  Widget build(BuildContext context) {
-    final placeholderColor = Theme.of(
-      context,
-    ).colorScheme.surfaceContainerHighest;
-    if (url == null || url!.isEmpty) {
-      return ColoredBox(
-        color: placeholderColor,
-        child: const Center(child: Icon(Icons.menu_book_outlined)),
-      );
-    }
-
-    return CachedNetworkImage(
-      imageUrl: url!,
-      httpHeaders: headers,
-      fit: BoxFit.cover,
-      placeholder: (context, _) => ColoredBox(color: placeholderColor),
-      errorWidget: (context, _, _) => ColoredBox(
-        color: placeholderColor,
-        child: const Center(child: Icon(Icons.broken_image_outlined)),
-      ),
-    );
   }
 }
