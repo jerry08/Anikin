@@ -67,4 +67,68 @@ void main() {
       expect(source, contains('fun sourcePreferences(key: String)'));
     }
   });
+
+  test('anime episode requests preserve the catalogue item identity', () {
+    final runtime = File(
+      'android/app/src/main/kotlin/com/oneb/anikin/extensions/'
+      'AniyomiExtensionRuntime.kt',
+    ).readAsStringSync();
+    final getEpisodes = runtime.substring(
+      runtime.indexOf('suspend fun getEpisodes('),
+      runtime.indexOf('suspend fun getVideoServers('),
+    );
+
+    expect(getEpisodes, contains('source.getEpisodeList(anime)'));
+    expect(getEpisodes, isNot(contains('source.getAnimeDetails(anime)')));
+  });
+
+  test('legacy anime video loading skips unsupported hoster probes', () {
+    final runtime = File(
+      'android/app/src/main/kotlin/com/oneb/anikin/extensions/'
+      'AniyomiExtensionRuntime.kt',
+    ).readAsStringSync();
+    final getVideoServers = runtime.substring(
+      runtime.indexOf('suspend fun getVideoServers('),
+      runtime.indexOf('suspend fun getVideos('),
+    );
+    final loadVideos = runtime.substring(
+      runtime.indexOf('private suspend fun loadVideos('),
+      runtime.indexOf('private fun usesHosterApi('),
+    );
+
+    expect(
+      getVideoServers,
+      contains('if (!usesHosterApi(source)) return@withContext emptyList()'),
+    );
+    expect(
+      loadVideos,
+      contains(
+        'if (!usesHosterApi(source)) return source.getVideoList(episode)',
+      ),
+    );
+  });
+
+  test('extension loopback stream relays allow only local cleartext', () {
+    final manifest = File(
+      'android/app/src/main/AndroidManifest.xml',
+    ).readAsStringSync();
+    final networkSecurity = File(
+      'android/app/src/main/res/xml/network_security_config.xml',
+    ).readAsStringSync();
+
+    expect(
+      manifest,
+      contains('android:networkSecurityConfig="@xml/network_security_config"'),
+    );
+    expect(
+      networkSecurity,
+      contains('<base-config cleartextTrafficPermitted="false" />'),
+    );
+    expect(networkSecurity, contains('>localhost</domain>'));
+    expect(networkSecurity, contains('>127.0.0.1</domain>'));
+    expect(
+      networkSecurity,
+      isNot(contains('<base-config cleartextTrafficPermitted="true"')),
+    );
+  });
 }

@@ -340,14 +340,17 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
         awaitReady()
         val (sourceId, anime) = OpaqueIds.decodeAnime(animeId) ?: return@withContext emptyList()
         val source = animeSources[sourceId] ?: return@withContext emptyList()
-        val details = runCatching { source.getAnimeDetails(anime) }.getOrDefault(anime)
-        source.getEpisodeList(details).map { episode -> episodeToMap(sourceId, episode) }
+        // Episode requests must receive the original catalogue item. Detail parsers commonly
+        // return a fresh SAnime with identity fields such as url left blank; the host normally
+        // merges those details separately instead of passing them into getEpisodeList().
+        source.getEpisodeList(anime).map { episode -> episodeToMap(sourceId, episode) }
     }
 
     suspend fun getVideoServers(providerKey: String, episodeId: String): List<Map<String, Any?>> = withContext(Dispatchers.IO) {
         awaitReady()
         val (sourceId, episode) = OpaqueIds.decodeEpisode(episodeId) ?: return@withContext emptyList()
         val source = animeSources[sourceId] ?: return@withContext emptyList()
+        if (!usesHosterApi(source)) return@withContext emptyList()
         val hosters = fetchHosters(source, episode)
         if (hosters.isEmpty()) return@withContext emptyList()
         hosters.mapIndexed { index, hoster ->
@@ -927,6 +930,11 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
     }
 
     private suspend fun loadVideos(source: AnimeSource, episode: SEpisode): List<Video> {
+        // Legacy (lib 12-14) extensions expose videos directly for an episode. Calling the
+        // hoster shim first performs an unnecessary page request and can trigger a 30-second
+        // WebView challenge before the real extraction even starts.
+        if (!usesHosterApi(source)) return source.getVideoList(episode)
+
         val hosters = runCatching { source.getHosterList(episode) }.getOrDefault(emptyList())
         if (hosters.isNotEmpty()) {
             val sorted = if (source is AnimeHttpSource) with(source) { hosters.sortHosters() } else hosters
@@ -935,6 +943,18 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
             }
         }
         return runCatching { source.getVideoList(episode) }.getOrDefault(emptyList())
+    }
+
+    private fun usesHosterApi(source: AnimeSource): Boolean {
+        val hostClassLoader = AnimeHttpSource::class.java.classLoader
+        var sourceClass: Class<*>? = source.javaClass
+        while (sourceClass != null && sourceClass.classLoader !== hostClassLoader) {
+            if (sourceClass.declaredMethods.any { method -> method.name in HOSTER_API_METHOD_NAMES }) {
+                return true
+            }
+            sourceClass = sourceClass.superclass
+        }
+        return false
     }
 
     private suspend fun videoToMap(source: AnimeSource, video: Video, serverName: String): Map<String, Any?>? {
@@ -1330,6 +1350,13 @@ class AniyomiExtensionRuntime private constructor(context: Context) {
         private const val MANGA_LIB_VERSION_MIN = 1.0
         private const val MANGA_LIB_VERSION_MAX = 2.0
         private const val TAG = "AniyomiExtensions"
+        private val HOSTER_API_METHOD_NAMES = setOf(
+            "getHosterList",
+            "hosterListRequest",
+            "hosterListParse",
+            "hosterListSelector",
+            "hosterFromElement",
+        )
         private val PACKAGE_FLAGS = PackageManager.GET_CONFIGURATIONS or
             PackageManager.GET_META_DATA or
             PackageManager.GET_SIGNATURES or

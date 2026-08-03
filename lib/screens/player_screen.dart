@@ -246,6 +246,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         controller = _playbackControllers.fromNetwork(
           Uri.parse(source.videoUrl.replaceAll(' ', '%20')),
           httpHeaders: headers,
+          formatHint: source.format,
         );
       }
       _controller = controller;

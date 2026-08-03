@@ -1,6 +1,8 @@
 import 'dart:io';
 
-import 'package:video_player/video_player.dart';
+import 'package:video_player/video_player.dart' as player;
+
+import '../models/juro_models.dart' show VideoFormat;
 
 enum PlaybackBackend {
   androidMedia3('Android Media3'),
@@ -29,14 +31,23 @@ class PlaybackControllerFactory {
     return PlaybackBackend.platformDefault;
   }
 
-  VideoPlayerController fromFile(File file) {
-    return VideoPlayerController.file(file);
+  player.VideoPlayerController fromFile(File file) {
+    return player.VideoPlayerController.file(file);
   }
 
-  VideoPlayerController fromNetwork(
+  player.VideoPlayerController fromNetwork(
     Uri uri, {
     Map<String, String> httpHeaders = const {},
+    VideoFormat? formatHint,
   }) {
-    return VideoPlayerController.networkUrl(uri, httpHeaders: httpHeaders);
+    return player.VideoPlayerController.networkUrl(
+      uri,
+      httpHeaders: httpHeaders,
+      formatHint: switch (formatHint) {
+        VideoFormat.hls || VideoFormat.m3u8 => player.VideoFormat.hls,
+        VideoFormat.dash => player.VideoFormat.dash,
+        VideoFormat.container || null => null,
+      },
+    );
   }
 }
