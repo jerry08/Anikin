@@ -36,8 +36,9 @@ Future<void> showUpdateAvailableDialog(
                     if (canInstallDirectly) ...[
                       const SizedBox(height: 12),
                       const Text(
-                        'The APK will download in the background. Android will '
-                        'ask you to approve the installation when it is ready.',
+                        'Android may first ask you to allow Anikin to install '
+                        'updates. The APK will then download in the background, '
+                        'and Android will ask you to approve the installation.',
                       ),
                     ],
                     if (notes != null) ...[

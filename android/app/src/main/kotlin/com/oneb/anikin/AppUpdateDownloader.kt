@@ -1,6 +1,7 @@
 package com.oneb.anikin
 
 import android.app.DownloadManager
+import android.content.ClipData
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -10,6 +11,8 @@ import android.os.Environment
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 object AppUpdateDownloader {
@@ -55,6 +58,10 @@ object AppUpdateDownloader {
 			"Anikin-$safeVersion.apk"
 		}
 		val destination = "updates/${System.currentTimeMillis()}-$apkFileName"
+		val downloadsDirectory = appContext.getExternalFilesDir(
+			Environment.DIRECTORY_DOWNLOADS,
+		) ?: error("Android update storage is unavailable.")
+		val destinationFile = File(downloadsDirectory, destination)
 
 		val request = DownloadManager.Request(downloadUri)
 			.setMimeType(apkMimeType)
@@ -109,12 +116,26 @@ object AppUpdateDownloader {
 					return
 				}
 
-				val apkUri = downloadManager.getUriForDownloadedFile(downloadId)
-				if (apkUri == null) {
-					Log.e(logTag, "No URI was returned for update download $downloadId.")
+				if (!destinationFile.isFile || destinationFile.length() <= 0L) {
+					Log.e(logTag, "Update download $downloadId did not create a readable APK.")
 					Toast.makeText(
 						appContext,
 						R.string.update_download_failed,
+						Toast.LENGTH_LONG,
+					).show()
+					return
+				}
+				val apkUri = try {
+					FileProvider.getUriForFile(
+						appContext,
+						"${appContext.packageName}.update_file_provider",
+						destinationFile,
+					)
+				} catch (error: Exception) {
+					Log.e(logTag, "Unable to share update download $downloadId.", error)
+					Toast.makeText(
+						appContext,
+						R.string.update_installer_unavailable,
 						Toast.LENGTH_LONG,
 					).show()
 					return
@@ -166,6 +187,7 @@ object AppUpdateDownloader {
 	private fun openInstaller(context: Context, apkUri: Uri) {
 		val installIntent = Intent(Intent.ACTION_VIEW).apply {
 			setDataAndType(apkUri, apkMimeType)
+			clipData = ClipData.newRawUri("Anikin update", apkUri)
 			addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 			addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 			addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)

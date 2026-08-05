@@ -1,13 +1,17 @@
 import 'package:anikin/core/platform_capabilities.dart';
 import 'package:anikin/data/app_database.dart';
 import 'package:anikin/services/credential_vault.dart';
+import 'package:anikin/services/device_form_factor_service.dart';
 import 'package:anikin/services/feature_gate_service.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('database creates the foundation schema and stores metadata', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
@@ -57,13 +61,41 @@ void main() {
 
   test('platform capabilities keep Android-only features isolated', () {
     const android = PlatformCapabilities(platform: TargetPlatform.android);
+    const television = PlatformCapabilities(
+      platform: TargetPlatform.android,
+      isTelevision: true,
+    );
     const windows = PlatformCapabilities(platform: TargetPlatform.windows);
 
     expect(android.supportsAniyomiExtensions, isTrue);
     expect(android.supportsPictureInPicture, isTrue);
     expect(android.supportsLnReaderPlugins, isTrue);
+    expect(android.supportsAndroidTv, isFalse);
+    expect(television.isAndroidTv, isTrue);
+    expect(television.supportsAndroidTv, isTrue);
+    expect(television.supportsHomeWidgets, isFalse);
     expect(windows.supportsAniyomiExtensions, isFalse);
     expect(windows.supportsPictureInPicture, isFalse);
     expect(windows.supportsLocalBookImport, isTrue);
   });
+
+  test(
+    'device form factor service reads the Android TV platform channel',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      const channel = MethodChannel('com.oneb.anikin/device');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            expect(call.method, 'isTelevision');
+            return true;
+          });
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null),
+      );
+
+      expect(await const DeviceFormFactorService().isTelevision(), isTrue);
+    },
+  );
 }

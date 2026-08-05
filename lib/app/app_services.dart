@@ -9,6 +9,7 @@ import '../services/backup_service.dart';
 import '../services/credential_vault.dart';
 import '../services/catalog_cache_service.dart';
 import '../services/download_service.dart';
+import '../services/device_form_factor_service.dart';
 import '../services/feature_gate_service.dart';
 import '../services/home_widget_service.dart';
 import '../services/juro_service.dart';
@@ -95,6 +96,10 @@ class AppServices {
     final trackingService = TrackingService(credentialVault: credentialVault);
     await trackingService.load();
 
+    final isTelevision = await const DeviceFormFactorService().isTelevision();
+    final capabilities = PlatformCapabilities.detect(
+      isTelevision: isTelevision,
+    );
     final sourceHealthService = SourceHealthService(database);
     final aniyomiExtensionService = AniyomiExtensionService();
     final juroService = JuroService(
@@ -129,7 +134,6 @@ class AppServices {
       preferences: preferences,
     );
     final watchHistoryService = WatchHistoryService();
-    final capabilities = PlatformCapabilities.detect();
     final homeWidgetService = HomeWidgetService(
       capabilities: capabilities,
       watchHistory: watchHistoryService,
