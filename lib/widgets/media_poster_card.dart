@@ -16,6 +16,7 @@ class MediaPosterCard extends StatefulWidget {
     this.showMetadata = true,
     this.showRating = true,
     this.posterOverlay,
+    this.autofocus = false,
     super.key,
   });
 
@@ -25,6 +26,7 @@ class MediaPosterCard extends StatefulWidget {
   final bool showMetadata;
   final bool showRating;
   final Widget? posterOverlay;
+  final bool autofocus;
 
   @override
   State<MediaPosterCard> createState() => _MediaPosterCardState();
@@ -33,6 +35,7 @@ class MediaPosterCard extends StatefulWidget {
 class _MediaPosterCardState extends State<MediaPosterCard> {
   final Object _heroSourceToken = Object();
   bool _hovered = false;
+  bool _focused = false;
 
   void _openMedia() {
     _activeMediaPosterHeroSource.value = _heroSourceToken;
@@ -40,6 +43,22 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
       if (mounted) {
         widget.onTap();
       }
+    });
+  }
+
+  void _handleFocusChanged(bool focused) {
+    if (_focused == focused) return;
+    setState(() => _focused = focused);
+    if (!focused) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+      );
     });
   }
 
@@ -63,96 +82,128 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
         child: AnimatedScale(
-          scale: _hovered && !reduceMotion ? 1.03 : 1,
+          scale: !reduceMotion
+              ? _focused
+                    ? 1.06
+                    : _hovered
+                    ? 1.03
+                    : 1
+              : 1,
           duration: const Duration(milliseconds: 140),
           curve: Curves.easeOutCubic,
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: cardRadius,
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
               borderRadius: cardRadius,
-              mouseCursor: SystemMouseCursors.click,
-              focusColor: theme.colorScheme.onSurface.withValues(alpha: 0.12),
-              hoverColor: theme.colorScheme.onSurface.withValues(alpha: 0.08),
-              onTap: _openMedia,
-              child: Padding(
-                // Symmetric top/bottom padding leaves headroom for the hover
-                // zoom so a 2-line title's metadata isn't clipped when scaled.
-                padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final cardWidth = constraints.hasBoundedWidth
-                        ? constraints.maxWidth
-                        : widget.width;
-                    final posterHeight = _posterHeightFor(
-                      context: context,
-                      constraints: constraints,
-                      cardWidth: cardWidth,
-                      titleStyle: titleStyle,
-                      metadataStyle: metadataStyle,
-                      hasMetadata: hasMetadata,
-                    );
+              boxShadow: _focused
+                  ? [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                        blurRadius: 18,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : const [],
+            ),
+            foregroundDecoration: BoxDecoration(
+              borderRadius: cardRadius,
+              border: _focused
+                  ? Border.all(color: theme.colorScheme.primary, width: 3)
+                  : null,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: cardRadius,
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                borderRadius: cardRadius,
+                mouseCursor: SystemMouseCursors.click,
+                focusColor: theme.colorScheme.onSurface.withValues(alpha: 0.18),
+                hoverColor: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+                autofocus: widget.autofocus,
+                onFocusChange: _handleFocusChanged,
+                onTap: _openMedia,
+                child: Padding(
+                  // Symmetric top/bottom padding leaves headroom for the hover
+                  // zoom so a 2-line title's metadata isn't clipped when scaled.
+                  padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final cardWidth = constraints.hasBoundedWidth
+                          ? constraints.maxWidth
+                          : widget.width;
+                      final posterHeight = _posterHeightFor(
+                        context: context,
+                        constraints: constraints,
+                        cardWidth: cardWidth,
+                        titleStyle: titleStyle,
+                        metadataStyle: metadataStyle,
+                        hasMetadata: hasMetadata,
+                      );
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AnimatedBuilder(
-                          animation: _activeMediaPosterHeroSource,
-                          builder: (context, child) => HeroMode(
-                            enabled:
-                                _activeMediaPosterHeroSource.value ==
-                                _heroSourceToken,
-                            child: Hero(
-                              tag: mediaPosterHeroTag(widget.media),
-                              child: child!,
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AnimatedBuilder(
+                            animation: _activeMediaPosterHeroSource,
+                            builder: (context, child) => HeroMode(
+                              enabled:
+                                  _activeMediaPosterHeroSource.value ==
+                                  _heroSourceToken,
+                              child: Hero(
+                                tag: mediaPosterHeroTag(widget.media),
+                                child: child!,
+                              ),
                             ),
-                          ),
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: ClipRRect(
-                              borderRadius: cardRadius,
-                              child: SizedBox(
-                                width: cardWidth,
-                                height: posterHeight,
-                                child: Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    _PosterImage(url: widget.media.cover.best),
-                                    if (showRatingBadge)
-                                      Positioned(
-                                        right: 7,
-                                        bottom: 7,
-                                        child: _RatingBadge(
-                                          score: widget.media.meanScore!,
-                                        ),
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: ClipRRect(
+                                borderRadius: cardRadius,
+                                child: SizedBox(
+                                  width: cardWidth,
+                                  height: posterHeight,
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      _PosterImage(
+                                        url: widget.media.cover.best,
                                       ),
-                                    ?widget.posterOverlay,
-                                  ],
+                                      if (showRatingBadge)
+                                        Positioned(
+                                          right: 7,
+                                          bottom: 7,
+                                          child: _RatingBadge(
+                                            score: widget.media.meanScore!,
+                                          ),
+                                        ),
+                                      ?widget.posterOverlay,
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          widget.media.displayTitle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: titleStyle,
-                        ),
-                        if (hasMetadata) ...[
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 8),
                           Text(
-                            widget.media.metadata,
-                            maxLines: 1,
+                            widget.media.displayTitle,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: metadataStyle,
+                            style: titleStyle,
                           ),
+                          if (hasMetadata) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              widget.media.metadata,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: metadataStyle,
+                            ),
+                          ],
                         ],
-                      ],
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             ),

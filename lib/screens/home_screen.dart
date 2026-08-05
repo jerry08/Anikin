@@ -29,6 +29,7 @@ class HomeScreen extends StatefulWidget {
     required this.downloadService,
     required this.mangaDownloadService,
     required this.trackingService,
+    this.isTelevision = false,
     super.key,
   });
 
@@ -39,6 +40,7 @@ class HomeScreen extends StatefulWidget {
   final DownloadService downloadService;
   final MangaDownloadService mangaDownloadService;
   final TrackingService trackingService;
+  final bool isTelevision;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -275,6 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (data.featured.isNotEmpty)
         _FeatureCarousel(
           items: data.featured,
+          isTelevision: widget.isTelevision,
           onItemTap: (media) => _openMedia(media, contentType: contentType),
         ),
       if (data.featured.isEmpty) const _TopChromeSpacer(),
@@ -286,6 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
         MediaSection(
           title: section.title,
           items: section.items,
+          isTelevision: widget.isTelevision,
           onItemTap: (media) => _openMedia(media, contentType: contentType),
           onMoreTap: () => _openSection(section, contentType: contentType),
         ),
@@ -300,7 +304,9 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, snapshot) {
         return LayoutBuilder(
           builder: (context, constraints) {
-            final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
+            final isDesktop =
+                widget.isTelevision ||
+                constraints.maxWidth >= _desktopBreakpoint;
             final content = <Widget>[
               if (snapshot.connectionState == ConnectionState.waiting)
                 const SizedBox(
@@ -360,6 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   top: 0,
                   child: _HomeTopBar(
                     contentType: _contentType,
+                    isTelevision: widget.isTelevision,
                     onContentTypeChanged: _setContentType,
                   ),
                 ),
@@ -400,10 +407,12 @@ class _BrowseSection {
 class _HomeTopBar extends StatelessWidget {
   const _HomeTopBar({
     required this.contentType,
+    required this.isTelevision,
     required this.onContentTypeChanged,
   });
 
   final AppMediaType contentType;
+  final bool isTelevision;
   final ValueChanged<AppMediaType> onContentTypeChanged;
 
   @override
@@ -421,8 +430,8 @@ class _HomeTopBar extends StatelessWidget {
               children: [
                 Image.asset(
                   'assets/images/tori_gate.png',
-                  width: 34,
-                  height: 34,
+                  width: isTelevision ? 44 : 34,
+                  height: isTelevision ? 44 : 34,
                 ),
                 const Spacer(),
                 MediaTypeSelector(
@@ -449,9 +458,14 @@ class _TopChromeSpacer extends StatelessWidget {
 }
 
 class _FeatureCarousel extends StatefulWidget {
-  const _FeatureCarousel({required this.items, required this.onItemTap});
+  const _FeatureCarousel({
+    required this.items,
+    required this.isTelevision,
+    required this.onItemTap,
+  });
 
   final List<AniListMedia> items;
+  final bool isTelevision;
   final ValueChanged<AniListMedia> onItemTap;
 
   @override
@@ -462,6 +476,7 @@ class _FeatureCarouselState extends State<_FeatureCarousel> {
   late final PageController _controller;
   Timer? _timer;
   int _index = 0;
+  bool _containsFocus = false;
 
   @override
   void initState() {
@@ -493,7 +508,7 @@ class _FeatureCarouselState extends State<_FeatureCarousel> {
     }
 
     _timer = Timer.periodic(const Duration(seconds: 6), (_) {
-      if (!mounted || !_controller.hasClients) {
+      if (!mounted || !_controller.hasClients || _containsFocus) {
         return;
       }
 
@@ -513,7 +528,7 @@ class _FeatureCarouselState extends State<_FeatureCarousel> {
         final width = constraints.hasBoundedWidth
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
-        final isDesktop = width >= _desktopBreakpoint;
+        final isDesktop = widget.isTelevision || width >= _desktopBreakpoint;
         final height = isDesktop
             ? (width * 0.34).clamp(340.0, 420.0).toDouble()
             : (width * 0.78).clamp(390.0, 440.0).toDouble();
@@ -538,6 +553,8 @@ class _FeatureCarouselState extends State<_FeatureCarousel> {
                         final media = widget.items[index];
                         return _FeatureBanner(
                           media: media,
+                          autofocus: widget.isTelevision && index == 0,
+                          onFocusChange: (focused) => _containsFocus = focused,
                           onTap: () => widget.onItemTap(media),
                         );
                       },
@@ -593,9 +610,16 @@ class _FeatureCarouselState extends State<_FeatureCarousel> {
 }
 
 class _FeatureBanner extends StatelessWidget {
-  const _FeatureBanner({required this.media, required this.onTap});
+  const _FeatureBanner({
+    required this.media,
+    required this.autofocus,
+    required this.onFocusChange,
+    required this.onTap,
+  });
 
   final AniListMedia media;
+  final bool autofocus;
+  final ValueChanged<bool> onFocusChange;
   final VoidCallback onTap;
 
   @override
@@ -607,7 +631,9 @@ class _FeatureBanner extends StatelessWidget {
 
     return InkWell(
       mouseCursor: SystemMouseCursors.click,
-      focusColor: Colors.white.withValues(alpha: 0.08),
+      autofocus: autofocus,
+      onFocusChange: onFocusChange,
+      focusColor: colorScheme.primary.withValues(alpha: 0.22),
       hoverColor: Colors.white.withValues(alpha: 0.06),
       onTap: onTap,
       child: LayoutBuilder(
@@ -825,6 +851,7 @@ class MediaSection extends StatelessWidget {
     required this.items,
     required this.onItemTap,
     required this.onMoreTap,
+    this.isTelevision = false,
     super.key,
   });
 
@@ -832,6 +859,7 @@ class MediaSection extends StatelessWidget {
   final List<AniListMedia> items;
   final ValueChanged<AniListMedia> onItemTap;
   final VoidCallback onMoreTap;
+  final bool isTelevision;
 
   @override
   Widget build(BuildContext context) {
@@ -842,10 +870,16 @@ class MediaSection extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
-        final horizontalPadding = isDesktop ? 20.0 : 12.0;
+        final horizontalPadding = isTelevision
+            ? 28.0
+            : isDesktop
+            ? 20.0
+            : 12.0;
 
         return Padding(
-          padding: EdgeInsets.only(bottom: isDesktop ? 30 : 22),
+          padding: EdgeInsets.only(
+            bottom: isTelevision ? 36 : (isDesktop ? 30 : 22),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -856,8 +890,11 @@ class MediaSection extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
+                        style:
+                            (isTelevision
+                                    ? Theme.of(context).textTheme.titleLarge
+                                    : Theme.of(context).textTheme.titleMedium)
+                                ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
                     IconButton(
@@ -872,7 +909,23 @@ class MediaSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              if (isDesktop)
+              if (isTelevision)
+                SizedBox(
+                  height: 326,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    clipBehavior: Clip.none,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    itemCount: items.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 14),
+                    itemBuilder: (context, index) => MediaPosterCard(
+                      media: items[index],
+                      width: 172,
+                      onTap: () => onItemTap(items[index]),
+                    ),
+                  ),
+                )
+              else if (isDesktop)
                 _DesktopMediaSectionGrid(items: items, onItemTap: onItemTap)
               else
                 SizedBox(

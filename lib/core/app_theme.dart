@@ -11,6 +11,7 @@ abstract final class AppLayout {
   static const double dialogMinWidth = 280;
   static const double dialogMaxWidth = 560;
   static const double minimumTouchTarget = 44;
+  static const double minimumTvTarget = 52;
 }
 
 abstract final class AppShapes {
@@ -439,6 +440,58 @@ class AppTheme {
           horizontal: 14,
           vertical: 12,
         ),
+      ),
+    );
+  }
+
+  static ThemeData television(ThemeData base) {
+    final colorScheme = base.colorScheme;
+    final focusColor = colorScheme.primary.withValues(alpha: 0.3);
+    final minimumButtonSize = const WidgetStatePropertyAll(
+      Size(76, AppLayout.minimumTvTarget),
+    );
+
+    return base.copyWith(
+      focusColor: focusColor,
+      hoverColor: colorScheme.onSurface.withValues(alpha: 0.12),
+      visualDensity: const VisualDensity(horizontal: 1, vertical: 1),
+      textTheme: base.textTheme.apply(fontSizeFactor: 1.12),
+      filledButtonTheme: FilledButtonThemeData(
+        style: base.filledButtonTheme.style?.copyWith(
+          minimumSize: minimumButtonSize,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: base.elevatedButtonTheme.style?.copyWith(
+          minimumSize: minimumButtonSize,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: base.outlinedButtonTheme.style?.copyWith(
+          minimumSize: minimumButtonSize,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: base.textButtonTheme.style?.copyWith(
+          minimumSize: minimumButtonSize,
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: base.iconButtonTheme.style?.copyWith(
+          minimumSize: const WidgetStatePropertyAll(
+            Size.square(AppLayout.minimumTvTarget),
+          ),
+        ),
+      ),
+      listTileTheme: base.listTileTheme.copyWith(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+        minVerticalPadding: 12,
+        selectedTileColor: colorScheme.primaryContainer,
+      ),
+      navigationRailTheme: base.navigationRailTheme.copyWith(
+        minWidth: 108,
+        minExtendedWidth: 220,
+        indicatorColor: colorScheme.primaryContainer,
       ),
     );
   }

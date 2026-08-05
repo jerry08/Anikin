@@ -37,6 +37,7 @@ class AnikinApp extends StatefulWidget {
     this.mangaDownloadService,
     this.trackingService,
     this.appServices,
+    this.isTelevision = false,
     super.key,
   });
 
@@ -50,7 +51,8 @@ class AnikinApp extends StatefulWidget {
       downloadService = services.downloadService,
       mangaDownloadService = services.mangaDownloadService,
       trackingService = services.trackingService,
-      updateService = services.updateService;
+      updateService = services.updateService,
+      isTelevision = services.capabilities.isAndroidTv;
 
   final PreferencesService preferences;
   final AniListService? aniListService;
@@ -62,6 +64,7 @@ class AnikinApp extends StatefulWidget {
   final TrackingService? trackingService;
   final AppServices? appServices;
   final UpdateService updateService;
+  final bool isTelevision;
 
   @override
   State<AnikinApp> createState() => _AnikinAppState();
@@ -113,19 +116,30 @@ class _AnikinAppState extends State<AnikinApp> with WidgetsBindingObserver {
     final app = AnimatedBuilder(
       animation: Listenable.merge([widget.preferences, _trackingService]),
       builder: (context, _) {
+        final lightTheme = AppTheme.light(widget.preferences.themeColorPalette);
+        final darkTheme = AppTheme.dark(widget.preferences.themeColorPalette);
         return MaterialApp(
           navigatorKey: _navigatorKey,
           title: AppConstants.appName,
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.light(widget.preferences.themeColorPalette),
-          darkTheme: AppTheme.dark(widget.preferences.themeColorPalette),
+          theme: widget.isTelevision
+              ? AppTheme.television(lightTheme)
+              : lightTheme,
+          darkTheme: widget.isTelevision
+              ? AppTheme.television(darkTheme)
+              : darkTheme,
           themeMode: widget.preferences.themeMode,
           builder: (context, child) {
             return AnnotatedRegion<SystemUiOverlayStyle>(
               value: AppTheme.edgeToEdgeOverlayStyle(
                 Theme.of(context).brightness,
               ),
-              child: child ?? const SizedBox.shrink(),
+              child: widget.isTelevision
+                  ? FocusTraversalGroup(
+                      policy: ReadingOrderTraversalPolicy(),
+                      child: child ?? const SizedBox.shrink(),
+                    )
+                  : child ?? const SizedBox.shrink(),
             );
           },
           home: MainShell(
@@ -139,6 +153,7 @@ class _AnikinAppState extends State<AnikinApp> with WidgetsBindingObserver {
             mangaDownloadService: _mangaDownloadService,
             trackingService: _trackingService,
             updateService: _updateService,
+            isTelevision: widget.isTelevision,
           ),
         );
       },
@@ -238,6 +253,7 @@ class MainShell extends StatefulWidget {
     required this.mangaDownloadService,
     required this.trackingService,
     required this.updateService,
+    this.isTelevision = false,
     super.key,
   });
 
@@ -250,6 +266,7 @@ class MainShell extends StatefulWidget {
   final MangaDownloadService mangaDownloadService;
   final TrackingService trackingService;
   final UpdateService updateService;
+  final bool isTelevision;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -301,6 +318,7 @@ class _MainShellState extends State<MainShell> {
         downloadService: widget.downloadService,
         mangaDownloadService: widget.mangaDownloadService,
         trackingService: widget.trackingService,
+        isTelevision: widget.isTelevision,
       ),
       SearchScreen(
         preferences: widget.preferences,
@@ -341,7 +359,9 @@ class _MainShellState extends State<MainShell> {
     );
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= AppLayout.wideBreakpoint;
+        final isWide =
+            widget.isTelevision ||
+            constraints.maxWidth >= AppLayout.wideBreakpoint;
         if (!isWide) {
           return Scaffold(
             body: content,
@@ -358,6 +378,7 @@ class _MainShellState extends State<MainShell> {
             children: [
               _AppNavigationRail(
                 glass: useGlassNavigation,
+                isTelevision: widget.isTelevision,
                 selectedIndex: _selectedIndex,
                 onDestinationSelected: (index) =>
                     setState(() => _selectedIndex = index),
@@ -374,23 +395,40 @@ class _MainShellState extends State<MainShell> {
 class _AppNavigationRail extends StatelessWidget {
   const _AppNavigationRail({
     required this.glass,
+    required this.isTelevision,
     required this.selectedIndex,
     required this.onDestinationSelected,
   });
 
   final bool glass;
+  final bool isTelevision;
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
 
   @override
   Widget build(BuildContext context) {
     final rail = SafeArea(
+      minimum: isTelevision
+          ? const EdgeInsets.symmetric(vertical: 12)
+          : EdgeInsets.zero,
       child: NavigationRail(
+        key: ValueKey(isTelevision ? 'tv-navigation-rail' : 'navigation-rail'),
         backgroundColor: glass ? Colors.transparent : null,
+        minWidth: isTelevision ? 108 : null,
         selectedIndex: selectedIndex,
         onDestinationSelected: onDestinationSelected,
         labelType: NavigationRailLabelType.all,
-        groupAlignment: -0.72,
+        groupAlignment: isTelevision ? -0.56 : -0.72,
+        leading: isTelevision
+            ? Padding(
+                padding: const EdgeInsets.only(bottom: 22),
+                child: Image.asset(
+                  'assets/images/tori_gate.png',
+                  width: 54,
+                  height: 54,
+                ),
+              )
+            : null,
         destinations: const [
           NavigationRailDestination(
             icon: Icon(Icons.home_outlined),

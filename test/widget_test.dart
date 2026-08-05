@@ -866,6 +866,90 @@ https://cdn.example.com/720/index.m3u8
     expect(find.text('General'), findsOneWidget);
   });
 
+  testWidgets('television shell uses TV navigation and media shelves', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(960, 540);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    SharedPreferences.setMockInitialValues({'automaticUpdateChecks': false});
+    final preferences = PreferencesService();
+    await preferences.load();
+    final media = List.generate(
+      4,
+      (index) => AniListMedia(
+        id: index + 1,
+        title: MediaTitle(english: 'TV title ${index + 1}'),
+        cover: const MediaCover(),
+        format: 'TV',
+      ),
+    );
+
+    await tester.pumpWidget(
+      AnikinApp(
+        preferences: preferences,
+        aniListService: _FakeAniListService(currentSeason: media),
+        juroService: _FakeJuroService(),
+        watchHistoryService: WatchHistoryService(),
+        updateService: UpdateService(currentVersion: '0.0.0'),
+        isTelevision: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('tv-navigation-rail')), findsOneWidget);
+    expect(find.byType(NavigationBar), findsNothing);
+    expect(
+      tester
+          .widgetList<MediaPosterCard>(find.byType(MediaPosterCard))
+          .any((card) => card.width == 172),
+      isTrue,
+    );
+    final context = tester.element(find.byType(MainShell));
+    expect(
+      Theme.of(context).visualDensity,
+      const VisualDensity(horizontal: 1, vertical: 1),
+    );
+  });
+
+  testWidgets('media cards expose a strong keyboard focus state', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.television(AppTheme.dark(ThemeColorPalette.anikin)),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 180,
+              height: 330,
+              child: MediaPosterCard(
+                autofocus: true,
+                width: 172,
+                media: const AniListMedia(
+                  id: 77,
+                  title: MediaTitle(english: 'Focused title'),
+                  cover: MediaCover(),
+                  format: 'TV',
+                ),
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale,
+      1.06,
+    );
+  });
+
   testWidgets('Home and Search share the selected media type', (
     WidgetTester tester,
   ) async {
