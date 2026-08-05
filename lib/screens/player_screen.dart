@@ -9,6 +9,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../core/app_constants.dart';
 import '../core/app_theme.dart';
+import '../core/player_remote_input.dart';
 import '../core/text_utils.dart';
 import '../models/anilist_media.dart';
 import '../models/juro_models.dart';
@@ -64,11 +65,20 @@ class _PlayerScreenState extends State<PlayerScreen> {
   final _timestampService = CommunityTimestampService();
   final _playbackControllers = const PlaybackControllerFactory();
   final _keyboardFocusNode = FocusNode(debugLabel: 'Player shortcuts');
+  final _controlsFocusNode = FocusNode(
+    debugLabel: 'Player controls',
+    skipTraversal: true,
+    canRequestFocus: false,
+  );
+  final _playButtonFocusNode = FocusNode(debugLabel: 'Player play button');
+  final _unlockButtonFocusNode = FocusNode(debugLabel: 'Player unlock button');
 
   VideoPlayerController? _controller;
   VideoSource? _source;
   late AnimeEpisode _episode;
   List<SubtitleCue> _subtitleCues = const [];
+  SubtitleTrack? _activeSubtitle;
+  String? _preferredSubtitleLanguage;
   List<CommunitySkipInterval> _skipIntervals = const [];
   CommunitySkipInterval? _activeSkipInterval;
   String? _caption;
@@ -87,6 +97,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Timer? _seekFeedbackTimer;
   _SeekFeedbackData? _seekFeedback;
   int _seekFeedbackId = 0;
+  int _subtitleLoadGeneration = 0;
   DateTime _lastProgressSave = DateTime.fromMillisecondsSinceEpoch(0);
 
   String get _episodeKey => '${widget.media.id}-${_episode.number}';
@@ -122,6 +133,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _timestampService.dispose();
     unawaited(_exitPlayerMode());
     _keyboardFocusNode.dispose();
+    _controlsFocusNode.dispose();
+    _playButtonFocusNode.dispose();
+    _unlockButtonFocusNode.dispose();
     super.dispose();
   }
 
@@ -198,12 +212,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   Future<void> _loadSourceAndPlay() async {
+    _subtitleLoadGeneration++;
     setState(() {
       _loading = true;
       _error = null;
       _status = 'Resolving source';
       _caption = null;
       _subtitleCues = const [];
+      _activeSubtitle = null;
       _skipIntervals = const [];
       _activeSkipInterval = null;
       _completedHandled = false;
@@ -235,13 +251,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
         _source = source;
 
-        final headers = Map<String, String>.from(source.headers);
-        final hasUserAgent = headers.keys.any(
-          (key) => key.toLowerCase() == 'user-agent',
-        );
-        if (!hasUserAgent) {
-          headers['User-Agent'] = AppConstants.defaultUserAgent;
-        }
+        final headers = _networkHeaders(source);
 
         controller = _playbackControllers.fromNetwork(
           Uri.parse(source.videoUrl.replaceAll(' ', '%20')),
@@ -296,12 +306,175 @@ class _PlayerScreenState extends State<PlayerScreen> {
       return;
     }
 
-    final subtitle = source.subtitles.firstWhere(
-      (item) => item.language.toLowerCase().contains('english'),
-      orElse: () => source.subtitles.first,
-    );
+    final subtitle = _preferredSubtitleTrack(source.subtitles);
+    try {
+      final cues = await _fetchSubtitleCues(source, subtitle);
+      if (cues == null) {
+        return;
+      }
+      if (cues.isEmpty) {
+        _subtitleCues = const [];
+        _activeSubtitle = null;
+        return;
+      }
+      _subtitleCues = cues;
+      _activeSubtitle = subtitle;
+      _preferredSubtitleLanguage ??= subtitle.language;
+    } catch (_) {
+      if (identical(_source, source)) {
+        _subtitleCues = const [];
+        _activeSubtitle = null;
+      }
+    }
+  }
 
-    _subtitleCues = await _subtitleService.load(subtitle);
+  SubtitleTrack _preferredSubtitleTrack(List<SubtitleTrack> tracks) {
+    final preferred = _preferredSubtitleLanguage?.trim().toLowerCase();
+    if (preferred != null && preferred.isNotEmpty) {
+      for (final track in tracks) {
+        if (track.language.trim().toLowerCase() == preferred) {
+          return track;
+        }
+      }
+      for (final track in tracks) {
+        final language = track.language.trim().toLowerCase();
+        if (language.contains(preferred) || preferred.contains(language)) {
+          return track;
+        }
+      }
+    }
+    return tracks.firstWhere(
+      (track) => track.language.toLowerCase().contains('english'),
+      orElse: () => tracks.first,
+    );
+  }
+
+  Future<List<SubtitleCue>?> _fetchSubtitleCues(
+    VideoSource source,
+    SubtitleTrack subtitle,
+  ) async {
+    final generation = ++_subtitleLoadGeneration;
+    final cues = await _subtitleService.load(
+      subtitle,
+      inheritedHeaders: _networkHeaders(source),
+    );
+    if (!mounted ||
+        generation != _subtitleLoadGeneration ||
+        !identical(_source, source)) {
+      return null;
+    }
+    return cues;
+  }
+
+  Future<void> _selectSubtitles() async {
+    final source = _source;
+    if (source == null || source.subtitles.isEmpty) {
+      return;
+    }
+
+    _hideTimer?.cancel();
+    final enabled =
+        widget.preferences.subtitlesEnabled && _activeSubtitle != null;
+    final selection = await showAppBottomSheet<_SubtitleSelection>(
+      context: context,
+      builder: (context, scrollController) => ListView(
+        controller: scrollController,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+            child: Text(
+              'Subtitles',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+          ListTile(
+            leading: Icon(
+              enabled ? Icons.radio_button_off : Icons.radio_button_checked,
+            ),
+            title: const Text('Off'),
+            subtitle: const Text('Hide captions'),
+            onTap: () =>
+                Navigator.of(context).pop(const _SubtitleSelection.off()),
+          ),
+          for (final track in source.subtitles)
+            ListTile(
+              leading: Icon(
+                enabled && track.url == _activeSubtitle?.url
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_off,
+              ),
+              title: Text(track.language),
+              subtitle: Text(_subtitleKindLabel(track.kind)),
+              onTap: () =>
+                  Navigator.of(context).pop(_SubtitleSelection.track(track)),
+            ),
+        ],
+      ),
+    );
+    _scheduleControlsHide();
+
+    if (!mounted || selection == null || !identical(_source, source)) {
+      return;
+    }
+    final subtitle = selection.track;
+    if (subtitle == null) {
+      _subtitleLoadGeneration++;
+      setState(() {
+        _activeSubtitle = null;
+        _subtitleCues = const [];
+        _caption = null;
+      });
+      await widget.preferences.setSubtitlesEnabled(false);
+      return;
+    }
+    if (enabled && subtitle.url == _activeSubtitle?.url) {
+      return;
+    }
+
+    try {
+      final cues = await _fetchSubtitleCues(source, subtitle);
+      if (cues == null) {
+        return;
+      }
+      if (cues.isEmpty) {
+        _showSubtitleLoadError(subtitle);
+        return;
+      }
+      await widget.preferences.setSubtitlesEnabled(true);
+      if (!mounted || !identical(_source, source)) {
+        return;
+      }
+      final position = _controller?.value.position ?? Duration.zero;
+      setState(() {
+        _activeSubtitle = subtitle;
+        _preferredSubtitleLanguage = subtitle.language;
+        _subtitleCues = cues;
+        _caption = SubtitleService.textAt(cues, position);
+      });
+    } catch (_) {
+      if (mounted) {
+        _showSubtitleLoadError(subtitle);
+      }
+    }
+  }
+
+  void _showSubtitleLoadError(SubtitleTrack subtitle) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Could not load ${subtitle.language} subtitles')),
+    );
+  }
+
+  Map<String, String> _networkHeaders(VideoSource source) {
+    final headers = Map<String, String>.from(source.headers);
+    final hasUserAgent = headers.keys.any(
+      (key) => key.toLowerCase() == 'user-agent',
+    );
+    if (!hasUserAgent) {
+      headers['User-Agent'] = AppConstants.defaultUserAgent;
+    }
+    return headers;
   }
 
   Future<void> _loadCommunityTimestamps(
@@ -568,11 +741,50 @@ class _PlayerScreenState extends State<PlayerScreen> {
       Duration(seconds: widget.preferences.playerControlsTimeoutSeconds),
       () {
         final controller = _controller;
+        if (_controlsFocusNode.hasFocus) {
+          _scheduleControlsHide();
+          return;
+        }
         if (mounted && controller?.value.isPlaying == true && !_locked) {
           setState(() => _showControls = false);
         }
       },
     );
+  }
+
+  void _focusPlayerControls() {
+    _hideTimer?.cancel();
+    if (!_showControls) {
+      setState(() => _showControls = true);
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final focusNode = _locked ? _unlockButtonFocusNode : _playButtonFocusNode;
+      if (focusNode.canRequestFocus) {
+        focusNode.requestFocus();
+      }
+    });
+  }
+
+  void _lockControls() {
+    setState(() {
+      _locked = true;
+      _showControls = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _unlockButtonFocusNode.canRequestFocus) {
+        _unlockButtonFocusNode.requestFocus();
+      }
+    });
+  }
+
+  void _unlockControls() {
+    setState(() => _locked = false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _playButtonFocusNode.canRequestFocus) {
+        _playButtonFocusNode.requestFocus();
+      }
+    });
   }
 
   Future<void> _togglePlay() async {
@@ -595,46 +807,59 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _scheduleControlsHide();
   }
 
-  void _handleKeyEvent(KeyEvent event) {
+  KeyEventResult _handleKeyEvent(FocusNode _, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
-      return;
+      return KeyEventResult.ignored;
     }
 
     final key = event.logicalKey;
     final repeating = event is KeyRepeatEvent;
-
-    if (!repeating &&
-        (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.keyK)) {
-      unawaited(_togglePlay());
-      return;
-    }
-
-    if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.keyJ) {
-      unawaited(
-        _seekBy(-widget.preferences.seekTimeSeconds, showFeedback: true),
-      );
-      return;
-    }
-
-    if (key == LogicalKeyboardKey.arrowRight ||
-        key == LogicalKeyboardKey.keyL) {
-      unawaited(
-        _seekBy(widget.preferences.seekTimeSeconds, showFeedback: true),
-      );
-      return;
-    }
-
     if (!repeating &&
         (key == LogicalKeyboardKey.keyF ||
             (key == LogicalKeyboardKey.enter &&
                 HardwareKeyboard.instance.isAltPressed))) {
       unawaited(_toggleFullscreen());
-      return;
+      return KeyEventResult.handled;
+    }
+    final command = playerRemoteCommandForKey(
+      key,
+      controlsHaveFocus: _controlsFocusNode.hasFocus,
+    );
+
+    if (command != null) {
+      if (repeating &&
+          command != PlayerRemoteCommand.seekBackward &&
+          command != PlayerRemoteCommand.seekForward) {
+        return KeyEventResult.handled;
+      }
+      switch (command) {
+        case PlayerRemoteCommand.togglePlayback:
+          unawaited(_togglePlay());
+        case PlayerRemoteCommand.play:
+          if (_controller?.value.isPlaying == false) {
+            unawaited(_togglePlay());
+          }
+        case PlayerRemoteCommand.pause:
+          if (_controller?.value.isPlaying == true) {
+            unawaited(_togglePlay());
+          }
+        case PlayerRemoteCommand.seekBackward:
+          unawaited(
+            _seekBy(-widget.preferences.seekTimeSeconds, showFeedback: true),
+          );
+        case PlayerRemoteCommand.seekForward:
+          unawaited(
+            _seekBy(widget.preferences.seekTimeSeconds, showFeedback: true),
+          );
+        case PlayerRemoteCommand.focusControls:
+          _focusPlayerControls();
+        case PlayerRemoteCommand.close:
+          unawaited(_closePlayer());
+      }
+      return KeyEventResult.handled;
     }
 
-    if (!repeating && key == LogicalKeyboardKey.escape) {
-      unawaited(_closePlayer());
-    }
+    return KeyEventResult.ignored;
   }
 
   Future<void> _selectSource() async {
@@ -826,7 +1051,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           unawaited(_closePlayer());
         }
       },
-      child: KeyboardListener(
+      child: Focus(
         focusNode: _keyboardFocusNode,
         autofocus: true,
         onKeyEvent: _handleKeyEvent,
@@ -931,50 +1156,56 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     child: _ControlButton(
                       icon: Icons.lock,
                       tooltip: 'Unlock controls',
-                      onPressed: () => setState(() => _locked = false),
+                      onPressed: _unlockControls,
+                      focusNode: _unlockButtonFocusNode,
                       filled: true,
                     ),
                   )
                 else if (playerControlsVisible)
-                  _PlayerControls(
-                    controller: controller,
-                    source: _source,
-                    episode: _episode,
-                    animeTitle: widget.providerAnime.title,
-                    hasPrevious: !_isOffline && _episodeIndex > 0,
-                    hasNext:
-                        !_isOffline &&
-                        _episodeIndex >= 0 &&
-                        _episodeIndex < widget.episodes.length - 1,
-                    onBack: _closePlayer,
-                    onTogglePlay: _togglePlay,
-                    onSeekBackward: () =>
-                        _seekBy(-widget.preferences.seekTimeSeconds),
-                    onSeekForward: () =>
-                        _seekBy(widget.preferences.seekTimeSeconds),
-                    onSeek: _seekTo,
-                    onSeekStart: _beginSeekBarInteraction,
-                    onSeekEnd: _endSeekBarInteraction,
-                    onPrevious: _playPrevious,
-                    onNext: _playNext,
-                    onSource: _isOffline ? null : _selectSource,
-                    onSpeed: _selectSpeed,
-                    onResize: _selectResizeMode,
-                    onPictureInPicture: Platform.isAndroid
-                        ? _enterPictureInPicture
-                        : null,
-                    onLock: () => setState(() {
-                      _locked = true;
-                      _showControls = true;
-                    }),
-                    onEpisodeSelected: _playEpisode,
-                    episodes: widget.episodes,
-                    currentSpeed: controller.value.playbackSpeed,
-                    resizeMode: widget.preferences.resizeMode,
-                    seekSeconds: widget.preferences.seekTimeSeconds,
-                    showRemainingDuration:
-                        widget.preferences.showRemainingDuration,
-                    incognitoMode: widget.preferences.incognitoMode,
+                  Focus(
+                    focusNode: _controlsFocusNode,
+                    child: _PlayerControls(
+                      controller: controller,
+                      source: _source,
+                      episode: _episode,
+                      animeTitle: widget.providerAnime.title,
+                      hasPrevious: !_isOffline && _episodeIndex > 0,
+                      hasNext:
+                          !_isOffline &&
+                          _episodeIndex >= 0 &&
+                          _episodeIndex < widget.episodes.length - 1,
+                      onBack: _closePlayer,
+                      onTogglePlay: _togglePlay,
+                      playButtonFocusNode: _playButtonFocusNode,
+                      onSeekBackward: () =>
+                          _seekBy(-widget.preferences.seekTimeSeconds),
+                      onSeekForward: () =>
+                          _seekBy(widget.preferences.seekTimeSeconds),
+                      onSeek: _seekTo,
+                      onSeekStart: _beginSeekBarInteraction,
+                      onSeekEnd: _endSeekBarInteraction,
+                      onPrevious: _playPrevious,
+                      onNext: _playNext,
+                      onSource: _isOffline ? null : _selectSource,
+                      onSubtitles: _source?.subtitles.isNotEmpty == true
+                          ? _selectSubtitles
+                          : null,
+                      activeSubtitle: _activeSubtitle,
+                      onSpeed: _selectSpeed,
+                      onResize: _selectResizeMode,
+                      onPictureInPicture: Platform.isAndroid
+                          ? _enterPictureInPicture
+                          : null,
+                      onLock: _lockControls,
+                      onEpisodeSelected: _playEpisode,
+                      episodes: widget.episodes,
+                      currentSpeed: controller.value.playbackSpeed,
+                      resizeMode: widget.preferences.resizeMode,
+                      seekSeconds: widget.preferences.seekTimeSeconds,
+                      showRemainingDuration:
+                          widget.preferences.showRemainingDuration,
+                      incognitoMode: widget.preferences.incognitoMode,
+                    ),
                   ),
                 if ((_loading || _error != null) && !playerControlsVisible)
                   Positioned(
@@ -1192,6 +1423,7 @@ class _PlayerControls extends StatelessWidget {
     required this.hasNext,
     required this.onBack,
     required this.onTogglePlay,
+    required this.playButtonFocusNode,
     required this.onSeekBackward,
     required this.onSeekForward,
     required this.onSeek,
@@ -1200,6 +1432,8 @@ class _PlayerControls extends StatelessWidget {
     required this.onPrevious,
     required this.onNext,
     required this.onSource,
+    required this.onSubtitles,
+    required this.activeSubtitle,
     required this.onSpeed,
     required this.onResize,
     required this.onPictureInPicture,
@@ -1221,6 +1455,7 @@ class _PlayerControls extends StatelessWidget {
   final bool hasNext;
   final VoidCallback onBack;
   final VoidCallback onTogglePlay;
+  final FocusNode playButtonFocusNode;
   final VoidCallback onSeekBackward;
   final VoidCallback onSeekForward;
   final Future<void> Function(Duration) onSeek;
@@ -1229,6 +1464,8 @@ class _PlayerControls extends StatelessWidget {
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final VoidCallback? onSource;
+  final VoidCallback? onSubtitles;
+  final SubtitleTrack? activeSubtitle;
   final VoidCallback onSpeed;
   final VoidCallback onResize;
   final VoidCallback? onPictureInPicture;
@@ -1419,6 +1656,7 @@ class _PlayerControls extends StatelessWidget {
                               : Icons.play_arrow,
                           tooltip: value.isPlaying ? 'Pause' : 'Play',
                           onPressed: onTogglePlay,
+                          focusNode: playButtonFocusNode,
                           filled: true,
                           buttonSize: transportButtonSize,
                           iconSize: playIconSize,
@@ -1494,13 +1732,16 @@ class _PlayerControls extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             if (currentSource?.subtitles.isNotEmpty == true)
-                              const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 6),
-                                child: Icon(
-                                  Icons.closed_caption,
-                                  color: Colors.white,
-                                  size: 22,
-                                ),
+                              _ControlButton(
+                                icon: activeSubtitle == null
+                                    ? Icons.closed_caption_off
+                                    : Icons.closed_caption,
+                                tooltip: activeSubtitle == null
+                                    ? 'Subtitles off'
+                                    : 'Subtitles: ${activeSubtitle!.language}',
+                                onPressed: onSubtitles,
+                                buttonSize: 38,
+                                iconSize: 22,
                               ),
                             _ControlButton(
                               icon: Icons.source_outlined,
@@ -1544,6 +1785,22 @@ class _PlayerControls extends StatelessWidget {
       ],
     );
   }
+}
+
+class _SubtitleSelection {
+  const _SubtitleSelection.off() : track = null;
+
+  const _SubtitleSelection.track(this.track) : assert(track != null);
+
+  final SubtitleTrack? track;
+}
+
+String _subtitleKindLabel(SubtitleKind kind) {
+  return switch (kind) {
+    SubtitleKind.vtt => 'WebVTT',
+    SubtitleKind.srt => 'SubRip (SRT)',
+    SubtitleKind.ass => 'Advanced SubStation Alpha (ASS)',
+  };
 }
 
 class _VideoSeekBar extends StatefulWidget {
@@ -1860,6 +2117,7 @@ class _ControlButton extends StatelessWidget {
     this.filled = false,
     this.buttonSize,
     this.iconSize,
+    this.focusNode,
   });
 
   final IconData icon;
@@ -1868,6 +2126,7 @@ class _ControlButton extends StatelessWidget {
   final bool filled;
   final double? buttonSize;
   final double? iconSize;
+  final FocusNode? focusNode;
 
   @override
   Widget build(BuildContext context) {
@@ -1884,6 +2143,7 @@ class _ControlButton extends StatelessWidget {
           dimension: resolvedButtonSize,
           child: IconButton(
             onPressed: onPressed,
+            focusNode: focusNode,
             padding: EdgeInsets.zero,
             constraints: BoxConstraints.tightFor(
               width: resolvedButtonSize,

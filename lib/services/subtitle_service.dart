@@ -23,21 +23,35 @@ class SubtitleService {
 
   final http.Client _client;
 
-  Future<List<SubtitleCue>> load(SubtitleTrack track) async {
-    if (track.kind == SubtitleKind.ass) {
-      return const [];
-    }
-
+  Future<List<SubtitleCue>> load(
+    SubtitleTrack track, {
+    Map<String, String> inheritedHeaders = const {},
+  }) async {
     final response = await _client.get(
       Uri.parse(track.url),
-      headers: track.headers,
+      headers: _mergeHeaders(inheritedHeaders, track.headers),
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return const [];
     }
 
     final text = utf8.decode(response.bodyBytes, allowMalformed: true);
-    return _parse(text);
+    return track.kind == SubtitleKind.ass ? _parseAss(text) : _parse(text);
+  }
+
+  static Map<String, String> _mergeHeaders(
+    Map<String, String> inherited,
+    Map<String, String> overrides,
+  ) {
+    final overriddenNames = overrides.keys
+        .map((key) => key.toLowerCase())
+        .toSet();
+    return {
+      for (final entry in inherited.entries)
+        if (!overriddenNames.contains(entry.key.toLowerCase()))
+          entry.key: entry.value,
+      ...overrides,
+    };
   }
 
   static String? textAt(List<SubtitleCue> cues, Duration position) {
@@ -75,7 +89,7 @@ class SubtitleService {
       }
 
       final start = _parseTimestamp(parts[0]);
-      final end = _parseTimestamp(parts[1].split(RegExp(r'\s+')).first);
+      final end = _parseTimestamp(parts[1].trim().split(RegExp(r'\s+')).first);
       if (start == null || end == null || end <= start) {
         continue;
       }
@@ -94,6 +108,88 @@ class SubtitleService {
 
     cues.sort((a, b) => a.start.compareTo(b.start));
     return cues;
+  }
+
+  static List<SubtitleCue> _parseAss(String content) {
+    final normalized = content.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+    final cues = <SubtitleCue>[];
+    var inEvents = false;
+    var fields = const <String>[];
+
+    for (final rawLine in normalized.split('\n')) {
+      final line = rawLine.trim();
+      if (line.startsWith('[') && line.endsWith(']')) {
+        inEvents = line.toLowerCase() == '[events]';
+        continue;
+      }
+      if (!inEvents) {
+        continue;
+      }
+
+      final separator = line.indexOf(':');
+      if (separator < 0) {
+        continue;
+      }
+      final key = line.substring(0, separator).trim().toLowerCase();
+      final value = line.substring(separator + 1).trimLeft();
+      if (key == 'format') {
+        fields = value
+            .split(',')
+            .map((field) => field.trim().toLowerCase())
+            .toList();
+        continue;
+      }
+      if (key != 'dialogue' || fields.isEmpty) {
+        continue;
+      }
+
+      final startIndex = fields.indexOf('start');
+      final endIndex = fields.indexOf('end');
+      final textIndex = fields.indexOf('text');
+      if (startIndex < 0 || endIndex < 0 || textIndex < 0) {
+        continue;
+      }
+
+      final values = _splitAssFields(value, fields.length);
+      if (values.length != fields.length) {
+        continue;
+      }
+      final start = _parseTimestamp(values[startIndex]);
+      final end = _parseTimestamp(values[endIndex]);
+      if (start == null || end == null || end <= start) {
+        continue;
+      }
+
+      final text = values[textIndex]
+          .replaceAll(RegExp(r'\{[^}]*\}'), '')
+          .replaceAll(r'\N', '\n')
+          .replaceAll(r'\n', '\n')
+          .replaceAll(r'\h', ' ')
+          .replaceAll(RegExp(r'<[^>]+>'), '')
+          .trim();
+      if (text.isEmpty) {
+        continue;
+      }
+      cues.add(SubtitleCue(start: start, end: end, text: text));
+    }
+
+    cues.sort((a, b) => a.start.compareTo(b.start));
+    return cues;
+  }
+
+  static List<String> _splitAssFields(String value, int fieldCount) {
+    final fields = <String>[];
+    var remainder = value;
+    for (var index = 1; index < fieldCount; index++) {
+      final separator = remainder.indexOf(',');
+      if (separator < 0) {
+        return const [];
+      }
+      fields.add(remainder.substring(0, separator));
+      remainder = remainder.substring(separator + 1);
+    }
+    fields.add(remainder);
+    return fields;
   }
 
   static Duration? _parseTimestamp(String raw) {
